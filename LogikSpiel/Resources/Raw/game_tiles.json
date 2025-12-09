@@ -1,0 +1,21 @@
+[
+    {
+        "Id": "cb1",
+        "Title": "Codebreaker L1",
+        "Image": "dotnet_bot.png",
+        "GameId": "Codebreaker",
+        "LevelNumber": 1,
+        "Seed": 101,
+        "Route": "GameHost"
+    },
+    {
+        "Id": "cb2",
+        "Title": "Codebreaker L2",
+        "Image": "dotnet_bot.png",
+        "GameId": "Codebreaker",
+        "LevelNumber": 2,
+        "Seed": 101,
+        "Route": "GameHost",
+        "RequiresLevelNumber": 1
+    }
+]
