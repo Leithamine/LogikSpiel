@@ -1,9 +1,12 @@
+using LogikSpiel.Services;
 using LogikSpiel.ViewModel;
 
 namespace LogikSpiel.View;
 
 public partial class LearnPage : ContentPage, IQueryAttributable
 {
+    public LearnPage() : this(AppServices.Get<LearnViewModel>()) { }
+
     public LearnPage(LearnViewModel vm)
     {
         InitializeComponent();
@@ -20,7 +23,14 @@ public partial class LearnPage : ContentPage, IQueryAttributable
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        if (BindingContext is LearnViewModel vm)
-            await vm.LoadAsync();
+        try
+        {
+            if (BindingContext is LearnViewModel vm)
+                await vm.LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            await this.DisplayAlertAsync("Fehler", ex.ToString(), "OK");
+        }
     }
 }

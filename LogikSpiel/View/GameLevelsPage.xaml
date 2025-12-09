@@ -1,9 +1,8 @@
-<ContentPage
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    x:Class="LogikSpiel.View.GameLevelsPage"
-    x:Name="RootPage"
-    NavigationPage.HasNavigationBar="False">
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="LogikSpiel.View.GameLevelsPage"
+             x:Name="RootPage"
+             NavigationPage.HasNavigationBar="False">
 
     <ContentPage.Background>
         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
@@ -12,7 +11,7 @@
         </LinearGradientBrush>
     </ContentPage.Background>
 
-    <Grid Padding="20" RowDefinitions="Auto,*" RowSpacing="12">
+    <Grid Padding="20" RowDefinitions="Auto,*,Auto" RowSpacing="12">
 
         <VerticalStackLayout Grid.Row="0" Spacing="10" HorizontalOptions="Center" MaximumWidthRequest="720">
             <Label Text="{Binding Title}"
@@ -26,42 +25,101 @@
                 <Button Text="Regeln" Command="{Binding LearnCommand}" CornerRadius="14"/>
             </HorizontalStackLayout>
 
-            <ActivityIndicator IsRunning="{Binding IsBusy}"
-                               IsVisible="{Binding IsBusy}"
-                               HorizontalOptions="Center"/>
+            <!-- Difficulty -->
+            <CollectionView ItemsSource="{Binding Difficulties}" SelectionMode="None" HeightRequest="46">
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Horizontal" ItemSpacing="10" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Button Text="{Binding Name}"
+                                CornerRadius="18"
+                                Padding="14,8"
+                                Command="{Binding BindingContext.SelectDifficultyCommand, Source={x:Reference RootPage}}"
+                                CommandParameter="{Binding .}">
+                            <Button.Triggers>
+                                <DataTrigger TargetType="Button" Binding="{Binding IsSelected}" Value="True">
+                                    <Setter Property="BackgroundColor" Value="#FFFFFF"/>
+                                    <Setter Property="TextColor" Value="#2B2B2B"/>
+                                </DataTrigger>
+                                <DataTrigger TargetType="Button" Binding="{Binding IsSelected}" Value="False">
+                                    <Setter Property="BackgroundColor" Value="#60FFFFFF"/>
+                                    <Setter Property="TextColor" Value="#FFFFFF"/>
+                                </DataTrigger>
+                            </Button.Triggers>
+                        </Button>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
         </VerticalStackLayout>
 
-        <CollectionView Grid.Row="1"
-                        ItemsSource="{Binding Levels}"
-                        SelectionMode="None">
+        <Border Grid.Row="1" BackgroundColor="#40FFFFFF" StrokeShape="RoundRectangle 18" Padding="14">
+            <Label Text="Wähle unten ein Level aus. Gelöste Level schalten das nächste frei – wie bei Candy Crush."
+                   TextColor="White"/>
+        </Border>
+
+        <!-- Bottom Map -->
+        <CollectionView Grid.Row="2" ItemsSource="{Binding LevelNodes}" SelectionMode="None" HeightRequest="90">
             <CollectionView.ItemsLayout>
-                <GridItemsLayout Orientation="Vertical"
-                                 Span="{Binding TileSpan}"
-                                 HorizontalItemSpacing="12"
-                                 VerticalItemSpacing="12" />
+                <LinearItemsLayout Orientation="Horizontal" ItemSpacing="10"/>
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Border Stroke="#FFFFFF"
-                            StrokeThickness="1"
-                            BackgroundColor="#FFFFFF"
-                            StrokeShape="RoundRectangle 18"
-                            Padding="12">
-                        <Grid RowDefinitions="Auto,Auto" RowSpacing="10">
-                            <Label Text="{Binding LevelNumber, StringFormat='Level {0}'}"
-                                   FontAttributes="Bold"
-                                   TextColor="#2B2B2B"
-                                   HorizontalTextAlignment="Center"/>
+                    <Grid x:Name="Root"
+                          ColumnDefinitions="Auto,Auto"
+                          VerticalOptions="Center">
 
-                            <Button Grid.Row="1"
-                                    Text="Play"
-                                    Command="{Binding BindingContext.PlayLevelCommand, Source={x:Reference RootPage}}"
-                                    CommandParameter="{Binding .}"
-                                    CornerRadius="14"
-                                    HeightRequest="40"/>
+                        <Grid WidthRequest="56" HeightRequest="56">
+                            <Border x:Name="NodeBorder"
+                                    Stroke="#FFFFFF"
+                                    StrokeThickness="2"
+                                    BackgroundColor="#EAEAEA"
+                                    StrokeShape="RoundRectangle 999">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding BindingContext.SelectLevelCommand, Source={x:Reference RootPage}}"
+                                        CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+
+                                <Label Text="{Binding LevelNumber}"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"
+                                       FontAttributes="Bold"
+                                       TextColor="#2B2B2B"/>
+                            </Border>
+
+                            <Image Source="professor.png"
+                                   IsVisible="{Binding IsCurrent}"
+                                   WidthRequest="22" HeightRequest="22"
+                                   HorizontalOptions="End"
+                                   VerticalOptions="Start"
+                                   Margin="0,-8,-8,0"/>
                         </Grid>
-                    </Border>
+
+                        <BoxView Grid.Column="1"
+                                 IsVisible="{Binding ShowConnector}"
+                                 WidthRequest="20"
+                                 HeightRequest="4"
+                                 VerticalOptions="Center"
+                                 BackgroundColor="#FFFFFF"
+                                 Opacity="0.7"/>
+
+                        <Grid.Triggers>
+                            <DataTrigger TargetType="Grid" Binding="{Binding IsUnlocked}" Value="False">
+                                <Setter Property="Opacity" Value="0.35"/>
+                            </DataTrigger>
+
+                            <DataTrigger TargetType="Grid" Binding="{Binding IsCompleted}" Value="True">
+                                <Setter TargetName="NodeBorder" Property="BackgroundColor" Value="#03DAC5"/>
+                                <Setter TargetName="NodeBorder" Property="Stroke" Value="#03DAC5"/>
+                            </DataTrigger>
+
+                            <DataTrigger TargetType="Grid" Binding="{Binding IsCurrent}" Value="True">
+                                <Setter TargetName="NodeBorder" Property="StrokeThickness" Value="3"/>
+                            </DataTrigger>
+                        </Grid.Triggers>
+                    </Grid>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>

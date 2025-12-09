@@ -16,24 +16,13 @@ public sealed class AsyncCommand : ICommand
         _canExecute = canExecute;
     }
 
-    public bool CanExecute(object? parameter)
-        => !_isExecuting && (_canExecute?.Invoke() ?? true);
+    public bool CanExecute(object? parameter) => !_isExecuting && (_canExecute?.Invoke() ?? true);
 
     public async void Execute(object? parameter)
     {
         if (!CanExecute(parameter)) return;
-
-        try
-        {
-            _isExecuting = true;
-            RaiseCanExecuteChanged();
-            await _execute();
-        }
-        finally
-        {
-            _isExecuting = false;
-            RaiseCanExecuteChanged();
-        }
+        try { _isExecuting = true; RaiseCanExecuteChanged(); await _execute(); }
+        finally { _isExecuting = false; RaiseCanExecuteChanged(); }
     }
 
     public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
@@ -53,24 +42,13 @@ public sealed class AsyncCommand<T> : ICommand
         _canExecute = canExecute;
     }
 
-    public bool CanExecute(object? parameter)
-        => !_isExecuting && (_canExecute?.Invoke((T?)parameter) ?? true);
+    public bool CanExecute(object? parameter) => !_isExecuting && (_canExecute?.Invoke((T?)parameter) ?? true);
 
     public async void Execute(object? parameter)
     {
         if (!CanExecute(parameter)) return;
-
-        try
-        {
-            _isExecuting = true;
-            RaiseCanExecuteChanged();
-            await _execute((T?)parameter);
-        }
-        finally
-        {
-            _isExecuting = false;
-            RaiseCanExecuteChanged();
-        }
+        try { _isExecuting = true; RaiseCanExecuteChanged(); await _execute((T?)parameter); }
+        finally { _isExecuting = false; RaiseCanExecuteChanged(); }
     }
 
     public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);

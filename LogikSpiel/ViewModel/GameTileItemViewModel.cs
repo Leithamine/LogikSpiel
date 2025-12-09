@@ -11,7 +11,10 @@ public sealed class GameTileItemViewModel : ObservableObject
     public string Image => Model.Image;
     public string Route => Model.Route;
 
-    public LevelSpec Spec => new(Model.GameId, Model.LevelNumber, Model.Seed);
+    public string DifficultyKey { get; set; } = "normal"; // oder vom Level-Screen setzen
+
+    public LevelSpec Spec => new(Model.GameId, DifficultyKey, Model.LevelNumber, Model.Seed);
+
 
     private bool _isLocked;
     public bool IsLocked

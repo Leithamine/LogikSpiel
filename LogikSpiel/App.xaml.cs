@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-
-namespace LogikSpiel;
+﻿namespace LogikSpiel;
 
 public partial class App : Application
 {

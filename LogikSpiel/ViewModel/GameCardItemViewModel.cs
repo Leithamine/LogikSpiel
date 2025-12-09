@@ -1,4 +1,5 @@
 ﻿using LogikSpiel.Model;
+using LogikSpiel.Core;
 
 namespace LogikSpiel.ViewModel;
 

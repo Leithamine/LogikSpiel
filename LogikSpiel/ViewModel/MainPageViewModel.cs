@@ -13,27 +13,19 @@ public sealed class MainPageViewModel : ObservableObject
 
     public ObservableCollection<GameCardItemViewModel> Games { get; } = new();
 
+    private int _tileSpan = 2;
+    public int TileSpan { get => _tileSpan; set => SetProperty(ref _tileSpan, value); }
+
     private bool _isBusy;
     public bool IsBusy
     {
         get => _isBusy;
-        private set
-        {
-            if (!SetProperty(ref _isBusy, value)) return;
-            OpenGameCommand.RaiseCanExecuteChanged();
-        }
+        private set { if (!SetProperty(ref _isBusy, value)) return; OpenGameCommand.RaiseCanExecuteChanged(); }
     }
 
     public AsyncCommand<GameCardItemViewModel> OpenGameCommand { get; }
 
     private bool _initialized;
-
-    private int _tileSpan = 2;
-    public int TileSpan
-    {
-        get => _tileSpan;
-        set => SetProperty(ref _tileSpan, value);
-    }
 
     public MainPageViewModel(IGameCatalogService catalog, INavigationService nav)
     {
@@ -41,15 +33,12 @@ public sealed class MainPageViewModel : ObservableObject
         _nav = nav;
 
         OpenGameCommand = new AsyncCommand<GameCardItemViewModel>(
-            async (game) =>
+            async game =>
             {
                 if (game is null) return;
-                await _nav.GoToAsync("GameLevels", new Dictionary<string, object>
-                {
-                    ["gameId"] = game.Id
-                });
+                await _nav.GoToAsync("GameLevels", new Dictionary<string, object> { ["gameId"] = game.Id });
             },
-            (game) => !IsBusy && game is not null
+            game => !IsBusy && game is not null
         );
     }
 
@@ -69,13 +58,9 @@ public sealed class MainPageViewModel : ObservableObject
         {
             var games = await _catalog.LoadGamesAsync();
             Games.Clear();
-            foreach (var g in games)
-                Games.Add(new GameCardItemViewModel(g));
-        }
-        finally
-        {
-            IsBusy = false;
+            foreach (var g in games) Games.Add(new GameCardItemViewModel(g));
             _initialized = true;
         }
+        finally { IsBusy = false; }
     }
 }

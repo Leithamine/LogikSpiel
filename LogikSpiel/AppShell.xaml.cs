@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using LogikSpiel.Services;
 using LogikSpiel.View;
 
 namespace LogikSpiel;
@@ -9,36 +9,14 @@ public partial class AppShell : Shell
     {
         InitializeComponent();
 
-        Routing.RegisterRoute("GameLevels", typeof(GameLevelsPage));
-        Routing.RegisterRoute("Learn", typeof(LearnPage));
-        Routing.RegisterRoute("GameHost", typeof(GameHostPage));
+        Routing.RegisterRoute("GameLevels", typeof(LogikSpiel.View.GameLevelsPage));
+        Routing.RegisterRoute("Learn", typeof(LogikSpiel.View.LearnPage));
+        Routing.RegisterRoute("GameHost", typeof(LogikSpiel.View.GameHostPage));
 
-        try
+        Items.Add(new ShellContent
         {
-            Items.Add(new ShellContent
-            {
-                Route = "Home",
-                Content = services.GetRequiredService<MainPage>()
-            });
-        }
-        catch (Exception ex)
-        {
-            Items.Add(new ShellContent
-            {
-                Route = "Error",
-                Content = new ContentPage
-                {
-                    Content = new ScrollView
-                    {
-                        Content = new Label
-                        {
-                            Text = ex.ToString(),
-                            Padding = 20
-                        }
-                    }
-                }
-            });
-        }
+            Route = "Home",
+            Content = services.GetRequiredService<MainPage>()
+        });
     }
 }
-

@@ -10,11 +10,14 @@ public static class MauiProgram
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();
-        builder.UseMauiApp<App>()
+
+        builder
+            .UseMauiApp<App>()
             .UseSkiaSharp();
 
         // Services
         builder.Services.AddSingleton<IGameCatalogService>(sp => new AppPackageGameCatalogService("games.json"));
+        builder.Services.AddSingleton<IGameProgressStore, PreferencesGameProgressStore>();
         builder.Services.AddSingleton<INavigationService, ShellNavigationService>();
 
         // ViewModels

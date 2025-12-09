@@ -2,7 +2,7 @@
 
 public sealed record LevelSpec(
     string GameId,
+    string DifficultyKey,
     int LevelNumber,
-    int Seed,
-    int Difficulty = 1
+    int Seed
 );

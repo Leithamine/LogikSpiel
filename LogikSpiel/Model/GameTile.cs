@@ -4,15 +4,17 @@ using System.Text;
 
 namespace LogikSpiel.Model;
 
-public sealed record GameTile(
-    string Id,
-    string Title,
-    string Image,          // z.B. "dotnet_bot.png"
-    string GameId,         // z.B. "Codebreaker"
-    int LevelNumber,       // z.B. 1
-    int Seed,              // z.B. 123 (deterministisch = testbar)
-    string Route,          // z.B. "GameHost"
-    int? RequiresLevelNumber = null // optional: sperrt Level bis vorherige gelöst
-);
+public sealed class GameTile
+{
+    public string GameId { get; init; } = "";
+    public int LevelNumber { get; init; }
+    public int Seed { get; init; }
+    public string DifficultyKey { get; init; } = "normal";
+
+    public string Title { get; init; } = "";
+    public string Image { get; init; } = "";
+    public string Route { get; init; } = "";
+}
+
 
 

@@ -1,10 +1,9 @@
-<ContentPage
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:skia="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
-    x:Class="LogikSpiel.View.MainPage"
-    x:Name="RootPage"
-    NavigationPage.HasNavigationBar="False">
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:skia="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
+             x:Class="LogikSpiel.View.MainPage"
+             x:Name="RootPage"
+             NavigationPage.HasNavigationBar="False">
 
     <ContentPage.Background>
         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
@@ -20,13 +19,12 @@
                    FontAttributes="Bold"
                    FontSize="{OnIdiom Phone=26, Tablet=32, Desktop=38}"
                    TextColor="White"
-                   HorizontalTextAlignment="Center" />
+                   HorizontalTextAlignment="Center"/>
 
             <Image Source="professor.png"
                    WidthRequest="{OnIdiom Phone=200, Tablet=220, Desktop=250}"
                    HeightRequest="{OnIdiom Phone=200, Tablet=230, Desktop=250}"
                    Aspect="AspectFit"
-                   HorizontalOptions="Center"
                    Margin="0,0,0,-6"/>
 
             <skia:SKLottieView Source="lottie_intro.json"
@@ -35,51 +33,29 @@
                                HorizontalOptions="Center"
                                RepeatCount="0"/>
 
-            <ActivityIndicator IsRunning="{Binding IsBusy}"
-                               IsVisible="{Binding IsBusy}"
-                               HorizontalOptions="Center"/>
+            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
         </VerticalStackLayout>
 
-        <CollectionView Grid.Row="1"
-                        ItemsSource="{Binding Games}"
-                        SelectionMode="None">
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Games}" SelectionMode="None">
             <CollectionView.ItemsLayout>
                 <GridItemsLayout Orientation="Vertical"
                                  Span="{Binding TileSpan}"
                                  HorizontalItemSpacing="12"
-                                 VerticalItemSpacing="12" />
+                                 VerticalItemSpacing="12"/>
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Border Stroke="#FFFFFF"
-                            StrokeThickness="1"
-                            BackgroundColor="#FFFFFF"
-                            StrokeShape="RoundRectangle 18"
-                            Padding="12">
+                    <Border Stroke="#FFFFFF" StrokeThickness="1" BackgroundColor="#FFFFFF"
+                            StrokeShape="RoundRectangle 18" Padding="12">
                         <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
-
-                            <Label Text="{Binding Title}"
-                                   FontAttributes="Bold"
-                                   FontSize="14"
-                                   TextColor="#2B2B2B"
-                                   HorizontalTextAlignment="Center"
-                                   LineBreakMode="TailTruncation"/>
-
-                            <Border Grid.Row="1"
-                                    StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 14">
-                                <Image Source="{Binding Image}"
-                                       Aspect="AspectFill"
-                                       HeightRequest="{OnIdiom Phone=110, Tablet=140, Desktop=160}"/>
-                            </Border>
-
-                            <Button Grid.Row="2"
-                                    Text="Öffnen"
+                            <Label Text="{Binding Title}" FontAttributes="Bold" FontSize="14"
+                                   TextColor="#2B2B2B" HorizontalTextAlignment="Center"/>
+                            <Image Grid.Row="1" Source="{Binding Image}" Aspect="AspectFill"
+                                   HeightRequest="{OnIdiom Phone=110, Tablet=140, Desktop=160}"/>
+                            <Button Grid.Row="2" Text="Öffnen" CornerRadius="14" HeightRequest="40"
                                     Command="{Binding BindingContext.OpenGameCommand, Source={x:Reference RootPage}}"
-                                    CommandParameter="{Binding .}"
-                                    CornerRadius="14"
-                                    HeightRequest="40"/>
+                                    CommandParameter="{Binding .}"/>
                         </Grid>
                     </Border>
                 </DataTemplate>

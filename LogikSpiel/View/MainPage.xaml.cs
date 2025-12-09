@@ -1,3 +1,4 @@
+using LogikSpiel.Services;
 using LogikSpiel.ViewModel;
 
 namespace LogikSpiel.View;
@@ -5,6 +6,8 @@ namespace LogikSpiel.View;
 public partial class MainPage : ContentPage
 {
     private double _lastWidth;
+
+    public MainPage() : this(AppServices.Get<MainPageViewModel>()) { }
 
     public MainPage(MainPageViewModel vm)
     {
@@ -15,7 +18,6 @@ public partial class MainPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-
         try
         {
             if (BindingContext is MainPageViewModel vm)
@@ -23,7 +25,6 @@ public partial class MainPage : ContentPage
         }
         catch (Exception ex)
         {
-            // zeigt dir endlich die echte Ursache statt Debugger.Break
             await this.DisplayAlertAsync("Startup-Fehler", ex.ToString(), "OK");
         }
     }
@@ -33,7 +34,6 @@ public partial class MainPage : ContentPage
         base.OnSizeAllocated(width, height);
         if (Math.Abs(width - _lastWidth) < 1) return;
         _lastWidth = width;
-
         (BindingContext as MainPageViewModel)?.UpdateTileSpan(width);
     }
 }

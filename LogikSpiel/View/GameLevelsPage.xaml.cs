@@ -1,10 +1,11 @@
+using LogikSpiel.Services;
 using LogikSpiel.ViewModel;
 
 namespace LogikSpiel.View;
 
 public partial class GameLevelsPage : ContentPage, IQueryAttributable
 {
-    private double _lastWidth;
+    public GameLevelsPage() : this(AppServices.Get<GameLevelsViewModel>()) { }
 
     public GameLevelsPage(GameLevelsViewModel vm)
     {
@@ -22,16 +23,14 @@ public partial class GameLevelsPage : ContentPage, IQueryAttributable
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        if (BindingContext is GameLevelsViewModel vm)
-            await vm.LoadAsync();
-    }
-
-    protected override void OnSizeAllocated(double width, double height)
-    {
-        base.OnSizeAllocated(width, height);
-        if (Math.Abs(width - _lastWidth) < 1) return;
-        _lastWidth = width;
-
-        (BindingContext as GameLevelsViewModel)?.UpdateTileSpan(width);
+        try
+        {
+            if (BindingContext is GameLevelsViewModel vm)
+                await vm.LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            await this.DisplayAlertAsync("Fehler", ex.ToString(), "OK");
+        }
     }
 }

@@ -1,9 +1,9 @@
-<ContentPage
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:skia="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
-    x:Class="LogikSpiel.View.GameHostPage"
-    NavigationPage.HasNavigationBar="False">
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:skia="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
+             x:Class="LogikSpiel.View.GameHostPage"
+             x:Name="RootPage"
+             NavigationPage.HasNavigationBar="False">
 
     <ContentPage.Background>
         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
@@ -12,7 +12,7 @@
         </LinearGradientBrush>
     </ContentPage.Background>
 
-    <Grid Padding="20" RowDefinitions="Auto,*" RowSpacing="12">
+    <Grid Padding="20" RowDefinitions="Auto,*,Auto" RowSpacing="12">
 
         <VerticalStackLayout Grid.Row="0" Spacing="8" HorizontalOptions="Center" MaximumWidthRequest="720">
             <Label Text="{Binding Title}"
@@ -25,7 +25,6 @@
                    WidthRequest="{OnIdiom Phone=180, Tablet=200, Desktop=220}"
                    HeightRequest="{OnIdiom Phone=180, Tablet=200, Desktop=220}"
                    Aspect="AspectFit"
-                   HorizontalOptions="Center"
                    Margin="0,0,0,-6"/>
 
             <skia:SKLottieView Source="lottie_intro.json"
@@ -34,22 +33,81 @@
                                HorizontalOptions="Center"
                                RepeatCount="0"/>
 
-            <Button Text="Zurück" Command="{Binding BackCommand}" CornerRadius="14"/>
+            <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                <Button Text="Zurück" Command="{Binding BackCommand}" CornerRadius="14"/>
+                <Button Text="Level geschafft ✅" Command="{Binding CompleteLevelCommand}" CornerRadius="14"/>
+            </HorizontalStackLayout>
         </VerticalStackLayout>
 
         <Border Grid.Row="1" BackgroundColor="#FFFFFF" StrokeShape="RoundRectangle 18" Padding="14">
-            <VerticalStackLayout Spacing="8">
-                <Label Text="GameHost Platzhalter"
-                       FontSize="18"
-                       FontAttributes="Bold"
-                       TextColor="#2B2B2B"/>
-                <Label Text="Hier kommt später deine Spiele-UI / Logik rein."
-                       TextColor="#2B2B2B"/>
-                <Label Text="{Binding Spec, StringFormat='Spec: {0}'}"
-                       TextColor="#2B2B2B"
-                       FontSize="12"/>
-            </VerticalStackLayout>
+            <Label Text="Hier kommt später deine Spiel-UI rein. (Demo: 'Level geschafft' schaltet das nächste frei.)"
+                   TextColor="#2B2B2B"/>
         </Border>
+
+        <CollectionView Grid.Row="2" ItemsSource="{Binding LevelNodes}" SelectionMode="None" HeightRequest="90">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Horizontal" ItemSpacing="10"/>
+            </CollectionView.ItemsLayout>
+
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Grid x:Name="Root"
+                          ColumnDefinitions="Auto,Auto"
+                          VerticalOptions="Center">
+
+                        <Grid WidthRequest="56" HeightRequest="56">
+                            <Border x:Name="NodeBorder"
+                                    Stroke="#FFFFFF"
+                                    StrokeThickness="2"
+                                    BackgroundColor="#EAEAEA"
+                                    StrokeShape="RoundRectangle 999">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding BindingContext.SelectLevelFromMapCommand, Source={x:Reference RootPage}}"
+                                        CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+
+                                <Label Text="{Binding LevelNumber}"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"
+                                       FontAttributes="Bold"
+                                       TextColor="#2B2B2B"/>
+                            </Border>
+
+                            <Image Source="professor.png"
+                                   IsVisible="{Binding IsCurrent}"
+                                   WidthRequest="22" HeightRequest="22"
+                                   HorizontalOptions="End"
+                                   VerticalOptions="Start"
+                                   Margin="0,-8,-8,0"/>
+                        </Grid>
+
+                        <BoxView Grid.Column="1"
+                                 IsVisible="{Binding ShowConnector}"
+                                 WidthRequest="20"
+                                 HeightRequest="4"
+                                 VerticalOptions="Center"
+                                 BackgroundColor="#FFFFFF"
+                                 Opacity="0.7"/>
+
+                        <Grid.Triggers>
+                            <DataTrigger TargetType="Grid" Binding="{Binding IsUnlocked}" Value="False">
+                                <Setter Property="Opacity" Value="0.35"/>
+                            </DataTrigger>
+
+                            <DataTrigger TargetType="Grid" Binding="{Binding IsCompleted}" Value="True">
+                                <Setter TargetName="NodeBorder" Property="BackgroundColor" Value="#03DAC5"/>
+                                <Setter TargetName="NodeBorder" Property="Stroke" Value="#03DAC5"/>
+                            </DataTrigger>
+
+                            <DataTrigger TargetType="Grid" Binding="{Binding IsCurrent}" Value="True">
+                                <Setter TargetName="NodeBorder" Property="StrokeThickness" Value="3"/>
+                            </DataTrigger>
+                        </Grid.Triggers>
+                    </Grid>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
 
     </Grid>
 </ContentPage>
