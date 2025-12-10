@@ -9,14 +9,11 @@ public partial class AppShell : Shell
     {
         InitializeComponent();
 
-        Routing.RegisterRoute("GameLevels", typeof(LogikSpiel.View.GameLevelsPage));
-        Routing.RegisterRoute("Learn", typeof(LogikSpiel.View.LearnPage));
-        Routing.RegisterRoute("GameHost", typeof(LogikSpiel.View.GameHostPage));
-
-        Items.Add(new ShellContent
-        {
-            Route = "Home",
-            Content = services.GetRequiredService<MainPage>()
-        });
+        // Routen registrieren
+        Routing.RegisterRoute("GameLevels", typeof(GameLevelsPage));
+        Routing.RegisterRoute("GameMap", typeof(GameMapPage));
+        Routing.RegisterRoute("Learn", typeof(LearnPage));
+        Routing.RegisterRoute("GameHost", typeof(GameHostPage));
+        Routing.RegisterRoute("Puzzle", typeof(PuzzlePage));   
     }
 }

@@ -15,48 +15,43 @@
     <Grid Padding="20" RowDefinitions="Auto,*" RowSpacing="12">
 
         <VerticalStackLayout Grid.Row="0" Spacing="8" HorizontalOptions="Center" MaximumWidthRequest="720">
-            <Label Text="{Binding PageTitle}"
+            <Label Text="Logik Spiele"
                    FontAttributes="Bold"
-                   FontSize="{OnIdiom Phone=26, Tablet=32, Desktop=38}"
+                   FontSize="30"
                    TextColor="White"
                    HorizontalTextAlignment="Center"/>
 
             <Image Source="professor.png"
-                   WidthRequest="{OnIdiom Phone=200, Tablet=220, Desktop=250}"
-                   HeightRequest="{OnIdiom Phone=200, Tablet=230, Desktop=250}"
+                   WidthRequest="190" HeightRequest="190"
                    Aspect="AspectFit"
-                   Margin="0,0,0,-6"/>
+                   HorizontalOptions="Center"/>
 
             <skia:SKLottieView Source="lottie_intro.json"
-                               HeightRequest="{OnIdiom Phone=200, Tablet=250, Desktop=300}"
-                               Scale="1.5"
-                               HorizontalOptions="Center"
-                               RepeatCount="0"/>
-
-            <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" />
+                               HeightRequest="170"
+                               RepeatCount="0"
+                               HorizontalOptions="Center"/>
         </VerticalStackLayout>
 
         <CollectionView Grid.Row="1" ItemsSource="{Binding Games}" SelectionMode="None">
             <CollectionView.ItemsLayout>
-                <GridItemsLayout Orientation="Vertical"
-                                 Span="{Binding TileSpan}"
-                                 HorizontalItemSpacing="12"
-                                 VerticalItemSpacing="12"/>
+                <GridItemsLayout Orientation="Vertical" Span="2" HorizontalItemSpacing="12" VerticalItemSpacing="12" />
             </CollectionView.ItemsLayout>
 
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Border Stroke="#FFFFFF" StrokeThickness="1" BackgroundColor="#FFFFFF"
-                            StrokeShape="RoundRectangle 18" Padding="12">
-                        <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="10">
-                            <Label Text="{Binding Title}" FontAttributes="Bold" FontSize="14"
-                                   TextColor="#2B2B2B" HorizontalTextAlignment="Center"/>
-                            <Image Grid.Row="1" Source="{Binding Image}" Aspect="AspectFill"
-                                   HeightRequest="{OnIdiom Phone=110, Tablet=140, Desktop=160}"/>
-                            <Button Grid.Row="2" Text="Öffnen" CornerRadius="14" HeightRequest="40"
+                    <Border BackgroundColor="#FFFFFF" StrokeShape="RoundRectangle 18" Padding="12">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="{Binding Title}"
+                                   FontAttributes="Bold"
+                                   TextColor="#2B2B2B"
+                                   HorizontalTextAlignment="Center"
+                                   LineBreakMode="TailTruncation"/>
+                            <Image Source="{Binding Image}" HeightRequest="120" Aspect="AspectFill"/>
+                            <Button Text="Öffnen"
                                     Command="{Binding BindingContext.OpenGameCommand, Source={x:Reference RootPage}}"
-                                    CommandParameter="{Binding .}"/>
-                        </Grid>
+                                    CommandParameter="{Binding .}"
+                                    CornerRadius="14"/>
+                        </VerticalStackLayout>
                     </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>

@@ -10,10 +10,17 @@ public sealed class PreferencesGameProgressStore : IGameProgressStore
     public Task<GameProgress> LoadAsync(CancellationToken ct = default)
     {
         var json = Preferences.Get(Key, "");
-        if (string.IsNullOrWhiteSpace(json)) return Task.FromResult(new GameProgress());
+        if (string.IsNullOrWhiteSpace(json))
+            return Task.FromResult(new GameProgress());
 
-        try { return Task.FromResult(JsonSerializer.Deserialize<GameProgress>(json) ?? new GameProgress()); }
-        catch { return Task.FromResult(new GameProgress()); }
+        try
+        {
+            return Task.FromResult(JsonSerializer.Deserialize<GameProgress>(json) ?? new GameProgress());
+        }
+        catch
+        {
+            return Task.FromResult(new GameProgress());
+        }
     }
 
     public Task SaveAsync(GameProgress progress, CancellationToken ct = default)

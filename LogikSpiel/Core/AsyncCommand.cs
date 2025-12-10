@@ -1,4 +1,5 @@
-﻿using System.Windows.Input;
+﻿using System.Diagnostics;
+using System.Windows.Input;
 
 namespace LogikSpiel.Core;
 
@@ -21,8 +22,30 @@ public sealed class AsyncCommand : ICommand
     public async void Execute(object? parameter)
     {
         if (!CanExecute(parameter)) return;
-        try { _isExecuting = true; RaiseCanExecuteChanged(); await _execute(); }
-        finally { _isExecuting = false; RaiseCanExecuteChanged(); }
+        try
+        {
+            _isExecuting = true;
+            RaiseCanExecuteChanged();
+            await _execute();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex);
+            try
+            {
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    if (Shell.Current is not null)
+                        await Shell.Current.DisplayAlertAsync("Fehler", ex.ToString(), "OK");
+                });
+            }
+            catch { }
+        }
+        finally
+        {
+            _isExecuting = false;
+            RaiseCanExecuteChanged();
+        }
     }
 
     public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
@@ -47,8 +70,30 @@ public sealed class AsyncCommand<T> : ICommand
     public async void Execute(object? parameter)
     {
         if (!CanExecute(parameter)) return;
-        try { _isExecuting = true; RaiseCanExecuteChanged(); await _execute((T?)parameter); }
-        finally { _isExecuting = false; RaiseCanExecuteChanged(); }
+        try
+        {
+            _isExecuting = true;
+            RaiseCanExecuteChanged();
+            await _execute((T?)parameter);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex);
+            try
+            {
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                {
+                    if (Shell.Current is not null)
+                        await Shell.Current.DisplayAlertAsync("Fehler", ex.ToString(), "OK");
+                });
+            }
+            catch { }
+        }
+        finally
+        {
+            _isExecuting = false;
+            RaiseCanExecuteChanged();
+        }
     }
 
     public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);

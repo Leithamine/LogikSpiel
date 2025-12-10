@@ -5,12 +5,10 @@ namespace LogikSpiel.View;
 
 public partial class GameLevelsPage : ContentPage, IQueryAttributable
 {
-    public GameLevelsPage() : this(AppServices.Get<GameLevelsViewModel>()) { }
-
-    public GameLevelsPage(GameLevelsViewModel vm)
+    public GameLevelsPage()
     {
         InitializeComponent();
-        BindingContext = vm;
+        BindingContext = AppServices.Get<GameLevelsViewModel>();
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -23,14 +21,7 @@ public partial class GameLevelsPage : ContentPage, IQueryAttributable
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        try
-        {
-            if (BindingContext is GameLevelsViewModel vm)
-                await vm.LoadAsync();
-        }
-        catch (Exception ex)
-        {
-            await this.DisplayAlertAsync("Fehler", ex.ToString(), "OK");
-        }
+        if (BindingContext is GameLevelsViewModel vm)
+            await vm.LoadAsync();
     }
 }

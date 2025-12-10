@@ -11,7 +11,6 @@ public sealed class GameLevelsViewModel : ObservableObject
     private readonly IGameProgressStore _progressStore;
     private readonly INavigationService _nav;
 
-    public ObservableCollection<DifficultyOptionViewModel> Difficulties { get; } = new();
     public ObservableCollection<LevelNodeViewModel> LevelNodes { get; } = new();
 
     private string? _gameId;
@@ -26,26 +25,36 @@ public sealed class GameLevelsViewModel : ObservableObject
     public string SelectedDifficultyKey
     {
         get => _selectedDifficultyKey;
-        set { if (!SetProperty(ref _selectedDifficultyKey, value)) return; _ = ReloadLevelsAsync(); }
-    }
-
-    private bool _isBusy;
-    public bool IsBusy
-    {
-        get => _isBusy;
-        private set
+        set
         {
-            if (!SetProperty(ref _isBusy, value)) return;
-            SelectLevelCommand.RaiseCanExecuteChanged();
-            LearnCommand.RaiseCanExecuteChanged();
-            BackCommand.RaiseCanExecuteChanged();
+            if (!SetProperty(ref _selectedDifficultyKey, value)) return;
+            OnPropertyChanged(nameof(MapLottieSource));
         }
     }
 
-    public AsyncCommand<DifficultyOptionViewModel> SelectDifficultyCommand { get; }
-    public AsyncCommand<LevelNodeViewModel> SelectLevelCommand { get; }
-    public AsyncCommand LearnCommand { get; }
+    public string MapLottieSource => SelectedDifficultyKey switch
+    {
+        "easy" => "map_easy.json",
+        "normal" => "map_normal.json",
+        "hard" => "map_hard.json",
+        "complex" => "map_complex.json",
+        "master" => "map_master.json",
+        "god" => "map_god.json",
+        _ => "map_normal.json"
+    };
+
+    private bool _isSettingsOpen;
+    public bool IsSettingsOpen { get => _isSettingsOpen; set => SetProperty(ref _isSettingsOpen, value); }
+
+    private double _mapHeight = 1200;
+    public double MapHeight { get => _mapHeight; private set => SetProperty(ref _mapHeight, value); }
+
     public AsyncCommand BackCommand { get; }
+    public AsyncCommand LearnCommand { get; }
+    public AsyncCommand OpenSettingsCommand { get; }
+    public AsyncCommand CloseSettingsCommand { get; }
+    public AsyncCommand<string> SetDifficultyCommand { get; }
+    public AsyncCommand<LevelNodeViewModel> SelectLevelCommand { get; }
 
     public GameLevelsViewModel(IGameCatalogService catalog, IGameProgressStore progressStore, INavigationService nav)
     {
@@ -53,53 +62,55 @@ public sealed class GameLevelsViewModel : ObservableObject
         _progressStore = progressStore;
         _nav = nav;
 
-        Difficulties.Add(new("easy", "Einfach"));
-        Difficulties.Add(new("normal", "Normal"));
-        Difficulties.Add(new("hard", "Schwer"));
-        Difficulties.Add(new("complex", "Kompliziert"));
-        Difficulties.Add(new("master", "Master"));
-        Difficulties.Add(new("god", "Gott"));
-        MarkSelected("normal");
-
-        SelectDifficultyCommand = new AsyncCommand<DifficultyOptionViewModel>(async d =>
-        {
-            if (d is null) return;
-            MarkSelected(d.Key);
-            SelectedDifficultyKey = d.Key;
-            await Task.CompletedTask;
-        });
-
-        SelectLevelCommand = new AsyncCommand<LevelNodeViewModel>(async node =>
-        {
-            if (node is null || !node.IsUnlocked) return;
-            await _nav.GoToAsync("GameHost", new Dictionary<string, object> { ["spec"] = node.Spec });
-        }, node => !IsBusy && node is not null);
+        BackCommand = new AsyncCommand(() => _nav.GoBackAsync());
 
         LearnCommand = new AsyncCommand(async () =>
         {
             if (string.IsNullOrWhiteSpace(GameId)) return;
             await _nav.GoToAsync("Learn", new Dictionary<string, object> { ["gameId"] = GameId! });
-        }, () => !IsBusy && !string.IsNullOrWhiteSpace(GameId));
+        });
 
-        BackCommand = new AsyncCommand(() => _nav.GoBackAsync(), () => !IsBusy);
-    }
+        OpenSettingsCommand = new AsyncCommand(() =>
+        {
+            IsSettingsOpen = true;
+            return Task.CompletedTask;
+        });
 
-    private void MarkSelected(string key)
-    {
-        foreach (var d in Difficulties) d.IsSelected = d.Key == key;
+        CloseSettingsCommand = new AsyncCommand(() =>
+        {
+            IsSettingsOpen = false;
+            return Task.CompletedTask;
+        });
+
+        SetDifficultyCommand = new AsyncCommand<string>(async key =>
+        {
+            if (string.IsNullOrWhiteSpace(key)) return;
+            SelectedDifficultyKey = key;
+            Preferences.Set($"LAST_DIFF_{GameId}", key);
+            IsSettingsOpen = false;
+            await ReloadLevelsAsync();
+        });
+
+        SelectLevelCommand = new AsyncCommand<LevelNodeViewModel>(async node =>
+        {
+            if (node is null || !node.IsUnlocked) return;
+
+            await _nav.GoToAsync("GameHost", new Dictionary<string, object>
+            {
+                ["gameId"] = node.Spec.GameId,
+                ["difficulty"] = node.Spec.DifficultyKey,
+                ["level"] = node.Spec.LevelNumber
+            });
+        });
     }
 
     public async Task LoadAsync()
     {
-        if (IsBusy || string.IsNullOrWhiteSpace(GameId)) return;
+        if (string.IsNullOrWhiteSpace(GameId)) return;
 
-        IsBusy = true;
-        try
-        {
-            Game = await _catalog.GetGameAsync(GameId!);
-            await ReloadLevelsAsync();
-        }
-        finally { IsBusy = false; }
+        Game = await _catalog.GetGameAsync(GameId!);
+        SelectedDifficultyKey = Preferences.Get($"LAST_DIFF_{GameId}", "normal");
+        await ReloadLevelsAsync();
     }
 
     public async Task ReloadLevelsAsync()
@@ -113,29 +124,43 @@ public sealed class GameLevelsViewModel : ObservableObject
 
         for (int i = 0; i < specs.Count; i++)
         {
-            var spec = specs[i];
-            var node = new LevelNodeViewModel(spec, showConnector: i < specs.Count - 1);
+            var s = specs[i];
+            var node = new LevelNodeViewModel(s);
 
-            node.IsCompleted = progress.IsCompleted(spec);
+            node.IsCompleted = progress.IsCompleted(s);
 
-            if (spec.LevelNumber == 1) node.IsUnlocked = true;
-            else
-            {
-                var prev = new LevelSpec(spec.GameId, spec.DifficultyKey, spec.LevelNumber - 1, spec.Seed - 1);
-                node.IsUnlocked = progress.IsCompleted(prev);
-            }
-
-            node.IsCurrent = spec.LevelNumber == 1 && node.IsUnlocked && !node.IsCompleted;
+            if (s.LevelNumber == 1) node.IsUnlocked = true;
+            else node.IsUnlocked = progress.IsCompleted(s.GameId, s.DifficultyKey, s.LevelNumber - 1);
 
             LevelNodes.Add(node);
         }
 
-        // Current Marker: erstes nicht-abgeschlossenes, aber unlocked
+        // Current: erstes unlocked & nicht abgeschlossen
         var current = LevelNodes.FirstOrDefault(n => n.IsUnlocked && !n.IsCompleted) ?? LevelNodes.FirstOrDefault();
-        if (current is not null)
+        foreach (var n in LevelNodes) n.IsCurrent = false;
+        if (current is not null) current.IsCurrent = true;
+
+        ApplyMapLayout(LevelNodes);
+    }
+
+    // Candy-Crush Zick-Zack-Pattern (0..1 Positionen)
+    private static readonly double[] XPattern = { 0.18, 0.50, 0.82, 0.65, 0.35, 0.20, 0.45, 0.75 };
+
+    private void ApplyMapLayout(IList<LevelNodeViewModel> nodes)
+    {
+        const double nodeSize = 60;
+        const double topPad = 120;
+        const double stepY = 120;
+
+        MapHeight = topPad + (nodes.Count - 1) * stepY + 260;
+
+        for (int i = 0; i < nodes.Count; i++)
         {
-            foreach (var n in LevelNodes) n.IsCurrent = false;
-            current.IsCurrent = true;
+            var x = XPattern[i % XPattern.Length];
+            var yPx = topPad + i * stepY;
+            var y = yPx / MapHeight;
+
+            nodes[i].Bounds = new Microsoft.Maui.Graphics.Rect(x, y, nodeSize, nodeSize);
         }
     }
 }

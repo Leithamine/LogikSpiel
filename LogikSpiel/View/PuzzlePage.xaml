@@ -1,7 +1,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:skia="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
-             x:Class="LogikSpiel.View.GameHostPage"
+             x:Class="LogikSpiel.View.PuzzlePage"
              NavigationPage.HasNavigationBar="False">
 
     <ContentPage.Background>
@@ -16,26 +16,28 @@
         <VerticalStackLayout Grid.Row="0" Spacing="8" HorizontalOptions="Center" MaximumWidthRequest="720">
             <Label Text="{Binding Title}"
                    FontAttributes="Bold"
-                   FontSize="20"
+                   FontSize="{OnIdiom Phone=20, Tablet=26, Desktop=32}"
                    TextColor="White"
                    HorizontalTextAlignment="Center"/>
 
-            <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
-                <Button Text="Zurück" Command="{Binding BackCommand}" CornerRadius="14"/>
-                <Button Text="Regeln" Command="{Binding RulesCommand}" CornerRadius="14"/>
-                <Button Text="Lösen ✅" Command="{Binding SolveCommand}" CornerRadius="14"/>
-            </HorizontalStackLayout>
-
-            <Image Source="professor.png" WidthRequest="160" HeightRequest="160" Aspect="AspectFit"/>
+            <Image Source="professor.png"
+                   WidthRequest="160" HeightRequest="160"
+                   Aspect="AspectFit"/>
 
             <skia:SKLottieView Source="lottie_intro.json"
-                               HeightRequest="160"
-                               RepeatCount="0"
-                               HorizontalOptions="Center"/>
+                               HeightRequest="{OnIdiom Phone=140, Tablet=170, Desktop=200}"
+                               Scale="1.1"
+                               HorizontalOptions="Center"
+                               RepeatCount="0"/>
+
+            <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                <Button Text="Zurück" Command="{Binding BackCommand}" CornerRadius="14"/>
+                <Button Text="Lösen ✅" Command="{Binding SolveCommand}" CornerRadius="14"/>
+            </HorizontalStackLayout>
         </VerticalStackLayout>
 
         <Border Grid.Row="1" BackgroundColor="#FFFFFF" StrokeShape="RoundRectangle 18" Padding="14">
-            <Label Text="Hier kommt später deine echte Rätsel-UI rein. 'Lösen' markiert das Level als geschafft und lädt automatisch das nächste."
+            <Label Text="Hier kommt später die echte Rätsel-UI rein. 'Lösen' schaltet automatisch das nächste Level."
                    TextColor="#2B2B2B"/>
         </Border>
 

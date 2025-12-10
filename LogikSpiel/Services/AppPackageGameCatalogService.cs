@@ -38,13 +38,14 @@ public sealed class AppPackageGameCatalogService : IGameCatalogService
         var game = await GetGameAsync(gameId, ct);
         if (game is null) return Array.Empty<LevelSpec>();
 
-        var baseSeed = (StableHash(gameId) ^ StableHash(difficultyKey)) % 100000 + 1000;
+        var baseSeed = StableHash($"{gameId}:{difficultyKey}") % 100000 + 1000;
 
-        var list = new List<LevelSpec>(game.LevelCount);
+        var levels = new List<LevelSpec>(game.LevelCount);
         for (int i = 1; i <= game.LevelCount; i++)
-            list.Add(new LevelSpec(gameId, difficultyKey, i, baseSeed + i));
-
-        return list;
+        {
+            levels.Add(new LevelSpec(gameId, difficultyKey, i, baseSeed + i));
+        }
+        return levels;
     }
 
     private static int StableHash(string s)
@@ -54,8 +55,12 @@ public sealed class AppPackageGameCatalogService : IGameCatalogService
             const int fnvOffset = (int)2166136261;
             const int fnvPrime = 16777619;
             int hash = fnvOffset;
-            foreach (var c in s) { hash ^= c; hash *= fnvPrime; }
-            return hash < 0 ? -hash : hash;
+            foreach (var c in s)
+            {
+                hash ^= c;
+                hash *= fnvPrime;
+            }
+            return (int)(Math.Abs((long)hash));
         }
     }
 }

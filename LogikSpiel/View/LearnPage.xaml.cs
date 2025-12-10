@@ -5,12 +5,10 @@ namespace LogikSpiel.View;
 
 public partial class LearnPage : ContentPage, IQueryAttributable
 {
-    public LearnPage() : this(AppServices.Get<LearnViewModel>()) { }
-
-    public LearnPage(LearnViewModel vm)
+    public LearnPage()
     {
         InitializeComponent();
-        BindingContext = vm;
+        BindingContext = AppServices.Get<LearnViewModel>();
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -23,14 +21,7 @@ public partial class LearnPage : ContentPage, IQueryAttributable
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        try
-        {
-            if (BindingContext is LearnViewModel vm)
-                await vm.LoadAsync();
-        }
-        catch (Exception ex)
-        {
-            await this.DisplayAlertAsync("Fehler", ex.ToString(), "OK");
-        }
+        if (BindingContext is LearnViewModel vm)
+            await vm.LoadAsync();
     }
 }
