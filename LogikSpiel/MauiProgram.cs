@@ -17,24 +17,24 @@ public static class MauiProgram
 
         // Services
         builder.Services.AddSingleton<IGameCatalogService>(sp => new AppPackageGameCatalogService("games.json"));
-        builder.Services.AddSingleton<IGameProgressStore, PreferencesGameProgressStore>();
+        builder.Services.AddSingleton<IUserProfileService, SqliteUserProfileService>();
         builder.Services.AddSingleton<INavigationService, ShellNavigationService>();
         builder.Services.AddSingleton<IDialogService, MauiDialogService>();
-
+        builder.Services.AddSingleton<IGameProgressStore, SqliteGameProgressStore>();
         // ViewModels
         builder.Services.AddTransient<MainPageViewModel>();
-        builder.Services.AddTransient<GameLevelsViewModel>();
+        builder.Services.AddTransient<ProfileViewModel>();
+        builder.Services.AddTransient<OnboardingViewModel>();
         builder.Services.AddTransient<LearnViewModel>();
         builder.Services.AddTransient<GameHostPageViewModel>();
         builder.Services.AddTransient<GameMapPageViewModel>();
         builder.Services.AddTransient<PuzzlePageViewModel>();
 
         // Pages
-        builder.Services.AddTransient<MainPage>();
-        builder.Services.AddTransient<GameLevelsPage>();
         builder.Services.AddTransient<LearnPage>();
         builder.Services.AddTransient<GameHostPage>();
-
+        builder.Services.AddTransient<OnboardingPage>();
+        builder.Services.AddTransient<ProfilePage>();
         // Shell
         builder.Services.AddSingleton<AppShell>();
 

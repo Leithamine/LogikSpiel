@@ -19,34 +19,37 @@ public sealed class AsyncCommand : ICommand
 
     public bool CanExecute(object? parameter) => !_isExecuting && (_canExecute?.Invoke() ?? true);
 
+    // In AsyncCommand.cs
+
     public async void Execute(object? parameter)
     {
+        // 1. Sofort abbrechen, wenn wir schon arbeiten
+        if (_isExecuting) return;
+
+        // 2. Prüfen, ob wir überhaupt dürfen
         if (!CanExecute(parameter)) return;
+
         try
         {
             _isExecuting = true;
-            RaiseCanExecuteChanged();
+            RaiseCanExecuteChanged(); // Deaktiviert Buttons visuell
+
             await _execute();
         }
         catch (Exception ex)
         {
-            Debug.WriteLine(ex);
-            try
-            {
-                await MainThread.InvokeOnMainThreadAsync(async () =>
-                {
-                    if (Shell.Current is not null)
-                        await Shell.Current.DisplayAlertAsync("Fehler", ex.ToString(), "OK");
-                });
-            }
-            catch { }
+            // Fehler fangen, damit die App nicht crasht
+            System.Diagnostics.Debug.WriteLine($"COMMAND ERROR: {ex}");
         }
         finally
         {
+            // Erst hier wieder freigeben
             _isExecuting = false;
             RaiseCanExecuteChanged();
         }
     }
+
+    // Dasselbe auch für AsyncCommand<T> machen!
 
     public void RaiseCanExecuteChanged() => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 }

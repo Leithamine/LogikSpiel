@@ -13,9 +13,20 @@ public sealed class LearnViewModel : ObservableObject
     public string? GameId { get => _gameId; set => SetProperty(ref _gameId, value); }
 
     private GameDefinition? _game;
-    public GameDefinition? Game { get => _game; private set { if (!SetProperty(ref _game, value)) return; OnPropertyChanged(nameof(Title)); } }
+    public GameDefinition? Game
+    {
+        get => _game;
+        private set
+        {
+            if (!SetProperty(ref _game, value)) return;
+            OnPropertyChanged(nameof(Title));
+            OnPropertyChanged(nameof(Rules)); // Wichtig: UI über neue Regeln informieren
+        }
+    }
 
     public string Title => Game?.Title ?? "Regeln";
+
+    // FIX: Typen müssen übereinstimmen (List vs List)
     public IReadOnlyList<string> Rules => Game?.RulesText ?? new List<string>();
 
     public AsyncCommand BackCommand { get; }

@@ -22,7 +22,11 @@ public sealed class PreferencesGameProgressStore : IGameProgressStore
             return Task.FromResult(new GameProgress());
         }
     }
-
+    public Task MarkLevelCompleteAsync(string gameId, string diff, int level)
+    {
+        // Dummy Implementierung, damit der Fehler weggeht
+        return Task.CompletedTask;
+    }
     public Task SaveAsync(GameProgress progress, CancellationToken ct = default)
     {
         Preferences.Set(Key, JsonSerializer.Serialize(progress));

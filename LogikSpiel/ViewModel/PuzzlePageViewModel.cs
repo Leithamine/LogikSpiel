@@ -13,22 +13,24 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
     public string GameId { get; private set; } = "";
     public string DifficultyKey { get; private set; } = "normal";
-    public int LevelNumber { get; private set; } = 1;
+
+    // Setter für LevelNumber, damit UI sich aktualisiert
+    private int _levelNumber = 1;
+    public int LevelNumber
+    {
+        get => _levelNumber;
+        private set { if (SetProperty(ref _levelNumber, value)) OnPropertyChanged(nameof(Title)); }
+    }
 
     private GameDefinition? _game;
     public GameDefinition? Game { get => _game; private set { if (!SetProperty(ref _game, value)) return; OnPropertyChanged(nameof(Title)); } }
 
-    public string Title
-        => Game is null ? "Rätsel" : $"{Game.Title} – {DiffName(DifficultyKey)} – Level {LevelNumber}";
+    public string Title => Game is null ? "Rätsel" : $"{Game.Title} – {DiffName(DifficultyKey)} – Level {LevelNumber}";
 
     public AsyncCommand BackCommand { get; }
     public AsyncCommand SolveCommand { get; }
 
-    public PuzzlePageViewModel(
-        IGameCatalogService catalog,
-        IGameProgressStore progressStore,
-        IDialogService dialog,
-        INavigationService nav)
+    public PuzzlePageViewModel(IGameCatalogService catalog, IGameProgressStore progressStore, IDialogService dialog, INavigationService nav)
     {
         _catalog = catalog;
         _progressStore = progressStore;
@@ -37,29 +39,20 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
         BackCommand = new AsyncCommand(() => _nav.GoBackAsync());
 
-        // Demo: “Lösen” markiert completed + lädt nächstes Level in derselben Page
         SolveCommand = new AsyncCommand(async () =>
         {
             if (string.IsNullOrWhiteSpace(GameId)) return;
 
-            var levels = await _catalog.GetLevelsAsync(GameId, DifficultyKey);
-            var spec = levels.First(l => l.LevelNumber == LevelNumber);
+            // 1. Speichern in DB
+            await _progressStore.MarkLevelCompleteAsync(GameId, DifficultyKey, LevelNumber);
 
-            var progress = await _progressStore.LoadAsync();
-            progress.MarkCompleted(spec);
-            await _progressStore.SaveAsync(progress);
+            // 2. Einfach zum nächsten Level weitergehen (ENDLOS)
+            // KEINE Prüfung auf Game.LevelCount mehr!
+            LevelNumber++;
 
-            if (LevelNumber < levels.Count)
-            {
-                LevelNumber++;
-                OnPropertyChanged(nameof(LevelNumber));
-                OnPropertyChanged(nameof(Title));
-                // hier später echte neue Rätsel-Generierung laden
-            }
-            else
-            {
-                await _dialog.AlertAsync("Fertig!", "Du hast alle Level dieser Schwierigkeit geschafft!");
-            }
+            // Optional: Kleines Feedback, dass es geklappt hat?
+            // await _dialog.AlertAsync("Gelöst!", "Weiter geht's!"); 
+            // Oder einfach stumm das nächste Rätsel laden (besserer Flow)
         });
     }
 
@@ -68,9 +61,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
         GameId = gameId;
         DifficultyKey = difficulty;
         LevelNumber = Math.Max(1, level);
-
         Game = await _catalog.GetGameAsync(GameId);
-        OnPropertyChanged(nameof(Title));
     }
 
     private static string DiffName(string key) => key switch
@@ -78,7 +69,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
         "easy" => "Einfach",
         "normal" => "Normal",
         "hard" => "Schwer",
-        "complex" => "Kompliziert",
+        "complex" => "Komplex",
         "master" => "Master",
         "god" => "Gott",
         _ => key

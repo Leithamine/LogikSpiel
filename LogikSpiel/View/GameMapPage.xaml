@@ -1,9 +1,12 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:skia="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
+             xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
              x:Class="LogikSpiel.View.GameMapPage"
              x:Name="RootPage"
-             NavigationPage.HasNavigationBar="False">
+             NavigationPage.HasNavigationBar="False"
+             Shell.NavBarIsVisible="False"
+             x:DataType="vm:GameMapPageViewModel">
 
     <ContentPage.Background>
         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
@@ -12,93 +15,110 @@
         </LinearGradientBrush>
     </ContentPage.Background>
 
-    <Grid Padding="20" RowDefinitions="Auto,Auto,*" RowSpacing="12">
+    <Grid RowDefinitions="Auto, *">
 
-        <!-- Titel -->
-        <VerticalStackLayout Grid.Row="0" Spacing="6" HorizontalOptions="Center" MaximumWidthRequest="720">
-            <Label Text="{Binding Title}"
-                   FontAttributes="Bold"
-                   FontSize="{OnIdiom Phone=24, Tablet=30, Desktop=36}"
-                   TextColor="White"
-                   HorizontalTextAlignment="Center"/>
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Padding="10" HeightRequest="60" BackgroundColor="#20000000">
+            <Button Grid.Column="0" Text="Zurück" Command="{Binding BackCommand}" 
+                    BackgroundColor="Transparent" TextColor="White" FontAttributes="Bold"/>
 
-            <Label Text="{Binding DifficultyLabel}"
-                   FontSize="14"
-                   TextColor="#EFFFFFFF"
-                   HorizontalTextAlignment="Center"/>
-        </VerticalStackLayout>
+            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="0">
+                <Label Text="{Binding Title}" TextColor="White" FontAttributes="Bold" HorizontalOptions="Center"/>
+                <Label Text="{Binding DifficultyLabel}" TextColor="#DDD" FontSize="12" HorizontalOptions="Center"/>
+            </VerticalStackLayout>
 
-        <!-- Buttons -->
-        <HorizontalStackLayout Grid.Row="1" Spacing="10" HorizontalOptions="Center">
-            <Button Text="Zurück" Command="{Binding BackCommand}" CornerRadius="14"/>
-            <Button Text="Regeln" Command="{Binding RulesCommand}" CornerRadius="14"/>
-            <Button Text="Einstellungen" Command="{Binding SettingsCommand}" CornerRadius="14"/>
-        </HorizontalStackLayout>
+            <HorizontalStackLayout Grid.Column="2" Spacing="5">
+                <Button Text="?" Command="{Binding RulesCommand}" WidthRequest="40" Padding="0" 
+                        ToolTipProperties.Text="Regeln" BackgroundColor="#40FFFFFF"/>
+                <Button Text="⚙️" Command="{Binding ToggleSettingsCommand}" WidthRequest="40" Padding="0" 
+                        ToolTipProperties.Text="Einstellungen" BackgroundColor="#40FFFFFF"/>
+            </HorizontalStackLayout>
+        </Grid>
 
-        <!-- Map -->
-        <ScrollView Grid.Row="2">
+        <ScrollView Grid.Row="1" x:Name="MapScrollView" VerticalScrollBarVisibility="Never">
             <Grid HeightRequest="{Binding MapHeight}">
-                <!-- Lottie Weg -->
-                <skia:SKLottieView Source="{Binding MapLottieSource}"
-                                   RepeatCount="-1"
-                                   HorizontalOptions="Fill"
-                                   VerticalOptions="Fill"
-                                   HeightRequest="{Binding MapHeight}" />
 
-                <!-- Level Nodes Overlay -->
+                <skia:SKLottieView x:Name="BackgroundLottie"
+                           Source="{Binding MapLottieSource}"
+                           RepeatCount="-1"
+                           HorizontalOptions="Fill"
+                           VerticalOptions="Fill"
+                           InputTransparent="True"/>
+
+                <GraphicsView x:Name="PathView"
+                      InputTransparent="True"
+                      HorizontalOptions="Fill" 
+                      VerticalOptions="Fill" />
+
                 <AbsoluteLayout BindableLayout.ItemsSource="{Binding Nodes}">
                     <BindableLayout.ItemTemplate>
-                        <DataTemplate>
+                        <DataTemplate x:DataType="vm:LevelNodeViewModel">
                             <Grid AbsoluteLayout.LayoutBounds="{Binding Bounds}"
-                                  AbsoluteLayout.LayoutFlags="PositionProportional">
+                          AbsoluteLayout.LayoutFlags="PositionProportional"
+                          WidthRequest="60" HeightRequest="60">
 
-                                <Border x:Name="NodeBorder"
-                                        Stroke="#FFFFFF"
-                                        StrokeThickness="2"
-                                        BackgroundColor="#EAEAEA"
-                                        StrokeShape="RoundRectangle 999">
+                                <Border Stroke="#FFFFFF"
+                                StrokeThickness="2"
+                                BackgroundColor="#EAEAEA"
+                                StrokeShape="RoundRectangle 30"
+                                WidthRequest="50" HeightRequest="50"
+                                HorizontalOptions="Center" VerticalOptions="Center">
+
                                     <Border.GestureRecognizers>
-                                        <TapGestureRecognizer
-                                            Command="{Binding BindingContext.OpenLevelCommand, Source={x:Reference RootPage}}"
-                                            CommandParameter="{Binding .}"/>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:GameMapPageViewModel}}, Path=OpenLevelCommand}"
+                                                      CommandParameter="{Binding .}"/>
                                     </Border.GestureRecognizers>
 
-                                    <Label Text="{Binding LevelNumber}"
-                                           HorizontalOptions="Center"
-                                           VerticalOptions="Center"
-                                           FontAttributes="Bold"
-                                           TextColor="#2B2B2B"/>
+                                    <Label Text="{Binding LevelNumber}" 
+                                   HorizontalOptions="Center" VerticalOptions="Center"
+                                   FontAttributes="Bold" TextColor="#2B2B2B"/>
+
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsCompleted}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="#03DAC5"/>
+                                            <Setter Property="Stroke" Value="#03DAC5"/>
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Border" Binding="{Binding IsCurrent}" Value="True">
+                                            <Setter Property="StrokeThickness" Value="4"/>
+                                            <Setter Property="Stroke" Value="#FFD700"/>
+                                            <Setter Property="Scale" Value="1.15"/>
+                                        </DataTrigger>
+                                    </Border.Triggers>
                                 </Border>
 
-                                <Image Source="professor.png"
-                                       IsVisible="{Binding IsCurrent}"
-                                       WidthRequest="26"
-                                       HeightRequest="26"
-                                       HorizontalOptions="End"
-                                       VerticalOptions="Start"
-                                       Margin="0,-10,-10,0"/>
-
-                                <!-- States -->
-                                <Grid.Triggers>
-                                    <DataTrigger TargetType="Grid" Binding="{Binding IsUnlocked}" Value="False">
-                                        <Setter Property="Opacity" Value="0.35"/>
-                                    </DataTrigger>
-
-                                    <DataTrigger TargetType="Grid" Binding="{Binding IsCompleted}" Value="True">
-                                        <Setter TargetName="NodeBorder" Property="BackgroundColor" Value="#03DAC5"/>
-                                        <Setter TargetName="NodeBorder" Property="Stroke" Value="#03DAC5"/>
-                                    </DataTrigger>
-
-                                    <DataTrigger TargetType="Grid" Binding="{Binding IsCurrent}" Value="True">
-                                        <Setter TargetName="NodeBorder" Property="StrokeThickness" Value="3"/>
-                                    </DataTrigger>
-                                </Grid.Triggers>
+                                <Image Source="professor.png" IsVisible="{Binding IsCurrent}"
+                               WidthRequest="32" HeightRequest="32"
+                               HorizontalOptions="End" VerticalOptions="Start"
+                               Margin="0,-12,-12,0"/>
                             </Grid>
                         </DataTemplate>
                     </BindableLayout.ItemTemplate>
                 </AbsoluteLayout>
+                <AbsoluteLayout InputTransparent="True">
+                    <Image Source="wolke.png"
+                           Aspect="AspectFill"
+                           AbsoluteLayout.LayoutBounds="{Binding CloudBounds}"
+                           AbsoluteLayout.LayoutFlags="PositionProportional,WidthProportional"/>   
+                </AbsoluteLayout>
             </Grid>
         </ScrollView>
+
+        <Grid Grid.Row="1" IsVisible="{Binding IsSettingsOpen}" BackgroundColor="#CC000000" Padding="20">
+            <Grid.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding ToggleSettingsCommand}"/>
+            </Grid.GestureRecognizers>
+            <Border BackgroundColor="White" VerticalOptions="Start" StrokeShape="RoundRectangle 20" Padding="20">
+                <VerticalStackLayout Spacing="15">
+                    <Label Text="Schwierigkeit wählen" FontAttributes="Bold" FontSize="18" TextColor="Black" HorizontalOptions="Center"/>
+                    <FlexLayout Wrap="Wrap" JustifyContent="SpaceBetween" Direction="Row">
+                        <Button Text="Einfach" Command="{Binding ChangeDifficultyCommand}" CommandParameter="easy" WidthRequest="100" Margin="5"/>
+                        <Button Text="Normal" Command="{Binding ChangeDifficultyCommand}" CommandParameter="normal" WidthRequest="100" Margin="5"/>
+                        <Button Text="Schwer" Command="{Binding ChangeDifficultyCommand}" CommandParameter="hard" WidthRequest="100" Margin="5"/>
+                        <Button Text="Master" Command="{Binding ChangeDifficultyCommand}" CommandParameter="master" WidthRequest="100" Margin="5"/>
+                    </FlexLayout>
+                    <Button Text="Abbrechen" Command="{Binding ToggleSettingsCommand}" BackgroundColor="#EEE" TextColor="Black"/>
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
 
     </Grid>
 </ContentPage>

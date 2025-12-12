@@ -10,7 +10,6 @@ public partial class AppShell : Shell
         InitializeComponent();
 
         // Routen registrieren
-        Routing.RegisterRoute("GameLevels", typeof(GameLevelsPage));
         Routing.RegisterRoute("GameMap", typeof(GameMapPage));
         Routing.RegisterRoute("Learn", typeof(LearnPage));
         Routing.RegisterRoute("GameHost", typeof(GameHostPage));

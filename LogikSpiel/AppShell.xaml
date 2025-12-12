@@ -6,4 +6,8 @@
     <ShellContent Title="Home"
                   Route="Main"
                   ContentTemplate="{DataTemplate view:MainPage}" />
+    <TabBar>
+        <ShellContent Title="Home" Icon="home.png" Route="Main" ContentTemplate="{DataTemplate view:MainPage}" />
+        <ShellContent Title="Profil" Icon="professor.png" Route="Profile" ContentTemplate="{DataTemplate view:ProfilePage}" />
+    </TabBar>
 </Shell>

@@ -2,6 +2,7 @@
 using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
+using Microsoft.Maui.Graphics;
 
 namespace LogikSpiel.ViewModel;
 
@@ -9,9 +10,9 @@ public sealed class GameMapPageViewModel : ObservableObject
 {
     private readonly IGameCatalogService _catalog;
     private readonly IGameProgressStore _progressStore;
-    private readonly IDialogService _dialog;
     private readonly INavigationService _nav;
 
+    public event Action<double>? RequestScrollToY;
     public ObservableCollection<LevelNodeViewModel> Nodes { get; } = new();
 
     private string? _gameId;
@@ -21,6 +22,12 @@ public sealed class GameMapPageViewModel : ObservableObject
     public GameDefinition? Game { get => _game; private set { if (!SetProperty(ref _game, value)) return; OnPropertyChanged(nameof(Title)); } }
 
     public string Title => Game?.Title ?? "Karte";
+
+    private bool _isSettingsOpen;
+    public bool IsSettingsOpen { get => _isSettingsOpen; set => SetProperty(ref _isSettingsOpen, value); }
+
+    private Rect _cloudBounds;
+    public Rect CloudBounds { get => _cloudBounds; set => SetProperty(ref _cloudBounds, value); }
 
     private string _difficultyKey = "normal";
     public string DifficultyKey
@@ -34,26 +41,27 @@ public sealed class GameMapPageViewModel : ObservableObject
         "easy" => "Einfach",
         "normal" => "Normal",
         "hard" => "Schwer",
-        "complex" => "Kompliziert",
+        "complex" => "Komplex",
         "master" => "Master",
         "god" => "Gott",
         _ => DifficultyKey
     };
 
+    private double _mapHeight = 900;
+    public double MapHeight { get => _mapHeight; private set => SetProperty(ref _mapHeight, value); }
+
+    public string MapLottieSource => $"map_{DifficultyKey}.json";
+
     public AsyncCommand BackCommand { get; }
     public AsyncCommand RulesCommand { get; }
-    public AsyncCommand SettingsCommand { get; }
+    public AsyncCommand ToggleSettingsCommand { get; }
+    public AsyncCommand<string> ChangeDifficultyCommand { get; }
     public AsyncCommand<LevelNodeViewModel> OpenLevelCommand { get; }
 
-    public GameMapPageViewModel(
-        IGameCatalogService catalog,
-        IGameProgressStore progressStore,
-        IDialogService dialog,
-        INavigationService nav)
+    public GameMapPageViewModel(IGameCatalogService catalog, IGameProgressStore progressStore, INavigationService nav)
     {
         _catalog = catalog;
         _progressStore = progressStore;
-        _dialog = dialog;
         _nav = nav;
 
         BackCommand = new AsyncCommand(() => _nav.GoBackAsync());
@@ -64,36 +72,24 @@ public sealed class GameMapPageViewModel : ObservableObject
             await _nav.GoToAsync("Learn", new Dictionary<string, object> { ["gameId"] = GameId! });
         });
 
-        SettingsCommand = new AsyncCommand(async () =>
+        ToggleSettingsCommand = new AsyncCommand(() =>
         {
-            var pick = await _dialog.PickAsync(
-                "Schwierigkeit",
-                "Abbrechen",
-                "Einfach", "Normal", "Schwer", "Kompliziert", "Master", "Gott");
+            IsSettingsOpen = !IsSettingsOpen;
+            return Task.CompletedTask;
+        });
 
-            if (pick is null) return;
-
-            var key = pick switch
-            {
-                "Einfach" => "easy",
-                "Normal" => "normal",
-                "Schwer" => "hard",
-                "Kompliziert" => "complex",
-                "Master" => "master",
-                "Gott" => "god",
-                _ => "normal"
-            };
-
+        ChangeDifficultyCommand = new AsyncCommand<string>(async key =>
+        {
+            if (string.IsNullOrWhiteSpace(key)) return;
             DifficultyKey = key;
-            SaveLastDifficulty();
-            await BuildMapAsync();
+            Preferences.Set($"LAST_DIFF_{GameId}", key);
+            IsSettingsOpen = false;
+            await BuildMapAsync(); // Neu laden
         });
 
         OpenLevelCommand = new AsyncCommand<LevelNodeViewModel>(async node =>
         {
-            if (node is null) return;
-            if (!node.IsUnlocked) return;
-
+            if (node is null || !node.IsUnlocked) return;
             await _nav.GoToAsync("Puzzle", new Dictionary<string, object>
             {
                 ["gameId"] = node.Spec.GameId,
@@ -103,114 +99,103 @@ public sealed class GameMapPageViewModel : ObservableObject
         });
     }
 
-    public double MapHeight { get; private set; } = 900;
-    public string MapLottieSource => DifficultyKey switch
-    {
-        "easy" => "map_easy.json",
-        "normal" => "map_normal.json",
-        "hard" => "map_hard.json",
-        "complex" => "map_complex.json",
-        "master" => "map_master.json",
-        "god" => "map_god.json",
-        _ => "map_normal.json"
-    };
-
-    private static readonly double[] XPattern =
-    {
-    0.18, 0.50, 0.82, 0.65, 0.35, 0.20, 0.45, 0.75
-};
-
-    private void ApplyMapLayout(IReadOnlyList<LevelNodeViewModel> nodes)
-    {
-        const double nodeSize = 60;
-        const double topPad = 80;
-        const double stepY = 120;
-
-        MapHeight = topPad + (nodes.Count - 1) * stepY + 200;
-        OnPropertyChanged(nameof(MapHeight));
-        OnPropertyChanged(nameof(MapLottieSource));
-
-        for (int i = 0; i < nodes.Count; i++)
-        {
-            var x = XPattern[i % XPattern.Length];           // 0..1
-            var yPx = topPad + i * stepY;
-            var y = yPx / MapHeight;                         // 0..1
-
-            nodes[i].Bounds = new Rect(x, y, nodeSize, nodeSize); // PositionProportional
-        }
-    }
-
     public async Task LoadAsync()
     {
         if (string.IsNullOrWhiteSpace(GameId)) return;
-
+        await Task.Delay(50);
         Game = await _catalog.GetGameAsync(GameId!);
-        LoadLastDifficulty();
+        DifficultyKey = Preferences.Get($"LAST_DIFF_{GameId}", "normal");
         await BuildMapAsync();
     }
 
-    public async Task RefreshAsync() => await BuildMapAsync();
-
-    private void LoadLastDifficulty()
-    {
-        if (string.IsNullOrWhiteSpace(GameId)) return;
-        DifficultyKey = Preferences.Get($"LAST_DIFF_{GameId}", "normal");
-    }
-
-    private void SaveLastDifficulty()
-    {
-        if (string.IsNullOrWhiteSpace(GameId)) return;
-        Preferences.Set($"LAST_DIFF_{GameId}", DifficultyKey);
-    }
-
-    private static double WaveOffset(int index)
-    {
-        // Candy-Crush-artige Welle (tweakbar)
-        // 0, 18, 36, 18, 0, -18, -36, -18, ...
-        int m = index % 8;
-        return m switch
-        {
-            0 => 0,
-            1 => 18,
-            2 => 36,
-            3 => 18,
-            4 => 0,
-            5 => -18,
-            6 => -36,
-            7 => -18,
-            _ => 0
-        };
-    }
+    private static readonly double[] XPattern = { 0.2, 0.5, 0.8, 0.65, 0.35, 0.2, 0.45, 0.75 };
 
     private async Task BuildMapAsync()
     {
         if (string.IsNullOrWhiteSpace(GameId) || Game is null) return;
-
         var progress = await _progressStore.LoadAsync();
-        var levels = await _catalog.GetLevelsAsync(GameId!, DifficultyKey);
+
+        // --- ENDLOS MODUS: Limit entfernen ---
+        // Wir setzen das Limit auf 10.000, damit Level 13, 14 etc. erkannt werden.
+        var maxLevel = 10000;
+
+        int highestCompleted = 0;
+        for (int level = 1; level <= maxLevel; level++)
+        {
+            if (progress.IsCompleted(GameId!, DifficultyKey, level))
+                highestCompleted = level;
+            else
+                break;
+        }
+
+        int currentLevelNumber = highestCompleted + 1;
+
+        // Wir zeigen Level 1 bis (Aktuell + 50)
+        int startLevel = 1;
+        int endLevel = currentLevelNumber + 50;
+        int totalLevels = endLevel - startLevel + 1;
+
+        const double nodeSize = 60;
+        const double bottomPad = 120;
+        const double stepY = 120;
+        const double cloudHeight = 180;
+        const double cloudGap = 40;
+
+        double topPad = cloudHeight + cloudGap - stepY;
+        if (topPad < 0) topPad = 0;
+
+        double totalHeight = topPad + (totalLevels * stepY) + bottomPad;
+        if (totalHeight < 900) totalHeight = 900;
+
+        MapHeight = totalHeight;
+        OnPropertyChanged(nameof(MapHeight));
+        OnPropertyChanged(nameof(MapLottieSource));
 
         Nodes.Clear();
 
-        // Build nodes
-        for (int i = 0; i < levels.Count; i++)
+        for (int i = 0; i < totalLevels; i++)
         {
-            var spec = levels[i];
-            var node = new LevelNodeViewModel(
-                spec,
-                showConnector: i < levels.Count - 1,
-                yOffset: WaveOffset(i));
+            int realLevelNum = startLevel + i;
+            // Seed für Endlos-Level
+            int baseSeed = StableHash($"{GameId}:{DifficultyKey}") + realLevelNum * 17;
+            var spec = new LevelSpec(GameId!, DifficultyKey, realLevelNum, baseSeed);
 
+            var x = XPattern[(realLevelNum - 1) % XPattern.Length];
+            var yPx = totalHeight - bottomPad - (i * stepY);
+            var yPercent = yPx / totalHeight;
+
+            var node = new LevelNodeViewModel(spec);
+            node.Bounds = new Rect(x, yPercent, nodeSize, nodeSize);
             node.IsCompleted = progress.IsCompleted(spec);
 
-            if (spec.LevelNumber == 1) node.IsUnlocked = true;
-            else node.IsUnlocked = progress.IsCompleted(spec.GameId, spec.DifficultyKey, spec.LevelNumber - 1);
+            if (realLevelNum == 1) node.IsUnlocked = true;
+            else node.IsUnlocked = progress.IsCompleted(spec.GameId, spec.DifficultyKey, realLevelNum - 1);
 
+            node.IsCurrent = (realLevelNum == currentLevelNumber);
             Nodes.Add(node);
         }
 
-        // Current marker = erstes unlocked & nicht completed
-        var current = Nodes.FirstOrDefault(n => n.IsUnlocked && !n.IsCompleted) ?? Nodes.FirstOrDefault();
-        foreach (var n in Nodes) n.IsCurrent = false;
-        if (current is not null) current.IsCurrent = true;
+        // Wolke auf volle Breite (Width=1)
+        CloudBounds = new Rect(0, 0, 1, cloudHeight);
+
+        var currentNode = Nodes.FirstOrDefault(n => n.IsCurrent) ?? Nodes.FirstOrDefault();
+        if (currentNode is not null)
+        {
+            double nodeCenterY = (currentNode.Bounds.Y * totalHeight) + (nodeSize / 2);
+            await Task.Delay(350); // Warten für Animation von MainPage
+            RequestScrollToY?.Invoke(nodeCenterY);
+        }
+    }
+
+    private static int StableHash(string s)
+    {
+        unchecked
+        {
+            const int fnvOffset = (int)2166136261;
+            const int fnvPrime = 16777619;
+            int hash = fnvOffset;
+            foreach (var c in s) { hash ^= c; hash *= fnvPrime; }
+            return Math.Abs(hash);
+        }
     }
 }

@@ -21,7 +21,7 @@ public sealed class MainPageViewModel : ObservableObject
         OpenGameCommand = new AsyncCommand<GameCardViewModel>(async g =>
         {
             if (g is null) return;
-            await _nav.GoToAsync("GameLevels", new Dictionary<string, object>
+            await _nav.GoToAsync("GameMap", new Dictionary<string, object>
             {
                 ["gameId"] = g.Id
             });
