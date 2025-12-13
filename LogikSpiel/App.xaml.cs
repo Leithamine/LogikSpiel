@@ -1,6 +1,6 @@
 ﻿using LogikSpiel.Services;
 using LogikSpiel.View;
-using LogikSpiel.ViewModel; // Wichtig für OnboardingViewModel
+using LogikSpiel.ViewModel;
 
 namespace LogikSpiel;
 
@@ -18,11 +18,10 @@ public partial class App : Application
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        // 1. Wir erstellen SOFORT ein Fenster mit einem Lade-Kreisel.
-        // Das verhindert, dass die App beim Start einfriert (weißer Bildschirm).
+        // 1. Lade-Screen erstellen
         var loadingPage = new ContentPage
         {
-            BackgroundColor = Color.FromArgb("#BB86FC"), // Dein Lila
+            BackgroundColor = Color.FromArgb("#BB86FC"),
             Content = new ActivityIndicator
             {
                 IsRunning = true,
@@ -35,31 +34,28 @@ public partial class App : Application
 
         var window = new Window(loadingPage);
 
-        // 2. Wir prüfen die Datenbank asynchron im Hintergrund (Fire & Forget)
+        // 2. Prüfung im Hintergrund
         Task.Run(async () =>
         {
-            // Kleine Pause, damit die App Zeit hat, das Fenster sauber aufzubauen
-            await Task.Delay(200);
+            // Kurze Pause, damit der Ladekreis sichtbar wird
+            await Task.Delay(500);
 
-            // Datenbank abfragen
+            // Datenbank prüfen
             bool hasProfile = await _userService.HasProfileAsync();
 
-            // 3. UI auf dem Haupt-Thread aktualisieren
+            // 3. UI Update auf dem Haupt-Thread
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 if (hasProfile)
                 {
-                    // User existiert -> Haupt-App (Shell) laden
+                    // KORREKTUR: Wir übergeben _services wieder, da deine AppShell das verlangt
                     window.Page = new AppShell(_services);
                 }
                 else
                 {
-                    // Kein User -> Onboarding laden
+                    // ViewModel holen und übergeben
                     var onboardingVM = _services.GetRequiredService<OnboardingViewModel>();
-                    window.Page = new OnboardingPage
-                    {
-                        BindingContext = onboardingVM
-                    };
+                    window.Page = new OnboardingPage(onboardingVM);
                 }
             });
         });

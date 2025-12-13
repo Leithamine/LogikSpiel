@@ -8,11 +8,15 @@ public class SqliteUserProfileService : IUserProfileService
     private SQLiteAsyncConnection? _db;
     private const string DbName = "LogikSpiel_v1.db3";
 
+    // 1. Das fehlende Event hinzufügen
+    public event Action? UserDataChanged;
+
     private async Task InitAsync()
     {
         if (_db is not null) return;
         var dbPath = Path.Combine(FileSystem.AppDataDirectory, DbName);
         _db = new SQLiteAsyncConnection(dbPath);
+        // Sicherstellen, dass die Tabelle existiert
         await _db.CreateTableAsync<UserProfile>();
     }
 
@@ -25,7 +29,7 @@ public class SqliteUserProfileService : IUserProfileService
     public async Task SaveUserAsync(UserProfile user)
     {
         await InitAsync();
-        // Wir gehen davon aus, dass es nur einen User gibt (Single Player App)
+
         var existing = await _db!.Table<UserProfile>().FirstOrDefaultAsync();
 
         if (existing != null)
@@ -43,6 +47,9 @@ public class SqliteUserProfileService : IUserProfileService
             // Neu erstellen
             await _db.InsertAsync(user);
         }
+
+        // 2. Das Event auslösen, damit z.B. das ProfilViewModel aktualisiert wird
+        UserDataChanged?.Invoke();
     }
 
     public async Task<bool> HasProfileAsync()

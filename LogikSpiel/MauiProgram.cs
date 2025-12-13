@@ -14,7 +14,7 @@ public static class MauiProgram
         builder
             .UseMauiApp<App>()
             .UseSkiaSharp();
-
+        //SQLitePCL.Batteries_V2.Init();
         // Services
         builder.Services.AddSingleton<IGameCatalogService>(sp => new AppPackageGameCatalogService("games.json"));
         builder.Services.AddSingleton<IUserProfileService, SqliteUserProfileService>();

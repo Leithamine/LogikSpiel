@@ -2,10 +2,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
              x:Class="LogikSpiel.View.OnboardingPage"
+             x:DataType="vm:OnboardingViewModel" 
              BackgroundColor="#BB86FC">
-
     <Grid RowDefinitions="*,Auto" Padding="30">
-
         <VerticalStackLayout Spacing="20" VerticalOptions="Center">
             <Label Text="Willkommen!" FontSize="32" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center"/>
             <Label Text="Verrate uns, wer du bist." TextColor="White" HorizontalOptions="Center"/>
@@ -22,7 +21,7 @@
         </VerticalStackLayout>
 
         <Button Grid.Row="1" 
-                Text="Los geht's!" 
+                Text="Los geht's!"
                 Command="{Binding CompleteOnboardingCommand}"
                 BackgroundColor="#03DAC5"
                 TextColor="Black"
