@@ -8,6 +8,10 @@ public sealed class LearnViewModel : ObservableObject
 {
     private readonly IGameCatalogService _catalog;
     private readonly INavigationService _nav;
+    private readonly IUserProfileService _userService; // NEU
+
+    private int _coins; // NEU
+    public int Coins { get => _coins; set => SetProperty(ref _coins, value); }
 
     private string? _gameId;
     public string? GameId { get => _gameId; set => SetProperty(ref _gameId, value); }
@@ -20,26 +24,31 @@ public sealed class LearnViewModel : ObservableObject
         {
             if (!SetProperty(ref _game, value)) return;
             OnPropertyChanged(nameof(Title));
-            OnPropertyChanged(nameof(Rules)); // Wichtig: UI über neue Regeln informieren
+            OnPropertyChanged(nameof(Rules));
         }
     }
 
     public string Title => Game?.Title ?? "Regeln";
-
-    // FIX: Typen müssen übereinstimmen (List vs List)
     public IReadOnlyList<string> Rules => Game?.RulesText ?? new List<string>();
 
     public AsyncCommand BackCommand { get; }
+    public AsyncCommand OpenProfileCommand { get; } // NEU
 
-    public LearnViewModel(IGameCatalogService catalog, INavigationService nav)
+    public LearnViewModel(IGameCatalogService catalog, INavigationService nav, IUserProfileService userService)
     {
         _catalog = catalog;
         _nav = nav;
+        _userService = userService;
         BackCommand = new AsyncCommand(() => _nav.GoBackAsync());
+        OpenProfileCommand = new AsyncCommand(async () => await _nav.GoToAsync("Profile")); // NEU
     }
 
     public async Task LoadAsync()
     {
+        // NEU
+        var user = await _userService.GetUserAsync();
+        Coins = user?.Coins ?? 0;
+
         if (string.IsNullOrWhiteSpace(GameId)) return;
         Game = await _catalog.GetGameAsync(GameId!);
     }

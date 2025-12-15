@@ -10,11 +10,16 @@ public sealed class PuzzlePageViewModel : ObservableObject
     private readonly IGameProgressStore _progressStore;
     private readonly IDialogService _dialog;
     private readonly INavigationService _nav;
+    private readonly IUserProfileService _userService;
 
+    // Coins Property (Wichtig für die Anzeige oben rechts)
+    private int _coins;
+    public int Coins { get => _coins; set => SetProperty(ref _coins, value); }
+
+    // Properties für das Spiel
     public string GameId { get; private set; } = "";
     public string DifficultyKey { get; private set; } = "normal";
 
-    // Setter für LevelNumber, damit UI sich aktualisiert
     private int _levelNumber = 1;
     public int LevelNumber
     {
@@ -27,37 +32,44 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
     public string Title => Game is null ? "Rätsel" : $"{Game.Title} – {DiffName(DifficultyKey)} – Level {LevelNumber}";
 
+    // Commands
     public AsyncCommand BackCommand { get; }
     public AsyncCommand SolveCommand { get; }
+    public AsyncCommand OpenProfileCommand { get; }
+    public AsyncCommand HintCommand { get; } // Der neue Hinweis-Button
 
-    public PuzzlePageViewModel(IGameCatalogService catalog, IGameProgressStore progressStore, IDialogService dialog, INavigationService nav)
+    public PuzzlePageViewModel(IGameCatalogService catalog, IGameProgressStore progressStore, IDialogService dialog, INavigationService nav, IUserProfileService userService)
     {
         _catalog = catalog;
         _progressStore = progressStore;
         _dialog = dialog;
         _nav = nav;
+        _userService = userService;
 
         BackCommand = new AsyncCommand(() => _nav.GoBackAsync());
+
+        OpenProfileCommand = new AsyncCommand(async () => await _nav.GoToAsync("Profile"));
+
+        // HIER IST DER NEUE HINT COMMAND
+        HintCommand = new AsyncCommand(async () =>
+        {
+            await _dialog.AlertAsync("Hinweis", "Hier würde ein Tipp stehen! (Das könnte später Coins kosten)");
+        });
 
         SolveCommand = new AsyncCommand(async () =>
         {
             if (string.IsNullOrWhiteSpace(GameId)) return;
-
-            // 1. Speichern in DB
             await _progressStore.MarkLevelCompleteAsync(GameId, DifficultyKey, LevelNumber);
-
-            // 2. Einfach zum nächsten Level weitergehen (ENDLOS)
-            // KEINE Prüfung auf Game.LevelCount mehr!
-            LevelNumber++;
-
-            // Optional: Kleines Feedback, dass es geklappt hat?
-            // await _dialog.AlertAsync("Gelöst!", "Weiter geht's!"); 
-            // Oder einfach stumm das nächste Rätsel laden (besserer Flow)
+            LevelNumber++; // Nächstes Level
         });
     }
 
     public async Task LoadAsync(string gameId, string difficulty, int level)
     {
+        // Coins laden
+        var user = await _userService.GetUserAsync();
+        Coins = user?.Coins ?? 0;
+
         GameId = gameId;
         DifficultyKey = difficulty;
         LevelNumber = Math.Max(1, level);

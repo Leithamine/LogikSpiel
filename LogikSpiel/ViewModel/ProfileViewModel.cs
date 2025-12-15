@@ -8,9 +8,11 @@ public class ProfileViewModel : ObservableObject
 {
     private readonly IUserProfileService _userService;
     private readonly IDialogService _dialog;
+    private readonly INavigationService _nav;
 
     private UserProfile? _user;
 
+    // --- Properties für die Anzeige ---
     public string Id => _user?.Id ?? "-";
     public int Coins => _user?.Coins ?? 0;
 
@@ -20,52 +22,43 @@ public class ProfileViewModel : ObservableObject
     private int _age;
     public int Age { get => _age; set => SetProperty(ref _age, value); }
 
+    // --- Einstellungen ---
     private bool _isMusicEnabled;
     public bool IsMusicEnabled
     {
         get => _isMusicEnabled;
-        set
-        {
-            if (SetProperty(ref _isMusicEnabled, value)) SaveSettings();
-        }
+        set { if (SetProperty(ref _isMusicEnabled, value)) SaveSettings(); }
     }
 
     private bool _isSoundEnabled;
     public bool IsSoundEnabled
     {
         get => _isSoundEnabled;
-        set
-        {
-            if (SetProperty(ref _isSoundEnabled, value)) SaveSettings();
-        }
+        set { if (SetProperty(ref _isSoundEnabled, value)) SaveSettings(); }
     }
 
-    public AsyncCommand SaveDataCommand { get; }
+    // --- Commands ---
+    public AsyncCommand BackCommand { get; }
+    public AsyncCommand ShowStatsCommand { get; }
 
-    public ProfileViewModel(IUserProfileService userService, IDialogService dialog)
+    // --- Konstruktor ---
+    public ProfileViewModel(IUserProfileService userService, IDialogService dialog, INavigationService nav)
     {
         _userService = userService;
         _dialog = dialog;
+        _nav = nav;
 
-        SaveDataCommand = new AsyncCommand(async () =>
+        // Zurück zur vorherigen Seite
+        BackCommand = new AsyncCommand(() => _nav.GoBackAsync());
+
+        // Statistik Button (Platzhalter)
+        ShowStatsCommand = new AsyncCommand(async () =>
         {
-            if (_user == null) return;
-
-            // Validierung
-            if (string.IsNullOrWhiteSpace(Name) || Age < 5 || Age > 99)
-            {
-                await _dialog.AlertAsync("Fehler", "Bitte gib einen gültigen Namen und ein Alter zwischen 5 und 99 ein.");
-                return;
-            }
-
-            _user.Name = Name;
-            _user.Age = Age;
-
-            await _userService.SaveUserAsync(_user);
-            await _dialog.AlertAsync("Gespeichert", "Deine Daten wurden aktualisiert.");
+            await _dialog.AlertAsync("Statistik", "Hier kommen bald deine Spiel-Statistiken hin!");
         });
     }
 
+    // --- Methoden ---
     public async Task LoadAsync()
     {
         _user = await _userService.GetUserAsync();
@@ -75,7 +68,8 @@ public class ProfileViewModel : ObservableObject
             Age = _user.Age;
             IsMusicEnabled = _user.IsMusicEnabled;
             IsSoundEnabled = _user.IsSoundEnabled;
-            // Notify other properties
+
+            // Wichtig: UI benachrichtigen, dass sich Coins/ID geändert haben könnten
             OnPropertyChanged(nameof(Id));
             OnPropertyChanged(nameof(Coins));
         }
@@ -87,6 +81,5 @@ public class ProfileViewModel : ObservableObject
         _user.IsMusicEnabled = IsMusicEnabled;
         _user.IsSoundEnabled = IsSoundEnabled;
         await _userService.SaveUserAsync(_user);
-        // Hier könnte man auch einen AudioService benachrichtigen
     }
 }

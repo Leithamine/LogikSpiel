@@ -2,7 +2,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:skia="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
              x:Class="LogikSpiel.View.PuzzlePage"
-             NavigationPage.HasNavigationBar="False">
+             NavigationPage.HasNavigationBar="False"
+             Shell.NavBarIsVisible="False">
 
     <ContentPage.Background>
         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
@@ -11,35 +12,24 @@
         </LinearGradientBrush>
     </ContentPage.Background>
 
-    <Grid Padding="20" RowDefinitions="Auto,*" RowSpacing="12">
+    <Grid Padding="20" RowDefinitions="Auto,*,Auto" RowSpacing="20">
 
-        <VerticalStackLayout Grid.Row="0" Spacing="8" HorizontalOptions="Center" MaximumWidthRequest="720">
-            <Label Text="{Binding Title}"
-                   FontAttributes="Bold"
-                   FontSize="{OnIdiom Phone=20, Tablet=26, Desktop=32}"
-                   TextColor="White"
-                   HorizontalTextAlignment="Center"/>
-
-            <Image Source="professor.png"
-                   WidthRequest="160" HeightRequest="160"
-                   Aspect="AspectFit"/>
-
-            <skia:SKLottieView Source="lottie_intro.json"
-                               HeightRequest="{OnIdiom Phone=140, Tablet=170, Desktop=200}"
-                               Scale="1.1"
-                               HorizontalOptions="Center"
-                               RepeatCount="0"/>
-
-            <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
-                <Button Text="Zurück" Command="{Binding BackCommand}" CornerRadius="14"/>
-                <Button Text="Lösen ✅" Command="{Binding SolveCommand}" CornerRadius="14"/>
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Padding="10" HeightRequest="60" BackgroundColor="#20000000">
+            <Button Grid.Column="0" Text="Zurück" Command="{Binding BackCommand}" BackgroundColor="Transparent" TextColor="White" FontAttributes="Bold"/>
+            <Label Grid.Column="1" Text="{Binding Title}" TextColor="White" FontAttributes="Bold" VerticalOptions="Center" HorizontalOptions="Center"/>
+            <HorizontalStackLayout Grid.Column="2" Spacing="8" VerticalOptions="Center">
+                <Label Text="{Binding Coins, StringFormat='💰 {0}'}" TextColor="#FFD700" FontAttributes="Bold" VerticalOptions="Center"/>
             </HorizontalStackLayout>
-        </VerticalStackLayout>
+        </Grid>
 
-        <Border Grid.Row="1" BackgroundColor="#FFFFFF" StrokeShape="RoundRectangle 18" Padding="14">
-            <Label Text="Hier kommt später die echte Rätsel-UI rein. 'Lösen' schaltet automatisch das nächste Level."
-                   TextColor="#2B2B2B"/>
+        <Border Grid.Row="1" BackgroundColor="#FFFFFF" StrokeShape="RoundRectangle 18" Padding="14" VerticalOptions="Fill">
+            <Label Text="Hier kommt das Rätsel hin..." TextColor="#2B2B2B" VerticalOptions="Center" HorizontalOptions="Center"/>
         </Border>
+
+        <HorizontalStackLayout Grid.Row="2" Spacing="15" HorizontalOptions="Center" VerticalOptions="End" Margin="0,0,0,20">
+            <Button Text="Hinweise 💡" Command="{Binding HintCommand}" BackgroundColor="#018786" TextColor="White" CornerRadius="14" HeightRequest="50" WidthRequest="140"/>
+            <Button Text="Lösen ✅" Command="{Binding SolveCommand}" BackgroundColor="#BB86FC" TextColor="White" CornerRadius="14" HeightRequest="50" WidthRequest="140"/>
+        </HorizontalStackLayout>
 
     </Grid>
 </ContentPage>

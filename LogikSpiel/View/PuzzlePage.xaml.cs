@@ -1,14 +1,14 @@
-using LogikSpiel.Services;
 using LogikSpiel.ViewModel;
 
 namespace LogikSpiel.View;
 
 public partial class PuzzlePage : ContentPage, IQueryAttributable
 {
-    public PuzzlePage()
+    // Konstruktor nimmt ViewModel an
+    public PuzzlePage(PuzzlePageViewModel vm)
     {
         InitializeComponent();
-        BindingContext = AppServices.Get<PuzzlePageViewModel>();
+        BindingContext = vm;
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)

@@ -1,20 +1,21 @@
-using LogikSpiel.Services;
 using LogikSpiel.ViewModel;
-
 namespace LogikSpiel.View;
 
 public partial class MainPage : ContentPage
 {
-    public MainPage()
+    private readonly MainPageViewModel _vm;
+    public MainPage(MainPageViewModel vm)
     {
         InitializeComponent();
-        BindingContext = AppServices.Get<MainPageViewModel>();
+        _vm = vm;
+        BindingContext = _vm;
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
         if (BindingContext is MainPageViewModel vm)
-            await vm.EnsureLoadedAsync();
+            await _vm.EnsureLoadedAsync();
     }
 }
+

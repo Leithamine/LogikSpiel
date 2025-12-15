@@ -8,15 +8,20 @@ public sealed class MainPageViewModel : ObservableObject
 {
     private readonly IGameCatalogService _catalog;
     private readonly INavigationService _nav;
-
+    private readonly IUserProfileService _userService; 
     public ObservableCollection<GameCardViewModel> Games { get; } = new();
 
-    public AsyncCommand<GameCardViewModel> OpenGameCommand { get; }
+    private int _coins;
+    public int Coins { get => _coins; set => SetProperty(ref _coins, value); }
 
-    public MainPageViewModel(IGameCatalogService catalog, INavigationService nav)
+    public AsyncCommand<GameCardViewModel> OpenGameCommand { get; }
+    public AsyncCommand OpenProfileCommand { get; }
+
+    public MainPageViewModel(IGameCatalogService catalog, INavigationService nav, IUserProfileService userService)
     {
         _catalog = catalog;
         _nav = nav;
+        _userService = userService;
 
         OpenGameCommand = new AsyncCommand<GameCardViewModel>(async g =>
         {
@@ -26,10 +31,13 @@ public sealed class MainPageViewModel : ObservableObject
                 ["gameId"] = g.Id
             });
         });
+        OpenProfileCommand = new AsyncCommand(async () => await _nav.GoToAsync("Profile"));
     }
 
     public async Task EnsureLoadedAsync()
     {
+        var user = await _userService.GetUserAsync();
+        Coins = user?.Coins ?? 0;
         if (Games.Count > 0) return;
 
         var games = await _catalog.LoadGamesAsync();
