@@ -27,23 +27,22 @@
 
             <HorizontalStackLayout Grid.Column="2" Spacing="8" VerticalOptions="Center">
 
+                <Button Text="Lernen" Command="{Binding RulesCommand}" 
+                        WidthRequest="35" HeightRequest="35" Padding="0" 
+                        BackgroundColor="#40FFFFFF" CornerRadius="8" FontAttributes="Bold"/>
+                
+                <Button Text="⚙️" Command="{Binding ToggleSettingsCommand}" 
+                        WidthRequest="35" HeightRequest="35" Padding="0" 
+                        BackgroundColor="#40FFFFFF" CornerRadius="8"/>
+
                 <Label Text="{Binding Coins, StringFormat='💰 {0}'}" 
                        TextColor="#FFD700" FontAttributes="Bold" VerticalOptions="Center"/>
-
                 <Border StrokeShape="RoundRectangle 18" WidthRequest="36" HeightRequest="36" Padding="0" StrokeThickness="0">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding OpenProfileCommand}"/>
                     </Border.GestureRecognizers>
                     <Image Source="professor.png" Aspect="AspectFill"/>
                 </Border>
-
-                <Button Text="⚙️" Command="{Binding ToggleSettingsCommand}" 
-                        WidthRequest="35" HeightRequest="35" Padding="0" 
-                        BackgroundColor="#40FFFFFF" CornerRadius="8"/>
-
-                <Button Text="?" Command="{Binding RulesCommand}" 
-                        WidthRequest="35" HeightRequest="35" Padding="0" 
-                        BackgroundColor="#40FFFFFF" CornerRadius="8" FontAttributes="Bold"/>
             </HorizontalStackLayout>
         </Grid>
 
@@ -105,6 +104,8 @@
                 <AbsoluteLayout InputTransparent="True">
                     <Image Source="wolke.png"
                            Aspect="Fill" 
+                           HorizontalOptions="FillAndExpand"
+                           VerticalOptions="FillAndExpand"
                            AbsoluteLayout.LayoutBounds="{Binding CloudBounds}"
                            AbsoluteLayout.LayoutFlags="PositionProportional,WidthProportional"/>
                 </AbsoluteLayout>
