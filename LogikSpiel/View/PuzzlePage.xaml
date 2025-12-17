@@ -1,7 +1,8 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:skia="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
+             xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
              x:Class="LogikSpiel.View.PuzzlePage"
+             x:DataType="vm:PuzzlePageViewModel"
              NavigationPage.HasNavigationBar="False"
              Shell.NavBarIsVisible="False">
 
@@ -12,24 +13,76 @@
         </LinearGradientBrush>
     </ContentPage.Background>
 
-    <Grid Padding="20" RowDefinitions="Auto,*,Auto" RowSpacing="20">
+    <Grid RowDefinitions="Auto, Auto, *, Auto" Padding="20" RowSpacing="15">
 
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Padding="10" HeightRequest="60" BackgroundColor="#20000000">
-            <Button Grid.Column="0" Text="Zurück" Command="{Binding BackCommand}" BackgroundColor="Transparent" TextColor="White" FontAttributes="Bold"/>
-            <Label Grid.Column="1" Text="{Binding Title}" TextColor="White" FontAttributes="Bold" VerticalOptions="Center" HorizontalOptions="Center"/>
-            <HorizontalStackLayout Grid.Column="2" Spacing="8" VerticalOptions="Center">
-                <Label Text="{Binding Coins, StringFormat='💰 {0}'}" TextColor="#FFD700" FontAttributes="Bold" VerticalOptions="Center"/>
-            </HorizontalStackLayout>
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" HeightRequest="50">
+            <Button Grid.Column="0" Text="&#x2190;" Command="{Binding BackCommand}" 
+                    BackgroundColor="#20FFFFFF" TextColor="White" FontAttributes="Bold" 
+                    WidthRequest="40" HeightRequest="40" CornerRadius="20" Padding="0"/>
+
+            <Label Grid.Column="1" Text="{Binding Title}" 
+                   TextColor="White" FontAttributes="Bold" FontSize="18" 
+                   VerticalOptions="Center" HorizontalOptions="Center"/>
+
+            <Label Grid.Column="2" Text="{Binding Coins, StringFormat='💰 {0}'}" 
+                   TextColor="#FFD700" FontAttributes="Bold" FontSize="16" 
+                   VerticalOptions="Center"/>
         </Grid>
 
-        <Border Grid.Row="1" BackgroundColor="#FFFFFF" StrokeShape="RoundRectangle 18" Padding="14" VerticalOptions="Fill">
-            <Label Text="Hier kommt das Rätsel hin..." TextColor="#2B2B2B" VerticalOptions="Center" HorizontalOptions="Center"/>
+        <Border Grid.Row="1" StrokeShape="RoundRectangle 20" BackgroundColor="#F0FFFFFF" Padding="20" StrokeThickness="0">
+            <VerticalStackLayout Spacing="15">
+                <Label Text="GIB DEN CODE EIN" FontSize="12" TextColor="#555" HorizontalOptions="Center" CharacterSpacing="2"/>
+
+                <HorizontalStackLayout BindableLayout.ItemsSource="{Binding InputDigits}" 
+                                       Spacing="10" HorizontalOptions="Center">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate>
+                            <Border Stroke="#6200EE" StrokeThickness="2" StrokeShape="RoundRectangle 12" 
+                                    HeightRequest="60" WidthRequest="50" BackgroundColor="White">
+                                <Entry Text="{Binding Digit}" 
+                                       IsReadOnly="{Binding IsLocked}"
+                                       MaxLength="1" 
+                                       Keyboard="Numeric"
+                                       FontSize="28" FontAttributes="Bold" TextColor="#333"
+                                       HorizontalTextAlignment="Center" VerticalTextAlignment="Center"
+                                       BackgroundColor="Transparent"/>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
         </Border>
 
-        <HorizontalStackLayout Grid.Row="2" Spacing="15" HorizontalOptions="Center" VerticalOptions="End" Margin="0,0,0,20">
-            <Button Text="Hinweise 💡" Command="{Binding HintCommand}" BackgroundColor="#018786" TextColor="White" CornerRadius="14" HeightRequest="50" WidthRequest="140"/>
-            <Button Text="Lösen ✅" Command="{Binding SolveCommand}" BackgroundColor="#BB86FC" TextColor="White" CornerRadius="14" HeightRequest="50" WidthRequest="140"/>
-        </HorizontalStackLayout>
+        <CollectionView Grid.Row="2" ItemsSource="{Binding Hints}" Margin="0,5">
+            <CollectionView.Header>
+                <Label Text="HINWEISE" FontSize="14" FontAttributes="Bold" TextColor="White" Margin="0,0,0,10"/>
+            </CollectionView.Header>
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border StrokeShape="RoundRectangle 15" BackgroundColor="White" Padding="15" Margin="0,0,0,10" StrokeThickness="0">
+                        <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="15">
+                            <Border Grid.Column="0" BackgroundColor="#F5F5F5" StrokeShape="RoundRectangle 8" Padding="10,5" StrokeThickness="0">
+                                <Label Text="{Binding Code}" FontAttributes="Bold" FontSize="16" TextColor="#333" HorizontalOptions="Center"/>
+                            </Border>
+                            <Label Grid.Column="1" Text="{Binding Description}" FontSize="13" TextColor="#666" VerticalOptions="Center" LineBreakMode="WordWrap"/>
+                            <Label Grid.Column="2" Text="{Binding Icon}" FontSize="20" VerticalOptions="Center"/>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Grid Grid.Row="3" ColumnDefinitions="*, *" ColumnSpacing="15">
+            <Button Grid.Column="0" Text="💡 Tipp (10)" 
+                    Command="{Binding HintCommand}"
+                    BackgroundColor="#03DAC5" TextColor="#000" FontAttributes="Bold"
+                    CornerRadius="15" HeightRequest="55"/>
+
+            <Button Grid.Column="1" Text="🔓 Öffnen" 
+                    Command="{Binding CheckCommand}"
+                    BackgroundColor="#BB86FC" TextColor="White" FontAttributes="Bold"
+                    CornerRadius="15" HeightRequest="55"/>
+        </Grid>
 
     </Grid>
 </ContentPage>

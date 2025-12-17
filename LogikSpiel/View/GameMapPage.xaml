@@ -104,8 +104,8 @@
                 <AbsoluteLayout InputTransparent="True">
                     <Image Source="wolke.png"
                            Aspect="Fill" 
-                           HorizontalOptions="FillAndExpand"
-                           VerticalOptions="FillAndExpand"
+                           HorizontalOptions="Fill"
+                           VerticalOptions="Fill"
                            AbsoluteLayout.LayoutBounds="{Binding CloudBounds}"
                            AbsoluteLayout.LayoutFlags="PositionProportional,WidthProportional"/>
                 </AbsoluteLayout>
