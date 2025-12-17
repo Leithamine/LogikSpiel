@@ -21,6 +21,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<INavigationService, ShellNavigationService>();
         builder.Services.AddSingleton<IDialogService, MauiDialogService>();
         builder.Services.AddSingleton<IGameProgressStore, SqliteGameProgressStore>();
+        builder.Services.AddSingleton<LockRiddleGeneratorService>();
         // ViewModels
         builder.Services.AddTransient<MainPageViewModel>();
         builder.Services.AddTransient<ProfileViewModel>();
@@ -35,6 +36,8 @@ public static class MauiProgram
         builder.Services.AddTransient<GameHostPage>();
         builder.Services.AddTransient<OnboardingPage>();
         builder.Services.AddTransient<ProfilePage>();
+        builder.Services.AddTransient<PuzzlePage>();
+
         // Shell
         builder.Services.AddSingleton<AppShell>();
 

@@ -66,8 +66,12 @@ public class ProfileViewModel : ObservableObject
         {
             Name = _user.Name;
             Age = _user.Age;
-            IsMusicEnabled = _user.IsMusicEnabled;
-            IsSoundEnabled = _user.IsSoundEnabled;
+            _isMusicEnabled = _user.IsMusicEnabled;
+            // Wir müssen der UI manuell sagen, dass sich der Wert geändert hat
+            OnPropertyChanged(nameof(IsMusicEnabled));
+
+            _isSoundEnabled = _user.IsSoundEnabled;
+            OnPropertyChanged(nameof(IsSoundEnabled));
 
             // Wichtig: UI benachrichtigen, dass sich Coins/ID geändert haben könnten
             OnPropertyChanged(nameof(Id));
@@ -78,8 +82,18 @@ public class ProfileViewModel : ObservableObject
     private async void SaveSettings()
     {
         if (_user == null) return;
-        _user.IsMusicEnabled = IsMusicEnabled;
-        _user.IsSoundEnabled = IsSoundEnabled;
-        await _userService.SaveUserAsync(_user);
+        try
+        {
+            // Aktualisiere das User-Objekt mit den aktuellen Werten aus dem ViewModel
+            _user.IsMusicEnabled = IsMusicEnabled;
+            _user.IsSoundEnabled = IsSoundEnabled;
+
+            await _userService.SaveUserAsync(_user);
+        }
+        catch (Exception ex)
+        {
+            // Hilft beim Debuggen, falls die DB gesperrt ist oder Spalten fehlen
+            System.Diagnostics.Debug.WriteLine($"Fehler beim Speichern: {ex.Message}");
+        }
     }
 }
