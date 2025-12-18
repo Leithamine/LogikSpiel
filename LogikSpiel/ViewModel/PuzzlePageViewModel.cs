@@ -5,21 +5,20 @@ using LogikSpiel.Services;
 
 namespace LogikSpiel.ViewModel;
 
-public sealed class PuzzlePageViewModel : ObservableObject, IQueryAttributable
+public sealed class PuzzlePageViewModel : ObservableObject
 {
-    private readonly IGameCatalogService _catalog;
     private readonly IGameProgressStore _progressStore;
     private readonly IDialogService _dialog;
     private readonly INavigationService _nav;
     private readonly IUserProfileService _userService;
     private readonly LockRiddleGeneratorService _riddleGenerator;
+    private readonly IRiddleStateStore _riddleState;
 
-    // --- User & Coins ---
     private UserProfile? _userProfile;
+
     private int _coins;
     public int Coins { get => _coins; set => SetProperty(ref _coins, value); }
 
-    // --- Spiel Status ---
     public string GameId { get; private set; } = "riddle_lock";
     public string DifficultyKey { get; private set; } = "normal";
 
@@ -30,33 +29,48 @@ public sealed class PuzzlePageViewModel : ObservableObject, IQueryAttributable
         private set { if (SetProperty(ref _levelNumber, value)) OnPropertyChanged(nameof(Title)); }
     }
 
+    private bool _isBusy;
+    public bool IsBusy
+    {
+        get => _isBusy;
+        set
+        {
+            if (SetProperty(ref _isBusy, value))
+                OnPropertyChanged(nameof(IsNotBusy));
+        }
+    }
+    public bool IsNotBusy => !IsBusy;
+
+    private int _genToken = 0;
+
     public string Title => $"Code Knacker – {DiffName(DifficultyKey)}";
 
-    // --- Listen für das UI ---
+    public bool ShowSolutionForDebug => true;
+    public string SecretSolution => _secretSolution;
+
     public ObservableCollection<DigitInputViewModel> InputDigits { get; } = new();
     public ObservableCollection<LockHint> Hints { get; } = new();
 
     private string _secretSolution = "";
 
-    // --- Commands ---
     public AsyncCommand BackCommand { get; }
     public AsyncCommand CheckCommand { get; }
     public AsyncCommand HintCommand { get; }
 
     public PuzzlePageViewModel(
-        IGameCatalogService catalog,
         IGameProgressStore progressStore,
         IDialogService dialog,
         INavigationService nav,
         IUserProfileService userService,
-        LockRiddleGeneratorService riddleGenerator)
+        LockRiddleGeneratorService riddleGenerator,
+        IRiddleStateStore riddleState)
     {
-        _catalog = catalog;
         _progressStore = progressStore;
         _dialog = dialog;
         _nav = nav;
         _userService = userService;
         _riddleGenerator = riddleGenerator;
+        _riddleState = riddleState;
 
         BackCommand = new AsyncCommand(() => _nav.GoBackAsync());
         CheckCommand = new AsyncCommand(CheckSolutionAsync);
@@ -75,131 +89,174 @@ public sealed class PuzzlePageViewModel : ObservableObject, IQueryAttributable
         });
     }
 
-    // --- WIEDER HINZUGEFÜGT: LoadAsync für Kompatibilität ---
     public async Task LoadAsync(string gameId, string difficulty, int level)
     {
-        GameId = gameId;
-        DifficultyKey = difficulty;
+        GameId = string.IsNullOrWhiteSpace(gameId) ? "riddle_lock" : gameId;
+        DifficultyKey = string.IsNullOrWhiteSpace(difficulty) ? "normal" : difficulty;
         LevelNumber = Math.Max(1, level);
-        
+
         OnPropertyChanged(nameof(Title));
 
-        // Spiel starten
-        StartNewRound();
         try
         {
-            // User laden
             _userProfile = await _userService.GetUserAsync();
-            if (_userProfile != null) Coins = _userProfile.Coins;
+            Coins = _userProfile?.Coins ?? 0;
         }
-        catch( Exception ex)
+        catch (Exception ex)
         {
-            // Fehler beim Laden des Users abfangen, damit das Spiel nicht abstürzt
             System.Diagnostics.Debug.WriteLine($"Fehler beim User-Laden: {ex.Message}");
         }
 
+        await StartNewRoundAsync();
     }
 
-    // Für Navigation via Shell Parameter (optional, falls du beides nutzt)
-    public void ApplyQueryAttributes(IDictionary<string, object> query)
+    private async Task StartNewRoundAsync()
     {
-        string diff = "normal";
-        int lvl = 1;
+        int token = ++_genToken;
 
-        if (query.TryGetValue("difficulty", out var diffObj)) diff = diffObj.ToString() ?? "normal";
-        if (query.TryGetValue("level", out var levelObj) && int.TryParse(levelObj.ToString(), out int l)) lvl = l;
-
-        // Ruft einfach LoadAsync auf -> löst das Problem elegant
-        Task.Run(() => LoadAsync("riddle_lock", diff, lvl));
-    }
-
-    private void StartNewRound()
-    {
-        int difficultyLevel = MapDifficultyToInt(DifficultyKey);
-
-        // Generator aufrufen
-        var riddleGame = _riddleGenerator.GenerateGame(difficultyLevel);
-        _secretSolution = riddleGame.SecretCode;
-
-        // UI Updates MÜSSEN auf dem MainThread passieren
         MainThread.BeginInvokeOnMainThread(() =>
         {
+            IsBusy = true;
+
+            _secretSolution = "";
+            OnPropertyChanged(nameof(SecretSolution));
+
             Hints.Clear();
-            foreach (var hint in riddleGame.Hints) Hints.Add(hint);
+            InputDigits.Clear();
+        });
+
+        // 1) erst Cache laden
+        var saved = await _riddleState.TryLoadAsync(GameId, DifficultyKey, LevelNumber);
+
+        LockRiddleGame game;
+        if (saved != null)
+        {
+            game = saved;
+        }
+        else
+        {
+            game = await Task.Run(() => _riddleGenerator.GenerateGame(DifficultyKey));
+            await _riddleState.SaveAsync(GameId, DifficultyKey, LevelNumber, game);
+        }
+
+        if (token != _genToken) return;
+
+        _secretSolution = game.SecretCode;
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            OnPropertyChanged(nameof(SecretSolution));
+
+            Hints.Clear();
+            foreach (var h in game.Hints)
+                Hints.Add(h);
 
             InputDigits.Clear();
             for (int i = 0; i < _secretSolution.Length; i++)
-            {
-                InputDigits.Add(new DigitInputViewModel());
-            }
+                InputDigits.Add(new DigitInputViewModel { Index = i });
+
+            IsBusy = false;
         });
+
+        System.Diagnostics.Debug.WriteLine($"[LockRiddle] diff={DifficultyKey}, level={LevelNumber}, secret={_secretSolution}, hints={game.Hints.Count}");
     }
 
     private async Task CheckSolutionAsync()
     {
-        string input = string.Join("", InputDigits.Select(d => d.Digit));
+        if (_secretSolution.Length == 0)
+        {
+            await _dialog.AlertAsync("Fehler", "Kein Rätsel geladen.");
+            return;
+        }
 
-        if (input.Length != _secretSolution.Length || input.Contains(' ') || string.IsNullOrEmpty(input))
+        if (InputDigits.Any(d => string.IsNullOrWhiteSpace(d.Digit)))
         {
             await _dialog.AlertAsync("Unvollständig", "Bitte fülle alle Felder aus.");
             return;
         }
 
-        if (input == _secretSolution)
-        {
-            // Gewonnen!
-            int reward = MapDifficultyToInt(DifficultyKey) * 2;
-            if (_userProfile != null)
-            {
-                _userProfile.Coins += reward;
-                Coins = _userProfile.Coins;
-                await _userService.SaveUserAsync(_userProfile);
-            }
+        string input = string.Concat(InputDigits.Select(d => (d.Digit ?? "").Trim()));
 
-            await _dialog.AlertAsync("KORREKT! 🎉", $"Code geknackt!\nDu erhältst {reward} Coins.");
-
-            // Nächstes Level
-            LevelNumber++;
-            StartNewRound();
-            // Fortschritt speichern (optional)
-            await _progressStore.MarkLevelCompleteAsync(GameId, DifficultyKey, LevelNumber - 1);
-        }
-        else
+        if (input.Length != _secretSolution.Length)
         {
-            await _dialog.AlertAsync("Falsch ❌", "Code stimmt nicht. Prüfe die Hinweise!");
+            await _dialog.AlertAsync("Unvollständig", "Bitte fülle alle Felder aus.");
+            return;
         }
+
+        if (input.Distinct().Count() != input.Length)
+        {
+            await _dialog.AlertAsync("Ungültig", "Jede Zahl darf nur einmal vorkommen.");
+            return;
+        }
+
+        if (input != _secretSolution)
+        {
+            await _dialog.AlertAsync("Falsch ❌",
+                $"Code stimmt nicht.\n\nDein Code: {input}\nLösung (Debug): {_secretSolution}");
+            return;
+        }
+
+        // ✅ korrekt
+        int reward = RewardForDifficulty(DifficultyKey);
+
+        if (_userProfile != null)
+        {
+            _userProfile.Coins += reward;
+            Coins = _userProfile.Coins;
+            await _userService.SaveUserAsync(_userProfile);
+        }
+
+        int completedLevel = LevelNumber;
+
+        await _progressStore.MarkLevelCompleteAsync(GameId, DifficultyKey, completedLevel);
+        await _riddleState.ClearAsync(GameId, DifficultyKey, completedLevel);
+
+        // ✅ Success-Page öffnen (mit Parametern)
+        var nextLevel = completedLevel + 1;
+
+        await Shell.Current.GoToAsync(nameof(LogikSpiel.View.UnlockSuccessPage), new Dictionary<string, object>
+        {
+            ["gameId"] = GameId,
+            ["difficulty"] = DifficultyKey,
+            ["completedLevel"] = completedLevel,
+            ["nextLevel"] = nextLevel,
+            ["reward"] = reward
+        });
     }
 
     private void RevealOneDigit()
     {
         for (int i = 0; i < _secretSolution.Length; i++)
         {
-            if (InputDigits[i].Digit != _secretSolution[i].ToString())
+            string target = _secretSolution[i].ToString();
+
+            if (InputDigits[i].Digit != target)
             {
-                InputDigits[i].Digit = _secretSolution[i].ToString();
+                InputDigits[i].Digit = target;
                 InputDigits[i].IsLocked = true;
 
                 if (_userProfile != null)
                 {
                     _userProfile.Coins -= 10;
                     Coins = _userProfile.Coins;
-                    _userService.SaveUserAsync(_userProfile);
+                    _ = _userService.SaveUserAsync(_userProfile);
                 }
                 return;
             }
         }
     }
 
-    private int MapDifficultyToInt(string key) => key.ToLowerInvariant() switch
-    {
-        "easy" => 3,     // Einfach = 3 Zahlen
-        "normal" => 4,   // Normal = 4 Zahlen
-        "hard" => 5,     // Schwer = 5 Zahlen
-        "master" => 6,   // Master = 6 Zahlen
-        _ => 4
-    };
+    private static int RewardForDifficulty(string key) =>
+        key.ToLowerInvariant() switch
+        {
+            "easy" => 6,
+            "normal" => 8,
+            "hard" => 10,
+            "master" => 12,
+            _ => 8
+        };
 
-    private static string DiffName(string key) => key switch
+    private static string DiffName(string key) => key.ToLowerInvariant() switch
     {
         "easy" => "Einfach",
         "normal" => "Normal",
@@ -207,13 +264,4 @@ public sealed class PuzzlePageViewModel : ObservableObject, IQueryAttributable
         "master" => "Master",
         _ => key
     };
-}
-
-public class DigitInputViewModel : ObservableObject
-{
-    private string _digit = "";
-    public string Digit { get => _digit; set => SetProperty(ref _digit, value); }
-
-    private bool _isLocked;
-    public bool IsLocked { get => _isLocked; set => SetProperty(ref _isLocked, value); }
 }

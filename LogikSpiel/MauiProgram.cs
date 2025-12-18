@@ -22,6 +22,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<IDialogService, MauiDialogService>();
         builder.Services.AddSingleton<IGameProgressStore, SqliteGameProgressStore>();
         builder.Services.AddSingleton<LockRiddleGeneratorService>();
+        builder.Services.AddSingleton<IRiddleStateStore, RiddleStateStore>();
+
         // ViewModels
         builder.Services.AddTransient<MainPageViewModel>();
         builder.Services.AddTransient<ProfileViewModel>();
