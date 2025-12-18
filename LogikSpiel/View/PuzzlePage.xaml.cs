@@ -4,7 +4,9 @@ namespace LogikSpiel.View;
 
 public partial class PuzzlePage : ContentPage, IQueryAttributable
 {
-    private bool _isLoaded = false; // Verhindert doppelts Laden
+    private bool _isLoaded;
+
+    private readonly Dictionary<int, Entry> _entryByIndex = new();
 
     public PuzzlePage(PuzzlePageViewModel vm)
     {
@@ -12,41 +14,86 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         BindingContext = vm;
     }
 
-    // WICHTIG: Diese Methode wird immer aufgerufen, wenn die Seite sichtbar wird
+    private void DigitEntry_Loaded(object? sender, EventArgs e)
+    {
+        if (sender is not Entry entry) return;
+        if (entry.BindingContext is not DigitInputViewModel dvm) return;
+
+        _entryByIndex[dvm.Index] = entry;
+    }
+
+    private void DigitEntry_Unloaded(object? sender, EventArgs e)
+    {
+        if (sender is not Entry entry) return;
+        if (entry.BindingContext is not DigitInputViewModel dvm) return;
+
+        _entryByIndex.Remove(dvm.Index);
+    }
+
+    private void DigitEntry_TextChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (sender is not Entry entry) return;
+        if (entry.BindingContext is not DigitInputViewModel dvm) return;
+        if (dvm.IsLocked) return;
+
+        var text = entry.Text ?? "";
+
+        // nur Ziffern, max 1 Zeichen
+        var digitsOnly = new string(text.Where(char.IsDigit).ToArray());
+        if (digitsOnly.Length > 1) digitsOnly = digitsOnly[^1].ToString();
+
+        if (digitsOnly != text)
+        {
+            entry.Text = digitsOnly;
+            return;
+        }
+
+        // Backspace: 1 -> 0 => Fokus zurück
+        if (!string.IsNullOrEmpty(e.OldTextValue) && e.OldTextValue.Length == 1 && string.IsNullOrEmpty(digitsOnly))
+        {
+            FocusIndex(dvm.Index - 1);
+            return;
+        }
+
+        // 1 Ziffer eingegeben => Fokus nach vorne
+        if (digitsOnly.Length == 1)
+            FocusIndex(dvm.Index + 1);
+    }
+
+    private void FocusIndex(int index)
+    {
+        if (index < 0) return;
+
+        if (_entryByIndex.TryGetValue(index, out var next))
+        {
+            if (next.IsEnabled && !next.IsReadOnly)
+                next.Focus();
+        }
+    }
+
     protected override async void OnAppearing()
     {
         base.OnAppearing();
 
-        // Wenn noch kein Spiel geladen wurde, starte ein Standard-Spiel (Normal)
-        if (!_isLoaded && BindingContext is PuzzlePageViewModel vm)
+        if (!_isLoaded && BindingContext is PuzzlePageViewModel vm && vm.Hints.Count == 0)
         {
-            // Starte Level 1 Normal, falls nichts anderes übergeben wurde
             await vm.LoadAsync("riddle_lock", "normal", 1);
             _isLoaded = true;
         }
     }
 
-    // Das hier wird NUR aufgerufen, wenn Parameter übergeben wurden (z.B. ?difficulty=hard)
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
         if (BindingContext is not PuzzlePageViewModel vm) return;
+        _isLoaded = true;
 
-        var gameId = query.ContainsKey("gameId") ? query["gameId"]?.ToString() ?? "" : "";
-        var difficulty = query.ContainsKey("difficulty") ? query["difficulty"]?.ToString() ?? "normal" : "normal";
+        var gameId = query.TryGetValue("gameId", out var idObj) ? idObj?.ToString() ?? "riddle_lock" : "riddle_lock";
+        var difficulty = query.TryGetValue("difficulty", out var diffObj) ? diffObj?.ToString() ?? "normal" : "normal";
 
         int level = 1;
-        if (query.TryGetValue("level", out var lv))
-        {
-            int.TryParse(lv?.ToString(), out level);
-        }
+        if (query.TryGetValue("level", out var lvObj))
+            int.TryParse(lvObj?.ToString(), out level);
 
-        // ÄNDERUNG: Nicht Task.Run nutzen, sondern direkt aufrufen.
-        // Da LoadAsync ein Task ist, nutzen wir "Fire-and-Forget" sicher auf dem Dispatcher.
-        Dispatcher.Dispatch(async () =>
-        {
-            await vm.LoadAsync(gameId, difficulty, level);
-        });
-
-        _isLoaded = true;
+        Dispatcher.Dispatch(async () => await vm.LoadAsync(gameId, difficulty, level));
     }
 }

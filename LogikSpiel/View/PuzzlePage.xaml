@@ -1,6 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
+             xmlns:model="clr-namespace:LogikSpiel.Model"
              x:Class="LogikSpiel.View.PuzzlePage"
              x:DataType="vm:PuzzlePageViewModel"
              NavigationPage.HasNavigationBar="False"
@@ -16,33 +18,48 @@
     <Grid RowDefinitions="Auto, Auto, *, Auto" Padding="20" RowSpacing="15">
 
         <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" HeightRequest="50">
-            <Button Grid.Column="0" Text="&#x2190;" Command="{Binding BackCommand}" 
-                    BackgroundColor="#20FFFFFF" TextColor="White" FontAttributes="Bold" 
+            <Button Grid.Column="0" Text="&#x2190;" Command="{Binding BackCommand}"
+                    BackgroundColor="#20FFFFFF" TextColor="White" FontAttributes="Bold"
                     WidthRequest="40" HeightRequest="40" CornerRadius="20" Padding="0"/>
 
-            <Label Grid.Column="1" Text="{Binding Title}" 
-                   TextColor="White" FontAttributes="Bold" FontSize="18" 
+            <Label Grid.Column="1" Text="{Binding Title}"
+                   TextColor="White" FontAttributes="Bold" FontSize="18"
                    VerticalOptions="Center" HorizontalOptions="Center"/>
 
-            <Label Grid.Column="2" Text="{Binding Coins, StringFormat='💰 {0}'}" 
-                   TextColor="#FFD700" FontAttributes="Bold" FontSize="16" 
+            <Label Grid.Column="2" Text="{Binding Coins, StringFormat='💰 {0}'}"
+                   TextColor="#FFD700" FontAttributes="Bold" FontSize="16"
                    VerticalOptions="Center"/>
         </Grid>
 
         <Border Grid.Row="1" StrokeShape="RoundRectangle 20" BackgroundColor="#F0FFFFFF" Padding="20" StrokeThickness="0">
-            <VerticalStackLayout Spacing="15">
+            <VerticalStackLayout Spacing="10">
                 <Label Text="GIB DEN CODE EIN" FontSize="12" TextColor="#555" HorizontalOptions="Center" CharacterSpacing="2"/>
 
-                <HorizontalStackLayout BindableLayout.ItemsSource="{Binding InputDigits}" 
+                <!-- ✅ geschlossenes Schloss -->
+                <Image Source="closedlock.png"
+                       HeightRequest="60"
+                       HorizontalOptions="Center"
+                       Margin="0,-2,0,0"/>
+
+                <Label Text="{Binding SecretSolution, StringFormat='Lösung (Debug): {0}'}"
+                       IsVisible="{Binding ShowSolutionForDebug}"
+                       FontSize="12" TextColor="#333" FontAttributes="Bold"
+                       HorizontalOptions="Center"/>
+
+                <HorizontalStackLayout BindableLayout.ItemsSource="{Binding InputDigits}"
                                        Spacing="10" HorizontalOptions="Center">
                     <BindableLayout.ItemTemplate>
-                        <DataTemplate>
-                            <Border Stroke="#6200EE" StrokeThickness="2" StrokeShape="RoundRectangle 12" 
+                        <DataTemplate x:DataType="vm:DigitInputViewModel">
+                            <Border Stroke="#6200EE" StrokeThickness="2" StrokeShape="RoundRectangle 12"
                                     HeightRequest="60" WidthRequest="50" BackgroundColor="White">
-                                <Entry Text="{Binding Digit}" 
+                                <Entry Text="{Binding Digit}"
+                                       Loaded="DigitEntry_Loaded"
+                                       Unloaded="DigitEntry_Unloaded"
+                                       TextChanged="DigitEntry_TextChanged"
                                        IsReadOnly="{Binding IsLocked}"
-                                       MaxLength="1" 
+                                       MaxLength="1"
                                        Keyboard="Numeric"
+                                       ReturnType="Next"
                                        FontSize="28" FontAttributes="Bold" TextColor="#333"
                                        HorizontalTextAlignment="Center" VerticalTextAlignment="Center"
                                        BackgroundColor="Transparent"/>
@@ -53,33 +70,72 @@
             </VerticalStackLayout>
         </Border>
 
-        <CollectionView Grid.Row="2" ItemsSource="{Binding Hints}" Margin="0,5">
-            <CollectionView.Header>
-                <Label Text="HINWEISE" FontSize="14" FontAttributes="Bold" TextColor="White" Margin="0,0,0,10"/>
-            </CollectionView.Header>
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Border StrokeShape="RoundRectangle 15" BackgroundColor="White" Padding="15" Margin="0,0,0,10" StrokeThickness="0">
-                        <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="15">
-                            <Border Grid.Column="0" BackgroundColor="#F5F5F5" StrokeShape="RoundRectangle 8" Padding="10,5" StrokeThickness="0">
-                                <Label Text="{Binding Code}" FontAttributes="Bold" FontSize="16" TextColor="#333" HorizontalOptions="Center"/>
-                            </Border>
-                            <Label Grid.Column="1" Text="{Binding Description}" FontSize="13" TextColor="#666" VerticalOptions="Center" LineBreakMode="WordWrap"/>
-                            <Label Grid.Column="2" Text="{Binding Icon}" FontSize="20" VerticalOptions="Center"/>
-                        </Grid>
-                    </Border>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+        <Grid Grid.Row="2">
+            <CollectionView ItemsSource="{Binding Hints}" Margin="0,5">
+                <CollectionView.Header>
+                    <Label Text="HINWEISE" FontSize="14" FontAttributes="Bold" TextColor="White" Margin="0,0,0,10"/>
+                </CollectionView.Header>
+
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="model:LockHint">
+                        <Border StrokeShape="RoundRectangle 15" BackgroundColor="White" Padding="15" Margin="0,0,0,10" StrokeThickness="0">
+                            <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="15">
+                                <HorizontalStackLayout Grid.Column="0"
+                                                       Spacing="4"
+                                                       BindableLayout.ItemsSource="{Binding Slots}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="x:String">
+                                            <Border StrokeThickness="0"
+                                                    BackgroundColor="Gray"
+                                                    StrokeShape="RoundRectangle 6"
+                                                    WidthRequest="22" HeightRequest="28"
+                                                    Padding="0">
+                                                <!-- ✅ leere Slots ("" ) unsichtbar -->
+                                                <Border.Triggers>
+                                                    <DataTrigger TargetType="Border" Binding="{Binding .}" Value="">
+                                                        <Setter Property="IsVisible" Value="False"/>
+                                                    </DataTrigger>
+                                                </Border.Triggers>
+
+                                                <Label Text="{Binding .}"
+                                                       FontAttributes="Bold"
+                                                       FontSize="14"
+                                                       HorizontalOptions="Center"
+                                                       VerticalOptions="Center"
+                                                       HorizontalTextAlignment="Center"
+                                                       VerticalTextAlignment="Center"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </HorizontalStackLayout>
+
+                                <Label Grid.Column="1" Text="{Binding Description}" FontSize="13" TextColor="#666"
+                                       VerticalOptions="Center" LineBreakMode="WordWrap"/>
+                                <Label Grid.Column="2" Text="{Binding Icon}" FontSize="20" VerticalOptions="Center"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <Grid IsVisible="{Binding IsBusy}" BackgroundColor="#66000000">
+                <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10">
+                    <ActivityIndicator IsRunning="True" />
+                    <Label Text="Erzeuge Rätsel..." TextColor="White" FontAttributes="Bold" HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </Grid>
+        </Grid>
 
         <Grid Grid.Row="3" ColumnDefinitions="*, *" ColumnSpacing="15">
-            <Button Grid.Column="0" Text="💡 Tipp (10)" 
+            <Button Grid.Column="0" Text="💡 Tipp (10)"
                     Command="{Binding HintCommand}"
+                    IsEnabled="{Binding IsNotBusy}"
                     BackgroundColor="#03DAC5" TextColor="#000" FontAttributes="Bold"
                     CornerRadius="15" HeightRequest="55"/>
 
-            <Button Grid.Column="1" Text="🔓 Öffnen" 
+            <Button Grid.Column="1" Text="🔓 Öffnen"
                     Command="{Binding CheckCommand}"
+                    IsEnabled="{Binding IsNotBusy}"
                     BackgroundColor="#BB86FC" TextColor="White" FontAttributes="Bold"
                     CornerRadius="15" HeightRequest="55"/>
         </Grid>
