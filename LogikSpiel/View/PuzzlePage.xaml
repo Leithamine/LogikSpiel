@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
              xmlns:model="clr-namespace:LogikSpiel.Model"
+             xmlns:skia="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
              x:Class="LogikSpiel.View.PuzzlePage"
              x:DataType="vm:PuzzlePageViewModel"
              NavigationPage.HasNavigationBar="False"
@@ -15,10 +16,13 @@
         </LinearGradientBrush>
     </ContentPage.Background>
 
-    <Grid RowDefinitions="Auto, Auto, *, Auto" Padding="20" RowSpacing="15">
+    <!-- ✅ 3 Rows: Header / Input / Hints -->
+    <Grid RowDefinitions="Auto, Auto, *" Padding="20" RowSpacing="15">
 
+        <!-- Header -->
         <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" HeightRequest="50">
             <Button Grid.Column="0" Text="&#x2190;" Command="{Binding BackCommand}"
+                    IsEnabled="{Binding IsNotBusy}"
                     BackgroundColor="#20FFFFFF" TextColor="White" FontAttributes="Bold"
                     WidthRequest="40" HeightRequest="40" CornerRadius="20" Padding="0"/>
 
@@ -31,12 +35,13 @@
                    VerticalOptions="Center"/>
         </Grid>
 
+        <!-- Input Panel -->
         <Border Grid.Row="1" StrokeShape="RoundRectangle 20" BackgroundColor="#F0FFFFFF" Padding="20" StrokeThickness="0">
             <VerticalStackLayout Spacing="10">
                 <Label Text="GIB DEN CODE EIN" FontSize="12" TextColor="#555" HorizontalOptions="Center" CharacterSpacing="2"/>
 
-                <!-- ✅ geschlossenes Schloss -->
-                <Image Source="closedlock.png"
+                <!-- ✅ Schloss: geschlossen beim Laden, öffnet sich bei Erfolg -->
+                <Image Source="{Binding LockImageSource}"
                        HeightRequest="60"
                        HorizontalOptions="Center"
                        Margin="0,-2,0,0"/>
@@ -57,6 +62,7 @@
                                        Unloaded="DigitEntry_Unloaded"
                                        TextChanged="DigitEntry_TextChanged"
                                        IsReadOnly="{Binding IsLocked}"
+                                       IsEnabled="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.IsNotBusy}"
                                        MaxLength="1"
                                        Keyboard="Numeric"
                                        ReturnType="Next"
@@ -67,9 +73,25 @@
                         </DataTemplate>
                     </BindableLayout.ItemTemplate>
                 </HorizontalStackLayout>
+
+                <!-- ✅ Buttons (bleiben wo sie sind – im Input-Bereich) -->
+                <Grid ColumnDefinitions="*, *" ColumnSpacing="15" Margin="0,8,0,0">
+                    <Button Grid.Column="0" Text="💡 Tipp (10)"
+                            Command="{Binding HintCommand}"
+                            IsEnabled="{Binding IsNotBusy}"
+                            BackgroundColor="#03DAC5" TextColor="#000" FontAttributes="Bold"
+                            CornerRadius="15" HeightRequest="55"/>
+
+                    <Button Grid.Column="1" Text="🔓 Öffnen"
+                            Command="{Binding CheckCommand}"
+                            IsEnabled="{Binding IsNotBusy}"
+                            BackgroundColor="#BB86FC" TextColor="White" FontAttributes="Bold"
+                            CornerRadius="15" HeightRequest="55"/>
+                </Grid>
             </VerticalStackLayout>
         </Border>
 
+        <!-- Hints -->
         <Grid Grid.Row="2">
             <CollectionView ItemsSource="{Binding Hints}" Margin="0,5">
                 <CollectionView.Header>
@@ -90,7 +112,7 @@
                                                     StrokeShape="RoundRectangle 6"
                                                     WidthRequest="22" HeightRequest="28"
                                                     Padding="0">
-                                                <!-- ✅ leere Slots ("" ) unsichtbar -->
+                                                <!-- leere Slots ausblenden -->
                                                 <Border.Triggers>
                                                     <DataTrigger TargetType="Border" Binding="{Binding .}" Value="">
                                                         <Setter Property="IsVisible" Value="False"/>
@@ -118,6 +140,7 @@
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
+            <!-- Busy Overlay -->
             <Grid IsVisible="{Binding IsBusy}" BackgroundColor="#66000000">
                 <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10">
                     <ActivityIndicator IsRunning="True" />
@@ -126,18 +149,40 @@
             </Grid>
         </Grid>
 
-        <Grid Grid.Row="3" ColumnDefinitions="*, *" ColumnSpacing="15">
-            <Button Grid.Column="0" Text="💡 Tipp (10)"
-                    Command="{Binding HintCommand}"
-                    IsEnabled="{Binding IsNotBusy}"
-                    BackgroundColor="#03DAC5" TextColor="#000" FontAttributes="Bold"
-                    CornerRadius="15" HeightRequest="55"/>
+        <!-- ✅ SUCCESS OVERLAY (wie UnlockSuccessPage, aber in PuzzlePage) -->
+        <Grid Grid.RowSpan="3"
+              IsVisible="{Binding IsCelebrating}"
+              BackgroundColor="#01000000"
+              InputTransparent="False">
 
-            <Button Grid.Column="1" Text="🔓 Öffnen"
-                    Command="{Binding CheckCommand}"
-                    IsEnabled="{Binding IsNotBusy}"
-                    BackgroundColor="#BB86FC" TextColor="White" FontAttributes="Bold"
-                    CornerRadius="15" HeightRequest="55"/>
+            <skia:SKLottieView x:Name="FireworksView"
+                               Source="fireworks_skottie.json"
+                               RepeatCount="-1"
+                               IsAnimationEnabled="True"
+                               Opacity="0.9"
+                               HorizontalOptions="Fill"
+                               VerticalOptions="Fill"/>
+
+            <VerticalStackLayout Spacing="16"
+                                 HorizontalOptions="Center"
+                                 VerticalOptions="Center">
+
+                <Label Text="GELÖST! 🎉"
+                       TextColor="White"
+                       FontSize="26"
+                       FontAttributes="Bold"
+                       HorizontalTextAlignment="Center"/>
+
+                <Image x:Name="OpenedLockImage"
+                       Source="openedlock.png"
+                       HeightRequest="160"
+                       HorizontalOptions="Center"/>
+
+                <Label Text="{Binding RewardText}"
+                       TextColor="White"
+                       FontSize="16"
+                       HorizontalTextAlignment="Center"/>
+            </VerticalStackLayout>
         </Grid>
 
     </Grid>
