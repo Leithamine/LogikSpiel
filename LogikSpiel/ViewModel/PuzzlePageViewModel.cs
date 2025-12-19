@@ -39,7 +39,33 @@ public sealed class PuzzlePageViewModel : ObservableObject
                 OnPropertyChanged(nameof(IsNotBusy));
         }
     }
-    public bool IsNotBusy => !IsBusy;
+
+    private bool _isCelebrating;
+    public bool IsCelebrating
+    {
+        get => _isCelebrating;
+        set
+        {
+            if (SetProperty(ref _isCelebrating, value))
+                OnPropertyChanged(nameof(IsNotBusy));
+        }
+    }
+
+    public bool IsNotBusy => !IsBusy && !IsCelebrating;
+
+    private string _rewardText = "";
+    public string RewardText
+    {
+        get => _rewardText;
+        set => SetProperty(ref _rewardText, value);
+    }
+
+    private string _lockImageSource = "closedlock.png";
+    public string LockImageSource
+    {
+        get => _lockImageSource;
+        set => SetProperty(ref _lockImageSource, value);
+    }
 
     private int _genToken = 0;
 
@@ -77,6 +103,8 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
         HintCommand = new AsyncCommand(async () =>
         {
+            if (!IsNotBusy) return;
+
             if (Coins >= 10)
             {
                 bool buy = await _dialog.ConfirmAsync("Tipp kaufen?", "Eine Zahl aufdecken für 10 Coins?");
@@ -118,6 +146,11 @@ public sealed class PuzzlePageViewModel : ObservableObject
         {
             IsBusy = true;
 
+            // Reset UI State
+            IsCelebrating = false;
+            RewardText = "";
+            LockImageSource = "closedlock.png";
+
             _secretSolution = "";
             OnPropertyChanged(nameof(SecretSolution));
 
@@ -125,7 +158,6 @@ public sealed class PuzzlePageViewModel : ObservableObject
             InputDigits.Clear();
         });
 
-        // 1) erst Cache laden
         var saved = await _riddleState.TryLoadAsync(GameId, DifficultyKey, LevelNumber);
 
         LockRiddleGame game;
@@ -163,6 +195,8 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
     private async Task CheckSolutionAsync()
     {
+        if (!IsNotBusy) return;
+
         if (_secretSolution.Length == 0)
         {
             await _dialog.AlertAsync("Fehler", "Kein Rätsel geladen.");
@@ -196,7 +230,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
             return;
         }
 
-        // ✅ korrekt
+        // ✅ korrekt -> Coins/Progress
         int reward = RewardForDifficulty(DifficultyKey);
 
         if (_userProfile != null)
@@ -211,16 +245,35 @@ public sealed class PuzzlePageViewModel : ObservableObject
         await _progressStore.MarkLevelCompleteAsync(GameId, DifficultyKey, completedLevel);
         await _riddleState.ClearAsync(GameId, DifficultyKey, completedLevel);
 
-        // ✅ Success-Page öffnen (mit Parametern)
-        var nextLevel = completedLevel + 1;
+        // ✅ Erfolg direkt in PuzzlePage anzeigen (ohne UnlockSuccessPage)
+        await PlaySuccessOverlayAsync(reward);
 
-        await Shell.Current.GoToAsync(nameof(LogikSpiel.View.UnlockSuccessPage), new Dictionary<string, object>
+        // ✅ danach automatisch nächstes Level
+        LevelNumber = completedLevel + 1;
+        await StartNewRoundAsync();
+    }
+
+    private async Task PlaySuccessOverlayAsync(int reward)
+    {
+        int token = ++_genToken;
+
+        MainThread.BeginInvokeOnMainThread(() =>
         {
-            ["gameId"] = GameId,
-            ["difficulty"] = DifficultyKey,
-            ["completedLevel"] = completedLevel,
-            ["nextLevel"] = nextLevel,
-            ["reward"] = reward
+            LockImageSource = "openedlock.png";
+            RewardText = reward > 0 ? $"Du erhältst {reward} Coins 💰" : "";
+            IsCelebrating = true;
+        });
+
+        // Dauer der Animation (anpassen wie du willst)
+        await Task.Delay(2600);
+
+        if (token != _genToken) return;
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            IsCelebrating = false;
+            RewardText = "";
+            LockImageSource = "closedlock.png";
         });
     }
 

@@ -84,15 +84,21 @@
 	  <MauiXaml Update="View\OnboardingPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="View\PascalTrianglePage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="View\ProfilePage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	  <MauiXaml Update="View\PuzzlePage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
-	  <MauiXaml Update="View\UnlockSuccessPage.xaml">
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="View\PascalTrianglePage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
-	  </MauiXaml>
+	  </None>
 	</ItemGroup>
 
 </Project>

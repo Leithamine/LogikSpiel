@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Linq;
 using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
@@ -11,20 +12,27 @@ public sealed class GameMapPageViewModel : ObservableObject
     private readonly IGameCatalogService _catalog;
     private readonly IGameProgressStore _progressStore;
     private readonly INavigationService _nav;
-    private readonly IUserProfileService _userService; // NEU
+    private readonly IUserProfileService _userService;
 
     public event Action<double>? RequestScrollToY;
     public ObservableCollection<LevelNodeViewModel> Nodes { get; } = new();
 
-    private int _coins; // NEU
+    private int _coins;
     public int Coins { get => _coins; set => SetProperty(ref _coins, value); }
 
     private string? _gameId;
     public string? GameId { get => _gameId; set => SetProperty(ref _gameId, value); }
 
-    // ... (Game, Title, IsSettingsOpen, CloudBounds, DifficultyKey, DifficultyLabel, MapHeight, MapLottieSource bleiben gleich) ...
     private GameDefinition? _game;
-    public GameDefinition? Game { get => _game; private set { if (!SetProperty(ref _game, value)) return; OnPropertyChanged(nameof(Title)); } }
+    public GameDefinition? Game
+    {
+        get => _game;
+        private set
+        {
+            if (!SetProperty(ref _game, value)) return;
+            OnPropertyChanged(nameof(Title));
+        }
+    }
 
     public string Title => Game?.Title ?? "Karte";
 
@@ -38,7 +46,12 @@ public sealed class GameMapPageViewModel : ObservableObject
     public string DifficultyKey
     {
         get => _difficultyKey;
-        private set { if (!SetProperty(ref _difficultyKey, value)) return; OnPropertyChanged(nameof(DifficultyLabel)); }
+        private set
+        {
+            if (!SetProperty(ref _difficultyKey, value)) return;
+            OnPropertyChanged(nameof(DifficultyLabel));
+            OnPropertyChanged(nameof(MapLottieSource));
+        }
     }
 
     public string DifficultyLabel => DifficultyKey switch
@@ -46,9 +59,7 @@ public sealed class GameMapPageViewModel : ObservableObject
         "easy" => "Einfach",
         "normal" => "Normal",
         "hard" => "Schwer",
-        "complex" => "Komplex",
         "master" => "Master",
-        "god" => "Gott",
         _ => DifficultyKey
     };
 
@@ -56,17 +67,19 @@ public sealed class GameMapPageViewModel : ObservableObject
     public double MapHeight { get => _mapHeight; private set => SetProperty(ref _mapHeight, value); }
 
     public string MapLottieSource => $"map_{DifficultyKey}.json";
-    // ... (Ende unveränderte Properties)
 
     public AsyncCommand BackCommand { get; }
     public AsyncCommand RulesCommand { get; }
     public AsyncCommand ToggleSettingsCommand { get; }
     public AsyncCommand<string> ChangeDifficultyCommand { get; }
     public AsyncCommand<LevelNodeViewModel> OpenLevelCommand { get; }
-    public AsyncCommand OpenProfileCommand { get; } // NEU
+    public AsyncCommand OpenProfileCommand { get; }
 
-    // Konstruktor angepasst
-    public GameMapPageViewModel(IGameCatalogService catalog, IGameProgressStore progressStore, INavigationService nav, IUserProfileService userService)
+    public GameMapPageViewModel(
+        IGameCatalogService catalog,
+        IGameProgressStore progressStore,
+        INavigationService nav,
+        IUserProfileService userService)
     {
         _catalog = catalog;
         _progressStore = progressStore;
@@ -74,7 +87,9 @@ public sealed class GameMapPageViewModel : ObservableObject
         _userService = userService;
 
         BackCommand = new AsyncCommand(() => _nav.GoBackAsync());
-        OpenProfileCommand = new AsyncCommand(async () => await _nav.GoToAsync("Profile")); // NEU
+
+        OpenProfileCommand = new AsyncCommand(async () =>
+            await _nav.GoToAsync("Profile"));
 
         RulesCommand = new AsyncCommand(async () =>
         {
@@ -82,62 +97,156 @@ public sealed class GameMapPageViewModel : ObservableObject
             await _nav.GoToAsync("Learn", new Dictionary<string, object> { ["gameId"] = GameId! });
         });
 
-        // ... (ToggleSettingsCommand, ChangeDifficultyCommand, OpenLevelCommand bleiben gleich)
-        ToggleSettingsCommand = new AsyncCommand(() => { IsSettingsOpen = !IsSettingsOpen; return Task.CompletedTask; });
-        ChangeDifficultyCommand = new AsyncCommand<string>(async key => {
+        ToggleSettingsCommand = new AsyncCommand(() =>
+        {
+            IsSettingsOpen = !IsSettingsOpen;
+            return Task.CompletedTask;
+        });
+
+        ChangeDifficultyCommand = new AsyncCommand<string>(async key =>
+        {
             if (string.IsNullOrWhiteSpace(key)) return;
             DifficultyKey = key;
             Preferences.Set($"LAST_DIFF_{GameId}", key);
             IsSettingsOpen = false;
             await BuildMapAsync();
         });
-        OpenLevelCommand = new AsyncCommand<LevelNodeViewModel>(async node => {
+
+        // ✅ WICHTIG: je nach Spiel zur richtigen Rätsel-Page navigieren
+        OpenLevelCommand = new AsyncCommand<LevelNodeViewModel>(async node =>
+        {
             if (node is null || !node.IsUnlocked) return;
-            await _nav.GoToAsync("Puzzle", new Dictionary<string, object> { ["gameId"] = node.Spec.GameId, ["difficulty"] = node.Spec.DifficultyKey, ["level"] = node.Spec.LevelNumber });
+
+            string route = node.Spec.GameId switch
+            {
+                // dein Lock/Code-Spiel
+                "codebreaker" => "Puzzle",
+                "riddle_lock" => "Puzzle",
+
+                // ✅ neues Spiel
+                "pascal_triangle" => "pascaltriangle",
+
+                // Default (bis du weitere Spiele implementierst)
+                _ => "Puzzle"
+            };
+
+            await _nav.GoToAsync(route, new Dictionary<string, object>
+            {
+                ["gameId"] = node.Spec.GameId,
+                ["difficulty"] = node.Spec.DifficultyKey,
+                ["level"] = node.Spec.LevelNumber
+            });
         });
     }
 
     public async Task LoadAsync()
     {
-        // NEU: Coins laden
         var user = await _userService.GetUserAsync();
         Coins = user?.Coins ?? 0;
 
         if (string.IsNullOrWhiteSpace(GameId)) return;
+
         await Task.Delay(50);
         Game = await _catalog.GetGameAsync(GameId!);
+
         DifficultyKey = Preferences.Get($"LAST_DIFF_{GameId}", "normal");
+
         await BuildMapAsync();
     }
 
-    // ... Rest der Datei (BuildMapAsync, StableHash etc.) bleibt unverändert ...
     private static readonly double[] XPattern = { 0.2, 0.5, 0.8, 0.65, 0.35, 0.2, 0.45, 0.75 };
+
     private async Task BuildMapAsync()
-    { /* Code wie vorher */
+    {
         if (string.IsNullOrWhiteSpace(GameId) || Game is null) return;
+
         var progress = await _progressStore.LoadAsync();
+
         var maxLevel = 10000;
         int highestCompleted = 0;
-        for (int level = 1; level <= maxLevel; level++) { if (progress.IsCompleted(GameId!, DifficultyKey, level)) highestCompleted = level; else break; }
+
+        for (int level = 1; level <= maxLevel; level++)
+        {
+            if (progress.IsCompleted(GameId!, DifficultyKey, level))
+                highestCompleted = level;
+            else
+                break;
+        }
+
         int currentLevelNumber = highestCompleted + 1;
-        int startLevel = 1; int endLevel = currentLevelNumber + 50; int totalLevels = endLevel - startLevel + 1;
-        const double nodeSize = 60; const double bottomPad = 120; const double stepY = 120; const double cloudHeight = 180; const double cloudGap = 40;
-        double topPad = cloudHeight + cloudGap - stepY; if (topPad < 0) topPad = 0;
-        double totalHeight = topPad + (totalLevels * stepY) + bottomPad; if (totalHeight < 900) totalHeight = 900;
-        MapHeight = totalHeight; OnPropertyChanged(nameof(MapHeight)); OnPropertyChanged(nameof(MapLottieSource));
+
+        int startLevel = 1;
+        int endLevel = currentLevelNumber + 50;
+        int totalLevels = endLevel - startLevel + 1;
+
+        const double nodeSize = 60;
+        const double bottomPad = 120;
+        const double stepY = 120;
+        const double cloudHeight = 180;
+        const double cloudGap = 40;
+
+        double topPad = cloudHeight + cloudGap - stepY;
+        if (topPad < 0) topPad = 0;
+
+        double totalHeight = topPad + (totalLevels * stepY) + bottomPad;
+        if (totalHeight < 900) totalHeight = 900;
+
+        MapHeight = totalHeight;
+
         Nodes.Clear();
+
         for (int i = 0; i < totalLevels; i++)
         {
-            int realLevelNum = startLevel + i; int baseSeed = StableHash($"{GameId}:{DifficultyKey}") + realLevelNum * 17;
+            int realLevelNum = startLevel + i;
+            int baseSeed = StableHash($"{GameId}:{DifficultyKey}") + realLevelNum * 17;
+
             var spec = new LevelSpec(GameId!, DifficultyKey, realLevelNum, baseSeed);
-            var x = XPattern[(realLevelNum - 1) % XPattern.Length]; var yPx = totalHeight - bottomPad - (i * stepY); var yPercent = yPx / totalHeight;
-            var node = new LevelNodeViewModel(spec); node.Bounds = new Rect(x, yPercent, nodeSize, nodeSize); node.IsCompleted = progress.IsCompleted(spec);
-            if (realLevelNum == 1) node.IsUnlocked = true; else node.IsUnlocked = progress.IsCompleted(spec.GameId, spec.DifficultyKey, realLevelNum - 1);
-            node.IsCurrent = (realLevelNum == currentLevelNumber); Nodes.Add(node);
+
+            var x = XPattern[(realLevelNum - 1) % XPattern.Length];
+            var yPx = totalHeight - bottomPad - (i * stepY);
+            var yPercent = yPx / totalHeight;
+
+            var node = new LevelNodeViewModel(spec)
+            {
+                Bounds = new Rect(x, yPercent, nodeSize, nodeSize)
+            };
+
+            node.IsCompleted = progress.IsCompleted(spec);
+
+            if (realLevelNum == 1) node.IsUnlocked = true;
+            else node.IsUnlocked = progress.IsCompleted(spec.GameId, spec.DifficultyKey, realLevelNum - 1);
+
+            node.IsCurrent = (realLevelNum == currentLevelNumber);
+
+            Nodes.Add(node);
         }
+
         CloudBounds = new Rect(0, 0, 1, cloudHeight);
+
         var currentNode = Nodes.FirstOrDefault(n => n.IsCurrent) ?? Nodes.FirstOrDefault();
-        if (currentNode is not null) { double nodeCenterY = (currentNode.Bounds.Y * totalHeight) + (nodeSize / 2); await Task.Delay(350); RequestScrollToY?.Invoke(nodeCenterY); }
+        if (currentNode is not null)
+        {
+            double nodeCenterY = (currentNode.Bounds.Y * totalHeight) + (nodeSize / 2);
+            await Task.Delay(350);
+            RequestScrollToY?.Invoke(nodeCenterY);
+        }
     }
-    private static int StableHash(string s) { unchecked { const int fnvOffset = (int)2166136261; const int fnvPrime = 16777619; int hash = fnvOffset; foreach (var c in s) { hash ^= c; hash *= fnvPrime; } return Math.Abs(hash); } }
+
+    private static int StableHash(string s)
+    {
+        unchecked
+        {
+            const int fnvOffset = (int)2166136261;
+            const int fnvPrime = 16777619;
+            int hash = fnvOffset;
+
+            foreach (var c in s)
+            {
+                hash ^= c;
+                hash *= fnvPrime;
+            }
+
+            return Math.Abs(hash);
+        }
+    }
 }

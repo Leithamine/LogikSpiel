@@ -23,7 +23,8 @@ public static class MauiProgram
         builder.Services.AddSingleton<IGameProgressStore, SqliteGameProgressStore>();
         builder.Services.AddSingleton<LockRiddleGeneratorService>();
         builder.Services.AddSingleton<IRiddleStateStore, RiddleStateStore>();
-
+        builder.Services.AddSingleton<PascalTriangleGeneratorService>();
+  
         // ViewModels
         builder.Services.AddTransient<MainPageViewModel>();
         builder.Services.AddTransient<ProfileViewModel>();
@@ -32,6 +33,7 @@ public static class MauiProgram
         builder.Services.AddTransient<GameHostPageViewModel>();
         builder.Services.AddTransient<GameMapPageViewModel>();
         builder.Services.AddTransient<PuzzlePageViewModel>();
+        builder.Services.AddTransient<PascalTrianglePageViewModel>();
 
         // Pages
         builder.Services.AddTransient<LearnPage>();
@@ -39,6 +41,7 @@ public static class MauiProgram
         builder.Services.AddTransient<OnboardingPage>();
         builder.Services.AddTransient<ProfilePage>();
         builder.Services.AddTransient<PuzzlePage>();
+        builder.Services.AddTransient<PascalTrianglePage>();
 
         // Shell
         builder.Services.AddSingleton<AppShell>();

@@ -59,5 +59,16 @@
             "Du bekommst Input/Output Paare.",
             "Finde die zugrunde liegende Funktion."
         ]
+    },
+    {
+        "Id": "pascal_triangle",
+        "Title": "Pascal Pfad",
+        "Image": "dotnet_bot.png",
+        "LevelCount": 30,
+        "RulesText": [
+            "Tippe dich von oben nach unten (nur links-unten oder rechts-unten).",
+            "Finde zuerst den Pfad mit der MAXIMALEN Summe, danach den mit der MINIMALEN Summe.",
+            "Erst wenn beide gelöst sind, ist das Level abgeschlossen."
+        ]
     }
 ]

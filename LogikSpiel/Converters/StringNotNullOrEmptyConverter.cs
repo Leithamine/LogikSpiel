@@ -1,6 +1,6 @@
 ﻿using System.Globalization;
 
-namespace LogikSpiel.View;
+namespace LogikSpiel.Converters;
 
 public sealed class StringNotNullOrEmptyConverter : IValueConverter
 {
@@ -11,11 +11,4 @@ public sealed class StringNotNullOrEmptyConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
-public sealed class LockedToButtonTextConverter : IValueConverter
-{
-    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => value is bool b && b ? "Locked" : "Play";
 
-    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        => throw new NotSupportedException();
-}
