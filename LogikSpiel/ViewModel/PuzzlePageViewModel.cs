@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Linq;
 using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
@@ -180,7 +181,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
             OnPropertyChanged(nameof(SecretSolution));
 
             Hints.Clear();
-            foreach (var h in game.Hints)
+            foreach (var h in game.Hints.Select(h => NormalizeHint(h, _secretSolution.Length)))
                 Hints.Add(h);
 
             InputDigits.Clear();
@@ -297,6 +298,19 @@ public sealed class PuzzlePageViewModel : ObservableObject
                 return;
             }
         }
+    }
+
+    private static LockHint NormalizeHint(LockHint hint, int codeLength)
+    {
+        // Null/Whitespace-Slots sauber auffüllen, damit sie in der UI sichtbar sind
+        var slots = hint.Slots ?? new List<string>();
+        var normalized = Enumerable.Range(0, codeLength)
+            .Select(i => i < slots.Count && !string.IsNullOrWhiteSpace(slots[i]) ? slots[i].Trim() : "")
+            .ToList();
+
+        hint.Slots = normalized;
+        hint.Code = string.Join(" ", normalized.Select(s => string.IsNullOrEmpty(s) ? "•" : s));
+        return hint;
     }
 
     private static int RewardForDifficulty(string key) =>
