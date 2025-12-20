@@ -102,37 +102,33 @@
                     <DataTemplate x:DataType="model:LockHint">
                         <Border StrokeShape="RoundRectangle 15" BackgroundColor="Transparent" Padding="15" Margin="0,0,0,10" StrokeThickness="0">
                             <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="15">
-                                <HorizontalStackLayout Grid.Column="0"
-                                                       Spacing="4"
-                                                       BindableLayout.ItemsSource="{Binding Slots}">
-                                    <BindableLayout.ItemTemplate>
-                                        <DataTemplate x:DataType="x:String">
-                                            <Border StrokeThickness="0"
-                                                    BackgroundColor="White"
-                                                    StrokeShape="RoundRectangle 6"
-                                                    WidthRequest="22" HeightRequest="28"
-                                                    Padding="0">
-                                                <!-- leere Slots ausblenden -->
-                                                <Border.Triggers>
-                                                    <DataTrigger TargetType="Border" Binding="{Binding .}" Value="">
-                                                        <Setter Property="IsVisible" Value="False"/>
-                                                    </DataTrigger>
-                                                </Border.Triggers>
-
-                                                <Label Text="{Binding .}"
-                                                       FontAttributes="Bold"
-                                                       FontSize="14"
-                                                       HorizontalOptions="Center"
-                                                       VerticalOptions="Center"
-                                                       HorizontalTextAlignment="Center"
-                                                       VerticalTextAlignment="Center"/>
-                                            </Border>
-                                        </DataTemplate>
-                                    </BindableLayout.ItemTemplate>
-                                </HorizontalStackLayout>
+                                <VerticalStackLayout Grid.Column="0" Spacing="2" HorizontalOptions="Center">
+                                    <HorizontalStackLayout Spacing="4"
+                                                           BindableLayout.ItemsSource="{Binding Slots}"
+                                                           HorizontalOptions="Center">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="x:String">
+                                                <Border StrokeThickness="0"
+                                                        BackgroundColor="White"
+                                                        StrokeShape="RoundRectangle 6"
+                                                        WidthRequest="22" HeightRequest="28"
+                                                        Padding="0">
+                                                    <Label Text="{Binding ., Converter={StaticResource StringOrBulletConverter}}"
+                                                           FontAttributes="Bold"
+                                                           FontSize="14"
+                                                           TextColor="#111"
+                                                           HorizontalOptions="Center"
+                                                           VerticalOptions="Center"
+                                                           HorizontalTextAlignment="Center"
+                                                           VerticalTextAlignment="Center"/>
+                                                </Border>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </HorizontalStackLayout>
+                                </VerticalStackLayout>
 
                                 <Label Grid.Column="1" Text="{Binding Description}" FontSize="15" FontAttributes="Bold" TextColor="White"
-                                       VerticalOptions="Center" LineBreakMode="WordWrap"/>
+                                       VerticalOptions="Center" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"/>
                                 <Label Grid.Column="2" Text="{Binding Icon}" FontSize="20" VerticalOptions="Center"/>
                             </Grid>
                         </Border>

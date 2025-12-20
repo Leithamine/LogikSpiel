@@ -36,41 +36,54 @@ public sealed class MathCrossGeneratorService
     public MathCrossGame GenerateGame(string difficultyKey, int seed)
     {
         var s = GetSettings(difficultyKey);
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(1.2);
 
-        for (int attempt = 0; attempt < 100; attempt++)
+        MathCrossGame? best = null;
+        int bestEquationCount = -1;
+
+        try
         {
-            var rnd = new Random(seed + attempt * 997);
-            int targetEquations = rnd.Next(s.MinEquations, s.MaxEquations + 1);
+            for (int attempt = 0; attempt < 80 && DateTime.UtcNow < deadline; attempt++)
+            {
+                var rnd = new Random(seed + attempt * 997);
+                int targetEquations = rnd.Next(s.MinEquations, s.MaxEquations + 1);
 
-            var big = CreateEmptyGrid(BigSize, BigSize);
-            var placedCount = 0;
+                var big = CreateEmptyGrid(BigSize, BigSize);
+                var placedCount = 0;
 
-            // Place first equation
-            if (!TryPlaceFirstEquation(big, rnd, s, ref placedCount)) continue;
+                // Place first equation
+                if (!TryPlaceFirstEquation(big, rnd, s, ref placedCount)) continue;
 
-            // Grow more equations
-            if (!TryGrowEquations(big, rnd, s, ref placedCount, targetEquations)) continue;
+                // Grow more equations
+                if (!TryGrowEquations(big, rnd, s, ref placedCount, targetEquations)) continue;
 
-            var cropped = Crop(big, s);
-            if (cropped.Rows == 0 || cropped.Cols == 0) continue;
-            if (!IsSingleComponent(cropped)) continue;
-            if (cropped.Equations.Count < s.MinEquations) continue;
+                var cropped = Crop(big, s);
+                if (cropped.Rows == 0 || cropped.Cols == 0) continue;
+                if (!IsSingleComponent(cropped)) continue;
+                if (cropped.Equations.Count < s.MinEquations) continue;
 
-            // CRITICAL: Reset all cells to not given first
-            ResetAllCells(cropped);
+                var finalized = FinalizeGame(cropped, rnd, s);
 
-            // Then apply initial masking
-            InitialMasking(cropped, rnd, s.GivenPercent);
+                if (cropped.Equations.Count >= targetEquations)
+                    return finalized;
 
-            // Ensure puzzle is solvable
-            EnsureSolvable(cropped, rnd, s);
-
-            cropped.Difficulty = s.DifficultyKey;
-            cropped.UseExtendedEquations = s.EquationLength == 7;
-            return cropped;
+                if (cropped.Equations.Count > bestEquationCount)
+                {
+                    bestEquationCount = cropped.Equations.Count;
+                    best = finalized;
+                }
+            }
+        }
+        catch
+        {
+            // swallow and fallback below
         }
 
-        return new MathCrossGame();
+        if (best != null && best.Equations.Count >= s.MinEquations)
+            return best;
+
+        var fallback = GenerateStripFallback(s, seed);
+        return FinalizeGame(fallback, new Random(seed + 4242), s);
     }
 
     private static void ResetAllCells(MathCrossGame game)
@@ -322,6 +335,22 @@ public sealed class MathCrossGeneratorService
         }
     }
 
+    private static MathCrossGame FinalizeGame(MathCrossGame raw, Random rnd, Settings s)
+    {
+        // CRITICAL: Reset all cells to not given first
+        ResetAllCells(raw);
+
+        // Then apply initial masking
+        InitialMasking(raw, rnd, s.GivenPercent);
+
+        // Ensure puzzle is solvable
+        EnsureSolvable(raw, rnd, s);
+
+        raw.Difficulty = s.DifficultyKey;
+        raw.UseExtendedEquations = s.EquationLength == 7;
+        return raw;
+    }
+
     private static bool TrySolveEquationStep(MathCrossGame game, MathEquation eq, bool[,] mask, Settings s)
     {
         int unknowns = 0;
@@ -472,6 +501,115 @@ public sealed class MathCrossGeneratorService
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Deterministic, schnelle Fallback-Generierung mit gestapelten Horizontal-Equations
+    /// und optionalen vertikalen Crosses (für mehr Schnittpunkte).
+    /// </summary>
+    private MathCrossGame GenerateStripFallback(Settings s, int seed)
+    {
+        var rnd = new Random(seed + 1337);
+        int eqLen = s.EquationLength;
+        int rows = Math.Max(s.MaxEquations * 2 + 4, eqLen + 4);
+        int cols = eqLen + 6;
+
+        var grid = CreateEmptyGrid(rows, cols);
+        int placed = 0;
+        int startCol = 2;
+
+        for (int r = 1; r + eqLen < rows - 1 && placed < s.MaxEquations; r += 2)
+        {
+            if (s.EquationLength == 5)
+            {
+                if (TryGenerateEquation5(s, rnd, out var a, out var op, out var b, out var c) &&
+                    TryCommitEquation5(grid, s, r, startCol, new Delta(0, 1), a, op, b, c))
+                {
+                    placed++;
+                }
+            }
+            else
+            {
+                if (TryGenerateEquation7(s, rnd, out var a, out var op1, out var b, out var op2, out var cc, out var d) &&
+                    TryCommitEquation7(grid, s, r, startCol - 1, new Delta(0, 1), a, op1, b, op2, cc, d))
+                {
+                    placed++;
+                }
+            }
+        }
+
+        // Versuche ein paar vertikale Gleichungen auf vorhandenen Zahl-Ankern zu platzieren,
+        // um mehr Schnitte zu erreichen.
+        int verticalAttempts = 0;
+        while (placed < s.MaxEquations && verticalAttempts++ < 60)
+        {
+            var anchors = GetNumberCells(grid);
+            if (anchors.Count == 0) break;
+
+            var (ar, ac, aval) = anchors[rnd.Next(anchors.Count)];
+            int anchorIdx = s.EquationLength == 5
+                ? new[] { 0, 2, 4 }[rnd.Next(3)]
+                : new[] { 0, 2, 4, 6 }[rnd.Next(4)];
+
+            int sr = ar - anchorIdx;
+            int sc = ac;
+            if (!InBounds(grid, sr, sc) || !InBounds(grid, sr + (s.EquationLength - 1), sc)) continue;
+
+            if (s.EquationLength == 5)
+            {
+                if (TryGenerateEquation5WithAnchor(s, rnd, anchorIdx, aval, out var a, out var op, out var b, out var c) &&
+                    TryCommitEquation5(grid, s, sr, sc, new Delta(1, 0), a, op, b, c))
+                {
+                    placed++;
+                }
+            }
+            else
+            {
+                if (TryGenerateEquation7WithAnchor(s, rnd, anchorIdx, aval, out var a, out var op1, out var b, out var op2, out var cc, out var d) &&
+                    TryCommitEquation7(grid, s, sr, sc, new Delta(1, 0), a, op1, b, op2, cc, d))
+                {
+                    placed++;
+                }
+            }
+        }
+
+        // Korrigiere Mindestanzahl
+        if (placed < s.MinEquations)
+        {
+            for (int extra = 0; placed < s.MinEquations && extra < 20; extra++)
+            {
+                int r = rnd.Next(1, rows - eqLen - 1);
+                int c = rnd.Next(1, Math.Max(2, cols - eqLen - 1));
+
+                if (s.EquationLength == 5)
+                {
+                    if (TryGenerateEquation5(s, rnd, out var a, out var op, out var b, out var c2) &&
+                        TryCommitEquation5(grid, s, r, c, new Delta(0, 1), a, op, b, c2))
+                    {
+                        placed++;
+                    }
+                }
+                else
+                {
+                    if (TryGenerateEquation7(s, rnd, out var a, out var op1, out var b, out var op2, out var cc, out var d) &&
+                        TryCommitEquation7(grid, s, r, c, new Delta(0, 1), a, op1, b, op2, cc, d))
+                    {
+                        placed++;
+                    }
+                }
+            }
+        }
+
+        if (placed == 0)
+        {
+            // letzte Sicherung: eine einfache Zeile + mit sauberem Ergebnis
+            int r = rows / 2;
+            int a = 3; int b = 4; int c = a + b;
+            TryCommitEquation5(grid, s, r, startCol, new Delta(0, 1), a, "+", b, c);
+            placed = 1;
+        }
+
+        return Crop(grid, s);
     }
 
     // 5-cell equation generation: A op B = C
@@ -834,16 +972,16 @@ public sealed class MathCrossGeneratorService
         return key switch
         {
             // Easy: 5-cell equations, +/-, numbers 1-20
-            "easy" => new Settings("easy", 1, 20, false, new[] { "+", "-" }, 4, 6, 0.40, 40, 10, 5),
+            "easy" => new Settings("easy", 1, 20, false, new[] { "+", "-" }, 7, 10, 0.40, 40, 10, 5),
 
             // Normal: 5-cell equations, +/-/×/÷, numbers 1-50
-            "normal" => new Settings("normal", 1, 50, false, new[] { "+", "-", "×", "÷" }, 5, 8, 0.35, 100, 12, 5),
+            "normal" => new Settings("normal", 1, 50, false, new[] { "+", "-", "×", "÷" }, 7, 10, 0.35, 100, 12, 5),
 
             // Hard: 7-cell equations (a op b op c = d), +/-/×/÷, numbers 1-999
-            "hard" => new Settings("hard", 1, 999, false, new[] { "+", "-", "×", "÷" }, 4, 6, 0.30, 2000, 16, 7),
+            "hard" => new Settings("hard", 1, 999, false, new[] { "+", "-", "×", "÷" }, 7, 10, 0.30, 2000, 16, 7),
 
             // Master: 7-cell equations, +/-/×/÷, numbers -1 to 999 (negative allowed)
-            "master" => new Settings("master", -99, 999, true, new[] { "+", "-", "×", "÷" }, 4, 7, 0.25, 3000, 18, 7),
+            "master" => new Settings("master", -99, 999, true, new[] { "+", "-", "×", "÷" }, 7, 10, 0.25, 3000, 18, 7),
 
             _ => GetSettings("easy")
         };

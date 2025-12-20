@@ -11,4 +11,41 @@ public sealed class StringNotNullOrEmptyConverter : IValueConverter
         => throw new NotSupportedException();
 }
 
+public sealed class SlotsHasDigitsConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is IEnumerable<string> slots)
+            return slots.Any(s => !string.IsNullOrWhiteSpace(s));
 
+        return false;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+public sealed class SlotsHasNoDigitsConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is IEnumerable<string> slots)
+            return !slots.Any(s => !string.IsNullOrWhiteSpace(s));
+
+        return true;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}
+
+public sealed class StringOrBulletConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        return value is string s && !string.IsNullOrWhiteSpace(s) ? s.Trim() : "•";
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => throw new NotSupportedException();
+}

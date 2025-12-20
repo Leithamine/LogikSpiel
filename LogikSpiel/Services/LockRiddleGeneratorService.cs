@@ -129,9 +129,14 @@ public class LockRiddleGeneratorService
         // Phase 4: Strategisch auffüllen
         AddStrategicHints(hints, signatures, secret, invalid, length, shownDigits, rules, targetHints);
 
+        // Absicherung: Jede Ziffer muss mindestens einmal in den Slots vorkommen
+        EnsureMissingDigitsCovered(hints, signatures, secret, invalid, length, shownDigits, coveredDigits, coveredPositions, targetHints);
+
+        UpdateCoverage(hints, coveredDigits, coveredPositions, secret);
+
         // Qualitätsprüfung (minimal)
         if (hints.Count < 3) return null;
-        if (coveredDigits.Count < Math.Min(length, 4)) return null;
+        if (coveredDigits.Count < length) return null;
 
         return hints;
     }
@@ -345,6 +350,39 @@ public class LockRiddleGeneratorService
         }
 
         return null;
+    }
+
+    // ───────────────────────────────────────────────────────────
+    // Phase 2.5: fehlende Ziffern gezielt abdecken
+    // ───────────────────────────────────────────────────────────
+
+    private void EnsureMissingDigitsCovered(
+        List<LockHint> hints,
+        HashSet<string> signatures,
+        int[] secret,
+        List<int> invalid,
+        int length,
+        int shownDigits,
+        HashSet<int> coveredDigits,
+        HashSet<int> coveredPositions,
+        int maxHints)
+    {
+        var missing = secret.Where(d => !coveredDigits.Contains(d)).ToList();
+        int attempts = 0;
+
+        while (missing.Count > 0 && hints.Count < maxHints + 2 && attempts++ < 80)
+        {
+            int digit = missing[_rnd.Next(missing.Count)];
+            int targetPos = Array.IndexOf(secret, digit);
+            if (targetPos < 0) targetPos = _rnd.Next(length);
+
+            var hint = CreateHint_PositionFocused(length, shownDigits, secret, invalid, targetPos);
+            if (hint != null && TryAddHint(hints, signatures, hint))
+            {
+                UpdateCoverage(hints, coveredDigits, coveredPositions, secret);
+                missing = secret.Where(d => !coveredDigits.Contains(d)).ToList();
+            }
+        }
     }
 
     private LockHint? CreateHint_PositionFocused(
@@ -566,7 +604,22 @@ public class LockRiddleGeneratorService
 
     private LockHint BuildHint(string[] slots, int[] secret)
     {
-        var (well, wrong) = LockHintScoring.Score(slots, secret);
+        // Normalize slot list to avoid nulls/short arrays after Serialization/Deserialization
+        var normalizedSlots = slots
+            .Select(s => string.IsNullOrWhiteSpace(s) ? "" : s.Trim())
+            .ToList();
+
+        if (normalizedSlots.Count < secret.Length)
+        {
+            for (int i = normalizedSlots.Count; i < secret.Length; i++)
+                normalizedSlots.Add("");
+        }
+        else if (normalizedSlots.Count > secret.Length)
+        {
+            normalizedSlots = normalizedSlots.Take(secret.Length).ToList();
+        }
+
+        var (well, wrong) = LockHintScoring.Score(normalizedSlots, secret);
         string Plural(int n, string s1, string s2) => n == 1 ? s1 : s2;
 
         string desc;
@@ -597,8 +650,8 @@ public class LockRiddleGeneratorService
 
         return new LockHint
         {
-            Slots = slots.ToList(),
-            Code = string.Join(" ", slots.Select(s => string.IsNullOrEmpty(s) ? "•" : s)),
+            Slots = normalizedSlots,
+            Code = string.Join(" ", normalizedSlots.Select(s => string.IsNullOrEmpty(s) ? "•" : s)),
             WellPlaced = well,
             WrongPlaced = wrong,
             Description = desc,
