@@ -1,4 +1,6 @@
-﻿namespace LogikSpiel.Services;
+﻿using Microsoft.Maui.Controls;
+
+namespace LogikSpiel.Services;
 
 public sealed class MauiDialogService : IDialogService
 {
@@ -9,7 +11,7 @@ public sealed class MauiDialogService : IDialogService
     {
         var p = CurrentPage;
         if (p is null) return;
-        await p.DisplayAlertAsync(title, message, ok);
+        await p.DisplayAlert(title, message, ok);
     }
 
     // NEU: Implementierung für ConfirmAsync
@@ -18,7 +20,7 @@ public sealed class MauiDialogService : IDialogService
         var p = CurrentPage;
         if (p is null) return false;
         // Ruft den systemeigenen Ja/Nein Dialog auf
-        return await p.DisplayAlertAsync(title, message, accept, cancel);
+        return await p.DisplayAlert(title, message, accept, cancel);
     }
 
     public async Task<string?> PickAsync(string title, string cancel, params string[] options)

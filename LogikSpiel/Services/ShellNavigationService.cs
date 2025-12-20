@@ -1,4 +1,6 @@
-﻿namespace LogikSpiel.Services;
+﻿using Microsoft.Maui.Controls;
+
+namespace LogikSpiel.Services;
 
 public sealed class ShellNavigationService : INavigationService
 {

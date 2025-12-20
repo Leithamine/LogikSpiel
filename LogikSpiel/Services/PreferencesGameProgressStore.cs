@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using LogikSpiel.Model;
+using Microsoft.Maui.Storage;
 
 namespace LogikSpiel.Services;
 
@@ -22,11 +23,33 @@ public sealed class PreferencesGameProgressStore : IGameProgressStore
             return Task.FromResult(new GameProgress());
         }
     }
+
     public Task MarkLevelCompleteAsync(string gameId, string diff, int level)
     {
-        // Dummy Implementierung, damit der Fehler weggeht
+        var progress = Preferences.Get(Key, "");
+        GameProgress state;
+
+        if (string.IsNullOrWhiteSpace(progress))
+        {
+            state = new GameProgress();
+        }
+        else
+        {
+            try
+            {
+                state = JsonSerializer.Deserialize<GameProgress>(progress) ?? new GameProgress();
+            }
+            catch
+            {
+                state = new GameProgress();
+            }
+        }
+
+        state.MarkCompleted(new LevelSpec(gameId, diff, level, 0));
+        Preferences.Set(Key, JsonSerializer.Serialize(state));
         return Task.CompletedTask;
     }
+
     public Task SaveAsync(GameProgress progress, CancellationToken ct = default)
     {
         Preferences.Set(Key, JsonSerializer.Serialize(progress));

@@ -1,6 +1,7 @@
 ﻿using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
+using Microsoft.Maui.Controls;
 
 namespace LogikSpiel.ViewModel;
 
@@ -54,7 +55,7 @@ public sealed class GameHostPageViewModel : ObservableObject
             if (LevelNumber < levels.Count)
                 LevelNumber++;
             else
-                await Shell.Current.DisplayAlertAsync("Fertig!", "Alle Level dieser Schwierigkeit geschafft!", "OK");
+                await Shell.Current.DisplayAlert("Fertig!", "Alle Level dieser Schwierigkeit geschafft!", "OK");
         });
     }
 
