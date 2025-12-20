@@ -188,11 +188,18 @@ public sealed class MathCrossPageViewModel : ObservableObject
         {
             for (int i = 0; i < 50; i++)
             {
-                var g = _generator.GenerateGame(DifficultyKey, seed + i);
-                if (g != null && g.Rows > 0 && g.Equations.Count > 0)
+                try
                 {
-                    newGame = g;
-                    break;
+                    var g = _generator.GenerateGame(DifficultyKey, seed + i);
+                    if (g != null && g.Rows > 0 && g.Equations.Count > 0)
+                    {
+                        newGame = g;
+                        break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"MathCross generation failed: {ex}");
                 }
             }
         });
