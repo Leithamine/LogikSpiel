@@ -19,7 +19,13 @@ public sealed class MathCrossPageViewModel : ObservableObject
 
     private UserProfile? _userProfile;
 
-    public ObservableCollection<MathCrossCellViewModel> FlatCells { get; } = new();
+    // ÄNDERUNG 1: FlatCells als Property mit Notification, um alles auf einmal zu tauschen
+    private ObservableCollection<MathCrossCellViewModel> _flatCells = new();
+    public ObservableCollection<MathCrossCellViewModel> FlatCells
+    {
+        get => _flatCells;
+        set => SetProperty(ref _flatCells, value);
+    }
     public ObservableCollection<ObservableCollection<MathCrossCellViewModel>> GridCells { get; } = new();
 
     private double _cellSize = 40;
@@ -226,10 +232,16 @@ public sealed class MathCrossPageViewModel : ObservableObject
     private void BuildGridViewModels()
     {
         GridCells.Clear();
-        FlatCells.Clear();
+
         SelectedCell = null;
 
-        if (Game == null || Game.Rows <= 0 || Game.Cols <= 0) return;
+        if (Game == null || Game.Rows <= 0 || Game.Cols <= 0)
+        {
+            FlatCells = new ObservableCollection<MathCrossCellViewModel>();
+            return;
+        }
+
+        var tempFlatList = new List<MathCrossCellViewModel>(); // Temporäre Liste
 
         for (int r = 0; r < Game.Rows; r++)
         {
@@ -238,10 +250,13 @@ public sealed class MathCrossPageViewModel : ObservableObject
             {
                 var vm = new MathCrossCellViewModel(Game.Grid[r, c], this);
                 row.Add(vm);
-                FlatCells.Add(vm);
+                tempFlatList.Add(vm); // In temporäre Liste einfügen
             }
             GridCells.Add(row);
         }
+
+        // JETZT erst dem UI Bescheid geben - nur EIN Update!
+        FlatCells = new ObservableCollection<MathCrossCellViewModel>(tempFlatList);
     }
 
     internal void SelectForEdit(MathCrossCellViewModel cellVm) => SelectedCell = cellVm;

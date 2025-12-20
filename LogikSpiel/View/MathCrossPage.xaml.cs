@@ -58,7 +58,6 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable
         BoardGrid.WidthRequest = cols * vm.CellSize + (cols - 1) * hSpace;
         BoardGrid.HeightRequest = rows * vm.CellSize + (rows - 1) * vSpace;
     }
-
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
         if (_isLoaded || BindingContext is not MathCrossPageViewModel vm) return;
@@ -67,9 +66,18 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable
         string diff = query.TryGetValue("difficulty", out var d) ? d?.ToString() ?? "easy" : "easy";
         int level = query.TryGetValue("level", out var l) && int.TryParse(l?.ToString(), out var lv) ? lv : 1;
 
+        // ÄNDERUNG: Try-Catch um den asynchronen Aufruf
         MainThread.BeginInvokeOnMainThread(async () =>
         {
-            await vm.LoadAsync("math_cross", diff, level);
+            try
+            {
+                await vm.LoadAsync("math_cross", diff, level);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Fehler beim Laden: {ex}");
+                // Optional: Hier dem User eine Meldung zeigen, statt abzustürzen
+            }
         });
     }
 }
