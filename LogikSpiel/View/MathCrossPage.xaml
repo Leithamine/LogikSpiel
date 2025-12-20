@@ -1,0 +1,189 @@
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
+             xmlns:conv="clr-namespace:LogikSpiel.Converters"
+             x:Class="LogikSpiel.View.MathCrossPage"
+             x:DataType="vm:MathCrossPageViewModel"
+             NavigationPage.HasNavigationBar="False"
+             Shell.NavBarIsVisible="False">
+
+    <ContentPage.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#BB86FC" Offset="0"/>
+            <GradientStop Color="#03DAC5" Offset="1"/>
+        </LinearGradientBrush>
+    </ContentPage.Background>
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="20" RowSpacing="15">
+
+        <!-- Header -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" HeightRequest="50">
+            <Button Grid.Column="0"
+                    Text="&#x2190;"
+                    Command="{Binding BackCommand}"
+                    BackgroundColor="#20FFFFFF"
+                    TextColor="White"
+                    WidthRequest="40" HeightRequest="40"
+                    CornerRadius="20"
+                    Padding="0"/>
+
+            <Label Grid.Column="1"
+                   Text="{Binding Title}"
+                   TextColor="White"
+                   FontAttributes="Bold"
+                   FontSize="18"
+                   VerticalOptions="Center"
+                   HorizontalOptions="Center"/>
+
+            <Label Grid.Column="2"
+                   Text="{Binding Coins, StringFormat='💰 {0}'}"
+                   TextColor="#FFD700"
+                   FontAttributes="Bold"
+                   VerticalOptions="Center"/>
+        </Grid>
+
+        <!-- Board -->
+        <Grid Grid.Row="1">
+
+            <Border x:Name="BoardHost"
+                    StrokeShape="RoundRectangle 20"
+                    BackgroundColor="Transparent"
+                    Padding="12"
+                    StrokeThickness="0">
+
+                <ScrollView Orientation="Both">
+                    <Grid x:Name="BoardGrid"
+                          HorizontalOptions="Center"
+                          VerticalOptions="Center"
+                          RowSpacing="2"
+                          ColumnSpacing="2"
+                          BindableLayout.ItemsSource="{Binding FlatCells}">
+
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:MathCrossCellViewModel">
+
+                                <Border Grid.Row="{Binding Cell.Row}"
+                                        Grid.Column="{Binding Cell.Col}"
+                                        IsVisible="{Binding Cell.Type, Converter={StaticResource NotEmptyCellConverter}}"
+                                        WidthRequest="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CellSize}"
+                                        HeightRequest="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CellSize}"
+                                        StrokeShape="RoundRectangle 6"
+                                        StrokeThickness="1"
+                                        Stroke="#C9C9C9"
+                                        BackgroundColor="{Binding BackgroundColor}">
+
+                                    <Grid>
+
+                                        <!-- NUMBERS: native phone keyboard -->
+                                        <Entry IsVisible="{Binding ShowNumberEntry}"
+                                               Text="{Binding NumberInput, Mode=TwoWay}"
+                                               Keyboard="Numeric"
+                                               HorizontalTextAlignment="Center"
+                                               VerticalTextAlignment="Center"
+                                               FontAttributes="Bold"
+                                               FontSize="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CellFontSize}"
+                                               TextColor="#222"
+                                               BackgroundColor="Transparent"
+                                               MaxLength="4"
+                                               ClearButtonVisibility="Never"/>
+
+                                        <!-- OPERATORS: button opens picker -->
+                                        <Button IsVisible="{Binding ShowOperatorButton}"
+                                                Text="{Binding OperatorDisplay}"
+                                                Command="{Binding TapOperatorCommand}"
+                                                FontAttributes="Bold"
+                                                FontSize="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CellFontSize}"
+                                                BackgroundColor="Transparent"
+                                                TextColor="#222"
+                                                Padding="0"/>
+
+                                        <!-- READONLY -->
+                                        <Label IsVisible="{Binding ShowReadOnlyLabel}"
+                                               Text="{Binding DisplayText}"
+                                               HorizontalOptions="Center"
+                                               VerticalOptions="Center"
+                                               FontAttributes="Bold"
+                                               FontSize="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CellFontSize}"
+                                               TextColor="#222"/>
+                                    </Grid>
+
+                                </Border>
+
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </Grid>
+                </ScrollView>
+            </Border>
+
+            <!-- ✅ OPERATOR OVERLAY (dim + picker in one grid) -->
+            <Grid IsVisible="{Binding IsOperatorPickerVisible}"
+                  InputTransparent="False">
+
+                <!-- Dim background (click to close) -->
+                <BoxView BackgroundColor="#80000000">
+                    <BoxView.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding CloseAllPickersCommand}" />
+                    </BoxView.GestureRecognizers>
+                </BoxView>
+
+                <!-- Picker sheet -->
+                <Border VerticalOptions="End"
+                        StrokeShape="RoundRectangle 20"
+                        BackgroundColor="#F0FFFFFF"
+                        Padding="20"
+                        Margin="12">
+
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Operator wählen"
+                               FontAttributes="Bold"
+                               TextColor="#333"
+                               HorizontalOptions="Center"/>
+
+                        <FlexLayout BindableLayout.ItemsSource="{Binding AvailableOperators}"
+                                    Wrap="Wrap"
+                                    JustifyContent="Center"
+                                    AlignItems="Center"
+                                    Direction="Row">
+
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="x:String">
+
+                                    <!-- ✅ WICHTIG: Command über RelativeSource (nicht x:Reference) -->
+                                    <Button Text="{Binding .}"
+                                            Margin="6"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.PickOperatorCommand}"
+                                            CommandParameter="{Binding .}"
+                                            WidthRequest="60"
+                                            HeightRequest="60"
+                                            CornerRadius="30"
+                                            BackgroundColor="#6200EE"
+                                            TextColor="White"
+                                            FontAttributes="Bold"
+                                            FontSize="22"
+                                            Padding="0" />
+
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </FlexLayout>
+
+                        <Button Text="Schließen"
+                                Command="{Binding CloseAllPickersCommand}"
+                                BackgroundColor="#DDDDDD"
+                                TextColor="#222"/>
+                    </VerticalStackLayout>
+
+                </Border>
+            </Grid>
+
+        </Grid>
+
+        <!-- Footer -->
+        <Grid Grid.Row="2" ColumnDefinitions="*,*,*,*" ColumnSpacing="10">
+            <Button Grid.Column="0" Text="Prüfen" Command="{Binding CheckCommand}" BackgroundColor="#2ECC71"/>
+            <Button Grid.Column="1" Text="Hint" Command="{Binding HintCommand}" BackgroundColor="#F1C40F"/>
+            <Button Grid.Column="2" Text="Lösen" Command="{Binding SolveCommand}" BackgroundColor="#3498DB"/>
+            <Button Grid.Column="3" Text="Reset" Command="{Binding ResetCommand}" BackgroundColor="#E74C3C"/>
+        </Grid>
+
+    </Grid>
+</ContentPage>

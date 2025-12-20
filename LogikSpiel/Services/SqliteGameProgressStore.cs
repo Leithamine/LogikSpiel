@@ -54,9 +54,21 @@ public sealed class SqliteGameProgressStore : IGameProgressStore
                 Difficulty = diff,
                 LevelNumber = level,
                 IsCompleted = true,
+                Stars = 0,
+                Score = 0,
                 CompletedAt = DateTime.Now
             };
             await _db.InsertAsync(entity);
         }
+        else
+        {
+            if (!existing.IsCompleted)
+            {
+                existing.IsCompleted = true;
+                existing.CompletedAt = DateTime.Now;
+                await _db.UpdateAsync(existing);
+            }
+        }
     }
+
 }
