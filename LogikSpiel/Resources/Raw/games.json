@@ -1,16 +1,5 @@
 ﻿[
     {
-        "Id": "number-classification",
-        "Title": "Number Classification",
-        "Image": "dotnet_bot.png",
-        "LevelCount": 12,
-        "RulesText": [
-            "Du bekommst eine Zahl.",
-            "Wähle alle passenden Eigenschaften (Primzahl, Palindrom, Armstrong, ...).",
-            "Je höher das Level, desto mehr Eigenschaften müssen korrekt erkannt werden."
-        ]
-    },
-    {
         "Id": "codebreaker",
         "Title": "Codebreaker (Mathe)",
         "Image": "dotnet_bot.png",
@@ -21,43 +10,12 @@
         ]
     },
     {
-        "Id": "sequence-decoder",
-        "Title": "Sequenz-Decoder",
+        "Id": "math_cross",
+        "Title": "Math Cross",
         "Image": "dotnet_bot.png",
         "LevelCount": 12,
         "RulesText": [
-            "Du bekommst eine Zahlenfolge.",
-            "Erkenne das Muster und gib die nächste Zahl an."
-        ]
-    },
-    {
-        "Id": "matrix-explorer",
-        "Title": "Matrix-Explorer",
-        "Image": "dotnet_bot.png",
-        "LevelCount": 12,
-        "RulesText": [
-            "Du darfst dich nur rechts oder unten bewegen.",
-            "Ziel: Max/Min Pfad oder Bedingungen erfüllen."
-        ]
-    },
-    {
-        "Id": "n-sum",
-        "Title": "N-Sum Puzzle",
-        "Image": "dotnet_bot.png",
-        "LevelCount": 12,
-        "RulesText": [
-            "Wähle eine Kombination aus Zahlen, die die Zielsumme ergibt.",
-            "Je höher das Level, desto mehr Nebenregeln."
-        ]
-    },
-    {
-        "Id": "function-finder",
-        "Title": "Finde die Funktion",
-        "Image": "dotnet_bot.png",
-        "LevelCount": 12,
-        "RulesText": [
-            "Du bekommst Input/Output Paare.",
-            "Finde die zugrunde liegende Funktion."
+            "Löse mathematische Kreuzworträtsel!"
         ]
     },
     {

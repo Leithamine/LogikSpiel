@@ -8,7 +8,9 @@
             <conv:StringNotNullOrEmptyConverter x:Key="StringNotNullOrEmptyConverter" />
             <conv:LockedToButtonTextConverter x:Key="LockedToButtonTextConverter" />
             <conv:BoolToColorConverter x:Key="BoolToColorConverter"/>
-
+            <conv:CellTypeToColorConverter x:Key="CellTypeToColorConverter"/>
+            <conv:InvertBoolConverter x:Key="InvertBoolConverter"/>
+            
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />

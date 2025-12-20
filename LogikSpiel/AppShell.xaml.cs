@@ -16,5 +16,6 @@ public partial class AppShell : Shell
         Routing.RegisterRoute("GameHost", typeof(GameHostPage));
         Routing.RegisterRoute("Puzzle", typeof(PuzzlePage));
         Routing.RegisterRoute("pascaltriangle", typeof(PascalTrianglePage));
+        Routing.RegisterRoute("mathcross", typeof(MathCrossPage));
     }
 }

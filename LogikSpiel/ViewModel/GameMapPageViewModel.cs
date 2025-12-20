@@ -126,6 +126,8 @@ public sealed class GameMapPageViewModel : ObservableObject
                 // ✅ neues Spiel
                 "pascal_triangle" => "pascaltriangle",
 
+                "math_cross" => "mathcross",
+
                 // Default (bis du weitere Spiele implementierst)
                 _ => "Puzzle"
             };
