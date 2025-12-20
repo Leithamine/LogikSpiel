@@ -46,19 +46,21 @@ public sealed class MathCrossGeneratorService
             var rnd = new Random(seed + attempt * 997);
             int targetEquations = rnd.Next(s.MinEquations, s.MaxEquations + 1);
 
-            var big = CreateEmptyGrid(BigSize, BigSize);
-            var placedCount = 0;
+        try
+        {
+            for (int attempt = 0; attempt < 80 && DateTime.UtcNow < deadline; attempt++)
+            {
+                var rnd = new Random(seed + attempt * 997);
+                int targetEquations = rnd.Next(s.MinEquations, s.MaxEquations + 1);
 
-            // Place first equation
-            if (!TryPlaceFirstEquation(big, rnd, s, ref placedCount)) continue;
+                var big = CreateEmptyGrid(BigSize, BigSize);
+                var placedCount = 0;
 
-            // Grow more equations
-            if (!TryGrowEquations(big, rnd, s, ref placedCount, targetEquations)) continue;
+                // Place first equation
+                if (!TryPlaceFirstEquation(big, rnd, s, ref placedCount)) continue;
 
-            var cropped = Crop(big, s);
-            if (cropped.Rows == 0 || cropped.Cols == 0) continue;
-            if (!IsSingleComponent(cropped)) continue;
-            if (cropped.Equations.Count < s.MinEquations) continue;
+                // Grow more equations
+                if (!TryGrowEquations(big, rnd, s, ref placedCount, targetEquations)) continue;
 
             var finalized = FinalizeGame(cropped, rnd, s);
 
