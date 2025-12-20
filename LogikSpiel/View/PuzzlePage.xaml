@@ -102,9 +102,8 @@
                     <DataTemplate x:DataType="model:LockHint">
                         <Border StrokeShape="RoundRectangle 15" BackgroundColor="Transparent" Padding="15" Margin="0,0,0,10" StrokeThickness="0">
                             <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="15">
-                                <VerticalStackLayout Grid.Column="0" Spacing="4" HorizontalOptions="Center">
+                                <VerticalStackLayout Grid.Column="0" Spacing="4">
                                     <HorizontalStackLayout Spacing="4"
-                                                           IsVisible="{Binding Slots, Converter={StaticResource SlotsHasDigitsConverter}}"
                                                            BindableLayout.ItemsSource="{Binding Slots}">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate x:DataType="x:String">
@@ -112,7 +111,8 @@
                                                         BackgroundColor="White"
                                                         StrokeShape="RoundRectangle 6"
                                                         WidthRequest="22" HeightRequest="28"
-                                                        Padding="0">
+                                                        Padding="0"
+                                                        IsVisible="{Binding ., Converter={StaticResource StringNotNullOrEmptyConverter}}">
                                                     <Label Text="{Binding .}"
                                                            FontAttributes="Bold"
                                                            FontSize="14"
@@ -128,12 +128,10 @@
 
                                     <!-- Fallback-Code-Zeile für Devices, die die Boxen nicht rendern -->
                                     <Label Text="{Binding Code}"
-                                           IsVisible="{Binding Slots, Converter={StaticResource SlotsHasNoDigitsConverter}}"
                                            FontAttributes="Bold"
                                            FontSize="13"
                                            TextColor="#111"
-                                           HorizontalOptions="Center"
-                                           HorizontalTextAlignment="Center"
+                                           HorizontalOptions="Start"
                                            LineBreakMode="NoWrap"/>
                                 </VerticalStackLayout>
 
