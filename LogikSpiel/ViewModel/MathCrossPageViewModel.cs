@@ -205,7 +205,17 @@ public sealed class MathCrossPageViewModel : ObservableObject
         });
 
         if (newGame == null || newGame.Rows == 0)
-            newGame = _generator.GenerateGame("easy", seed);
+        {
+            try
+            {
+                newGame = _generator.GenerateGame("easy", seed);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"MathCross fallback generation failed: {ex}");
+                newGame = new MathCrossGame();
+            }
+        }
 
         Game = newGame ?? new MathCrossGame();
 

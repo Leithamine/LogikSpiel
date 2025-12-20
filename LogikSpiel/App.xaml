@@ -12,6 +12,7 @@
             <conv:InvertBoolConverter x:Key="InvertBoolConverter"/>
             <conv:SlotsHasDigitsConverter x:Key="SlotsHasDigitsConverter" />
             <conv:SlotsHasNoDigitsConverter x:Key="SlotsHasNoDigitsConverter" />
+            <conv:StringOrBulletConverter x:Key="StringOrBulletConverter" />
             
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Resources/Styles/Colors.xaml" />

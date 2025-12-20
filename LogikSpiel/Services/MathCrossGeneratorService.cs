@@ -36,15 +36,10 @@ public sealed class MathCrossGeneratorService
     public MathCrossGame GenerateGame(string difficultyKey, int seed)
     {
         var s = GetSettings(difficultyKey);
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(2.5);
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(1.2);
 
         MathCrossGame? best = null;
         int bestEquationCount = -1;
-
-        for (int attempt = 0; attempt < 120 && DateTime.UtcNow < deadline; attempt++)
-        {
-            var rnd = new Random(seed + attempt * 997);
-            int targetEquations = rnd.Next(s.MinEquations, s.MaxEquations + 1);
 
         try
         {
@@ -62,19 +57,29 @@ public sealed class MathCrossGeneratorService
                 // Grow more equations
                 if (!TryGrowEquations(big, rnd, s, ref placedCount, targetEquations)) continue;
 
-            var finalized = FinalizeGame(cropped, rnd, s);
+                var cropped = Crop(big, s);
+                if (cropped.Rows == 0 || cropped.Cols == 0) continue;
+                if (!IsSingleComponent(cropped)) continue;
+                if (cropped.Equations.Count < s.MinEquations) continue;
 
-            if (cropped.Equations.Count >= targetEquations)
-                return finalized;
+                var finalized = FinalizeGame(cropped, rnd, s);
 
-            if (cropped.Equations.Count > bestEquationCount)
-            {
-                bestEquationCount = cropped.Equations.Count;
-                best = finalized;
+                if (cropped.Equations.Count >= targetEquations)
+                    return finalized;
+
+                if (cropped.Equations.Count > bestEquationCount)
+                {
+                    bestEquationCount = cropped.Equations.Count;
+                    best = finalized;
+                }
             }
         }
+        catch
+        {
+            // swallow and fallback below
+        }
 
-        if (best != null)
+        if (best != null && best.Equations.Count >= s.MinEquations)
             return best;
 
         var fallback = GenerateStripFallback(s, seed);
@@ -593,6 +598,15 @@ public sealed class MathCrossGeneratorService
                     }
                 }
             }
+        }
+
+        if (placed == 0)
+        {
+            // letzte Sicherung: eine einfache Zeile + mit sauberem Ergebnis
+            int r = rows / 2;
+            int a = 3; int b = 4; int c = a + b;
+            TryCommitEquation5(grid, s, r, startCol, new Delta(0, 1), a, "+", b, c);
+            placed = 1;
         }
 
         return Crop(grid, s);
