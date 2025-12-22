@@ -326,6 +326,12 @@ public sealed class MathCrossPageViewModel : ObservableObject
         // Operator abwählen
         SelectedOperator = null;
 
+        // Wenn bereits eine Zelle aktiv ist und eine Zahl erwartet, direkt eintragen
+        if (SelectedCell is { IsEditable: true, IsNumberCell: true })
+        {
+            PlaceNumberToken(token, SelectedCell);
+        }
+
         await Task.CompletedTask;
     }
 
@@ -348,6 +354,12 @@ public sealed class MathCrossPageViewModel : ObservableObject
         // Zahl abwählen
         if (SelectedNumber != null) SelectedNumber.IsSelected = false;
         SelectedNumber = null;
+
+        // Wenn bereits eine Zelle aktiv ist und ein Operator erwartet, direkt eintragen
+        if (SelectedCell is { IsEditable: true, IsOperatorCell: true })
+        {
+            PlaceOperator(normalized, SelectedCell);
+        }
 
         await Task.CompletedTask;
     }
@@ -554,15 +566,17 @@ public sealed class MathCrossPageViewModel : ObservableObject
         if (isSelected) return Color.FromArgb("#FFF3B0");
 
         if (cell.Type == CellType.Equals) return Color.FromArgb("#EDEDED");
-        if (cell.IsGiven) return Color.FromArgb("#E7E7E7");
+        if (cell.IsGiven) return Color.FromArgb("#E0E0E0");
 
-        bool hasInput = !string.IsNullOrWhiteSpace(cell.UserInput);
-
+        // Farbschema laut Anforderung:
+        // - Zahlen-Eingabefelder: Weiß
+        // - Operator-Eingabefelder: Gelb
+        // - Gefüllte / vorgegebene Felder: Grau (oben abgedeckt)
         if (cell.Type == CellType.Operator)
-            return hasInput ? Color.FromArgb("#D8CCFF") : Color.FromArgb("#DCEEFF");
+            return Color.FromArgb("#FFEAA7"); // sanftes Gelb
 
         if (cell.Type == CellType.Number)
-            return hasInput ? Color.FromArgb("#CFF7D3") : Colors.White;
+            return Colors.White;
 
         return Colors.White;
     }
