@@ -14,6 +14,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable
 
         vm.PropertyChanged += (_, e) =>
         {
+            // ✅ Nur Game reicht, Grid wird damit neu berechnet
             if (e.PropertyName == nameof(MathCrossPageViewModel.Game))
                 MainThread.BeginInvokeOnMainThread(BuildBoardGrid);
         };
@@ -24,7 +25,16 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable
     private void BuildBoardGrid()
     {
         if (BindingContext is not MathCrossPageViewModel vm || vm.Game == null) return;
-        if (BoardHost.Width <= 0 || BoardHost.Height <= 0) return;
+
+        if (BoardHost.Width <= 0 || BoardHost.Height <= 0)
+        {
+            MainThread.BeginInvokeOnMainThread(async () =>
+            {
+                await Task.Delay(80);
+                BuildBoardGrid();
+            });
+            return;
+        }
 
         int rows = Math.Max(1, vm.Game.Rows);
         int cols = Math.Max(1, vm.Game.Cols);
@@ -32,19 +42,17 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable
         double hSpace = BoardGrid.ColumnSpacing;
         double vSpace = BoardGrid.RowSpacing;
 
-        double availableWidth = BoardHost.Width - BoardHost.Padding.HorizontalThickness;
-        double availableHeight = BoardHost.Height - BoardHost.Padding.VerticalThickness;
+        // Ziel: große Zellen, scrollen ist erlaubt.
+        int visibleColsTarget = vm.Game.UseExtendedEquations ? 7 : 6;
 
-        double cellW = (availableWidth - (cols - 1) * hSpace) / cols;
-        double cellH = (availableHeight - (rows - 1) * vSpace) / rows;
+        const double safety = 30;
+        double availableWidth = Math.Max(0, BoardHost.Width - safety);
 
-        double size = Math.Floor(Math.Min(cellW, cellH));
+        double cellW = (availableWidth - (visibleColsTarget - 1) * hSpace) / visibleColsTarget;
 
-        // Adjust cell size based on grid complexity
-        // For 7-cell equations (Hard/Master), cells might need to be smaller
-        double maxSize = vm.Game.UseExtendedEquations ? 60 : 80;
-        vm.CellSize = Math.Clamp(size, 30, maxSize);
-        vm.CellFontSize = vm.CellSize * 0.38;
+        double max = vm.Game.UseExtendedEquations ? 92 : 110;
+        vm.CellSize = Math.Clamp(Math.Floor(cellW), 44, max);
+        vm.CellFontSize = vm.CellSize * 0.42;
 
         BoardGrid.RowDefinitions.Clear();
         BoardGrid.ColumnDefinitions.Clear();
@@ -58,6 +66,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable
         BoardGrid.WidthRequest = cols * vm.CellSize + (cols - 1) * hSpace;
         BoardGrid.HeightRequest = rows * vm.CellSize + (rows - 1) * vSpace;
     }
+
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
         if (_isLoaded || BindingContext is not MathCrossPageViewModel vm) return;
@@ -66,18 +75,10 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable
         string diff = query.TryGetValue("difficulty", out var d) ? d?.ToString() ?? "easy" : "easy";
         int level = query.TryGetValue("level", out var l) && int.TryParse(l?.ToString(), out var lv) ? lv : 1;
 
-        // ÄNDERUNG: Try-Catch um den asynchronen Aufruf
         MainThread.BeginInvokeOnMainThread(async () =>
         {
-            try
-            {
-                await vm.LoadAsync("math_cross", diff, level);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Fehler beim Laden: {ex}");
-                // Optional: Hier dem User eine Meldung zeigen, statt abzustürzen
-            }
+            try { await vm.LoadAsync("math_cross", diff, level); }
+            catch (Exception ex) { await DisplayAlertAsync("Fehler", ex.Message, "OK"); }
         });
     }
 }

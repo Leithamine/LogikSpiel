@@ -31,14 +31,16 @@ public class MathEquation
     public int StartCol { get; set; }
     public bool IsHorizontal { get; set; }
 
-    // 5 cells: A op B = C (Easy/Normal)
-    // 7 cells: A op1 B op2 C = D (Hard/Master)
+    // 5 cells: A op B = C
+    // 7 cells: A op1 B op2 C = D
+    // 9 cells: A op1 B op2 C op3 D = E
     public List<(int row, int col)> Cells { get; set; } = new();
 
     public string Operator { get; set; } = "";
-    public string Operator2 { get; set; } = ""; // For 7-cell equations
+    public string Operator2 { get; set; } = "";
+    public string Operator3 { get; set; } = ""; // ✅ neu für Master (9)
 
-    public int CellCount => Cells.Count; // 5 or 7
+    public int CellCount => Cells.Count; // 5 / 7 / 9
 }
 
 public class MathCrossGame
@@ -52,8 +54,11 @@ public class MathCrossGame
     public string Difficulty { get; set; } = "easy";
     public int GivenCells { get; set; }
 
-    // True for Hard/Master (7-cell equations)
+    // True for Hard/Master (>=7)
     public bool UseExtendedEquations { get; set; }
+
+    // ✅ neu: echte Länge (5/7/9)
+    public int EquationLength { get; set; } = 5;
 
     public int GridSize => System.Math.Max(Rows, Cols);
 }
