@@ -25,14 +25,12 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
 
             if (vm.IsCelebrating)
             {
-                // ?? Animation “neu starten” (best effort)
                 if (FireworksView != null)
                 {
                     FireworksView.IsAnimationEnabled = false;
                     FireworksView.IsAnimationEnabled = true;
                 }
 
-                // kleines Pop fürs Schloss im Overlay
                 if (OpenedLockImage != null)
                 {
                     OpenedLockImage.Scale = 0.9;
@@ -78,14 +76,12 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
             return;
         }
 
-        // Backspace -> Fokus zurück
         if (!string.IsNullOrEmpty(e.OldTextValue) && e.OldTextValue.Length == 1 && string.IsNullOrEmpty(digitsOnly))
         {
             FocusIndex(dvm.Index - 1);
             return;
         }
 
-        // 1 Ziffer -> Fokus vor
         if (digitsOnly.Length == 1)
             FocusIndex(dvm.Index + 1);
     }

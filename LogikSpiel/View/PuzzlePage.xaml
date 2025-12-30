@@ -16,10 +16,8 @@
         </LinearGradientBrush>
     </ContentPage.Background>
 
-    <!-- ✅ 3 Rows: Header / Input / Hints -->
     <Grid RowDefinitions="Auto, Auto, *" Padding="20" RowSpacing="15">
 
-        <!-- Header -->
         <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" HeightRequest="50">
             <Button Grid.Column="0" Text="&#x2190;" Command="{Binding BackCommand}"
                     IsEnabled="{Binding IsNotBusy}"
@@ -35,21 +33,14 @@
                    VerticalOptions="Center"/>
         </Grid>
 
-        <!-- Input Panel -->
         <Border Grid.Row="1" StrokeShape="RoundRectangle 20" BackgroundColor="Transparent" Padding="20" StrokeThickness="0">
             <VerticalStackLayout Spacing="10">
                 <Label Text="GIB DEN CODE EIN" FontSize="12" TextColor="#555" HorizontalOptions="Center" CharacterSpacing="2"/>
 
-                <!-- ✅ Schloss: geschlossen beim Laden, öffnet sich bei Erfolg -->
                 <Image Source="{Binding LockImageSource}"
                        HeightRequest="60"
                        HorizontalOptions="Center"
                        Margin="0,-2,0,0"/>
-
-                <!--<Label Text="{Binding SecretSolution, StringFormat='Lösung (Debug): {0}'}"
-                       IsVisible="{Binding ShowSolutionForDebug}"
-                       FontSize="12" TextColor="#333" FontAttributes="Bold"
-                       HorizontalOptions="Center"/>-->
 
                 <HorizontalStackLayout BindableLayout.ItemsSource="{Binding InputDigits}"
                                        Spacing="10" HorizontalOptions="Center">
@@ -74,7 +65,6 @@
                     </BindableLayout.ItemTemplate>
                 </HorizontalStackLayout>
 
-                <!-- ✅ Buttons (bleiben wo sie sind – im Input-Bereich) -->
                 <Grid ColumnDefinitions="*, *" ColumnSpacing="15" Margin="0,8,0,0">
                     <Button Grid.Column="0" Text="💡 Tipp (10)"
                             Command="{Binding HintCommand}"
@@ -91,7 +81,6 @@
             </VerticalStackLayout>
         </Border>
 
-        <!-- Hints -->
         <Grid Grid.Row="2">
             <CollectionView ItemsSource="{Binding Hints}" Margin="0,5">
                 <CollectionView.Header>
@@ -136,7 +125,6 @@
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
-            <!-- Busy Overlay -->
             <Grid IsVisible="{Binding IsBusy}" BackgroundColor="#66000000">
                 <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10">
                     <ActivityIndicator IsRunning="True" />
@@ -145,7 +133,6 @@
             </Grid>
         </Grid>
 
-        <!-- ✅ SUCCESS OVERLAY (wie UnlockSuccessPage, aber in PuzzlePage) -->
         <Grid Grid.RowSpan="3"
               IsVisible="{Binding IsCelebrating}"
               BackgroundColor="#01000000"

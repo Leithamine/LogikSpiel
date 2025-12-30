@@ -147,7 +147,6 @@ public sealed class PuzzlePageViewModel : ObservableObject
         {
             IsBusy = true;
 
-            // Reset UI State
             IsCelebrating = false;
             RewardText = "";
             LockImageSource = "closedlock.png";
@@ -162,12 +161,17 @@ public sealed class PuzzlePageViewModel : ObservableObject
         var saved = await _riddleState.TryLoadAsync(GameId, DifficultyKey, LevelNumber);
 
         LockRiddleGame game;
-        if (saved != null)
+
+        // ✅ WICHTIG: gespeicherte Rätsel nur verwenden, wenn sie konsistent + eindeutig sind
+        if (saved != null && _riddleGenerator.IsGameValid(saved))
         {
             game = saved;
         }
         else
         {
+            if (saved != null)
+                await _riddleState.ClearAsync(GameId, DifficultyKey, LevelNumber);
+
             game = await Task.Run(() => _riddleGenerator.GenerateGame(DifficultyKey));
             await _riddleState.SaveAsync(GameId, DifficultyKey, LevelNumber, game);
         }
@@ -231,7 +235,6 @@ public sealed class PuzzlePageViewModel : ObservableObject
             return;
         }
 
-        // ✅ korrekt -> Coins/Progress
         int reward = RewardForDifficulty(DifficultyKey);
 
         if (_userProfile != null)
@@ -246,10 +249,8 @@ public sealed class PuzzlePageViewModel : ObservableObject
         await _progressStore.MarkLevelCompleteAsync(GameId, DifficultyKey, completedLevel);
         await _riddleState.ClearAsync(GameId, DifficultyKey, completedLevel);
 
-        // ✅ Erfolg direkt in PuzzlePage anzeigen (ohne UnlockSuccessPage)
         await PlaySuccessOverlayAsync(reward);
 
-        // ✅ danach automatisch nächstes Level
         LevelNumber = completedLevel + 1;
         await StartNewRoundAsync();
     }
@@ -265,7 +266,6 @@ public sealed class PuzzlePageViewModel : ObservableObject
             IsCelebrating = true;
         });
 
-        // Dauer der Animation (anpassen wie du willst)
         await Task.Delay(2600);
 
         if (token != _genToken) return;
@@ -302,7 +302,6 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
     private static LockHint NormalizeHint(LockHint hint, int codeLength)
     {
-        // Null/Whitespace-Slots sauber auffüllen, damit sie in der UI sichtbar sind
         var slots = hint.Slots ?? new List<string>();
         var normalized = Enumerable.Range(0, codeLength)
             .Select(i => i < slots.Count && !string.IsNullOrWhiteSpace(slots[i]) ? slots[i].Trim() : "")
