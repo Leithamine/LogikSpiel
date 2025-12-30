@@ -1,4 +1,5 @@
 ﻿using LogikSpiel.Services;
+using LogikSpiel.Services.MathHangman;
 using LogikSpiel.View;
 using LogikSpiel.ViewModel;
 using SkiaSharp.Views.Maui.Controls.Hosting;
@@ -25,7 +26,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IRiddleStateStore, RiddleStateStore>();
         builder.Services.AddSingleton<PascalTriangleGeneratorService>();
         builder.Services.AddSingleton<MathCrossGeneratorService>();
-
+        builder.Services.AddSingleton<IMathHangmanService, MathHangmanService>();
         // ViewModels
         builder.Services.AddTransient<MainPageViewModel>();
         builder.Services.AddTransient<ProfileViewModel>();
@@ -36,7 +37,7 @@ public static class MauiProgram
         builder.Services.AddTransient<PuzzlePageViewModel>();
         builder.Services.AddTransient<PascalTrianglePageViewModel>();
         builder.Services.AddTransient<MathCrossPageViewModel>();
-
+        builder.Services.AddTransient<MathHangmanPageViewModel>();
         // Pages
         builder.Services.AddTransient<LearnPage>();
         builder.Services.AddTransient<GameHostPage>();
@@ -45,7 +46,7 @@ public static class MauiProgram
         builder.Services.AddTransient<PuzzlePage>();
         builder.Services.AddTransient<PascalTrianglePage>();
         builder.Services.AddTransient<MathCrossPage>();
-
+        builder.Services.AddTransient<MathHangmanPage>();
         // Shell
         builder.Services.AddSingleton<AppShell>();
 

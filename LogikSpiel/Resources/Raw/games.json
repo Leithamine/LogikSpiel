@@ -28,5 +28,16 @@
             "Finde zuerst den Pfad mit der MAXIMALEN Summe, danach den mit der MINIMALEN Summe.",
             "Erst wenn beide gelöst sind, ist das Level abgeschlossen."
         ]
+    },
+    {
+        "Id": "math_hangman",
+        "Title": "Mathe Hangman",
+        "Image": "dotnet_bot.png",
+        "LevelCount": 30,
+        "RulesText": [
+            "Errate eine geheime Zahl.",
+            "Bei falschen Versuchen wird der Hangman Teil für Teil gezeichnet.",
+            "Eigenschaften der Zahl werden nach und nach aufgedeckt oder im Shop gekauft."
+        ]
     }
 ]

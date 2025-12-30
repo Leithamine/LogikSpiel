@@ -41,6 +41,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Model\MathHangman\NumberProperty.cs" />
+	  <Compile Remove="Model\MathHangman\ShopHint.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
 	  <MauiAsset Remove="Resources\Raw\fireworks.json" />
 	  <MauiAsset Remove="Resources\Raw\game_tiles.json" />
 	  <MauiAsset Remove="Resources\Raw\map_complex.json" />
@@ -86,6 +91,9 @@
 		</MauiXaml>
 		<MauiXaml Update="View\MathCrossPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
+		<MauiXaml Update="View\MathHangmanPage.xaml">
+		  <Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
 		<MauiXaml Update="View\OnboardingPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
