@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
+             x:Class="LogikSpiel.View.MathHangmanPage"
+             x:DataType="vm:MathHangmanPageViewModel"
+             NavigationPage.HasNavigationBar="False"
+             Shell.NavBarIsVisible="False"
+             x:Name="ThisPage">
+
+    <ContentPage.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#BB86FC" Offset="0"/>
+            <GradientStop Color="#03DAC5" Offset="1"/>
+        </LinearGradientBrush>
+    </ContentPage.Background>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="12" RowSpacing="10">
+
+        <!-- HEADER -->
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" HeightRequest="50">
+            <Button Grid.Column="0" Text="←" Command="{Binding BackCommand}"
+                    BackgroundColor="#20FFFFFF"
+                    TextColor="White" FontAttributes="Bold" FontSize="20"
+                    WidthRequest="44" HeightRequest="44" CornerRadius="22" Padding="0"/>
+
+            <VerticalStackLayout Grid.Column="1" Spacing="0" HorizontalOptions="Center" VerticalOptions="Center">
+                <Label Text="Mathe Hangman" TextColor="White" FontAttributes="Bold" FontSize="18" HorizontalOptions="Center"/>
+                <Label Text="{Binding DifficultyText}" TextColor="White" FontSize="12" Opacity="0.9" HorizontalOptions="Center"/>
+            </VerticalStackLayout>
+
+            <Label Grid.Column="2" Text="{Binding Coins, StringFormat='💰 {0}'}"
+                   TextColor="#FFD700" FontAttributes="Bold" FontSize="15" VerticalOptions="Center"/>
+        </Grid>
+
+        <!-- HANGMAN BOX - Transparent -->
+        <Border Grid.Row="1"
+                StrokeShape="RoundRectangle 16"
+                BackgroundColor="#20FFFFFF"
+                StrokeThickness="0"
+                Padding="12"
+                HeightRequest="280">
+            <Grid RowDefinitions="Auto,*" RowSpacing="8">
+
+                <!-- Leben Anzeige -->
+                <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
+                    <Label Text="{Binding Lives, StringFormat='❤️ {0}'}"
+                           TextColor="White" FontAttributes="Bold" FontSize="16"/>
+                    <Label Grid.Column="1"
+                           Text="{Binding WrongCount, StringFormat='❌ {0}/6'}"
+                           TextColor="White" FontSize="16"/>
+                </Grid>
+
+                <!-- Hangman Zeichnung - füllt die Box -->
+                <GraphicsView Grid.Row="1" 
+                              x:Name="HangmanView"
+                              HorizontalOptions="Fill"
+                              VerticalOptions="Fill"/>
+
+            </Grid>
+        </Border>
+
+        <!-- EIGENSCHAFTEN - Transparent -->
+        <Border Grid.Row="2"
+                StrokeShape="RoundRectangle 16"
+                BackgroundColor="#20FFFFFF"
+                StrokeThickness="0"
+                Padding="12">
+
+            <Grid RowDefinitions="Auto,Auto,*" RowSpacing="8">
+
+                <Label Text="✨ Eigenschaften der gesuchten Zahl"
+                       TextColor="White" FontAttributes="Bold" FontSize="15"/>
+
+                <!-- Aktueller Hinweis -->
+                <Border Grid.Row="1"
+                        StrokeShape="RoundRectangle 10"
+                        BackgroundColor="#40FFEB3B"
+                        StrokeThickness="0"
+                        Padding="10"
+                        IsVisible="{Binding HasHint}">
+                    <Label Text="{Binding CurrentHint}"
+                           TextColor="White" FontAttributes="Bold" FontSize="14"/>
+                </Border>
+
+                <!-- Eigenschaften Liste -->
+                <CollectionView Grid.Row="2" ItemsSource="{Binding VisibleProperties}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="vm:NumberPropertyVM">
+                            <Border StrokeShape="RoundRectangle 12"
+                                    BackgroundColor="#30FFFFFF"
+                                    StrokeThickness="0"
+                                    Padding="12"
+                                    Margin="0,4">
+
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                                    <Label Text="{Binding TitleLine}" 
+                                           TextColor="White" 
+                                           FontAttributes="Bold" 
+                                           FontSize="14"
+                                           VerticalOptions="Center"/>
+
+                                    <Button Grid.Column="1"
+                                            Text="?"
+                                            WidthRequest="36" HeightRequest="36"
+                                            CornerRadius="18"
+                                            BackgroundColor="#60FFFFFF"
+                                            TextColor="White"
+                                            FontAttributes="Bold"
+                                            FontSize="16"
+                                            Padding="0"
+                                            Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.ExplainPropertyCommand}"
+                                            CommandParameter="{Binding .}" />
+                                </Grid>
+
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+            </Grid>
+        </Border>
+
+        <!-- BOTTOM: Eingabe + Buttons - Transparent -->
+        <Border Grid.Row="3"
+                StrokeShape="RoundRectangle 16"
+                BackgroundColor="#20FFFFFF"
+                StrokeThickness="0"
+                Padding="12">
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+
+                <Entry Grid.Column="0"
+                       Text="{Binding GuessText}"
+                       Placeholder="Zahl eingeben..."
+                       Keyboard="Numeric"
+                       BackgroundColor="#40FFFFFF"
+                       TextColor="White"
+                       PlaceholderColor="#AAFFFFFF"
+                       HeightRequest="48"
+                       FontSize="16"/>
+
+                <Button Grid.Column="1"
+                        Text="✓"
+                        Command="{Binding GuessCommand}"
+                        BackgroundColor="#4CAF50"
+                        TextColor="White"
+                        FontAttributes="Bold"
+                        CornerRadius="12"
+                        WidthRequest="52"
+                        HeightRequest="48"
+                        FontSize="20"/>
+
+                <Button Grid.Column="2"
+                        Text="💡"
+                        Command="{Binding HintCommand}"
+                        BackgroundColor="#FF9800"
+                        TextColor="White"
+                        FontAttributes="Bold"
+                        CornerRadius="12"
+                        WidthRequest="52"
+                        HeightRequest="48"
+                        FontSize="20"/>
+
+            </Grid>
+        </Border>
+
+    </Grid>
+</ContentPage>
