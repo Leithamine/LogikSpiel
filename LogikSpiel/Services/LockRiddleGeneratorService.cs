@@ -1,20 +1,11 @@
-﻿#nullable enable
+﻿// File: Services/LockRiddleGeneratorService.cs
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using LogikSpiel.Model;
 
 namespace LogikSpiel.Services;
-
-// ────────────────────────────────────────────────────────────────
-// LockRiddleGeneratorService.cs
-// ────────────────────────────────────────────────────────────────
-// Wichtige Fixes gegenüber deinen letzten Versionen:
-// 1) Hint-Deduplizierung (Signature) ist POSITIONSBASIERT (SlotsKey),
-//    damit wertvolle Positions-Constraints nicht wegfallen.
-// 2) BuildHint berechnet Well/Wrong immer aus Slots vs. Secret (Wahrheit).
-// 3) ConstraintSolver.ValidateSolution nutzt DIESELBE Scoring-Logik (shared).
-// ────────────────────────────────────────────────────────────────
 
 public class LockRiddleGeneratorService
 {
@@ -23,7 +14,7 @@ public class LockRiddleGeneratorService
     public LockRiddleGame GenerateGame(string difficultyKey)
     {
         var (length, shownDigits, targetHints, rules) = GetSettings(difficultyKey);
-        return GenerateIntelligent(length, shownDigits, targetHints, rules);
+        return GenerateWithCoverageGuarantee(length, shownDigits, targetHints, rules);
     }
 
     private static (int length, int shownDigits, int targetHints, List<(int well, int wrong)> rules) GetSettings(string key)
@@ -32,57 +23,38 @@ public class LockRiddleGeneratorService
 
         return key switch
         {
-            "easy" => (3, 3, 4,
-            [
-                (0,0), (1,0), (0,1), (0,2), (2,0)
-            ]),
-
-            "normal" => (4, 4, 5,
-            [
-                (0,0), (1,0), (0,1), (0,2), (2,0), (1,1)
-            ]),
-
-            "hard" => (5, 5, 7,
-            [
-                (0,0), (1,0), (0,1), (2,0), (0,2), (1,1), (2,1), (1,2)
-            ]),
-
-            "master" => (6, 6, 8,
-            [
-                (0,0), (1,0), (0,1), (2,0), (0,2), (1,1), (2,1), (1,2), (0,3), (3,0)
-            ]),
-
-            _ => (4, 4, 5,
-            [
-                (0,0), (1,0), (0,1), (0,2), (2,0), (1,1)
-            ])
+            "easy" => (3, 3, 4, [(0, 0), (1, 0), (0, 1), (0, 2), (2, 0)]),
+            "normal" => (4, 4, 5, [(0, 0), (1, 0), (0, 1), (0, 2), (2, 0), (1, 1)]),
+            "hard" => (5, 5, 7, [(0, 0), (1, 0), (0, 1), (2, 0), (0, 2), (1, 1), (2, 1), (1, 2)]),
+            "master" => (6, 6, 8, [(0, 0), (1, 0), (0, 1), (2, 0), (0, 2), (1, 1), (2, 1), (1, 2), (0, 3), (3, 0)]),
+            _ => (4, 4, 5, [(0, 0), (1, 0), (0, 1), (0, 2), (2, 0), (1, 1)])
         };
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // INTELLIGENTE GENERIERUNG
-    // ═══════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════
+    // HAUPTALGORITHMUS MIT COVERAGE-GARANTIE
+    // ═══════════════════════════════════════════════════════════════
 
-    private LockRiddleGame GenerateIntelligent(int length, int shownDigits, int targetHints, List<(int well, int wrong)> rules)
+    private LockRiddleGame GenerateWithCoverageGuarantee(
+        int length, int shownDigits, int targetHints, List<(int well, int wrong)> rules)
     {
         length = Math.Clamp(length, 3, 6);
-        shownDigits = Math.Clamp(shownDigits, 1, length);
+        shownDigits = Math.Clamp(shownDigits, length, length);
         targetHints = Math.Clamp(targetHints, 3, 12);
 
-        for (int attempt = 0; attempt < 200; attempt++)
+        for (int attempt = 0; attempt < 300; attempt++)
         {
-            // 1) Secret + invalid generieren (unique digits)
             var (secret, invalid) = GenerateSecret(length);
+            var hints = BuildHintsWithCoverageGuarantee(secret, invalid, length, targetHints, rules);
 
-            // 2) Hints bauen
-            var hints = BuildIntelligentHints(secret, invalid, length, shownDigits, targetHints, rules);
-            if (hints == null || hints.Count < 3) continue;
+            if (hints == null || hints.Count < 3)
+                continue;
 
-            // 3) Eindeutigkeitscheck
+            // Eindeutigkeitscheck
             var solver = new ConstraintSolver(length, hints);
             var solutions = solver.FindAllSolutions(maxSolutions: 2);
-
             string secretStr = string.Concat(secret);
+
             if (solutions.Count == 1 && solutions[0] == secretStr)
             {
                 return new LockRiddleGame
@@ -94,479 +66,335 @@ public class LockRiddleGeneratorService
             }
         }
 
-        return GenerateFallbackGame(length, shownDigits, targetHints);
+        return GenerateSafeFallback(length, targetHints);
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // INTELLIGENTE HINT-GENERIERUNG (Phasen)
-    // ═══════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════
+    // HINT-GENERIERUNG MIT COVERAGE-GARANTIE
+    // ═══════════════════════════════════════════════════════════════
 
-    private List<LockHint>? BuildIntelligentHints(
-        int[] secret,
-        List<int> invalid,
-        int length,
-        int shownDigits,
-        int targetHints,
-        List<(int well, int wrong)> rules)
+    private List<LockHint>? BuildHintsWithCoverageGuarantee(
+        int[] secret, List<int> invalid, int length, int targetHints, List<(int well, int wrong)> rules)
     {
         var hints = new List<LockHint>();
-        var signatures = new HashSet<string>(); // positionsbasierte Signatur!
+        var signatures = new HashSet<string>();
         var coveredDigits = new HashSet<int>();
         var coveredPositions = new HashSet<int>();
 
-        // Phase 1: Basis
-        AddBaseHints(hints, signatures, secret, invalid, length, shownDigits, targetHints);
-        UpdateCoverage(hints, coveredDigits, coveredPositions, secret);
+        // ══════════════════════════════════════════════════════════
+        // PHASE 1: COVERAGE - Jede Secret-Ziffer MUSS vorkommen!
+        // ══════════════════════════════════════════════════════════
 
-        // Phase 2: Coverage (alle Secret-Ziffern sollen vorkommen)
-        AddCoverageHints(hints, signatures, secret, invalid, length, shownDigits, coveredDigits, targetHints);
-        UpdateCoverage(hints, coveredDigits, coveredPositions, secret);
+        for (int pos = 0; pos < length; pos++)
+        {
+            if (coveredDigits.Contains(secret[pos]) && coveredPositions.Contains(pos))
+                continue;
 
-        // Phase 3: Positions-Hints
-        AddPositionHints(hints, signatures, secret, invalid, length, shownDigits, coveredPositions, targetHints);
-        UpdateCoverage(hints, coveredDigits, coveredPositions, secret);
+            var hint = CreateHintForPosition(secret, invalid, length, pos, coveredDigits);
+            if (hint != null && TryAddHint(hints, signatures, hint))
+            {
+                UpdateCoverage(hint, coveredDigits, coveredPositions, secret);
+            }
+        }
 
-        // Phase 4: Strategisch auffüllen
-        AddStrategicHints(hints, signatures, secret, invalid, length, shownDigits, rules, targetHints);
+        // Prüfe ob alle Ziffern abgedeckt sind
+        if (coveredDigits.Count < length)
+        {
+            foreach (int digit in secret.Where(d => !coveredDigits.Contains(d)))
+            {
+                var hint = CreateHintShowingDigit(secret, invalid, length, digit);
+                if (hint != null && TryAddHint(hints, signatures, hint))
+                {
+                    UpdateCoverage(hint, coveredDigits, coveredPositions, secret);
+                }
+            }
+        }
 
-        // Absicherung: Jede Ziffer muss mindestens einmal in den Slots vorkommen
-        EnsureMissingDigitsCovered(hints, signatures, secret, invalid, length, shownDigits, coveredDigits, coveredPositions, targetHints);
+        if (coveredDigits.Count < length)
+            return null;
 
-        UpdateCoverage(hints, coveredDigits, coveredPositions, secret);
+        // ══════════════════════════════════════════════════════════
+        // PHASE 2: MAXIMAL 1x "Keine Zahl korrekt"
+        // ══════════════════════════════════════════════════════════
 
-        // Qualitätsprüfung (minimal)
-        if (hints.Count < 3) return null;
-        if (coveredDigits.Count < length) return null;
+        if (hints.Count < targetHints)
+        {
+            var nothingHint = CreateHintNothingCorrect(invalid, length);
+            TryAddHint(hints, signatures, nothingHint);
+        }
+
+        // ══════════════════════════════════════════════════════════
+        // PHASE 3: VARIANZ - Zusätzliche Hints nach Regeln
+        // ══════════════════════════════════════════════════════════
+
+        var shuffledRules = rules
+            .Where(r => !(r.well == 0 && r.wrong == 0))
+            .OrderBy(_ => _rnd.Next())
+            .ToList();
+
+        foreach (var (well, wrong) in shuffledRules)
+        {
+            if (hints.Count >= targetHints) break;
+
+            var hint = CreateHintByRule(secret, invalid, length, well, wrong);
+            if (hint != null)
+            {
+                TryAddHint(hints, signatures, hint);
+            }
+        }
+
+        // ══════════════════════════════════════════════════════════
+        // PHASE 4: AUFFÜLLEN falls nötig
+        // ══════════════════════════════════════════════════════════
+
+        int fillAttempts = 0;
+        while (hints.Count < targetHints && fillAttempts++ < 30)
+        {
+            var validRules = rules.Where(r => r.well + r.wrong > 0 && r.well + r.wrong <= length).ToList();
+            if (validRules.Count == 0) break;
+
+            var rule = validRules[_rnd.Next(validRules.Count)];
+            var hint = CreateHintByRule(secret, invalid, length, rule.well, rule.wrong);
+            if (hint != null)
+            {
+                TryAddHint(hints, signatures, hint);
+            }
+        }
 
         return hints;
     }
 
-    // ───────────────────────────────────────────────────────────
-    // Phase 1: Basis-Hints
-    // ───────────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════
+    // HINT-ERSTELLER
+    // ═══════════════════════════════════════════════════════════════
 
-    private void AddBaseHints(
-        List<LockHint> hints,
-        HashSet<string> signatures,
-        int[] secret,
-        List<int> invalid,
-        int length,
-        int shownDigits,
-        int maxHints)
+    /// <summary>
+    /// Erstellt einen Hint der garantiert die Ziffer an Position 'targetPos' enthält.
+    /// </summary>
+    private LockHint CreateHintForPosition(int[] secret, List<int> invalid, int length, int targetPos, HashSet<int> alreadyCovered)
     {
-        if (hints.Count >= maxHints) return;
+        var slots = new string[length];
+        var usedDigits = new HashSet<int>();
 
-        // Immer: Ein "nichts korrekt"
-        TryAddHint(hints, signatures, CreateHint_NothingCorrect(length, shownDigits, secret, invalid));
+        // Entscheide: soll die Ziel-Ziffer korrekt platziert werden?
+        bool placeCorrectly = _rnd.Next(3) > 0; // 66% korrekt platziert
 
-        if (hints.Count >= maxHints) return;
-
-        // Starter
-        if (length <= 4)
+        if (placeCorrectly)
         {
-            TryAddHint(hints, signatures, CreateHint_ByRule(length, shownDigits, secret, invalid, 1, 0));
+            slots[targetPos] = secret[targetPos].ToString();
+            usedDigits.Add(secret[targetPos]);
         }
         else
         {
-            TryAddHint(hints, signatures, CreateHint_ByRule(length, shownDigits, secret, invalid, 1, 0));
-            if (hints.Count < maxHints)
-                TryAddHint(hints, signatures, CreateHint_ByRule(length, shownDigits, secret, invalid, 0, 1));
-        }
-    }
-
-    // ───────────────────────────────────────────────────────────
-    // Phase 2: Coverage-Hints
-    // ───────────────────────────────────────────────────────────
-
-    private void AddCoverageHints(
-        List<LockHint> hints,
-        HashSet<string> signatures,
-        int[] secret,
-        List<int> invalid,
-        int length,
-        int shownDigits,
-        HashSet<int> coveredDigits,
-        int maxHints)
-    {
-        var missing = secret.Where(d => !coveredDigits.Contains(d)).ToHashSet();
-        int attempts = 0;
-
-        while (missing.Count > 0 && hints.Count < maxHints && attempts < 50)
-        {
-            attempts++;
-
-            int countToReveal = Math.Min(missing.Count, _rnd.Next(1, 3));
-            var digitsToReveal = missing.OrderBy(_ => _rnd.Next()).Take(countToReveal).ToList();
-
-            var hint = CreateHint_CoverageOptimized(length, shownDigits, secret, invalid, digitsToReveal);
-
-            if (hint != null && TryAddHint(hints, signatures, hint))
+            // Ziffer an falscher Position
+            var wrongPositions = Enumerable.Range(0, length).Where(p => p != targetPos).ToList();
+            if (wrongPositions.Count > 0)
             {
-                foreach (var slot in hint.Slots)
-                {
-                    if (int.TryParse(slot, out int d) && missing.Contains(d))
-                        missing.Remove(d);
-                }
+                int wrongPos = wrongPositions[_rnd.Next(wrongPositions.Count)];
+                slots[wrongPos] = secret[targetPos].ToString();
+                usedDigits.Add(secret[targetPos]);
             }
-        }
-    }
-
-    // ───────────────────────────────────────────────────────────
-    // Phase 3: Positions-Hints
-    // ───────────────────────────────────────────────────────────
-
-    private void AddPositionHints(
-        List<LockHint> hints,
-        HashSet<string> signatures,
-        int[] secret,
-        List<int> invalid,
-        int length,
-        int shownDigits,
-        HashSet<int> coveredPositions,
-        int maxHints)
-    {
-        if (hints.Count >= maxHints) return;
-
-        var criticalPositions = Enumerable.Range(0, length)
-            .Where(p => !coveredPositions.Contains(p))
-            .OrderBy(_ => _rnd.Next())
-            .Take(2)
-            .ToList();
-
-        foreach (var pos in criticalPositions)
-        {
-            if (hints.Count >= maxHints) break;
-
-            var hint = CreateHint_PositionFocused(length, shownDigits, secret, invalid, pos);
-            TryAddHint(hints, signatures, hint);
-        }
-    }
-
-    // ───────────────────────────────────────────────────────────
-    // Phase 4: Strategische Hints
-    // ───────────────────────────────────────────────────────────
-
-    private void AddStrategicHints(
-        List<LockHint> hints,
-        HashSet<string> signatures,
-        int[] secret,
-        List<int> invalid,
-        int length,
-        int shownDigits,
-        List<(int well, int wrong)> rules,
-        int targetHints)
-    {
-        if (hints.Count >= targetHints) return;
-
-        var prioritizedRules = rules
-            .OrderByDescending(r => r.well + r.wrong)
-            .ThenBy(_ => _rnd.Next())
-            .ToList();
-
-        int attempts = 0;
-        foreach (var rule in prioritizedRules)
-        {
-            if (hints.Count >= targetHints) break;
-            if (attempts++ > 30) break;
-
-            if (rule.well == 0 && rule.wrong == 0)
-                TryAddHint(hints, signatures, CreateHint_NothingCorrect(length, shownDigits, secret, invalid));
             else
-                TryAddHint(hints, signatures, CreateHint_ByRule(length, shownDigits, secret, invalid, rule.well, rule.wrong));
-        }
-
-        attempts = 0;
-        while (hints.Count < targetHints && attempts++ < 20)
-        {
-            var rule = prioritizedRules[_rnd.Next(Math.Min(prioritizedRules.Count, 5))];
-
-            if (rule.well == 0 && rule.wrong == 0)
-                TryAddHint(hints, signatures, CreateHint_NothingCorrect(length, shownDigits, secret, invalid));
-            else
-                TryAddHint(hints, signatures, CreateHint_ByRule(length, shownDigits, secret, invalid, rule.well, rule.wrong));
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    // OPTIMIERTE HINT-ERSTELLER
-    // ═══════════════════════════════════════════════════════════
-
-    private LockHint? CreateHint_CoverageOptimized(
-        int length,
-        int shownDigits,
-        int[] secret,
-        List<int> invalid,
-        List<int> digitsToReveal)
-    {
-        for (int attempt = 0; attempt < 30; attempt++)
-        {
-            var slots = Enumerable.Repeat("", length).ToArray();
-            var shownPos = PickDistinctPositions(length, shownDigits);
-            var usedHintDigits = new HashSet<int>();
-
-            bool anyPlaced = false;
-
-            foreach (var digit in digitsToReveal)
-            {
-                if (shownPos.Count == 0) break;
-
-                int secretPos = Array.IndexOf(secret, digit);
-                if (secretPos < 0) continue;
-
-                bool placeCorrect = _rnd.Next(3) == 0 && shownPos.Contains(secretPos);
-
-                if (placeCorrect)
-                {
-                    slots[secretPos] = digit.ToString();
-                    shownPos.Remove(secretPos);
-                    usedHintDigits.Add(digit);
-                    anyPlaced = true;
-                }
-                else
-                {
-                    var wrongPos = shownPos.Where(p => p != secretPos).ToList();
-                    if (wrongPos.Count > 0)
-                    {
-                        int pos = wrongPos[_rnd.Next(wrongPos.Count)];
-                        slots[pos] = digit.ToString();
-                        shownPos.Remove(pos);
-                        usedHintDigits.Add(digit);
-                        anyPlaced = true;
-                    }
-                }
-            }
-
-            foreach (var pos in shownPos)
-            {
-                if (!string.IsNullOrEmpty(slots[pos])) continue;
-
-                int d = PickInvalidDistinct(invalid, usedHintDigits);
-                usedHintDigits.Add(d);
-                slots[pos] = d.ToString();
-            }
-
-            if (anyPlaced)
-                return BuildHint(slots, secret);
-        }
-
-        return null;
-    }
-
-    // ───────────────────────────────────────────────────────────
-    // Phase 2.5: fehlende Ziffern gezielt abdecken
-    // ───────────────────────────────────────────────────────────
-
-    private void EnsureMissingDigitsCovered(
-        List<LockHint> hints,
-        HashSet<string> signatures,
-        int[] secret,
-        List<int> invalid,
-        int length,
-        int shownDigits,
-        HashSet<int> coveredDigits,
-        HashSet<int> coveredPositions,
-        int maxHints)
-    {
-        var missing = secret.Where(d => !coveredDigits.Contains(d)).ToList();
-        int attempts = 0;
-
-        while (missing.Count > 0 && hints.Count < maxHints + 2 && attempts++ < 80)
-        {
-            int digit = missing[_rnd.Next(missing.Count)];
-            int targetPos = Array.IndexOf(secret, digit);
-            if (targetPos < 0) targetPos = _rnd.Next(length);
-
-            var hint = CreateHint_PositionFocused(length, shownDigits, secret, invalid, targetPos);
-            if (hint != null && TryAddHint(hints, signatures, hint))
-            {
-                UpdateCoverage(hints, coveredDigits, coveredPositions, secret);
-                missing = secret.Where(d => !coveredDigits.Contains(d)).ToList();
-            }
-        }
-    }
-
-    private LockHint? CreateHint_PositionFocused(
-        int length,
-        int shownDigits,
-        int[] secret,
-        List<int> invalid,
-        int targetPos)
-    {
-        for (int attempt = 0; attempt < 30; attempt++)
-        {
-            var slots = Enumerable.Repeat("", length).ToArray();
-            var shownPos = new List<int> { targetPos };
-
-            while (shownPos.Count < shownDigits)
-            {
-                int p = _rnd.Next(length);
-                if (!shownPos.Contains(p))
-                    shownPos.Add(p);
-            }
-
-            var usedHintDigits = new HashSet<int>();
-            bool anyPlaced = false;
-
-            // Target: 50% korrekt, 50% andere Secret-Ziffer
-            if (_rnd.Next(2) == 0)
             {
                 slots[targetPos] = secret[targetPos].ToString();
-                usedHintDigits.Add(secret[targetPos]);
-                anyPlaced = true;
+                usedDigits.Add(secret[targetPos]);
             }
-            else
-            {
-                var otherSecretDigits = secret.Where((d, i) => i != targetPos && !usedHintDigits.Contains(d)).ToList();
-                if (otherSecretDigits.Count > 0)
-                {
-                    int d = otherSecretDigits[_rnd.Next(otherSecretDigits.Count)];
-                    slots[targetPos] = d.ToString();
-                    usedHintDigits.Add(d);
-                    anyPlaced = true;
-                }
-            }
-
-            foreach (var pos in shownPos)
-            {
-                if (!string.IsNullOrEmpty(slots[pos])) continue;
-
-                if (_rnd.Next(3) == 0)
-                {
-                    var available = secret.Where((d, i) => i != pos && !usedHintDigits.Contains(d)).ToList();
-                    if (available.Count > 0)
-                    {
-                        int d = available[_rnd.Next(available.Count)];
-                        slots[pos] = d.ToString();
-                        usedHintDigits.Add(d);
-                        anyPlaced = true;
-                        continue;
-                    }
-                }
-
-                int invD = PickInvalidDistinct(invalid, usedHintDigits);
-                usedHintDigits.Add(invD);
-                slots[pos] = invD.ToString();
-            }
-
-            if (anyPlaced)
-                return BuildHint(slots, secret);
         }
 
-        return null;
-    }
+        // Restliche Positionen füllen
+        var uncoveredDigits = secret.Where(d => !alreadyCovered.Contains(d) && !usedDigits.Contains(d)).ToList();
 
-    // ═══════════════════════════════════════════════════════════
-    // "STANDARD"-ERSTELLER
-    // ═══════════════════════════════════════════════════════════
-
-    private LockHint CreateHint_NothingCorrect(int length, int shownDigits, int[] secret, List<int> invalid)
-    {
-        var slots = Enumerable.Repeat("", length).ToArray();
-        var shownPos = PickDistinctPositions(length, shownDigits);
-        var usedDigits = new HashSet<int>();
-
-        foreach (int p in shownPos)
+        for (int pos = 0; pos < length; pos++)
         {
-            int d = PickInvalidDistinct(invalid, usedDigits);
-            usedDigits.Add(d);
-            slots[p] = d.ToString();
+            if (!string.IsNullOrEmpty(slots[pos])) continue;
+
+            // 40% Chance eine noch nicht abgedeckte Secret-Ziffer zu verwenden
+            if (uncoveredDigits.Count > 0 && _rnd.Next(5) < 2)
+            {
+                int digit = uncoveredDigits[_rnd.Next(uncoveredDigits.Count)];
+                int secretPos = Array.IndexOf(secret, digit);
+
+                if (secretPos != pos)
+                {
+                    slots[pos] = digit.ToString();
+                    usedDigits.Add(digit);
+                    uncoveredDigits.Remove(digit);
+                    continue;
+                }
+            }
+
+            int invDigit = PickInvalidDigit(invalid, usedDigits);
+            slots[pos] = invDigit.ToString();
+            usedDigits.Add(invDigit);
         }
 
         return BuildHint(slots, secret);
     }
 
-    private LockHint? CreateHint_ByRule(int length, int shownDigits, int[] secret, List<int> invalid, int well, int wrong)
+    /// <summary>
+    /// Erstellt einen Hint der garantiert eine bestimmte Ziffer zeigt.
+    /// </summary>
+    private LockHint CreateHintShowingDigit(int[] secret, List<int> invalid, int length, int digitToShow)
     {
-        if (well < 0 || wrong < 0 || well + wrong > shownDigits)
+        int secretPos = Array.IndexOf(secret, digitToShow);
+
+        var slots = new string[length];
+        var usedDigits = new HashSet<int>();
+
+        bool placeCorrectly = _rnd.Next(2) == 0;
+
+        if (placeCorrectly || secretPos < 0)
+        {
+            if (secretPos >= 0)
+                slots[secretPos] = digitToShow.ToString();
+        }
+        else
+        {
+            var wrongPositions = Enumerable.Range(0, length).Where(p => p != secretPos).ToList();
+            int wrongPos = wrongPositions[_rnd.Next(wrongPositions.Count)];
+            slots[wrongPos] = digitToShow.ToString();
+        }
+        usedDigits.Add(digitToShow);
+
+        for (int pos = 0; pos < length; pos++)
+        {
+            if (!string.IsNullOrEmpty(slots[pos])) continue;
+
+            int invDigit = PickInvalidDigit(invalid, usedDigits);
+            slots[pos] = invDigit.ToString();
+            usedDigits.Add(invDigit);
+        }
+
+        return BuildHint(slots, secret);
+    }
+
+    /// <summary>
+    /// Erstellt einen Hint mit nur Invalid-Ziffern → "Keine Zahl korrekt"
+    /// </summary>
+    private LockHint CreateHintNothingCorrect(List<int> invalid, int length)
+    {
+        var slots = new string[length];
+        var usedDigits = new HashSet<int>();
+
+        for (int pos = 0; pos < length; pos++)
+        {
+            int digit = PickInvalidDigit(invalid, usedDigits);
+            slots[pos] = digit.ToString();
+            usedDigits.Add(digit);
+        }
+
+        return new LockHint
+        {
+            Slots = slots.ToList(),
+            Code = string.Join(" ", slots),
+            WellPlaced = 0,
+            WrongPlaced = 0,
+            Description = "Keine Zahl korrekt",
+            Icon = "❌"
+        };
+    }
+
+    /// <summary>
+    /// Erstellt einen Hint nach einer bestimmten Regel (well, wrong).
+    /// </summary>
+    private LockHint? CreateHintByRule(int[] secret, List<int> invalid, int length, int well, int wrong)
+    {
+        if (well < 0 || wrong < 0 || well + wrong > length || well + wrong == 0)
             return null;
 
-        for (int tries = 0; tries < 50; tries++)
+        for (int attempt = 0; attempt < 50; attempt++)
         {
-            var slots = Enumerable.Repeat("", length).ToArray();
-            var shownPos = PickDistinctPositions(length, shownDigits);
+            var slots = new string[length];
+            var usedDigits = new HashSet<int>();
+            var usedSecretIndices = new HashSet<int>();
 
-            var wellPos = PickSubset(shownPos, well);
-            var freePos = shownPos.Where(p => !wellPos.Contains(p)).ToList();
+            var allPositions = Enumerable.Range(0, length).OrderBy(_ => _rnd.Next()).ToList();
+            var wellPositions = allPositions.Take(well).ToList();
+            var remainingPositions = allPositions.Skip(well).ToList();
 
-            var usedHintDigits = new HashSet<int>();
-            var usedSecretIdx = new HashSet<int>();
-
-            // Well placed
-            foreach (int p in wellPos)
+            foreach (int pos in wellPositions)
             {
-                slots[p] = secret[p].ToString();
-                usedHintDigits.Add(secret[p]);
-                usedSecretIdx.Add(p);
+                slots[pos] = secret[pos].ToString();
+                usedDigits.Add(secret[pos]);
+                usedSecretIndices.Add(pos);
             }
 
-            // Wrong placed
-            if (freePos.Count < wrong) continue;
-
             bool failed = false;
-            for (int k = 0; k < wrong; k++)
+            for (int i = 0; i < wrong && !failed; i++)
             {
-                var candSecretIdx = Enumerable.Range(0, length)
-                    .Where(i => !usedSecretIdx.Contains(i) && !usedHintDigits.Contains(secret[i]))
+                var availableSecretIndices = Enumerable.Range(0, length)
+                    .Where(idx => !usedSecretIndices.Contains(idx) && !usedDigits.Contains(secret[idx]))
                     .ToList();
 
-                if (candSecretIdx.Count == 0) { failed = true; break; }
+                if (availableSecretIndices.Count == 0)
+                {
+                    failed = true;
+                    break;
+                }
 
-                int sIdx = candSecretIdx[_rnd.Next(candSecretIdx.Count)];
-                var candPos = freePos.Where(p => p != sIdx).ToList();
-                if (candPos.Count == 0) { failed = true; break; }
+                int secretIdx = availableSecretIndices[_rnd.Next(availableSecretIndices.Count)];
+                int digitToPlace = secret[secretIdx];
 
-                int tPos = candPos[_rnd.Next(candPos.Count)];
+                var validTargetPositions = remainingPositions
+                    .Where(p => string.IsNullOrEmpty(slots[p]) && p != secretIdx)
+                    .ToList();
 
-                slots[tPos] = secret[sIdx].ToString();
-                usedHintDigits.Add(secret[sIdx]);
-                usedSecretIdx.Add(sIdx);
-                freePos.Remove(tPos);
+                if (validTargetPositions.Count == 0)
+                {
+                    failed = true;
+                    break;
+                }
+
+                int targetPos = validTargetPositions[_rnd.Next(validTargetPositions.Count)];
+                slots[targetPos] = digitToPlace.ToString();
+                usedDigits.Add(digitToPlace);
+                usedSecretIndices.Add(secretIdx);
+                remainingPositions.Remove(targetPos);
             }
 
             if (failed) continue;
 
-            // Rest füllen mit invalid
-            foreach (int p in shownPos)
+            for (int pos = 0; pos < length; pos++)
             {
-                if (!string.IsNullOrEmpty(slots[p])) continue;
+                if (!string.IsNullOrEmpty(slots[pos])) continue;
 
-                int d = PickInvalidDistinct(invalid, usedHintDigits);
-                usedHintDigits.Add(d);
-                slots[p] = d.ToString();
+                int digit = PickInvalidDigit(invalid, usedDigits);
+                slots[pos] = digit.ToString();
+                usedDigits.Add(digit);
             }
 
-            // Wahrheit wird aus Slots berechnet
             return BuildHint(slots, secret);
         }
 
         return null;
     }
 
-    // ═══════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════
     // HELPERS
-    // ═══════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════
 
     private (int[] secret, List<int> invalid) GenerateSecret(int length)
     {
-        var pool = Enumerable.Range(0, 10).ToList();
-        int[] secret = new int[length];
+        var pool = Enumerable.Range(0, 10).OrderBy(_ => _rnd.Next()).ToList();
+        int[] secret = pool.Take(length).ToArray();
+        List<int> invalid = pool.Skip(length).ToList();
+        return (secret, invalid);
+    }
 
-        for (int i = 0; i < length; i++)
-        {
-            int idx = _rnd.Next(pool.Count);
-            secret[i] = pool[idx];
-            pool.RemoveAt(idx);
-        }
+    private int PickInvalidDigit(List<int> invalid, HashSet<int> usedDigits)
+    {
+        var candidates = invalid.Where(d => !usedDigits.Contains(d)).ToList();
 
-        // pool enthält jetzt die invalid digits
-        return (secret, pool);
+        if (candidates.Count > 0)
+            return candidates[_rnd.Next(candidates.Count)];
+
+        return invalid[_rnd.Next(invalid.Count)];
     }
 
     private bool TryAddHint(List<LockHint> hints, HashSet<string> signatures, LockHint? hint)
     {
         if (hint == null) return false;
 
-        // ✅ Positionsbasierte Signatur: verhindert das Wegwerfen guter Hints
         string slotsKey = string.Join("|", hint.Slots.Select(s => string.IsNullOrEmpty(s) ? "_" : s));
         string sig = $"{hint.WellPlaced}:{hint.WrongPlaced}:{slotsKey}";
 
@@ -579,74 +407,50 @@ public class LockRiddleGeneratorService
         return false;
     }
 
-    private void UpdateCoverage(List<LockHint> hints, HashSet<int> coveredDigits, HashSet<int> coveredPositions, int[] secret)
+    private void UpdateCoverage(LockHint hint, HashSet<int> coveredDigits, HashSet<int> coveredPositions, int[] secret)
     {
         var secretSet = secret.ToHashSet();
 
-        foreach (var hint in hints)
+        for (int i = 0; i < hint.Slots.Count && i < secret.Length; i++)
         {
-            for (int i = 0; i < hint.Slots.Count && i < secret.Length; i++)
-            {
-                if (!int.TryParse(hint.Slots[i], out int d)) continue;
+            if (!int.TryParse(hint.Slots[i], out int d)) continue;
 
-                if (secretSet.Contains(d))
-                    coveredDigits.Add(d);
+            if (secretSet.Contains(d))
+                coveredDigits.Add(d);
 
-                if (secret[i] == d)
-                    coveredPositions.Add(i);
-            }
+            if (i < secret.Length && secret[i] == d)
+                coveredPositions.Add(i);
         }
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // BUILD: Wahrheit aus Slots berechnen (shared scoring)
-    // ═══════════════════════════════════════════════════════════
-
     private LockHint BuildHint(string[] slots, int[] secret)
     {
-        // Normalize slot list to avoid nulls/short arrays after Serialization/Deserialization
-        var normalizedSlots = slots
-            .Select(s => string.IsNullOrWhiteSpace(s) ? "" : s.Trim())
-            .ToList();
+        var normalizedSlots = slots.Select(s => string.IsNullOrWhiteSpace(s) ? "" : s.Trim()).ToList();
 
-        if (normalizedSlots.Count < secret.Length)
-        {
-            for (int i = normalizedSlots.Count; i < secret.Length; i++)
-                normalizedSlots.Add("");
-        }
-        else if (normalizedSlots.Count > secret.Length)
-        {
+        while (normalizedSlots.Count < secret.Length)
+            normalizedSlots.Add("");
+        if (normalizedSlots.Count > secret.Length)
             normalizedSlots = normalizedSlots.Take(secret.Length).ToList();
-        }
 
         var (well, wrong) = LockHintScoring.Score(normalizedSlots, secret);
+
         string Plural(int n, string s1, string s2) => n == 1 ? s1 : s2;
 
-        string desc;
-        if (well == 0 && wrong == 0)
+        string desc = (well, wrong) switch
         {
-            desc = "Keine Zahl korrekt";
-        }
-        else if (well > 0 && wrong == 0)
-        {
-            desc = $"{well} {Plural(well, "Zahl", "Zahlen")} korrekt und richtig platziert";
-        }
-        else if (well == 0 && wrong > 0)
-        {
-            desc = $"{wrong} {Plural(wrong, "Zahl", "Zahlen")} korrekt, aber falsch platziert";
-        }
-        else
-        {
-            int total = well + wrong;
-            desc = $"{total} {Plural(total, "Zahl", "Zahlen")} korrekt: " +
-                   $"{well} richtig platziert, {wrong} falsch platziert";
-        }
+            (0, 0) => "Keine Zahl korrekt",
+            ( > 0, 0) => $"{well} {Plural(well, "Zahl", "Zahlen")} korrekt und richtig platziert",
+            (0, > 0) => $"{wrong} {Plural(wrong, "Zahl", "Zahlen")} korrekt, aber falsch platziert",
+            _ => $"{well + wrong} {Plural(well + wrong, "Zahl", "Zahlen")} korrekt: {well} richtig platziert, {wrong} falsch platziert"
+        };
 
-        string icon =
-            (well == 0 && wrong == 0) ? "❌"
-            : (well > 0 && wrong > 0) ? "🔎"
-            : (well > 0) ? "🎯"
-            : "⚠️";
+        string icon = (well, wrong) switch
+        {
+            (0, 0) => "❌",
+            ( > 0, > 0) => "🔎",
+            ( > 0, _) => "🎯",
+            _ => "⚠️"
+        };
 
         return new LockHint
         {
@@ -659,93 +463,59 @@ public class LockRiddleGeneratorService
         };
     }
 
-    private List<int> PickDistinctPositions(int length, int count)
-    {
-        count = Math.Clamp(count, 0, length);
+    // ═══════════════════════════════════════════════════════════════
+    // SICHERER FALLBACK
+    // ═══════════════════════════════════════════════════════════════
 
-        var all = Enumerable.Range(0, length).ToList();
-        var res = new List<int>(count);
-
-        for (int i = 0; i < count; i++)
-        {
-            int idx = _rnd.Next(all.Count);
-            res.Add(all[idx]);
-            all.RemoveAt(idx);
-        }
-
-        return res;
-    }
-
-    private HashSet<int> PickSubset(List<int> source, int count)
-    {
-        count = Math.Clamp(count, 0, source.Count);
-
-        var temp = new List<int>(source);
-        var res = new HashSet<int>();
-
-        for (int i = 0; i < count && temp.Count > 0; i++)
-        {
-            int idx = _rnd.Next(temp.Count);
-            res.Add(temp[idx]);
-            temp.RemoveAt(idx);
-        }
-
-        return res;
-    }
-
-    private int PickInvalidDistinct(List<int> invalid, HashSet<int> used)
-    {
-        // invalid enthält NIE Secret-Ziffern (kommt aus Pool nach Secret-Entnahme)
-        var candidates = invalid.Where(d => !used.Contains(d)).ToList();
-        if (candidates.Count == 0)
-            return invalid[_rnd.Next(invalid.Count)];
-
-        return candidates[_rnd.Next(candidates.Count)];
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    // FALLBACK
-    // ═══════════════════════════════════════════════════════════
-
-    private LockRiddleGame GenerateFallbackGame(int length, int shownDigits, int targetHints)
+    private LockRiddleGame GenerateSafeFallback(int length, int targetHints)
     {
         var (secret, invalid) = GenerateSecret(length);
-
         var hints = new List<LockHint>();
         var signatures = new HashSet<string>();
 
-        TryAddHint(hints, signatures, CreateHint_NothingCorrect(length, shownDigits, secret, invalid));
+        var nothingHint = CreateHintNothingCorrect(invalid, length);
+        TryAddHint(hints, signatures, nothingHint);
 
-        // einfache, stabile Hints: jeweils 1 well auf verschiedenen Positionen (wenn möglich)
-        for (int i = 0; i < length && hints.Count < targetHints; i++)
+        for (int pos = 0; pos < length && hints.Count < targetHints; pos++)
         {
-            var slots = Enumerable.Repeat("", length).ToArray();
-
-            // zeige genau shownDigits Positionen (inkl. i, falls möglich)
-            var shownPos = PickDistinctPositions(length, Math.Min(shownDigits, length));
-            if (!shownPos.Contains(i))
-            {
-                // erzwinge i rein, ersetze die erste Position
-                if (shownPos.Count > 0) shownPos[0] = i;
-                else shownPos.Add(i);
-                shownPos = shownPos.Distinct().Take(Math.Min(shownDigits, length)).ToList();
-            }
-
+            var slots = new string[length];
             var usedDigits = new HashSet<int>();
 
-            slots[i] = secret[i].ToString();
-            usedDigits.Add(secret[i]);
+            slots[pos] = secret[pos].ToString();
+            usedDigits.Add(secret[pos]);
 
-            foreach (var p in shownPos)
+            for (int p = 0; p < length; p++)
             {
-                if (p == i) continue;
-
-                int d = PickInvalidDistinct(invalid, usedDigits);
-                usedDigits.Add(d);
+                if (!string.IsNullOrEmpty(slots[p])) continue;
+                int d = PickInvalidDigit(invalid, usedDigits);
                 slots[p] = d.ToString();
+                usedDigits.Add(d);
             }
 
-            TryAddHint(hints, signatures, BuildHint(slots, secret));
+            var hint = BuildHint(slots, secret);
+            TryAddHint(hints, signatures, hint);
+        }
+
+        for (int i = 0; i < length && hints.Count < targetHints; i++)
+        {
+            int nextPos = (i + 1) % length;
+
+            var slots = new string[length];
+            var usedDigits = new HashSet<int>();
+
+            slots[nextPos] = secret[i].ToString();
+            usedDigits.Add(secret[i]);
+
+            for (int p = 0; p < length; p++)
+            {
+                if (!string.IsNullOrEmpty(slots[p])) continue;
+                int d = PickInvalidDigit(invalid, usedDigits);
+                slots[p] = d.ToString();
+                usedDigits.Add(d);
+            }
+
+            var hint = BuildHint(slots, secret);
+            TryAddHint(hints, signatures, hint);
         }
 
         return new LockRiddleGame
@@ -757,74 +527,15 @@ public class LockRiddleGeneratorService
     }
 }
 
-// ────────────────────────────────────────────────────────────────
-// Shared scoring: gleiche Logik für Generator & Solver
-// ────────────────────────────────────────────────────────────────
-internal static class LockHintScoring
-{
-    public static (int well, int wrong) Score(IReadOnlyList<string> slots, IReadOnlyList<int> code)
-    {
-        int well = 0;
-        int wrong = 0;
+// ═══════════════════════════════════════════════════════════════
+// CONSTRAINT SOLVER
+// ═══════════════════════════════════════════════════════════════
 
-        int n = Math.Min(slots.Count, code.Count);
-
-        // parse
-        var slotInts = new int[slots.Count];
-        var hasSlot = new bool[slots.Count];
-
-        for (int i = 0; i < slots.Count; i++)
-        {
-            if (int.TryParse(slots[i], out int d))
-            {
-                slotInts[i] = d;
-                hasSlot[i] = true;
-            }
-        }
-
-        var codeUsed = new bool[code.Count];
-        var slotUsed = new bool[slots.Count];
-
-        // well
-        for (int i = 0; i < n; i++)
-        {
-            if (hasSlot[i] && slotInts[i] == code[i])
-            {
-                well++;
-                codeUsed[i] = true;
-                slotUsed[i] = true;
-            }
-        }
-
-        // wrong
-        for (int i = 0; i < slots.Count; i++)
-        {
-            if (!hasSlot[i] || slotUsed[i]) continue;
-
-            for (int j = 0; j < code.Count; j++)
-            {
-                if (!codeUsed[j] && code[j] == slotInts[i])
-                {
-                    wrong++;
-                    codeUsed[j] = true;
-                    break;
-                }
-            }
-        }
-
-        return (well, wrong);
-    }
-}
-
-// ═══════════════════════════════════════════════════════════
-// ConstraintSolver
-// ═══════════════════════════════════════════════════════════
-
-public class ConstraintSolver
+internal class ConstraintSolver
 {
     private readonly int _length;
     private readonly List<LockHint> _hints;
-    private readonly List<int>[] _possibleDigits; // pro Position: Kandidaten
+    private readonly List<int>[] _possibleDigits;
 
     public ConstraintSolver(int length, List<LockHint> hints)
     {
@@ -842,7 +553,7 @@ public class ConstraintSolver
 
         var solutions = new List<string>();
         var current = new int[_length];
-        var used = new bool[10]; // Unique digits (wie Generator)
+        var used = new bool[10];
 
         void Search(int pos)
         {
@@ -897,7 +608,6 @@ public class ConstraintSolver
                         _possibleDigits[pos].RemoveAll(d => hintDigits.Contains(d));
                         if (_possibleDigits[pos].Count < before) changed = true;
                     }
-
                     continue;
                 }
 
@@ -928,5 +638,61 @@ public class ConstraintSolver
         }
 
         return true;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SCORING
+// ═══════════════════════════════════════════════════════════════
+
+internal static class LockHintScoring
+{
+    public static (int well, int wrong) Score(IReadOnlyList<string> slots, IReadOnlyList<int> code)
+    {
+        int well = 0;
+        int wrong = 0;
+        int n = Math.Min(slots.Count, code.Count);
+
+        var slotInts = new int[slots.Count];
+        var hasSlot = new bool[slots.Count];
+
+        for (int i = 0; i < slots.Count; i++)
+        {
+            if (int.TryParse(slots[i], out int d))
+            {
+                slotInts[i] = d;
+                hasSlot[i] = true;
+            }
+        }
+
+        var codeUsed = new bool[code.Count];
+        var slotUsed = new bool[slots.Count];
+
+        for (int i = 0; i < n; i++)
+        {
+            if (hasSlot[i] && slotInts[i] == code[i])
+            {
+                well++;
+                codeUsed[i] = true;
+                slotUsed[i] = true;
+            }
+        }
+
+        for (int i = 0; i < slots.Count; i++)
+        {
+            if (!hasSlot[i] || slotUsed[i]) continue;
+
+            for (int j = 0; j < code.Count; j++)
+            {
+                if (!codeUsed[j] && code[j] == slotInts[i])
+                {
+                    wrong++;
+                    codeUsed[j] = true;
+                    break;
+                }
+            }
+        }
+
+        return (well, wrong);
     }
 }

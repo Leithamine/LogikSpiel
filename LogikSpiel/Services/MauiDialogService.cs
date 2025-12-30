@@ -27,7 +27,7 @@ public sealed class MauiDialogService : IDialogService
         if (p is null) return null;
 
 #pragma warning disable CS0618
-        var result = await p.DisplayActionSheet(title, cancel, null, options);
+        var result = await p.DisplayActionSheetAsync(title, cancel, null, options);
 #pragma warning restore CS0618
 
         if (string.Equals(result, cancel, StringComparison.OrdinalIgnoreCase)) return null;

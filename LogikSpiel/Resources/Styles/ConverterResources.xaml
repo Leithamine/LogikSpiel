@@ -1,0 +1,50 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!-- File: Resources/Styles/ConverterResources.xaml -->
+<!-- Diese Datei muss in App.xaml als MergedDictionary eingebunden werden -->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                    xmlns:conv="clr-namespace:LogikSpiel.Converters">
+
+    <!-- ═══════════════ BOOLEAN CONVERTERS ═══════════════ -->
+
+    <!-- Invertiert Boolean: true → false, false → true -->
+    <conv:InvertBoolConverter x:Key="InvertBoolConverter"/>
+
+    <!-- Boolean zu Farbe: Parameter Format "TrueColor|FalseColor" -->
+    <conv:BoolToColorConverter x:Key="BoolToColorConverter"/>
+
+    <!-- ═══════════════ CELL TYPE CONVERTERS ═══════════════ -->
+
+    <!-- CellType zu Hintergrundfarbe -->
+    <conv:CellTypeToColorConverter x:Key="CellTypeToColorConverter"/>
+
+    <!-- CellType zu Visibility (nicht Empty = sichtbar) -->
+    <conv:NotEmptyCellConverter x:Key="NotEmptyCellConverter"/>
+
+    <conv:CellTypeToVisibilityConverter x:Key="CellTypeToVisibilityConverter"/>
+
+    <!-- ═══════════════ STRING CONVERTERS ═══════════════ -->
+
+    <!-- String nicht null/empty → true -->
+    <conv:StringNotNullOrEmptyConverter x:Key="StringNotNullOrEmptyConverter"/>
+
+    <!-- String oder Bullet-Punkt wenn leer -->
+    <conv:StringOrBulletConverter x:Key="StringOrBulletConverter"/>
+
+    <!-- ═══════════════ SLOT CONVERTERS ═══════════════ -->
+
+    <!-- Hat Slots mindestens eine Ziffer? -->
+    <conv:SlotsHasDigitsConverter x:Key="SlotsHasDigitsConverter"/>
+
+    <!-- Hat Slots keine Ziffern? -->
+    <conv:SlotsHasNoDigitsConverter x:Key="SlotsHasNoDigitsConverter"/>
+
+    <!-- ═══════════════ SPECIAL CONVERTERS ═══════════════ -->
+
+    <!-- Lock-Status zu Button-Text -->
+    <conv:LockedToButtonTextConverter x:Key="LockedToButtonTextConverter"/>
+
+    <!-- Keyboard basierend auf Schwierigkeit -->
+    <conv:KeyboardByDifficultyConverter x:Key="KeyboardByDifficultyConverter"/>
+
+</ResourceDictionary>

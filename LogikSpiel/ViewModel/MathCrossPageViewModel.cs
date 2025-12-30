@@ -1,9 +1,5 @@
 ﻿#nullable enable
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
 using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
@@ -19,44 +15,39 @@ public sealed class MathCrossPageViewModel : ObservableObject
     private readonly IUserProfileService _userService;
     private readonly MathCrossGeneratorService _generator;
 
+    public event Action? RequestLayoutUpdate;
+
     private UserProfile? _userProfile;
-
-    // ===== Grid data =====
-    private ObservableCollection<MathCrossCellViewModel> _flatCells = new();
-    public ObservableCollection<MathCrossCellViewModel> FlatCells
-    {
-        get => _flatCells;
-        set => SetProperty(ref _flatCells, value);
-    }
-
-    public ObservableCollection<ObservableCollection<MathCrossCellViewModel>> GridCells { get; } = new();
-
-    // ===== Layout =====
-    private double _cellSize = 60;
-    public double CellSize { get => _cellSize; set => SetProperty(ref _cellSize, value); }
-
-    private double _cellFontSize = 20;
-    public double CellFontSize { get => _cellFontSize; set => SetProperty(ref _cellFontSize, value); }
-
-    // ===== Game meta =====
-    public string GameId { get; private set; } = "math_cross";
-    public string DifficultyKey { get; private set; } = "easy";
-
-    // ✅ Für KeyboardByDifficultyConverter
-    public bool AllowDecimalInput => false;
-    public bool AllowNegativeInput => DifficultyKey == "master";
-
-    public string DifficultyText => $"Schwierigkeit: {DiffName(DifficultyKey)}";
 
     private int _coins;
     public int Coins { get => _coins; set => SetProperty(ref _coins, value); }
+
+    public string GameId { get; private set; } = "math_cross";
+    public string DifficultyKey { get; private set; } = "easy";
 
     private int _levelNumber = 1;
     public int LevelNumber
     {
         get => _levelNumber;
-        private set => SetProperty(ref _levelNumber, value);
+        private set
+        {
+            if (SetProperty(ref _levelNumber, value))
+                OnPropertyChanged(nameof(Title));
+        }
     }
+
+    public string Title => $"Math Cross – {DiffName(DifficultyKey)} (Lv {LevelNumber})";
+    public string DifficultyText => DiffName(DifficultyKey);
+
+    private MathCrossGame? _game;
+    public MathCrossGame? Game
+    {
+        get => _game;
+        private set => SetProperty(ref _game, value);
+    }
+
+    // Feste Zellgröße
+    public double CellSize => 42;
 
     private bool _isBusy;
     public bool IsBusy
@@ -70,12 +61,11 @@ public sealed class MathCrossPageViewModel : ObservableObject
     }
     public bool IsNotBusy => !IsBusy;
 
-    private MathCrossGame? _game;
-    public MathCrossGame? Game
-    {
-        get => _game;
-        private set => SetProperty(ref _game, value);
-    }
+    public bool AllowNegativeInput => DifficultyKey is "hard" or "master";
+    public bool AllowDecimalInput => DifficultyKey == "master";
+
+    public ObservableCollection<MathCrossCellViewModel> FlatCells { get; } = new();
+    public ObservableCollection<string> CandidateTokens { get; } = new();
 
     private MathCrossCellViewModel? _selectedCell;
     public MathCrossCellViewModel? SelectedCell
@@ -83,38 +73,25 @@ public sealed class MathCrossPageViewModel : ObservableObject
         get => _selectedCell;
         set
         {
-            if (_selectedCell != null) _selectedCell.IsSelected = false;
-            if (SetProperty(ref _selectedCell, value) && _selectedCell != null)
-                _selectedCell.IsSelected = true;
+            if (_selectedCell == value) return;
+            var old = _selectedCell;
+            _selectedCell = value;
+            old?.UpdateDisplay();
+            _selectedCell?.UpdateDisplay();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HasSelection));
+            UpdateCandidateTokens();
         }
     }
 
-    // ===== Token banks =====
-    public ObservableCollection<MathTokenViewModel> NumberTokens { get; } = new();
+    public bool HasSelection => SelectedCell != null;
 
-    private MathTokenViewModel? _selectedNumber;
-    public MathTokenViewModel? SelectedNumber
-    {
-        get => _selectedNumber;
-        private set => SetProperty(ref _selectedNumber, value);
-    }
-
-    private string? _selectedOperator;
-    public string? SelectedOperator
-    {
-        get => _selectedOperator;
-        private set => SetProperty(ref _selectedOperator, value);
-    }
-
-    // ✅ Fokus springt NICHT automatisch (User entscheidet)
-    public bool AutoAdvance { get; set; } = false;
-
-    // ===== Commands =====
     public AsyncCommand BackCommand { get; }
     public AsyncCommand ResetCommand { get; }
-    public AsyncCommand SolveLevelCommand { get; }
-    public AsyncCommand<string> PickOperatorCommand { get; }
-    public AsyncCommand<MathTokenViewModel> PickNumberTokenCommand { get; }
+    public AsyncCommand CheckCommand { get; }
+    public AsyncCommand HintCommand { get; }
+    public AsyncCommand<string> TokenCommand { get; }
+    public AsyncCommand ClearCellCommand { get; }
 
     public MathCrossPageViewModel(
         IGameProgressStore progressStore,
@@ -130,475 +107,344 @@ public sealed class MathCrossPageViewModel : ObservableObject
         _generator = generator;
 
         BackCommand = new AsyncCommand(() => _nav.GoBackAsync());
-        ResetCommand = new AsyncCommand(ResetAllInputsAsync);
-        SolveLevelCommand = new AsyncCommand(CheckSolutionAsync);
 
-        PickOperatorCommand = new AsyncCommand<string>(PickOperatorAsync);
-        PickNumberTokenCommand = new AsyncCommand<MathTokenViewModel>(PickNumberTokenAsync);
+        ResetCommand = new AsyncCommand(async () =>
+        {
+            if (Game == null) return;
+            bool confirm = await _dialog.ConfirmAsync("Reset", "Alle Eingaben löschen?", "Ja", "Nein");
+            if (!confirm) return;
+
+            foreach (var vm in FlatCells)
+            {
+                if (!vm.IsGiven && vm.Cell.Type is CellType.Number or CellType.Operator)
+                {
+                    vm.Cell.UserInput = "";
+                    vm.UpdateDisplay();
+                }
+            }
+            SelectedCell = null;
+        });
+
+        CheckCommand = new AsyncCommand(CheckSolutionAsync);
+
+        HintCommand = new AsyncCommand(async () =>
+        {
+            if (Coins < 10)
+            {
+                await _dialog.AlertAsync("Nicht genug Coins", "Du brauchst 10 Coins!");
+                return;
+            }
+
+            bool buy = await _dialog.ConfirmAsync("Tipp kaufen?", "Ein Feld für 10 Coins?");
+            if (!buy) return;
+
+            var empty = FlatCells
+                .Where(c => c.IsEditable && string.IsNullOrWhiteSpace(c.Cell.UserInput))
+                .OrderBy(_ => Random.Shared.Next())
+                .FirstOrDefault();
+
+            if (empty == null)
+            {
+                await _dialog.AlertAsync("Kein Tipp", "Alle Felder ausgefüllt!");
+                return;
+            }
+
+            empty.Cell.UserInput = empty.Cell.Solution;
+            empty.Cell.IsGiven = true;
+            empty.UpdateDisplay();
+
+            if (_userProfile != null)
+            {
+                _userProfile.Coins -= 10;
+                Coins = _userProfile.Coins;
+                await _userService.SaveUserAsync(_userProfile);
+            }
+            UpdateCandidateTokens();
+        });
+
+        TokenCommand = new AsyncCommand<string>(async token =>
+        {
+            if (string.IsNullOrEmpty(token) || SelectedCell == null || !SelectedCell.IsEditable) return;
+
+            SelectedCell.Cell.UserInput = token;
+            SelectedCell.UpdateDisplay();
+
+            var next = FlatCells
+                .SkipWhile(c => c != SelectedCell)
+                .Skip(1)
+                .FirstOrDefault(c => c.IsEditable && string.IsNullOrWhiteSpace(c.Cell.UserInput));
+
+            if (next != null)
+            {
+                ClearSelections();
+                next.IsSelected = true;
+                SelectedCell = next;
+            }
+            await Task.CompletedTask;
+        });
+
+        ClearCellCommand = new AsyncCommand(async () =>
+        {
+            if (SelectedCell == null || !SelectedCell.IsEditable) return;
+            SelectedCell.Cell.UserInput = "";
+            SelectedCell.UpdateDisplay();
+            UpdateCandidateTokens();
+            await Task.CompletedTask;
+        });
     }
 
     public async Task LoadAsync(string gameId, string difficulty, int level)
     {
-        GameId = string.IsNullOrWhiteSpace(gameId) ? "math_cross" : gameId.Trim();
-        DifficultyKey = NormalizeDifficulty(difficulty);
-        LevelNumber = Math.Max(1, level);
-
-        OnPropertyChanged(nameof(DifficultyText));
-        OnPropertyChanged(nameof(AllowDecimalInput));
-        OnPropertyChanged(nameof(AllowNegativeInput));
-
-        _userProfile = await _userService.GetUserAsync();
-        Coins = _userProfile?.Coins ?? 0;
-
-        await StartNewRoundAsync();
-    }
-
-    private static string NormalizeDifficulty(string? diff)
-    {
-        var d = (diff ?? "easy").Trim().ToLowerInvariant();
-        return d switch
-        {
-            "einfach" => "easy",
-            "normal" => "normal",
-            "schwer" => "hard",
-            "master" => "master",
-            "easy" => "easy",
-            "hard" => "hard",
-            _ => "easy"
-        };
-    }
-
-    public async Task StartNewRoundAsync()
-    {
+        if (IsBusy) return;
         IsBusy = true;
 
-        int seed = StableHash($"{GameId}:{DifficultyKey}") + LevelNumber * 77;
-
-        MathCrossGame? newGame = null;
-
-        await Task.Run(() =>
+        try
         {
-            for (int i = 0; i < 50; i++)
-            {
-                try
-                {
-                    var g = _generator.GenerateGame(DifficultyKey, seed + i);
-                    if (g != null && g.Rows > 0 && g.Equations.Count > 0)
-                    {
-                        newGame = g;
-                        break;
-                    }
-                }
-                catch
-                {
-                    // ignore and keep trying
-                }
-            }
-        });
+            GameId = string.IsNullOrWhiteSpace(gameId) ? "math_cross" : gameId;
+            DifficultyKey = string.IsNullOrWhiteSpace(difficulty) ? "easy" : difficulty;
+            LevelNumber = Math.Max(1, level);
 
-        Game = newGame ?? new MathCrossGame();
+            OnPropertyChanged(nameof(Title));
+            OnPropertyChanged(nameof(DifficultyText));
+            OnPropertyChanged(nameof(AllowNegativeInput));
+            OnPropertyChanged(nameof(AllowDecimalInput));
 
-        BuildGridViewModels();
-        BuildNumberTokens(seed);
+            _userProfile = await _userService.GetUserAsync();
+            Coins = _userProfile?.Coins ?? 0;
 
-        SelectedCell = null;
-        ClearSelections();
-
-        IsBusy = false;
+            await StartNewRoundAsync();
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
-    private void BuildGridViewModels()
+    private async Task StartNewRoundAsync()
     {
-        GridCells.Clear();
+        FlatCells.Clear();
         SelectedCell = null;
+        CandidateTokens.Clear();
 
-        if (Game == null || Game.Rows <= 0 || Game.Cols <= 0)
+        int seed = StableHash($"{GameId}:{DifficultyKey}") + LevelNumber * 77;
+        var game = await Task.Run(() => _generator.GenerateGame(DifficultyKey, seed));
+
+        if (game == null || game.Rows == 0)
         {
-            FlatCells = new ObservableCollection<MathCrossCellViewModel>();
+            await _dialog.AlertAsync("Fehler", "Konnte kein Rätsel generieren.");
             return;
         }
 
-        var temp = new List<MathCrossCellViewModel>();
+        Game = game;
 
-        for (int r = 0; r < Game.Rows; r++)
+        // Erstelle ViewModels nur für nicht-leere Zellen
+        for (int r = 0; r < game.Rows; r++)
         {
-            var row = new ObservableCollection<MathCrossCellViewModel>();
-            for (int c = 0; c < Game.Cols; c++)
+            for (int c = 0; c < game.Cols; c++)
             {
-                var vm = new MathCrossCellViewModel(Game.Grid[r, c], this);
-                row.Add(vm);
-                temp.Add(vm);
+                var cell = game.Grid[r, c];
+                if (cell.Type != CellType.Empty)
+                {
+                    FlatCells.Add(new MathCrossCellViewModel(cell, this));
+                }
             }
-            GridCells.Add(row);
         }
 
-        FlatCells = new ObservableCollection<MathCrossCellViewModel>(temp);
+        RequestLayoutUpdate?.Invoke();
     }
 
-    private void BuildNumberTokens(int seed)
+    public void OnCellTapped(MathCrossCellViewModel cell)
     {
-        NumberTokens.Clear();
-        if (Game == null) return;
-
-        var list = new List<MathTokenViewModel>();
-
-        foreach (var vm in FlatCells)
+        if (!cell.IsEditable)
         {
-            var cell = vm.Cell;
-
-            // Nur NICHT-gegebene Zahlen werden als Tokens erzeugt
-            if (cell.IsGiven) continue;
-            if (cell.Type != CellType.Number) continue;
-
-            list.Add(new MathTokenViewModel(cell.Solution));
-
-            // Editierbare Zahl-Felder starten leer
-            cell.UserInput = "";
-            vm.UpdateDisplay();
+            SelectedCell = null;
+            return;
         }
-
-        // Shuffle Tokens deterministic
-        var rnd = new Random(seed + 999);
-        foreach (var t in list.OrderBy(_ => rnd.Next()))
-            NumberTokens.Add(t);
+        ClearSelections();
+        cell.IsSelected = true;
+        SelectedCell = cell;
     }
 
     private void ClearSelections()
     {
-        if (SelectedNumber != null) SelectedNumber.IsSelected = false;
-        SelectedNumber = null;
-
-        SelectedOperator = null;
+        foreach (var c in FlatCells)
+            if (c.IsSelected) c.IsSelected = false;
     }
 
-    // ===== UI actions =====
-
-    internal void OnCellTapped(MathCrossCellViewModel cellVm)
+    private void UpdateCandidateTokens()
     {
-        if (!cellVm.IsEditable) return;
+        CandidateTokens.Clear();
+        if (SelectedCell == null || !SelectedCell.IsEditable) return;
 
-        SelectedCell = cellVm;
+        var cell = SelectedCell.Cell;
 
-        // Zahl ausgewählt + Zahlzelle -> eintragen
-        if (SelectedNumber != null && cellVm.IsNumberCell)
+        if (cell.Type == CellType.Number)
         {
-            PlaceNumberToken(SelectedNumber, cellVm);
-            return;
+            foreach (var t in BuildNumberCandidates(cell.Solution))
+                CandidateTokens.Add(t);
         }
-
-        // Operator ausgewählt + Operatorzelle -> eintragen
-        if (!string.IsNullOrWhiteSpace(SelectedOperator) && cellVm.IsOperatorCell)
+        else if (cell.Type == CellType.Operator)
         {
-            PlaceOperator(SelectedOperator!, cellVm);
-            return;
+            foreach (var t in BuildOperatorCandidates())
+                CandidateTokens.Add(t);
         }
+    }
 
-        // Keine Auswahl: Tap auf belegtes Feld -> zurück / löschen
-        if (SelectedNumber == null && string.IsNullOrWhiteSpace(SelectedOperator))
+    private IEnumerable<string> BuildOperatorCandidates()
+    {
+        return DifficultyKey.ToLowerInvariant() switch
         {
-            if (cellVm.IsNumberCell && !string.IsNullOrWhiteSpace(cellVm.Cell.UserInput))
+            "easy" => new[] { "+", "−" },
+            "normal" => new[] { "+", "−", "×" },
+            _ => new[] { "+", "−", "×", "÷" }
+        };
+    }
+
+    private IEnumerable<string> BuildNumberCandidates(string? solution)
+    {
+        string sol = (solution ?? "").Trim();
+        var set = new HashSet<string> { sol };
+
+        int minVal = DifficultyKey is "hard" or "master" ? -1 : 1;
+        int maxVal = 99;
+
+        if (TryParse(sol, out var sNum))
+        {
+            var rnd = Random.Shared;
+            while (set.Count < 10)
             {
-                ReturnNumberToBank(cellVm);
-            }
-            else if (cellVm.IsOperatorCell && !string.IsNullOrWhiteSpace(cellVm.Cell.UserInput))
-            {
-                cellVm.Cell.UserInput = "";
-                cellVm.UpdateDisplay();
-            }
-        }
-    }
+                double v = sNum + rnd.Next(-15, 16);
+                v = Math.Max(minVal, Math.Min(maxVal, v));
 
-    private async Task PickNumberTokenAsync(MathTokenViewModel? token)
-    {
-        if (token == null) return;
-
-        if (SelectedNumber == token)
-        {
-            ClearSelections();
-            return;
-        }
-
-        if (SelectedNumber != null) SelectedNumber.IsSelected = false;
-
-        SelectedNumber = token;
-        SelectedNumber.IsSelected = true;
-
-        // Operator abwählen
-        SelectedOperator = null;
-
-        // Wenn bereits eine Zelle aktiv ist und eine Zahl erwartet, direkt eintragen
-        if (SelectedCell is { IsEditable: true, IsNumberCell: true })
-        {
-            PlaceNumberToken(token, SelectedCell);
-        }
-
-        await Task.CompletedTask;
-    }
-
-    private async Task PickOperatorAsync(string? op)
-    {
-        if (string.IsNullOrWhiteSpace(op)) return;
-
-        var normalized = NormalizeOperator(op);
-
-        // Toggle: gleicher Operator nochmal -> abwählen
-        if (SelectedOperator == normalized)
-        {
-            SelectedOperator = null;
-            await Task.CompletedTask;
-            return;
-        }
-
-        SelectedOperator = normalized;
-
-        // Zahl abwählen
-        if (SelectedNumber != null) SelectedNumber.IsSelected = false;
-        SelectedNumber = null;
-
-        // Wenn bereits eine Zelle aktiv ist und ein Operator erwartet, direkt eintragen
-        if (SelectedCell is { IsEditable: true, IsOperatorCell: true })
-        {
-            PlaceOperator(normalized, SelectedCell);
-        }
-
-        await Task.CompletedTask;
-    }
-
-    private void PlaceNumberToken(MathTokenViewModel token, MathCrossCellViewModel cellVm)
-    {
-        if (!cellVm.IsEditable || !cellVm.IsNumberCell) return;
-
-        // Falls schon Zahl drin -> zurück in Bank
-        if (!string.IsNullOrWhiteSpace(cellVm.Cell.UserInput))
-            NumberTokens.Add(new MathTokenViewModel(cellVm.Cell.UserInput));
-
-        cellVm.Cell.UserInput = NormalizeNumberString(token.Value);
-        cellVm.UpdateDisplay();
-
-        NumberTokens.Remove(token);
-
-        // Zahl-Auswahl leeren (wie üblich)
-        ClearSelections();
-
-        if (AutoAdvance) MoveToNextCell();
-    }
-
-    private void PlaceOperator(string op, MathCrossCellViewModel cellVm)
-    {
-        if (!cellVm.IsEditable || !cellVm.IsOperatorCell) return;
-
-        cellVm.Cell.UserInput = NormalizeOperator(op);
-        cellVm.UpdateDisplay();
-
-        // Operator bleibt ausgewählt (für mehrere Operatoren)
-        if (AutoAdvance) MoveToNextCell();
-    }
-
-    private void ReturnNumberToBank(MathCrossCellViewModel cellVm)
-    {
-        var v = cellVm.Cell.UserInput;
-        if (string.IsNullOrWhiteSpace(v)) return;
-
-        NumberTokens.Add(new MathTokenViewModel(v));
-        cellVm.Cell.UserInput = "";
-        cellVm.UpdateDisplay();
-    }
-
-    private void MoveToNextCell()
-    {
-        if (Game == null || SelectedCell == null) return;
-
-        int row = SelectedCell.Cell.Row;
-        int col = SelectedCell.Cell.Col;
-
-        for (int r = row; r < Game.Rows; r++)
-        {
-            int start = (r == row) ? col + 1 : 0;
-            for (int c = start; c < Game.Cols; c++)
-            {
-                var cell = Game.Grid[r, c];
-                if (!cell.IsGiven && cell.Type is CellType.Number or CellType.Operator)
+                string cand;
+                if (DifficultyKey == "master" && rnd.Next(10) < 2)
                 {
-                    SelectedCell = GridCells[r][c];
-                    return;
+                    double dec = Math.Round(v + rnd.NextDouble() - 0.5, 1);
+                    dec = Math.Max(minVal, Math.Min(maxVal, dec));
+                    cand = dec.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
                 }
-            }
-        }
-
-        for (int r = 0; r <= row; r++)
-        {
-            int end = (r == row) ? col : Game.Cols;
-            for (int c = 0; c < end; c++)
-            {
-                var cell = Game.Grid[r, c];
-                if (!cell.IsGiven && cell.Type is CellType.Number or CellType.Operator)
+                else
                 {
-                    SelectedCell = GridCells[r][c];
-                    return;
+                    cand = ((int)Math.Round(v)).ToString();
                 }
+                set.Add(cand.Replace('-', '−'));
             }
         }
-    }
-
-    // ===== Reset =====
-    private async Task ResetAllInputsAsync()
-    {
-        if (Game == null) return;
-
-        foreach (var vm in FlatCells)
+        else
         {
-            var cell = vm.Cell;
-            if (cell.IsGiven) continue;
-            if (cell.Type is CellType.Empty or CellType.Equals) continue;
-
-            cell.UserInput = "";
-            vm.UpdateDisplay();
+            foreach (var p in Enumerable.Range(minVal, maxVal - minVal + 1)
+                .Select(n => n.ToString().Replace('-', '−'))
+                .OrderBy(_ => Random.Shared.Next())
+                .Take(10))
+            {
+                set.Add(p);
+            }
         }
 
-        int seed = StableHash($"{GameId}:{DifficultyKey}") + LevelNumber * 77;
-        BuildNumberTokens(seed);
-
-        SelectedCell = null;
-        ClearSelections();
-
-        await Task.CompletedTask;
+        return set.OrderBy(v => TryParse(v, out var n) ? n : double.MaxValue).Take(10);
     }
 
-    // ===== Check / Solve =====
     private async Task CheckSolutionAsync()
     {
         if (Game == null) return;
 
-        var missing = FlatCells
-            .Where(vm => vm.IsEditable && IsMissingInput(vm.Cell.UserInput, vm.Cell.Type))
-            .ToList();
-
+        var missing = FlatCells.Where(vm => vm.IsEditable && string.IsNullOrWhiteSpace(vm.Cell.UserInput)).ToList();
         if (missing.Count > 0)
         {
             SelectedCell = missing[0];
-            await _dialog.AlertAsync("Fehlt noch was", $"Bitte fülle alle Felder aus. Es fehlen noch: {missing.Count}");
+            await _dialog.AlertAsync("Fehlt noch", $"Es fehlen {missing.Count} Felder.");
             return;
         }
 
-
-        // Vergleiche: Zahlen als int, Operatoren normalisiert
         foreach (var vm in FlatCells)
         {
             var cell = vm.Cell;
-            if (cell.Type is CellType.Empty or CellType.Equals) continue;
-            if (cell.IsGiven) continue;
+            if (cell.Type is CellType.Empty or CellType.Equals || cell.IsGiven) continue;
 
             bool ok = cell.Type switch
             {
                 CellType.Number => SameNumber(cell.UserInput, cell.Solution),
-                CellType.Operator => SameOperator(cell.UserInput, cell.Solution),
+                CellType.Operator => SameOp(cell.UserInput, cell.Solution),
                 _ => true
             };
 
             if (!ok)
             {
+                ClearSelections();
+                vm.IsSelected = true;
                 SelectedCell = vm;
-                await _dialog.AlertAsync("Nicht korrekt", "Mindestens ein Feld ist falsch. (Feld ist markiert)");
+                await _dialog.AlertAsync("Falsch", "Mindestens ein Feld ist falsch.");
                 return;
             }
         }
 
-        await _dialog.AlertAsync("Super!", "Level gelöst!");
+        int reward = DifficultyKey switch { "easy" => 5, "normal" => 8, "hard" => 12, "master" => 18, _ => 5 };
+
+        if (_userProfile != null)
+        {
+            _userProfile.Coins += reward;
+            Coins = _userProfile.Coins;
+            await _userService.SaveUserAsync(_userProfile);
+        }
+
+        await _dialog.AlertAsync("Super! 🎉", $"+{reward} Coins");
         await _progressStore.MarkLevelCompleteAsync(GameId, DifficultyKey, LevelNumber);
 
         LevelNumber++;
         await StartNewRoundAsync();
     }
-    private static bool IsMissingInput(string? input, CellType type)
+
+    private static bool SameOp(string? u, string? s) => Norm(u) == Norm(s);
+
+    private static bool SameNumber(string? u, string? s)
     {
-        var t = (input ?? "").Trim();
-
-        // Platzhalter gelten als "leer"
-        if (string.IsNullOrWhiteSpace(t)) return true;
-        if (type == CellType.Number && (t == "·" || t == ".")) return true;
-        if (type == CellType.Operator && (t == "?")) return true;
-
-        return false;
+        if (!TryParse(u, out var uv) || !TryParse(s, out var sv)) return false;
+        return Math.Abs(uv - sv) < 0.001;
     }
 
-    // ===== Normalisierung =====
-    private static bool SameOperator(string? user, string? sol)
-        => NormalizeOperator(user) == NormalizeOperator(sol);
-
-    private static bool SameNumber(string? user, string? sol)
+    private static bool TryParse(string? s, out double r)
     {
-        if (!int.TryParse(NormalizeNumberString(user), out var u)) return false;
-        if (!int.TryParse(NormalizeNumberString(sol), out var s)) return false;
-        return u == s;
+        r = 0;
+        var t = (s ?? "").Trim().Replace('−', '-').Replace(',', '.');
+        return double.TryParse(t, System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.InvariantCulture, out r);
     }
 
-    private static string NormalizeOperator(string? s)
+    private static string Norm(string? s)
     {
-        var t = (s ?? "").Trim();
-
-        // Unicode minus -> normal minus
-        t = t.Replace('−', '-');
-
-        // Varianten normalisieren
-        if (t == "x" || t == "X" || t == "*") return "×";
-        if (t == "/" || t == ":") return "÷";
-
+        var t = (s ?? "").Trim().Replace('−', '-').Replace('–', '-');
+        if (t is "x" or "X" or "*") return "×";
+        if (t is "/" or ":") return "÷";
+        if (t == "-") return "−";
         return t;
     }
 
-    private static string NormalizeNumberString(string? s)
-    {
-        var t = (s ?? "").Trim();
-
-        t = t.Replace('−', '-');
-
-        if (t.StartsWith("+")) t = t[1..];
-
-        if (int.TryParse(t, out var v)) return v.ToString();
-
-        return t;
-    }
-
-    // ===== Farben =====
-    public Color GetCellColor(MathCrossCell cell, bool isSelected)
+    public Color GetCellColor(MathCrossCell cell, bool sel)
     {
         if (cell.Type == CellType.Empty) return Colors.Transparent;
-        if (isSelected) return Color.FromArgb("#FFF3B0");
-
-        if (cell.Type == CellType.Equals) return Color.FromArgb("#EDEDED");
-        if (cell.IsGiven) return Color.FromArgb("#E0E0E0");
-
-        // Farbschema laut Anforderung:
-        // - Zahlen-Eingabefelder: Weiß
-        // - Operator-Eingabefelder: Gelb
-        // - Gefüllte / vorgegebene Felder: Grau (oben abgedeckt)
-        if (cell.Type == CellType.Operator)
-            return Color.FromArgb("#FFEAA7"); // sanftes Gelb
-
-        if (cell.Type == CellType.Number)
-            return Colors.White;
-
+        if (sel) return Color.FromArgb("#FFF3B0");
+        if (cell.Type == CellType.Equals) return Color.FromArgb("#E8E8E8");
+        if (cell.IsGiven) return Color.FromArgb("#D8D8D8");
+        if (cell.Type == CellType.Operator) return Color.FromArgb("#FFEAA7");
         return Colors.White;
     }
 
-    private static string DiffName(string key) => key switch
+    private static string DiffName(string k) => k switch
     {
         "easy" => "Einfach",
         "normal" => "Normal",
         "hard" => "Schwer",
         "master" => "Master",
-        _ => key
+        _ => k
     };
 
     private static int StableHash(string s)
     {
         unchecked
         {
-            const int fnvOffset = (int)2166136261;
-            const int fnvPrime = 16777619;
-            int hash = fnvOffset;
-            foreach (var ch in s) { hash ^= ch; hash *= fnvPrime; }
-            return Math.Abs(hash);
+            int h = (int)2166136261;
+            foreach (var c in s) { h ^= c; h *= 16777619; }
+            return Math.Abs(h);
         }
     }
 }
@@ -608,62 +454,31 @@ public sealed class MathCrossCellViewModel : ObservableObject
     public MathCrossCell Cell { get; }
     private readonly MathCrossPageViewModel _parent;
 
-    // ✅ Empty-Felder komplett ausblenden im UI
-    public bool IsBoardCellVisible => Cell.Type != CellType.Empty;
-
     public MathCrossCellViewModel(MathCrossCell cell, MathCrossPageViewModel parent)
     {
         Cell = cell;
         _parent = parent;
-
-        TapCellCommand = new AsyncCommand(() =>
-        {
-            _parent.OnCellTapped(this);
-            return Task.CompletedTask;
-        });
+        TapCellCommand = new AsyncCommand(() => { _parent.OnCellTapped(this); return Task.CompletedTask; });
     }
 
     private bool _isSelected;
     public bool IsSelected
     {
         get => _isSelected;
-        set
-        {
-            if (SetProperty(ref _isSelected, value))
-                OnPropertyChanged(nameof(BackgroundColor));
-        }
+        set { if (SetProperty(ref _isSelected, value)) OnPropertyChanged(nameof(BackgroundColor)); }
     }
 
     public bool IsGiven => Cell.IsGiven;
     public bool IsEditable => !Cell.IsGiven && Cell.Type is CellType.Number or CellType.Operator;
 
-    public bool IsNumberCell => Cell.Type == CellType.Number;
-    public bool IsOperatorCell => Cell.Type == CellType.Operator;
+    public string DisplayText => Cell.Type == CellType.Equals ? "=" : Cell.IsGiven ? Cell.Solution : Cell.UserInput;
 
-    public bool ShowEditableButton => IsBoardCellVisible && IsEditable;
-    public bool ShowReadOnlyLabel => IsBoardCellVisible && !IsEditable;
-
-    public string DisplayText =>
-        Cell.Type == CellType.Empty ? "" :
-        Cell.Type == CellType.Equals ? "=" :
-        Cell.IsGiven ? Cell.Solution :
-        Cell.UserInput;
-
-    public string EditableText
-    {
-        get
-        {
-            if (!IsEditable) return "";
-
-            if (IsOperatorCell)
-                return string.IsNullOrWhiteSpace(Cell.UserInput) ? "." : Cell.UserInput;
-
-            return string.IsNullOrWhiteSpace(Cell.UserInput) ? "X" : Cell.UserInput;
-        }
-    }
+    public string EditableText => !IsEditable ? "" :
+        Cell.Type == CellType.Operator ?
+            (string.IsNullOrWhiteSpace(Cell.UserInput) ? "?" : Cell.UserInput) :
+            (string.IsNullOrWhiteSpace(Cell.UserInput) ? "·" : Cell.UserInput);
 
     public AsyncCommand TapCellCommand { get; }
-
     public Color BackgroundColor => _parent.GetCellColor(Cell, IsSelected);
 
     public void UpdateDisplay()
@@ -672,26 +487,6 @@ public sealed class MathCrossCellViewModel : ObservableObject
         OnPropertyChanged(nameof(EditableText));
         OnPropertyChanged(nameof(IsGiven));
         OnPropertyChanged(nameof(IsEditable));
-        OnPropertyChanged(nameof(ShowEditableButton));
-        OnPropertyChanged(nameof(ShowReadOnlyLabel));
         OnPropertyChanged(nameof(BackgroundColor));
-        OnPropertyChanged(nameof(IsBoardCellVisible));
-    }
-}
-
-public sealed class MathTokenViewModel : ObservableObject
-{
-    public MathTokenViewModel(string value)
-    {
-        Value = (value ?? "").Trim();
-    }
-
-    public string Value { get; }
-
-    private bool _isSelected;
-    public bool IsSelected
-    {
-        get => _isSelected;
-        set => SetProperty(ref _isSelected, value);
     }
 }

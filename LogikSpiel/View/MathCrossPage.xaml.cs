@@ -1,70 +1,89 @@
-﻿using System.Collections.Generic;
+﻿#nullable enable
 using LogikSpiel.ViewModel;
+using Microsoft.Maui.Controls;
+using Microsoft.Maui.Controls.Shapes;
+using Microsoft.Maui.Graphics;
 
 namespace LogikSpiel.View;
 
 public partial class MathCrossPage : ContentPage, IQueryAttributable
 {
     private bool _isLoaded;
+    private const double CellSize = 42;
 
     public MathCrossPage(MathCrossPageViewModel vm)
     {
         InitializeComponent();
         BindingContext = vm;
-
-        vm.PropertyChanged += (_, e) =>
-        {
-            // ✅ Nur Game reicht, Grid wird damit neu berechnet
-            if (e.PropertyName == nameof(MathCrossPageViewModel.Game))
-                MainThread.BeginInvokeOnMainThread(BuildBoardGrid);
-        };
-
-        BoardHost.SizeChanged += (_, _) => BuildBoardGrid();
+        vm.RequestLayoutUpdate += () => MainThread.BeginInvokeOnMainThread(BuildGrid);
+        vm.PropertyChanged += (s, e) => { if (e.PropertyName == nameof(vm.Game)) MainThread.BeginInvokeOnMainThread(BuildGrid); };
     }
 
-    private void BuildBoardGrid()
+    private void BuildGrid()
     {
         if (BindingContext is not MathCrossPageViewModel vm || vm.Game == null) return;
 
-        if (BoardHost.Width <= 0 || BoardHost.Height <= 0)
-        {
-            MainThread.BeginInvokeOnMainThread(async () =>
-            {
-                await Task.Delay(80);
-                BuildBoardGrid();
-            });
-            return;
-        }
+        var game = vm.Game;
 
-        int rows = Math.Max(1, vm.Game.Rows);
-        int cols = Math.Max(1, vm.Game.Cols);
-
-        double hSpace = BoardGrid.ColumnSpacing;
-        double vSpace = BoardGrid.RowSpacing;
-
-        // Ziel: große Zellen, scrollen ist erlaubt.
-        int visibleColsTarget = vm.Game.UseExtendedEquations ? 7 : 6;
-
-        const double safety = 30;
-        double availableWidth = Math.Max(0, BoardHost.Width - safety);
-
-        double cellW = (availableWidth - (visibleColsTarget - 1) * hSpace) / visibleColsTarget;
-
-        double max = vm.Game.UseExtendedEquations ? 92 : 110;
-        vm.CellSize = Math.Clamp(Math.Floor(cellW), 44, max);
-        vm.CellFontSize = vm.CellSize * 0.42;
-
+        BoardGrid.Children.Clear();
         BoardGrid.RowDefinitions.Clear();
         BoardGrid.ColumnDefinitions.Clear();
 
-        for (int r = 0; r < rows; r++)
-            BoardGrid.RowDefinitions.Add(new RowDefinition { Height = vm.CellSize });
+        for (int r = 0; r < game.Rows; r++)
+            BoardGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(CellSize) });
 
-        for (int c = 0; c < cols; c++)
-            BoardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = vm.CellSize });
+        for (int c = 0; c < game.Cols; c++)
+            BoardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(CellSize) });
 
-        BoardGrid.WidthRequest = cols * vm.CellSize + (cols - 1) * hSpace;
-        BoardGrid.HeightRequest = rows * vm.CellSize + (rows - 1) * vSpace;
+        foreach (var cellVm in vm.FlatCells)
+        {
+            var cell = cellVm.Cell;
+
+            var border = new Border
+            {
+                StrokeThickness = 1,
+                Stroke = Color.FromArgb("#CCCCCC"),
+                StrokeShape = new RoundRectangle { CornerRadius = 6 },
+                Padding = 0
+            };
+
+            border.SetBinding(Border.BackgroundColorProperty,
+                new Binding(nameof(MathCrossCellViewModel.BackgroundColor), source: cellVm));
+
+            Grid.SetRow(border, cell.Row);
+            Grid.SetColumn(border, cell.Col);
+
+            if (cellVm.IsEditable)
+            {
+                var btn = new Button
+                {
+                    Padding = 0,
+                    FontAttributes = FontAttributes.Bold,
+                    FontSize = 15,
+                    BackgroundColor = Colors.Transparent,
+                    TextColor = Color.FromArgb("#222"),
+                    BorderWidth = 0
+                };
+                btn.SetBinding(Button.TextProperty, new Binding(nameof(MathCrossCellViewModel.EditableText), source: cellVm));
+                btn.SetBinding(Button.CommandProperty, new Binding(nameof(MathCrossCellViewModel.TapCellCommand), source: cellVm));
+                border.Content = btn;
+            }
+            else
+            {
+                var lbl = new Label
+                {
+                    HorizontalTextAlignment = TextAlignment.Center,
+                    VerticalTextAlignment = TextAlignment.Center,
+                    FontAttributes = FontAttributes.Bold,
+                    TextColor = Color.FromArgb("#333"),
+                    FontSize = 15
+                };
+                lbl.SetBinding(Label.TextProperty, new Binding(nameof(MathCrossCellViewModel.DisplayText), source: cellVm));
+                border.Content = lbl;
+            }
+
+            BoardGrid.Children.Add(border);
+        }
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -77,6 +96,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable
 
         MainThread.BeginInvokeOnMainThread(async () =>
         {
+            await Task.Delay(100);
             try { await vm.LoadAsync("math_cross", diff, level); }
             catch (Exception ex) { await DisplayAlertAsync("Fehler", ex.Message, "OK"); }
         });

@@ -2,10 +2,16 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
+             xmlns:conv="clr-namespace:LogikSpiel.Converters"
              x:Class="LogikSpiel.View.MathCrossPage"
              x:DataType="vm:MathCrossPageViewModel"
              NavigationPage.HasNavigationBar="False"
-             Shell.NavBarIsVisible="False">
+             Shell.NavBarIsVisible="False"
+             x:Name="ThisPage">
+
+    <ContentPage.Resources>
+        <conv:InvertBoolConverter x:Key="InvertBoolConverter"/>
+    </ContentPage.Resources>
 
     <ContentPage.Background>
         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
@@ -14,189 +20,73 @@
         </LinearGradientBrush>
     </ContentPage.Background>
 
-    <!-- Header / Board (scroll) / Bottom Panel (fixed) -->
-    <Grid RowDefinitions="Auto,*,Auto" Padding="20" RowSpacing="15">
+    <Grid RowDefinitions="Auto,*,Auto" Padding="12" RowSpacing="10">
 
-        <!-- Header -->
+        <!-- HEADER -->
         <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" HeightRequest="50">
-            <Button Grid.Column="0"
-                    Text="&#x2190;"
-                    Command="{Binding BackCommand}"
-                    IsEnabled="{Binding IsNotBusy}"
-                    BackgroundColor="#20FFFFFF"
-                    TextColor="White"
-                    FontAttributes="Bold"
-                    WidthRequest="40"
-                    HeightRequest="40"
-                    CornerRadius="20"
-                    Padding="0"/>
+            <Button Grid.Column="0" Text="←" Command="{Binding BackCommand}"
+                    IsEnabled="{Binding IsNotBusy}" BackgroundColor="#20FFFFFF"
+                    TextColor="White" FontAttributes="Bold" FontSize="20"
+                    WidthRequest="44" HeightRequest="44" CornerRadius="22" Padding="0"/>
 
-            <VerticalStackLayout Grid.Column="1" Spacing="0"
-                                 HorizontalOptions="Center"
-                                 VerticalOptions="Center">
-                <Label Text="Math Cross"
-                       TextColor="White"
-                       FontAttributes="Bold"
-                       FontSize="18"
-                       HorizontalOptions="Center"/>
-                <Label Text="{Binding DifficultyText}"
-                       TextColor="White"
-                       FontSize="12"
-                       Opacity="0.9"
-                       HorizontalOptions="Center"/>
+            <VerticalStackLayout Grid.Column="1" Spacing="0" HorizontalOptions="Center" VerticalOptions="Center">
+                <Label Text="Math Cross" TextColor="White" FontAttributes="Bold" FontSize="18" HorizontalOptions="Center"/>
+                <Label Text="{Binding DifficultyText}" TextColor="White" FontSize="12" Opacity="0.9" HorizontalOptions="Center"/>
             </VerticalStackLayout>
 
-            <Label Grid.Column="2"
-                   Text="{Binding Coins, StringFormat='💰 {0}'}"
-                   TextColor="#FFD700"
-                   FontAttributes="Bold"
-                   FontSize="16"
-                   VerticalOptions="Center"/>
+            <Label Grid.Column="2" Text="{Binding Coins, StringFormat='💰 {0}'}"
+                   TextColor="#FFD700" FontAttributes="Bold" FontSize="15" VerticalOptions="Center"/>
         </Grid>
 
+        <!-- BOARD -->
+        <Border Grid.Row="1" StrokeShape="RoundRectangle 16" BackgroundColor="#30FFFFFF"
+                Padding="8" StrokeThickness="0" x:Name="BoardContainer">
+            <ScrollView Orientation="Both" HorizontalScrollBarVisibility="Never" VerticalScrollBarVisibility="Never">
+                <Grid x:Name="BoardGrid" HorizontalOptions="Center" VerticalOptions="Center" RowSpacing="3" ColumnSpacing="3"/>
+            </ScrollView>
+        </Border>
 
-        <Grid Grid.Row="1" x:Name="BoardHost">
-
-                <ScrollView Orientation="Both"
-                    HorizontalScrollBarVisibility="Always"
-                    VerticalScrollBarVisibility="Always">
-
-                    <Grid Padding="10"
-                  HorizontalOptions="Start"
-                  VerticalOptions="Start">
-
-                        <Grid x:Name="BoardGrid"
-                      HorizontalOptions="Start"
-                      VerticalOptions="Start"
-                      RowSpacing="8"
-                      ColumnSpacing="8"
-                      BindableLayout.ItemsSource="{Binding FlatCells}">
-
-                            <BindableLayout.ItemTemplate>
-                                <DataTemplate x:DataType="vm:MathCrossCellViewModel">
-
-                                    <!-- ✅ Empty-Felder komplett unsichtbar -->
-                                    <Border IsVisible="{Binding IsBoardCellVisible}"
-                                    Grid.Row="{Binding Cell.Row}"
-                                    Grid.Column="{Binding Cell.Col}"
-                                    BackgroundColor="{Binding BackgroundColor}"
-                                    StrokeThickness="0"
-                                    WidthRequest="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CellSize}"
-                                    HeightRequest="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CellSize}"
-                                    StrokeShape="RoundRectangle 12"
-                                    Padding="0">
-
-                                        <Grid>
-
-                                            <!-- Given / "=" -->
-                                            <Label IsVisible="{Binding ShowReadOnlyLabel}"
-                                           Text="{Binding DisplayText}"
-                                           HorizontalTextAlignment="Center"
-                                           VerticalTextAlignment="Center"
-                                           FontAttributes="Bold"
-                                           TextColor="#222"
-                                           FontSize="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CellFontSize}" />
-
-                                            <!-- Editable -->
-                                            <Button IsVisible="{Binding ShowEditableButton}"
-                                            Text="{Binding EditableText}"
-                                            Command="{Binding TapCellCommand}"
-                                            Padding="0"
-                                            FontAttributes="Bold"
-                                            FontSize="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.CellFontSize}"
-                                            BackgroundColor="Transparent"
-                                            TextColor="#111"/>
-                                        </Grid>
-
-                                    </Border>
-                                </DataTemplate>
-                            </BindableLayout.ItemTemplate>
-
-                        </Grid>
-                    </Grid>
-                </ScrollView>
-
-                <!-- Busy Overlay -->
-            <Grid IsVisible="{Binding IsBusy}" BackgroundColor="#66000000">
-                <VerticalStackLayout HorizontalOptions="Center"
-                                 VerticalOptions="Center"
-                                 Spacing="10">
-                    <ActivityIndicator IsRunning="True"/>
-                    <Label Text="Erzeuge Rätsel..."
-                       TextColor="White"
-                       FontAttributes="Bold"/>
-                </VerticalStackLayout>
-            </Grid>
-        </Grid>
-
-        <Border Grid.Row="2"
-            StrokeShape="RoundRectangle 20"
-            BackgroundColor="#18FFFFFF"
-            Padding="10"
-            StrokeThickness="0">
-
-            <VerticalStackLayout Spacing="8">
-
-                <!-- Buttons -->
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                    <Button Grid.Column="0"
-                        Text="↩️ Reset"
-                        Command="{Binding ResetCommand}"
-                        IsEnabled="{Binding IsNotBusy}"
-                        BackgroundColor="#03DAC5"
-                        TextColor="#000"
-                        FontAttributes="Bold"
-                        CornerRadius="14"
-                        HeightRequest="48"/>
-
-                    <Button Grid.Column="1"
-                        Text="✅ Lösen"
-                        Command="{Binding SolveLevelCommand}"
-                        IsEnabled="{Binding IsNotBusy}"
-                        BackgroundColor="#BB86FC"
-                        TextColor="White"
-                        FontAttributes="Bold"
-                        CornerRadius="14"
-                        HeightRequest="48"/>
+        <!-- BOTTOM -->
+        <Border Grid.Row="2" StrokeShape="RoundRectangle 16" BackgroundColor="#E8FFFFFF"
+                Padding="12" StrokeThickness="0">
+            <VerticalStackLayout Spacing="10">
+                <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="8">
+                    <Button Grid.Column="0" Text="↩️" Command="{Binding ResetCommand}" IsEnabled="{Binding IsNotBusy}"
+                            BackgroundColor="#E0E0E0" TextColor="#333" FontAttributes="Bold" CornerRadius="12" HeightRequest="44" FontSize="18"/>
+                    <Button Grid.Column="1" Text="💡" Command="{Binding HintCommand}" IsEnabled="{Binding IsNotBusy}"
+                            BackgroundColor="#03DAC5" TextColor="#000" FontAttributes="Bold" CornerRadius="12" HeightRequest="44" FontSize="18"/>
+                    <Button Grid.Column="2" Text="⌫" Command="{Binding ClearCellCommand}" IsEnabled="{Binding HasSelection}"
+                            BackgroundColor="#FFB74D" TextColor="#000" FontAttributes="Bold" CornerRadius="12" HeightRequest="44" FontSize="18"/>
+                    <Button Grid.Column="3" Text="✓" Command="{Binding CheckCommand}" IsEnabled="{Binding IsNotBusy}"
+                            BackgroundColor="#4CAF50" TextColor="White" FontAttributes="Bold" CornerRadius="12" HeightRequest="44" FontSize="18"/>
                 </Grid>
 
-                <!-- Operatoren (klein) -->
-                <HorizontalStackLayout Spacing="10">
-                    <Label Text="Ops:" TextColor="White" Opacity="0.85" FontSize="12" VerticalOptions="Center"/>
-                    <Button Text="+" Command="{Binding PickOperatorCommand}" CommandParameter="+" WidthRequest="44" HeightRequest="40" CornerRadius="12" BackgroundColor="#22FFFFFF" TextColor="White" FontAttributes="Bold"/>
-                    <Button Text="-" Command="{Binding PickOperatorCommand}" CommandParameter="-" WidthRequest="44" HeightRequest="40" CornerRadius="12" BackgroundColor="#22FFFFFF" TextColor="White" FontAttributes="Bold"/>
-                    <Button Text="×" Command="{Binding PickOperatorCommand}" CommandParameter="×" WidthRequest="44" HeightRequest="40" CornerRadius="12" BackgroundColor="#22FFFFFF" TextColor="White" FontAttributes="Bold"/>
-                    <Button Text="÷" Command="{Binding PickOperatorCommand}" CommandParameter="÷" WidthRequest="44" HeightRequest="40" CornerRadius="12" BackgroundColor="#22FFFFFF" TextColor="White" FontAttributes="Bold"/>
-                </HorizontalStackLayout>
-
-                <!-- Zahlen (horizontal scroll, klein) -->
-                <HorizontalStackLayout Spacing="8">
-                    <Label Text="Zahlen:" TextColor="White" Opacity="0.85" FontSize="12" VerticalOptions="Center"/>
-
-                    <ScrollView Orientation="Horizontal"
-                            HorizontalScrollBarVisibility="Never">
-                        <HorizontalStackLayout Spacing="8"
-                                           BindableLayout.ItemsSource="{Binding NumberTokens}">
-                            <BindableLayout.ItemTemplate>
-                                <DataTemplate x:DataType="vm:MathTokenViewModel">
-                                    <Button Text="{Binding Value}"
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.PickNumberTokenCommand}"
+                <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never" IsVisible="{Binding HasSelection}">
+                    <HorizontalStackLayout Spacing="6" HorizontalOptions="Center" BindableLayout.ItemsSource="{Binding CandidateTokens}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <Button Text="{Binding .}"
+                                        Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.TokenCommand}"
                                         CommandParameter="{Binding .}"
-                                        WidthRequest="56"
-                                        HeightRequest="40"
-                                        CornerRadius="12"
-                                        FontAttributes="Bold"
-                                        FontSize="14"
-                                        BackgroundColor="#22FFFFFF"
-                                        TextColor="White"/>
-                                </DataTemplate>
-                            </BindableLayout.ItemTemplate>
-                        </HorizontalStackLayout>
-                    </ScrollView>
-                </HorizontalStackLayout>
+                                        WidthRequest="52" HeightRequest="48" Padding="0"
+                                        BackgroundColor="White" TextColor="#333" FontAttributes="Bold"
+                                        FontSize="16" CornerRadius="10" BorderColor="#CCC" BorderWidth="1"/>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </HorizontalStackLayout>
+                </ScrollView>
 
+                <Label Text="Tippe auf ein Feld" IsVisible="{Binding HasSelection, Converter={StaticResource InvertBoolConverter}}"
+                       HorizontalOptions="Center" TextColor="#888" FontSize="13" FontAttributes="Italic"/>
             </VerticalStackLayout>
         </Border>
 
+        <!-- Loading -->
+        <Grid Grid.RowSpan="3" IsVisible="{Binding IsBusy}" BackgroundColor="#AA000000">
+            <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="12">
+                <ActivityIndicator IsRunning="True" Color="White" HeightRequest="50" WidthRequest="50"/>
+                <Label Text="Erzeuge Rätsel..." TextColor="White" FontAttributes="Bold" FontSize="16"/>
+            </VerticalStackLayout>
+        </Grid>
     </Grid>
 </ContentPage>

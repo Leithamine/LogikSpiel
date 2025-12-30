@@ -15,70 +15,95 @@
         </LinearGradientBrush>
     </ContentPage.Background>
 
-    <Grid RowDefinitions="Auto, Auto, *, Auto" Padding="20" RowSpacing="15">
+    <Grid RowDefinitions="Auto, Auto, *, Auto" Padding="16" RowSpacing="12">
 
-        <!-- Header -->
+        <!-- HEADER -->
         <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" HeightRequest="50">
-            <Button Grid.Column="0" Text="&#x2190;"
+            <Button Grid.Column="0" 
+                    Text="←"
                     Command="{Binding BackCommand}"
                     BackgroundColor="#20FFFFFF"
                     TextColor="White"
                     FontAttributes="Bold"
-                    WidthRequest="40" HeightRequest="40"
-                    CornerRadius="20" Padding="0"/>
+                    FontSize="20"
+                    WidthRequest="44" 
+                    HeightRequest="44"
+                    CornerRadius="22" 
+                    Padding="0"/>
 
             <Label Grid.Column="1"
                    Text="{Binding Title}"
                    TextColor="White"
                    FontAttributes="Bold"
-                   FontSize="18"
+                   FontSize="17"
                    VerticalOptions="Center"
-                   HorizontalOptions="Center"/>
+                   HorizontalOptions="Center"
+                   LineBreakMode="TailTruncation"/>
 
-            <Label Grid.Column="2"
-                   Text="{Binding Coins, StringFormat='💰 {0}'}"
-                   TextColor="#FFD700"
-                   FontAttributes="Bold"
-                   FontSize="16"
-                   VerticalOptions="Center"/>
+            <HorizontalStackLayout Grid.Column="2" Spacing="6" VerticalOptions="Center">
+                <Label Text="{Binding Coins, StringFormat='💰 {0}'}"
+                       TextColor="#FFD700"
+                       FontAttributes="Bold"
+                       FontSize="15"
+                       VerticalOptions="Center"/>
+            </HorizontalStackLayout>
         </Grid>
 
-        <!-- Info-Bar: Aufgabe + Summe -->
-        <Border Grid.Row="1" StrokeShape="RoundRectangle 20"
-                BackgroundColor="#F0FFFFFF" Padding="14" StrokeThickness="0">
+        <!-- INFO-BAR -->
+        <Border Grid.Row="1" 
+                StrokeShape="RoundRectangle 16"
+                BackgroundColor="#F5FFFFFF" 
+                Padding="12" 
+                StrokeThickness="0"
+                Shadow="{Shadow Brush=#20000000, Offset='0,2', Radius=4}">
 
-            <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*,Auto"
-                  ColumnSpacing="12" RowSpacing="8">
+            <Grid RowDefinitions="Auto,Auto" 
+                  ColumnDefinitions="Auto,*,Auto"
+                  ColumnSpacing="10" 
+                  RowSpacing="6">
 
+                <!-- Aufgaben-Chip (MAX oder MIN) -->
                 <Border Grid.Row="0" Grid.Column="0"
                         StrokeThickness="0"
-                        Padding="10,6"
-                        StrokeShape="RoundRectangle 14"
-                        BackgroundColor="{Binding GoalChipColor}">
+                        Padding="12,6"
+                        StrokeShape="RoundRectangle 12"
+                        BackgroundColor="{Binding GoalChipColor}"
+                        Shadow="{Shadow Brush=#30000000, Offset='0,1', Radius=2}">
                     <Label Text="{Binding GoalChipText}"
                            TextColor="White"
                            FontAttributes="Bold"
-                           FontSize="13"/>
+                           FontSize="12"/>
                 </Border>
 
-                <Label Grid.Row="0" Grid.Column="2"
-                       Text="{Binding UserSum, StringFormat='Summe: {0}'}"
-                       TextColor="#333"
-                       FontAttributes="Bold"
-                       FontSize="14"
-                       VerticalOptions="Center"
-                       HorizontalTextAlignment="End"/>
+                <!-- Aktuelle Summe -->
+                <Border Grid.Row="0" Grid.Column="2"
+                        StrokeThickness="0"
+                        Padding="10,6"
+                        StrokeShape="RoundRectangle 10"
+                        BackgroundColor="#EEEEEE">
+                    <Label Text="{Binding UserSum, StringFormat='Σ = {0:0.##}'}"
+                           TextColor="#333"
+                           FontAttributes="Bold"
+                           FontSize="14"
+                           VerticalOptions="Center"/>
+                </Border>
 
+                <!-- Anleitung -->
                 <Label Grid.Row="1" Grid.ColumnSpan="3"
-                       Text="Tippe von oben nach unten (links-unten oder rechts-unten)."
-                       FontSize="12"
-                       TextColor="#666"/>
+                       Text="Tippe Zellen von OBEN nach UNTEN um einen Pfad zu bilden."
+                       FontSize="11"
+                       TextColor="#666"
+                       HorizontalTextAlignment="Center"/>
             </Grid>
         </Border>
 
-        <!-- Board -->
-        <Border Grid.Row="2" StrokeShape="RoundRectangle 20"
-                BackgroundColor="Transparent" Padding="12" StrokeThickness="0">
+        <!-- SPIELFELD (CANVAS) - Nimmt den gesamten verfügbaren Platz -->
+        <Border Grid.Row="2" 
+                StrokeShape="RoundRectangle 16"
+                BackgroundColor="#30FFFFFF" 
+                Padding="4" 
+                StrokeThickness="0">
+
             <skia:SKCanvasView x:Name="BoardCanvas"
                                IgnorePixelScaling="False"
                                EnableTouchEvents="True"
@@ -88,25 +113,32 @@
                                VerticalOptions="Fill"/>
         </Border>
 
-        <!-- Buttons -->
-        <Grid Grid.Row="3" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto"
-              ColumnSpacing="15" RowSpacing="12">
+        <!-- BUTTONS -->
+        <Grid Grid.Row="3" 
+              ColumnDefinitions="*,*" 
+              RowDefinitions="Auto,Auto"
+              ColumnSpacing="10" 
+              RowSpacing="10">
 
             <Button Grid.Row="0" Grid.Column="0"
-                    Text="👁 Lösung"
+                    Text="👁️ Lösung"
                     Command="{Binding ToggleSolutionCommand}"
-                    BackgroundColor="#BB86FC"
+                    BackgroundColor="#9B59B6"
                     TextColor="White"
                     FontAttributes="Bold"
-                    CornerRadius="15" HeightRequest="55"/>
+                    CornerRadius="14" 
+                    HeightRequest="50"
+                    FontSize="14"/>
 
             <Button Grid.Row="0" Grid.Column="1"
                     Text="🧹 Reset"
                     Command="{Binding ResetCommand}"
                     BackgroundColor="#E0E0E0"
-                    TextColor="#000"
+                    TextColor="#333"
                     FontAttributes="Bold"
-                    CornerRadius="15" HeightRequest="55"/>
+                    CornerRadius="14" 
+                    HeightRequest="50"
+                    FontSize="14"/>
 
             <Button Grid.Row="1" Grid.Column="0"
                     Text="💡 Tipp (15)"
@@ -114,15 +146,19 @@
                     BackgroundColor="#03DAC5"
                     TextColor="#000"
                     FontAttributes="Bold"
-                    CornerRadius="15" HeightRequest="55"/>
+                    CornerRadius="14" 
+                    HeightRequest="50"
+                    FontSize="14"/>
 
             <Button Grid.Row="1" Grid.Column="1"
                     Text="✅ Prüfen"
                     Command="{Binding CheckCommand}"
-                    BackgroundColor="#2ECC71"
+                    BackgroundColor="#27AE60"
                     TextColor="White"
                     FontAttributes="Bold"
-                    CornerRadius="15" HeightRequest="55"/>
+                    CornerRadius="14" 
+                    HeightRequest="50"
+                    FontSize="14"/>
         </Grid>
 
     </Grid>

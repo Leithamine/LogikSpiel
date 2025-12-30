@@ -8,11 +8,11 @@ namespace LogikSpiel.Services;
 
 public sealed class PascalTriangleGeneratorService
 {
-    public PascalTriangleGame GenerateGame(string difficultyKey, int seed)
+    public PascalTriangleGame GenerateGame(string difficultyKey, int seed, int? maxRows = null)
     {
         var rnd = new Random(seed);
 
-        var (rows, generator) = GetSettings(difficultyKey, rnd);
+        var (rows, generator) = GetSettings(difficultyKey, rnd, maxRows);
 
         var triangle = new List<List<decimal>>();
         for (int row = 0; row < rows; row++)
@@ -37,130 +37,200 @@ public sealed class PascalTriangleGeneratorService
         };
     }
 
-    private static (int rows, Func<decimal> generator) GetSettings(string key, Random rnd)
+    private static (int rows, Func<decimal> generator) GetSettings(string key, Random rnd, int? maxRows)
     {
         key = (key ?? "easy").ToLowerInvariant();
 
-        return key switch
+        // ✅ REDUZIERTE Reihenanzahl für bessere Darstellung auf Mobilgeräten
+        (int minR, int maxR, Func<decimal> gen) settings = key switch
         {
-            "easy" => (rnd.Next(5, 8), () => rnd.Next(1, 11)), // 1..10
+            "easy" => (5, 7, () => rnd.Next(1, 11)),
 
-            "normal" => (rnd.Next(5, 8), () =>
+            "normal" => (6, 8, () =>
             {
-                // 50% int 1..50, 50% Komma 1.1..9.9
                 if (rnd.Next(2) == 0) return rnd.Next(1, 51);
-
-                int whole = rnd.Next(1, 10);      // 1..9
-                int frac = rnd.Next(1, 10);       // 1..9
+                int whole = rnd.Next(1, 10);
+                int frac = rnd.Next(1, 10);
                 return whole + (frac / 10m);
             }
             ),
 
-            "hard" => (rnd.Next(7, 11), () =>
+            "hard" => (7, 10, () =>
             {
-                // 50% +1..100, 50% -1..-100
                 int v = rnd.Next(1, 101);
                 return rnd.Next(2) == 0 ? v : -v;
             }
             ),
 
-            "master" => (rnd.Next(10, 16), () =>
+            // ✅ Master: maximal 12 Reihen statt 15
+            "master" => (8, 12, () =>
             {
-                // Mischung -100..100, teils Komma
                 int whole = rnd.Next(-100, 101);
-
-                if (rnd.Next(10) < 7) return whole; // 70% int
-
-                int frac = rnd.Next(1, 10); // 0.1..0.9
+                if (rnd.Next(10) < 7) return whole;
+                int frac = rnd.Next(1, 10);
                 return whole >= 0 ? whole + frac / 10m : whole - frac / 10m;
             }
             ),
 
-            _ => (rnd.Next(5, 8), () => rnd.Next(1, 11))
+            _ => (5, 7, () => rnd.Next(1, 11))
         };
+
+        int minRows = settings.minR;
+        int maxBase = settings.maxR;
+
+        // Device-Limit anwenden
+        int maxAllowed = maxRows.HasValue ? Math.Max(3, maxRows.Value) : maxBase;
+
+        int actualMin = Math.Min(minRows, maxAllowed);
+        int actualMax = Math.Min(maxBase, maxAllowed);
+
+        if (actualMax < actualMin) actualMax = actualMin;
+
+        int rows = rnd.Next(actualMin, actualMax + 1);
+        return (rows, settings.gen);
     }
 
-    private static (decimal sum, List<(int row, int col)> path) FindMaxPath(List<List<decimal>> triangle)
+    private static (decimal sum, List<(int row, int col)> path) FindMaxPath(List<List<decimal>> tri)
     {
-        int n = triangle.Count;
-        if (n == 0) return (0, new());
-
+        int n = tri.Count;
         var dp = new decimal[n][];
-        for (int i = 0; i < n; i++) dp[i] = new decimal[i + 1];
+        var parent = new int[n][];
 
-        dp[0][0] = triangle[0][0];
-
-        for (int row = 1; row < n; row++)
+        for (int r = 0; r < n; r++)
         {
-            for (int col = 0; col <= row; col++)
-            {
-                decimal cur = triangle[row][col];
+            dp[r] = new decimal[r + 1];
+            parent[r] = new int[r + 1];
+            for (int c = 0; c <= r; c++) parent[r][c] = -1;
+        }
 
-                if (col == 0) dp[row][col] = dp[row - 1][0] + cur;
-                else if (col == row) dp[row][col] = dp[row - 1][col - 1] + cur;
-                else dp[row][col] = Math.Max(dp[row - 1][col - 1], dp[row - 1][col]) + cur;
+        dp[0][0] = tri[0][0];
+
+        for (int r = 1; r < n; r++)
+        {
+            for (int c = 0; c <= r; c++)
+            {
+                decimal best = decimal.MinValue;
+                int bestParent = -1;
+
+                if (c - 1 >= 0)
+                {
+                    var cand = dp[r - 1][c - 1] + tri[r][c];
+                    if (cand > best)
+                    {
+                        best = cand;
+                        bestParent = c - 1;
+                    }
+                }
+
+                if (c <= r - 1)
+                {
+                    var cand = dp[r - 1][c] + tri[r][c];
+                    if (cand > best)
+                    {
+                        best = cand;
+                        bestParent = c;
+                    }
+                }
+
+                dp[r][c] = best;
+                parent[r][c] = bestParent;
             }
         }
 
-        decimal maxSum = dp[n - 1].Max();
-        int maxCol = Array.IndexOf(dp[n - 1], maxSum);
-
-        var path = new List<(int row, int col)>();
-        int c = maxCol;
-
-        for (int row = n - 1; row >= 0; row--)
+        int last = n - 1;
+        int bestCol = 0;
+        decimal bestSum = dp[last][0];
+        for (int c = 1; c <= last; c++)
         {
-            path.Add((row, c));
-            if (row == 0) break;
-
-            if (c == 0) c = 0;
-            else if (c == row) c--;
-            else if (dp[row - 1][c - 1] > dp[row - 1][c]) c--;
-        }
-
-        path.Reverse();
-        return (maxSum, path);
-    }
-
-    private static (decimal sum, List<(int row, int col)> path) FindMinPath(List<List<decimal>> triangle)
-    {
-        int n = triangle.Count;
-        if (n == 0) return (0, new());
-
-        var dp = new decimal[n][];
-        for (int i = 0; i < n; i++) dp[i] = new decimal[i + 1];
-
-        dp[0][0] = triangle[0][0];
-
-        for (int row = 1; row < n; row++)
-        {
-            for (int col = 0; col <= row; col++)
+            if (dp[last][c] > bestSum)
             {
-                decimal cur = triangle[row][col];
-
-                if (col == 0) dp[row][col] = dp[row - 1][0] + cur;
-                else if (col == row) dp[row][col] = dp[row - 1][col - 1] + cur;
-                else dp[row][col] = Math.Min(dp[row - 1][col - 1], dp[row - 1][col]) + cur;
+                bestSum = dp[last][c];
+                bestCol = c;
             }
         }
 
-        decimal minSum = dp[n - 1].Min();
-        int minCol = Array.IndexOf(dp[n - 1], minSum);
-
         var path = new List<(int row, int col)>();
-        int c = minCol;
-
-        for (int row = n - 1; row >= 0; row--)
+        int colCur = bestCol;
+        for (int r = last; r >= 0; r--)
         {
-            path.Add((row, c));
-            if (row == 0) break;
+            path.Add((r, colCur));
+            colCur = parent[r][colCur];
+            if (r == 0) break;
+        }
+        path.Reverse();
 
-            if (c == 0) c = 0;
-            else if (c == row) c--;
-            else if (dp[row - 1][c - 1] < dp[row - 1][c]) c--;
+        return (bestSum, path);
+    }
+
+    private static (decimal sum, List<(int row, int col)> path) FindMinPath(List<List<decimal>> tri)
+    {
+        int n = tri.Count;
+        var dp = new decimal[n][];
+        var parent = new int[n][];
+
+        for (int r = 0; r < n; r++)
+        {
+            dp[r] = new decimal[r + 1];
+            parent[r] = new int[r + 1];
+            for (int c = 0; c <= r; c++) parent[r][c] = -1;
         }
 
+        dp[0][0] = tri[0][0];
+
+        for (int r = 1; r < n; r++)
+        {
+            for (int c = 0; c <= r; c++)
+            {
+                decimal best = decimal.MaxValue;
+                int bestParent = -1;
+
+                if (c - 1 >= 0)
+                {
+                    var cand = dp[r - 1][c - 1] + tri[r][c];
+                    if (cand < best)
+                    {
+                        best = cand;
+                        bestParent = c - 1;
+                    }
+                }
+
+                if (c <= r - 1)
+                {
+                    var cand = dp[r - 1][c] + tri[r][c];
+                    if (cand < best)
+                    {
+                        best = cand;
+                        bestParent = c;
+                    }
+                }
+
+                dp[r][c] = best;
+                parent[r][c] = bestParent;
+            }
+        }
+
+        int last = n - 1;
+        int bestCol = 0;
+        decimal bestSum = dp[last][0];
+        for (int c = 1; c <= last; c++)
+        {
+            if (dp[last][c] < bestSum)
+            {
+                bestSum = dp[last][c];
+                bestCol = c;
+            }
+        }
+
+        var path = new List<(int row, int col)>();
+        int colCur = bestCol;
+        for (int r = last; r >= 0; r--)
+        {
+            path.Add((r, colCur));
+            colCur = parent[r][colCur];
+            if (r == 0) break;
+        }
         path.Reverse();
-        return (minSum, path);
+
+        return (bestSum, path);
     }
 }

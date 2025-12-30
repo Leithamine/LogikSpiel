@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿#nullable enable
+using System.Globalization;
 using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
@@ -38,7 +39,11 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
     public string Title => $"Pascal Pfad – {DiffName(DifficultyKey)} (Lv {LevelNumber})";
 
     private PascalTriangleGame? _game;
-    public PascalTriangleGame? Game { get => _game; private set => SetProperty(ref _game, value); }
+    public PascalTriangleGame? Game
+    {
+        get => _game;
+        private set => SetProperty(ref _game, value);
+    }
 
     private bool _showSolutionOverlay;
     public bool ShowSolutionOverlay
@@ -51,8 +56,7 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
         }
     }
 
-    // ✅ Pro Level genau EIN Ziel
-    private string _goal = "max"; // "max" | "min"
+    private string _goal = "max";
     public string Goal
     {
         get => _goal;
@@ -68,6 +72,7 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
     }
 
     public string GoalChipText => Goal == "max" ? "AUFGABE: MAX" : "AUFGABE: MIN";
+
     public Color GoalChipColor => Goal == "max"
         ? Color.FromArgb("#2ECC71")
         : Color.FromArgb("#E74C3C");
@@ -78,7 +83,11 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
             : (Game?.MinPath?.ToHashSet() ?? new());
 
     private decimal _userSum;
-    public decimal UserSum { get => _userSum; set => SetProperty(ref _userSum, value); }
+    public decimal UserSum
+    {
+        get => _userSum;
+        set => SetProperty(ref _userSum, value);
+    }
 
     private readonly List<(int row, int col)> _selectedPath = new();
     public IReadOnlyList<(int row, int col)> SelectedPath => _selectedPath;
@@ -122,11 +131,14 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
         {
             if (Coins < 15)
             {
-                await _dialog.AlertAsync("Nicht genug Coins", "Du brauchst 15 Coins!");
+                await _dialog.AlertAsync("Nicht genug Coins", "Du brauchst 15 Coins für einen Tipp!");
                 return;
             }
 
-            bool buy = await _dialog.ConfirmAsync("Tipp kaufen?", "Ersten echten Schritt anzeigen für 15 Coins?");
+            bool buy = await _dialog.ConfirmAsync(
+                "Tipp kaufen?",
+                "Die ersten 2 Schritte des Lösungspfads anzeigen für 15 Coins?");
+
             if (!buy) return;
 
             RevealFirstMove();
@@ -161,18 +173,37 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
         ClearSelection();
         ShowSolutionOverlay = false;
 
-        // deterministischer seed pro Level
-        int seed = StableHash($"{GameId}:{DifficultyKey}") + LevelNumber * 17;
+        int baseSeed = StableHash($"{GameId}:{DifficultyKey}") + LevelNumber * 17;
 
-        // ✅ Ziel pro Level: max oder min (deterministisch)
-        Goal = (seed % 2 == 0) ? "max" : "min";
+        Goal = (baseSeed % 2 == 0) ? "max" : "min";
 
-        Game = await Task.Run(() => _generator.GenerateGame(DifficultyKey, seed));
+        // Zielbereich für Reihenanzahl je Schwierigkeit
+        var (minRows, maxRows) = TargetRowRange(DifficultyKey);
 
+        PascalTriangleGame? game = null;
+        for (int attempt = 0; attempt < 10; attempt++)
+        {
+            int seed = baseSeed + attempt * 13;
+            game = await Task.Run(() => _generator.GenerateGame(DifficultyKey, seed, maxRows));
+
+            if (game != null && game.Rows >= minRows && game.Rows <= maxRows)
+                break;
+        }
+
+        Game = game;
         RequestRedraw?.Invoke();
     }
 
-    // start anywhere, extend from ends
+    private static (int minRows, int maxRows) TargetRowRange(string difficultyKey)
+        => difficultyKey.ToLowerInvariant() switch
+        {
+            "easy" => (5, 7),
+            "normal" => (6, 8),
+            "hard" => (8, 10),
+            "master" => (10, 13),
+            _ => (5, 8)
+        };
+
     public void TapCell(int row, int col)
     {
         if (Game == null) return;
@@ -221,6 +252,11 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
             RequestRedraw?.Invoke();
             return;
         }
+
+        _selectedPath.Clear();
+        _selectedPath.Add(key);
+        UpdateUserSum();
+        RequestRedraw?.Invoke();
     }
 
     private static bool IsParentOf((int row, int col) child, (int row, int col) parent)
@@ -237,11 +273,18 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
 
     private void UpdateUserSum()
     {
-        if (Game == null) { UserSum = 0; return; }
+        if (Game == null)
+        {
+            UserSum = 0;
+            return;
+        }
 
         decimal sum = 0;
         foreach (var (r, c) in _selectedPath)
-            sum += Game.Triangle[r][c];
+        {
+            if (r >= 0 && r < Game.Triangle.Count && c >= 0 && c < Game.Triangle[r].Count)
+                sum += Game.Triangle[r][c];
+        }
 
         UserSum = sum;
     }
@@ -273,27 +316,45 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
 
         int lastRow = Game.Rows - 1;
 
-        if (_selectedPath.Count != Game.Rows || _selectedPath[0].row != 0 || _selectedPath[^1].row != lastRow)
+        if (_selectedPath.Count != Game.Rows)
         {
             await _dialog.AlertAsync(
                 "Pfad unvollständig",
-                "Dein Pfad muss bis ganz nach OBEN (Zeile 0) und ganz nach UNTEN (letzte Zeile) gehen."
-            );
+                $"Dein Pfad hat {_selectedPath.Count} Zellen, aber das Dreieck hat {Game.Rows} Zeilen.\n" +
+                "Der Pfad muss von der Spitze bis zur Basis gehen.");
+            return;
+        }
+
+        if (_selectedPath[0].row != 0)
+        {
+            await _dialog.AlertAsync(
+                "Pfad unvollständig",
+                "Dein Pfad muss oben bei der Spitze (Zeile 0) beginnen.");
+            return;
+        }
+
+        if (_selectedPath[^1].row != lastRow)
+        {
+            await _dialog.AlertAsync(
+                "Pfad unvollständig",
+                $"Dein Pfad muss unten bei der Basis (Zeile {lastRow}) enden.");
             return;
         }
 
         decimal target = Goal == "max" ? Game.MaxPathSum : Game.MinPathSum;
-        bool ok = UserSum == target;
+        bool isOptimal = UserSum == target;
 
         ShowSolutionOverlay = true;
 
         var de = CultureInfo.GetCultureInfo("de-DE");
 
-        if (!ok)
+        if (!isOptimal)
         {
-            await _dialog.AlertAsync("Nicht optimal ❌",
+            string goalText = Goal == "max" ? "maximale" : "minimale";
+            await _dialog.AlertAsync(
+                "Nicht optimal ❌",
                 $"Deine Summe: {UserSum.ToString("0.##", de)}\n" +
-                $"Beste Summe: {target.ToString("0.##", de)}");
+                $"Beste {goalText} Summe: {target.ToString("0.##", de)}");
             return;
         }
 
@@ -308,7 +369,11 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
 
         await _progressStore.MarkLevelCompleteAsync(GameId, DifficultyKey, LevelNumber);
 
-        await Task.Delay(900);
+        await _dialog.AlertAsync(
+            "Perfekt! 🎉",
+            $"Du hast den optimalen Pfad gefunden!\n+{reward} Coins");
+
+        await Task.Delay(500);
 
         LevelNumber++;
         await StartNewRoundAsync();
