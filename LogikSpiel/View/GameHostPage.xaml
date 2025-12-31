@@ -1,44 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
              xmlns:skia="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
              x:Class="LogikSpiel.View.GameHostPage"
+             x:DataType="vm:GameHostPageViewModel"
              NavigationPage.HasNavigationBar="False"
-             Shell.NavBarIsVisible="False">
+             Shell.NavBarIsVisible="False"
+             Background="{StaticResource BgGradient}">
 
-    <ContentPage.Background>
-        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#BB86FC" Offset="0"/>
-            <GradientStop Color="#03DAC5" Offset="1"/>
-        </LinearGradientBrush>
-    </ContentPage.Background>
+    <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="16">
 
-    <Grid Padding="20" RowDefinitions="Auto,*" RowSpacing="12">
+        <!-- ═══════════════════════════════════════════════════════════════
+             HEADER
+             ═══════════════════════════════════════════════════════════════ -->
+        <Border Style="{StaticResource GlassCard}" Padding="12">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Button Grid.Column="0" Text="←" Style="{StaticResource BtnIcon}"
+                        Command="{Binding BackCommand}"/>
 
-        <VerticalStackLayout Grid.Row="0" Spacing="8" HorizontalOptions="Center" MaximumWidthRequest="720">
-            <Label Text="{Binding Title}"
-                   FontAttributes="Bold"
-                   FontSize="20"
-                   TextColor="White"
-                   HorizontalTextAlignment="Center"/>
+                <Label Grid.Column="1" Text="{Binding Title}" Style="{StaticResource H3}"
+                       HorizontalOptions="Center" VerticalOptions="Center"/>
 
-            <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
-                <Button Text="Zurück" Command="{Binding BackCommand}" CornerRadius="14"/>
-                <Button Text="Regeln" Command="{Binding RulesCommand}" CornerRadius="14"/>
-                <Button Text="Lösen ✅" Command="{Binding SolveCommand}" CornerRadius="14"/>
-            </HorizontalStackLayout>
-
-            <Image Source="professor.png" WidthRequest="160" HeightRequest="160" Aspect="AspectFit"/>
-
-            <skia:SKLottieView Source="lottie_intro.json"
-                               HeightRequest="160"
-                               RepeatCount="0"
-                               HorizontalOptions="Center"/>
-        </VerticalStackLayout>
-
-        <Border Grid.Row="1" BackgroundColor="#FFFFFF" StrokeShape="RoundRectangle 18" Padding="14">
-            <Label Text="Hier kommt später deine echte Rätsel-UI rein. 'Lösen' markiert das Level als geschafft und lädt automatisch das nächste."
-                   TextColor="#2B2B2B"/>
+                <HorizontalStackLayout Grid.Column="2" Spacing="8">
+                    <Button Text="📖" Style="{StaticResource BtnIcon}"
+                            WidthRequest="40" HeightRequest="40"
+                            Command="{Binding RulesCommand}"/>
+                </HorizontalStackLayout>
+            </Grid>
         </Border>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             GAME CONTENT
+             ═══════════════════════════════════════════════════════════════ -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="24" HorizontalOptions="Center" MaximumWidthRequest="500">
+
+                <!-- Mascot -->
+                <Border StrokeThickness="0" 
+                        StrokeShape="RoundRectangle 80"
+                        WidthRequest="160" HeightRequest="160"
+                        HorizontalOptions="Center">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="{StaticResource C_Primary}" Offset="0"/>
+                            <GradientStop Color="{StaticResource C_Secondary}" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Image Source="professor.png" 
+                           WidthRequest="140" HeightRequest="140" 
+                           Aspect="AspectFit"/>
+                </Border>
+
+                <!-- Lottie Animation -->
+                <skia:SKLottieView Source="lottie_intro.json"
+                                   HeightRequest="140"
+                                   RepeatCount="0"
+                                   HorizontalOptions="Center"/>
+
+                <!-- Info Card -->
+                <Border Style="{StaticResource SolidCard}" Padding="20">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="🎮 Spielinfo" Style="{StaticResource H3}"/>
+                        <Label Text="Hier kommt später deine echte Rätsel-UI rein. 'Lösen' markiert das Level als geschafft und lädt automatisch das nächste."
+                               Style="{StaticResource Body}"
+                               LineBreakMode="WordWrap"/>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Action Buttons -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                    <Button Grid.Column="0" Text="📖 Regeln"
+                            Style="{StaticResource BtnSecondary}"
+                            Command="{Binding RulesCommand}"/>
+
+                    <Button Grid.Column="1" Text="✅ Lösen"
+                            Style="{StaticResource BtnSuccess}"
+                            Command="{Binding SolveCommand}"/>
+                </Grid>
+
+            </VerticalStackLayout>
+        </ScrollView>
 
     </Grid>
 </ContentPage>

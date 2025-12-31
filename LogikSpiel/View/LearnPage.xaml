@@ -1,40 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
              x:Class="LogikSpiel.View.LearnPage"
+             x:DataType="vm:LearnPageViewModel"
              NavigationPage.HasNavigationBar="False"
-             Shell.NavBarIsVisible="False">
+             Shell.NavBarIsVisible="False"
+             Background="{StaticResource BgGradient}">
 
-    <ContentPage.Background>
-        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#BB86FC" Offset="0"/>
-            <GradientStop Color="#03DAC5" Offset="1"/>
-        </LinearGradientBrush>
-    </ContentPage.Background>
+    <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="16">
+        <Image Source="profileinfobg.jpg"
+       Grid.RowSpan="2"
+       Aspect="AspectFill"
+       Opacity="0.4"
+       InputTransparent="True" />
+        <!-- HEADER -->
+        <Border Style="{StaticResource GlassCard}" Padding="12">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Button Grid.Column="0" Text="←" Style="{StaticResource BtnIcon}"
+                        Command="{Binding BackCommand}"/>
 
-    <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" Padding="10" HeightRequest="60" BackgroundColor="#20000000">
-        <Button Grid.Column="0" Text="Zurück" Command="{Binding BackCommand}" BackgroundColor="Transparent" TextColor="White" FontAttributes="Bold"/>
+                <Label Grid.Column="1" Text="{Binding Title}" Style="{StaticResource H3}"
+                       HorizontalOptions="Center" VerticalOptions="Center"/>
 
-        <Label Grid.Column="1" Text="{Binding Title}" TextColor="White" FontAttributes="Bold" VerticalOptions="Center" HorizontalOptions="Center"/>
-
-        <HorizontalStackLayout Grid.Column="2" Spacing="8" VerticalOptions="Center">
-            <Label Text="{Binding Coins, StringFormat='💰 {0}'}" TextColor="#FFD700" FontAttributes="Bold" VerticalOptions="Center"/>
-            <Border StrokeShape="RoundRectangle 18" WidthRequest="36" HeightRequest="36" Padding="0">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding OpenProfileCommand}"/>
-                </Border.GestureRecognizers>
-                <Image Source="professor.png" Aspect="AspectFill"/>
-            </Border>
-        </HorizontalStackLayout>
-    
-
-    <Border Grid.Row="1" BackgroundColor="#FFFFFF" StrokeShape="RoundRectangle 18" Padding="14">
-            <CollectionView ItemsSource="{Binding Rules}" SelectionMode="None">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Label Text="•  {Binding .}" TextColor="#2B2B2B" Margin="0,6"/>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+                <Border Grid.Column="2" Style="{StaticResource Chip}">
+                    <HorizontalStackLayout Spacing="4">
+                        <Label Text="💰" FontSize="14"/>
+                        <Label Text="{Binding Coins}" TextColor="{StaticResource C_Gold}" FontAttributes="Bold"/>
+                    </HorizontalStackLayout>
+                </Border>
+            </Grid>
         </Border>
+
+        <!-- RULES -->
+        <Border Grid.Row="1" Style="{StaticResource SolidCard}" Padding="20">
+            <ScrollView>
+                <VerticalStackLayout Spacing="16">
+
+                    <HorizontalStackLayout Spacing="10">
+                        <Label Text="📚" FontSize="24"/>
+                        <Label Text="Spielregeln" Style="{StaticResource H2}"/>
+                    </HorizontalStackLayout>
+
+                    <BoxView HeightRequest="1" Color="{StaticResource C_GlassBorder}"/>
+
+                    <!-- Rules List - MIT KORREKTEM x:DataType -->
+                    <CollectionView ItemsSource="{Binding Rules}" SelectionMode="None">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <Border StrokeThickness="0"
+                                        StrokeShape="RoundRectangle 12"
+                                        BackgroundColor="{StaticResource C_GlassWhite}"
+                                        Padding="14"
+                                        Margin="0,4">
+                                    <HorizontalStackLayout Spacing="12">
+                                        <Label Text="•" 
+                                               TextColor="{StaticResource C_Primary}" 
+                                               FontSize="20" 
+                                               FontAttributes="Bold"
+                                               VerticalOptions="Start"/>
+                                        <Label Text="{Binding .}" 
+                                               Style="{StaticResource Body}"
+                                               VerticalOptions="Center"/>
+                                    </HorizontalStackLayout>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+
+                </VerticalStackLayout>
+            </ScrollView>
+        </Border>
+
     </Grid>
 </ContentPage>

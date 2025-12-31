@@ -4,163 +4,163 @@
              xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
              x:Class="LogikSpiel.View.MathHangmanPage"
              x:DataType="vm:MathHangmanPageViewModel"
+             x:Name="ThisPage"
              NavigationPage.HasNavigationBar="False"
              Shell.NavBarIsVisible="False"
-             x:Name="ThisPage">
+             Background="{StaticResource BgGradient}">
 
-    <ContentPage.Background>
-        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#BB86FC" Offset="0"/>
-            <GradientStop Color="#03DAC5" Offset="1"/>
-        </LinearGradientBrush>
-    </ContentPage.Background>
-
-    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="12" RowSpacing="10">
-
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="12" RowSpacing="12">
+        <Image Source="spielbg.jpg"
+       Grid.RowSpan="2"
+       Aspect="AspectFill"
+       Opacity="0.4"
+       InputTransparent="True" />
         <!-- HEADER -->
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" HeightRequest="50">
-            <Button Grid.Column="0" Text="←" Command="{Binding BackCommand}"
-                    BackgroundColor="#20FFFFFF"
-                    TextColor="White" FontAttributes="Bold" FontSize="20"
-                    WidthRequest="44" HeightRequest="44" CornerRadius="22" Padding="0"/>
+        <Border Grid.Row="0" Style="{StaticResource GlassCard}" Padding="12">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Button Grid.Column="0" Text="←" Style="{StaticResource BtnIcon}"
+                        Command="{Binding BackCommand}"/>
 
-            <VerticalStackLayout Grid.Column="1" Spacing="0" HorizontalOptions="Center" VerticalOptions="Center">
-                <Label Text="Mathe Hangman" TextColor="White" FontAttributes="Bold" FontSize="18" HorizontalOptions="Center"/>
-                <Label Text="{Binding DifficultyText}" TextColor="White" FontSize="12" Opacity="0.9" HorizontalOptions="Center"/>
-            </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Label Text="🎯 Mathe Hangman" Style="{StaticResource H3}" HorizontalOptions="Center"/>
+                    <Border StrokeThickness="0" StrokeShape="RoundRectangle 8"
+                            BackgroundColor="{StaticResource C_Accent}" Padding="10,4">
+                        <Label Text="{Binding DifficultyText}" TextColor="{StaticResource C_TextPrimary}" FontSize="11" FontAttributes="Bold"/>
+                    </Border>
+                </VerticalStackLayout>
 
-            <Label Grid.Column="2" Text="{Binding Coins, StringFormat='💰 {0}'}"
-                   TextColor="#FFD700" FontAttributes="Bold" FontSize="15" VerticalOptions="Center"/>
-        </Grid>
-
-        <!-- HANGMAN BOX - Transparent -->
-        <Border Grid.Row="1"
-                StrokeShape="RoundRectangle 16"
-                BackgroundColor="#20FFFFFF"
-                StrokeThickness="0"
-                Padding="12"
-                HeightRequest="280">
-            <Grid RowDefinitions="Auto,*" RowSpacing="8">
-
-                <!-- Leben Anzeige -->
-                <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
-                    <Label Text="{Binding Lives, StringFormat='❤️ {0}'}"
-                           TextColor="White" FontAttributes="Bold" FontSize="16"/>
-                    <Label Grid.Column="1"
-                           Text="{Binding WrongCount, StringFormat='❌ {0}/6'}"
-                           TextColor="White" FontSize="16"/>
-                </Grid>
-
-                <!-- Hangman Zeichnung - füllt die Box -->
-                <GraphicsView Grid.Row="1" 
-                              x:Name="HangmanView"
-                              HorizontalOptions="Fill"
-                              VerticalOptions="Fill"/>
-
+                <Border Grid.Column="2" Style="{StaticResource CoinBadge}">
+                    <HorizontalStackLayout Spacing="4">
+                        <Label Text="💰" FontSize="14"/>
+                        <Label Text="{Binding Coins}" TextColor="{StaticResource C_Gold}" FontAttributes="Bold"/>
+                    </HorizontalStackLayout>
+                </Border>
             </Grid>
         </Border>
 
-        <!-- EIGENSCHAFTEN - Transparent -->
-        <Border Grid.Row="2"
-                StrokeShape="RoundRectangle 16"
-                BackgroundColor="#20FFFFFF"
-                StrokeThickness="0"
-                Padding="12">
+        <!-- HANGMAN -->
+        <Border Grid.Row="1" Style="{StaticResource GlowCard}" HeightRequest="260">
+            <Grid RowDefinitions="Auto,*" RowSpacing="10">
 
-            <Grid RowDefinitions="Auto,Auto,*" RowSpacing="8">
+                <HorizontalStackLayout Spacing="20" HorizontalOptions="Center">
+                    <HorizontalStackLayout Spacing="6">
+                        <Label Text="❤️" FontSize="18"/>
+                        <Label Text="{Binding Lives}" Style="{StaticResource H3}" 
+                               TextColor="{StaticResource C_Accent}"/>
+                    </HorizontalStackLayout>
 
-                <Label Text="✨ Eigenschaften der gesuchten Zahl"
-                       TextColor="White" FontAttributes="Bold" FontSize="15"/>
+                    <Border StrokeThickness="0" StrokeShape="RoundRectangle 8"
+                            BackgroundColor="{StaticResource C_Error}" Padding="10,4"
+                            Opacity="0.9">
+                        <Label Text="{Binding WrongCount, StringFormat='Fehler: {0}/6'}" 
+                               TextColor="{StaticResource C_TextPrimary}" FontSize="12" FontAttributes="Bold"/>
+                    </Border>
+                </HorizontalStackLayout>
 
-                <!-- Aktueller Hinweis -->
+                <Border Grid.Row="1" 
+                        StrokeThickness="0" 
+                        StrokeShape="RoundRectangle 16"
+                        BackgroundColor="{StaticResource C_BgDark}">
+                    <GraphicsView x:Name="HangmanView"
+                                  HorizontalOptions="Fill"
+                                  VerticalOptions="Fill"/>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- PROPERTIES -->
+        <Border Grid.Row="2" Style="{StaticResource GlassCard}" Padding="12">
+            <Grid RowDefinitions="Auto,Auto,*" RowSpacing="10">
+
+                <Label Text="✨ Eigenschaften der Zahl" Style="{StaticResource H3}"/>
+
                 <Border Grid.Row="1"
-                        StrokeShape="RoundRectangle 10"
-                        BackgroundColor="#40FFEB3B"
                         StrokeThickness="0"
-                        Padding="10"
+                        StrokeShape="RoundRectangle 12"
+                        Padding="12"
                         IsVisible="{Binding HasHint}">
-                    <Label Text="{Binding CurrentHint}"
-                           TextColor="White" FontAttributes="Bold" FontSize="14"/>
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                            <GradientStop Color="{StaticResource C_Warning}" Offset="0"/>
+                            <GradientStop Color="{StaticResource C_GoldDark}" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Label Text="{Binding CurrentHint}" 
+                           TextColor="{StaticResource C_TextDark}" 
+                           FontAttributes="Bold" 
+                           FontSize="14"/>
                 </Border>
 
-                <!-- Eigenschaften Liste -->
+                <!-- Properties List -->
                 <CollectionView Grid.Row="2" ItemsSource="{Binding VisibleProperties}">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="vm:NumberPropertyVM">
-                            <Border StrokeShape="RoundRectangle 12"
-                                    BackgroundColor="#30FFFFFF"
-                                    StrokeThickness="0"
-                                    Padding="12"
+                            <Border StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 14"
+                                    BackgroundColor="{StaticResource C_BgLight}"
+                                    Padding="14"
                                     Margin="0,4">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                    <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+                                        <Label Text="✓" TextColor="{StaticResource C_Success}" 
+                                               FontSize="16" FontAttributes="Bold"/>
+                                        <Label Text="{Binding Key}" 
+                                               TextColor="{StaticResource C_TextPrimary}"
+                                               FontAttributes="Bold"
+                                               FontSize="14"/>
+                                    </HorizontalStackLayout>
 
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-                                    <Label Text="{Binding TitleLine}" 
-                                           TextColor="White" 
-                                           FontAttributes="Bold" 
-                                           FontSize="14"
-                                           VerticalOptions="Center"/>
-
-                                    <Button Grid.Column="1"
-                                            Text="?"
-                                            WidthRequest="36" HeightRequest="36"
-                                            CornerRadius="18"
-                                            BackgroundColor="#60FFFFFF"
-                                            TextColor="White"
+                                    <Button Grid.Column="1" Text="?" 
+                                            WidthRequest="38" HeightRequest="38"
+                                            CornerRadius="19"
+                                            BackgroundColor="{StaticResource C_Primary}"
+                                            TextColor="{StaticResource C_TextPrimary}"
                                             FontAttributes="Bold"
                                             FontSize="16"
                                             Padding="0"
                                             Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.ExplainPropertyCommand}"
-                                            CommandParameter="{Binding .}" />
+                                            CommandParameter="{Binding .}"/>
                                 </Grid>
-
                             </Border>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
-
             </Grid>
         </Border>
 
-        <!-- BOTTOM: Eingabe + Buttons - Transparent -->
-        <Border Grid.Row="3"
-                StrokeShape="RoundRectangle 16"
-                BackgroundColor="#20FFFFFF"
-                StrokeThickness="0"
-                Padding="12">
-            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+        <!-- INPUT -->
+        <Border Grid.Row="3" Style="{StaticResource SolidCard}" Padding="16">
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
 
-                <Entry Grid.Column="0"
-                       Text="{Binding GuessText}"
-                       Placeholder="Zahl eingeben..."
-                       Keyboard="Numeric"
-                       BackgroundColor="#40FFFFFF"
-                       TextColor="White"
-                       PlaceholderColor="#AAFFFFFF"
-                       HeightRequest="48"
-                       FontSize="16"/>
+                <Border StrokeThickness="2" 
+                        Stroke="{StaticResource C_Primary}"
+                        StrokeShape="RoundRectangle 14"
+                        BackgroundColor="{StaticResource C_BgLight}"
+                        Padding="4">
+                    <Entry Text="{Binding GuessText}"
+                           Placeholder="Zahl eingeben..."
+                           Keyboard="Numeric"
+                           BackgroundColor="Transparent"
+                           TextColor="{StaticResource C_TextPrimary}"
+                           PlaceholderColor="{StaticResource C_TextMuted}"
+                           FontSize="18"
+                           FontAttributes="Bold"/>
+                </Border>
 
-                <Button Grid.Column="1"
-                        Text="✓"
-                        Command="{Binding GuessCommand}"
-                        BackgroundColor="#4CAF50"
-                        TextColor="White"
+                <Button Grid.Column="1" Text="✓"
+                        Style="{StaticResource BtnSuccess}"
+                        WidthRequest="56" HeightRequest="52"
+                        FontSize="22"
+                        Command="{Binding GuessCommand}"/>
+
+                <Button Grid.Column="2" Text="💡"
+                        BackgroundColor="{StaticResource C_Warning}"
+                        TextColor="{StaticResource C_TextDark}"
                         FontAttributes="Bold"
-                        CornerRadius="12"
-                        WidthRequest="52"
-                        HeightRequest="48"
-                        FontSize="20"/>
-
-                <Button Grid.Column="2"
-                        Text="💡"
-                        Command="{Binding HintCommand}"
-                        BackgroundColor="#FF9800"
-                        TextColor="White"
-                        FontAttributes="Bold"
-                        CornerRadius="12"
-                        WidthRequest="52"
-                        HeightRequest="48"
-                        FontSize="20"/>
-
+                        CornerRadius="14"
+                        WidthRequest="56" HeightRequest="52"
+                        FontSize="22"
+                        Command="{Binding HintCommand}"/>
             </Grid>
         </Border>
 

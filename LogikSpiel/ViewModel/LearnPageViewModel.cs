@@ -4,7 +4,7 @@ using LogikSpiel.Services;
 
 namespace LogikSpiel.ViewModel;
 
-public sealed class LearnViewModel : ObservableObject
+public sealed class LearnPageViewModel : ObservableObject
 {
     private readonly IGameCatalogService _catalog;
     private readonly INavigationService _nav;
@@ -29,12 +29,12 @@ public sealed class LearnViewModel : ObservableObject
     }
 
     public string Title => Game?.Title ?? "Regeln";
-    public IReadOnlyList<string> Rules => Game?.RulesText ?? new List<string>();
+    public IReadOnlyList<string> Rules => Game?.Rules ?? new List<string>();
 
     public AsyncCommand BackCommand { get; }
     public AsyncCommand OpenProfileCommand { get; } // NEU
 
-    public LearnViewModel(IGameCatalogService catalog, INavigationService nav, IUserProfileService userService)
+    public LearnPageViewModel(IGameCatalogService catalog, INavigationService nav, IUserProfileService userService)
     {
         _catalog = catalog;
         _nav = nav;

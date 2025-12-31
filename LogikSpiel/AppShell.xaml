@@ -7,6 +7,6 @@
                   Route="Main"
                   ContentTemplate="{DataTemplate view:MainPage}" />
     <TabBar>
-        <ShellContent Title="Home" Icon="logo.png" Route="Main" ContentTemplate="{DataTemplate view:MainPage}" />
+        <ShellContent Title="Home" Icon="applogo.png" Route="Main" ContentTemplate="{DataTemplate view:MainPage}" />
     </TabBar>
 </Shell>

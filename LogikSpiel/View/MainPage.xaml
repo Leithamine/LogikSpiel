@@ -1,89 +1,156 @@
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             xmlns:skia="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
+             xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
+             xmlns:model="clr-namespace:LogikSpiel.Model"
              x:Class="LogikSpiel.View.MainPage"
+             x:DataType="vm:MainPageViewModel"
              x:Name="RootPage"
              NavigationPage.HasNavigationBar="False"
-             Shell.NavBarIsVisible="False">
+             Shell.NavBarIsVisible="False"
+             Background="{StaticResource BgGradient}">
 
-    <ContentPage.Background>
-        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#BB86FC" Offset="0"/>
-            <GradientStop Color="#03DAC5" Offset="1"/>
-        </LinearGradientBrush>
-    </ContentPage.Background>
+    <Grid RowDefinitions="Auto,*" RowSpacing="0">
+            <Image Source="mainbg.jpg"
+           Grid.RowSpan="2"
+           Aspect="AspectFill"
+           Opacity="0.4"
+           InputTransparent="True" />
+        <!-- HEADER -->
+        <Border Grid.Row="0" 
+                Style="{StaticResource GlassCard}"
+                Margin="16,16,16,0"
+                Padding="16,12">
+            <Grid ColumnDefinitions="*,Auto">
 
-    <Grid RowDefinitions="Auto, *" RowSpacing="0">
-
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" HeightRequest="60" Padding="15,0" BackgroundColor="#20000000">
-            <Label Grid.Column="0" Text="Logik Spiele" TextColor="White" FontAttributes="Bold" FontSize="20" VerticalOptions="Center"/>
-
-            <HorizontalStackLayout Grid.Column="2" Spacing="10" VerticalOptions="Center">
-                <Label Text="{Binding Coins, StringFormat='💰 {0}'}" TextColor="#FFD700" FontAttributes="Bold" FontSize="16" VerticalOptions="Center"/>
-                <Border StrokeShape="RoundRectangle 20" WidthRequest="40" HeightRequest="40" Padding="0">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding OpenProfileCommand}"/>
-                    </Border.GestureRecognizers>
-                    <Image Source="professor.png" Aspect="AspectFill"/>
-                </Border>
-            </HorizontalStackLayout>
-        </Grid>
-
-        <CollectionView Grid.Row="1" ItemsSource="{Binding Games}" SelectionMode="None" Margin="10,0">
-
-            <CollectionView.Header>
-                <VerticalStackLayout Spacing="10" HorizontalOptions="Center" Padding="0,10,0,20">
-
-                    <Label Text="Willkommen zurück!"
-                           FontAttributes="Bold"
-                           FontSize="26"
-                           TextColor="White"
-                           HorizontalTextAlignment="Center"/>
-
-                    <Image Source="professor.png"
-                           WidthRequest="160" HeightRequest="160"
-                           Aspect="AspectFit"
-                           HorizontalOptions="Center"/>
-
-                    <skia:SKLottieView Source="lottie_intro.json"
-                                       HeightRequest="150"
-                                       RepeatCount="0"
-                                       HorizontalOptions="Center"/>
-                </VerticalStackLayout>
-            </CollectionView.Header>
-
-            <CollectionView.ItemsLayout>
-                <GridItemsLayout Orientation="Vertical" 
-                                 Span="2" 
-                                 HorizontalItemSpacing="10" 
-                                 VerticalItemSpacing="10" />
-            </CollectionView.ItemsLayout>
-
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Border BackgroundColor="#FFFFFF" StrokeShape="RoundRectangle 18" Padding="10">
-                        <VerticalStackLayout Spacing="8">
-                            <Label Text="{Binding Title}" 
-                                   FontAttributes="Bold" 
-                                   TextColor="#2B2B2B" 
-                                   HorizontalTextAlignment="Center"
-                                   LineBreakMode="TailTruncation"/>
-
-                            <Image Source="{Binding Image}" 
-                                   HeightRequest="100" 
-                                   Aspect="AspectFill"/>
-
-                            <Button Text="Spielen" 
-                                    Command="{Binding BindingContext.OpenGameCommand, Source={x:Reference RootPage}}" 
-                                    CommandParameter="{Binding .}" 
-                                    CornerRadius="14"
-                                    HeightRequest="40"
-                                    FontSize="14"/>
-                        </VerticalStackLayout>
+                <!-- Logo & Title -->
+                <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
+                    <Border StrokeShape="RoundRectangle 12" 
+                            StrokeThickness="0"
+                            BackgroundColor="{StaticResource C_Primary}"
+                            WidthRequest="48" HeightRequest="48"
+                            Padding="0">
+                        <Label Text="🧩" FontSize="26" 
+                               HorizontalOptions="Center" VerticalOptions="Center"/>
                     </Border>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
+                    <VerticalStackLayout Spacing="0" VerticalOptions="Center">
+                        <Label Text="Logik Spiele" Style="{StaticResource H3}"/>
+                        <Label Text="Trainiere dein Gehirn" Style="{StaticResource Caption}"/>
+                    </VerticalStackLayout>
+                </HorizontalStackLayout>
 
-        </CollectionView>
+                <!-- Profile & Coins -->
+                <HorizontalStackLayout Grid.Column="1" Spacing="12" VerticalOptions="Center">
+                    <Border Style="{StaticResource Chip}">
+                        <HorizontalStackLayout Spacing="6">
+                            <Label Text="💰" FontSize="16"/>
+                            <Label Text="{Binding Coins}" 
+                                   TextColor="{StaticResource C_Gold}" 
+                                   FontAttributes="Bold" 
+                                   FontSize="15"/>
+                        </HorizontalStackLayout>
+                    </Border>
+
+                    <Border StrokeShape="RoundRectangle 22" 
+                            Stroke="{StaticResource C_Primary}"
+                            StrokeThickness="2"
+                            WidthRequest="44" HeightRequest="44" 
+                            Padding="0">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenProfileCommand}"/>
+                        </Border.GestureRecognizers>
+                        <Image Source="professor.png" Aspect="AspectFill"/>
+                    </Border>
+                </HorizontalStackLayout>
+            </Grid>
+        </Border>
+
+        <!-- CONTENT -->
+        <ScrollView Grid.Row="1" Padding="16">
+            <VerticalStackLayout Spacing="20">
+
+                <!-- Welcome -->
+                <VerticalStackLayout Spacing="8" Margin="0,10,0,0">
+                    <Label Text="👋 Willkommen zurück!" Style="{StaticResource H1}" HorizontalOptions="Center"/>
+                    <Label Text="Wähle ein Spiel und starte!" Style="{StaticResource Body}" HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+
+                <!-- App Logo - mit Fallback Emoji falls Bild fehlt -->
+                <Border StrokeThickness="0" 
+                        StrokeShape="RoundRectangle 30"
+                        BackgroundColor="{StaticResource C_GlassWhite}"
+                        WidthRequest="160" HeightRequest="160"
+                        HorizontalOptions="Center"
+                        Shadow="{StaticResource ShadowGlow}">
+                    <Grid>
+                        <!-- Versuche Bild zu laden -->
+                        <Image Source="applogo.png" 
+                               WidthRequest="140" HeightRequest="140" 
+                               Aspect="AspectFit"/>
+                        <!-- Fallback falls Bild nicht existiert -->
+                        <Label Text="🧠" FontSize="80" 
+                               HorizontalOptions="Center" VerticalOptions="Center"
+                               IsVisible="False"/>
+                    </Grid>
+                </Border>
+
+                <!-- Games Section Title -->
+                <HorizontalStackLayout Spacing="10" Margin="0,10,0,0">
+                    <BoxView WidthRequest="4" HeightRequest="24" 
+                             Color="{StaticResource C_Primary}" 
+                             CornerRadius="2"/>
+                    <Label Text="Spiele" Style="{StaticResource H2}"/>
+                </HorizontalStackLayout>
+
+                <!-- Games Grid -->
+                <FlexLayout Wrap="Wrap" 
+                            JustifyContent="SpaceBetween" 
+                            AlignItems="Start"
+                            BindableLayout.ItemsSource="{Binding Games}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="model:GameDefinition">
+                            <Border Style="{StaticResource SolidCard}"
+                                    WidthRequest="165"
+                                    Margin="0,0,0,16">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer 
+                                        Command="{Binding Source={x:Reference RootPage}, Path=BindingContext.OpenGameCommand}"
+                                        CommandParameter="{Binding .}"/>
+                                </Border.GestureRecognizers>
+
+                                <VerticalStackLayout Spacing="12">
+                                    <!-- Game Image -->
+                                    <Border StrokeThickness="0" 
+                                            StrokeShape="RoundRectangle 14"
+                                            HeightRequest="100"
+                                            BackgroundColor="{StaticResource C_BgLight}">
+                                        <Image Source="{Binding Image}" 
+                                               Aspect="AspectFit"
+                                               Margin="10"/>
+                                    </Border>
+
+                                    <!-- Game Title -->
+                                    <Label Text="{Binding Title}" 
+                                           Style="{StaticResource H3}"
+                                           FontSize="15"
+                                           HorizontalTextAlignment="Center"
+                                           LineBreakMode="TailTruncation"/>
+
+                                    <!-- Play Button -->
+                                    <Button Text="▶ Spielen" 
+                                            Style="{StaticResource BtnPrimary}"
+                                            HeightRequest="42"
+                                            FontSize="14"
+                                            Command="{Binding Source={x:Reference RootPage}, Path=BindingContext.OpenGameCommand}"
+                                            CommandParameter="{Binding .}"/>
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </FlexLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
     </Grid>
 </ContentPage>

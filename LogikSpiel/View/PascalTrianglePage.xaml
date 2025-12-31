@@ -6,104 +6,85 @@
              x:Class="LogikSpiel.View.PascalTrianglePage"
              x:DataType="vm:PascalTrianglePageViewModel"
              NavigationPage.HasNavigationBar="False"
-             Shell.NavBarIsVisible="False">
+             Shell.NavBarIsVisible="False"
+             Background="{StaticResource BgGradient}">
 
-    <ContentPage.Background>
-        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#BB86FC" Offset="0"/>
-            <GradientStop Color="#03DAC5" Offset="1"/>
-        </LinearGradientBrush>
-    </ContentPage.Background>
-
-    <Grid RowDefinitions="Auto, Auto, *, Auto" Padding="16" RowSpacing="12">
-
+    <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="0">
+        <Image Source="spielbg.jpg"
+       Grid.RowSpan="2"
+       Aspect="AspectFill"
+       Opacity="0.4"
+       InputTransparent="True" />
         <!-- HEADER -->
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" HeightRequest="50">
-            <Button Grid.Column="0" 
-                    Text="←"
-                    Command="{Binding BackCommand}"
-                    BackgroundColor="#20FFFFFF"
-                    TextColor="White"
-                    FontAttributes="Bold"
-                    FontSize="20"
-                    WidthRequest="44" 
-                    HeightRequest="44"
-                    CornerRadius="22" 
-                    Padding="0"/>
-
-            <Label Grid.Column="1"
-                   Text="{Binding Title}"
-                   TextColor="White"
-                   FontAttributes="Bold"
-                   FontSize="17"
-                   VerticalOptions="Center"
-                   HorizontalOptions="Center"
-                   LineBreakMode="TailTruncation"/>
-
-            <HorizontalStackLayout Grid.Column="2" Spacing="6" VerticalOptions="Center">
-                <Label Text="{Binding Coins, StringFormat='💰 {0}'}"
-                       TextColor="#FFD700"
-                       FontAttributes="Bold"
-                       FontSize="15"
-                       VerticalOptions="Center"/>
-            </HorizontalStackLayout>
-        </Grid>
-
-        <!-- INFO-BAR -->
-        <Border Grid.Row="1" 
-                StrokeShape="RoundRectangle 16"
-                BackgroundColor="#F5FFFFFF" 
-                Padding="12" 
+        <Border Grid.Row="0" 
+                BackgroundColor="{StaticResource C_GlassWhite}"
                 StrokeThickness="0"
-                Shadow="{Shadow Brush=#20000000, Offset='0,2', Radius=4}">
+                Padding="12,10">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
 
-            <Grid RowDefinitions="Auto,Auto" 
-                  ColumnDefinitions="Auto,*,Auto"
-                  ColumnSpacing="10" 
-                  RowSpacing="6">
+                <Button Grid.Column="0" Text="←" 
+                        Style="{StaticResource IconButton}"
+                        Command="{Binding BackCommand}"/>
 
-                <!-- Aufgaben-Chip (MAX oder MIN) -->
-                <Border Grid.Row="0" Grid.Column="0"
-                        StrokeThickness="0"
-                        Padding="12,6"
-                        StrokeShape="RoundRectangle 12"
-                        BackgroundColor="{Binding GoalChipColor}"
-                        Shadow="{Shadow Brush=#30000000, Offset='0,1', Radius=2}">
-                    <Label Text="{Binding GoalChipText}"
-                           TextColor="White"
-                           FontAttributes="Bold"
-                           FontSize="12"/>
+                <Label Grid.Column="1"
+                       Text="{Binding Title}"
+                       FontSize="16" FontAttributes="Bold" 
+                       TextColor="{StaticResource C_TextPrimary}"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       LineBreakMode="TailTruncation"/>
+
+                <Border Grid.Column="2" Style="{StaticResource CoinBadge}">
+                    <Label Text="{Binding Coins, StringFormat='💰 {0}'}"
+                           TextColor="{StaticResource C_Gold}" FontAttributes="Bold"/>
                 </Border>
-
-                <!-- Aktuelle Summe -->
-                <Border Grid.Row="0" Grid.Column="2"
-                        StrokeThickness="0"
-                        Padding="10,6"
-                        StrokeShape="RoundRectangle 10"
-                        BackgroundColor="#EEEEEE">
-                    <Label Text="{Binding UserSum, StringFormat='Σ = {0:0.##}'}"
-                           TextColor="#333"
-                           FontAttributes="Bold"
-                           FontSize="14"
-                           VerticalOptions="Center"/>
-                </Border>
-
-                <!-- Anleitung -->
-                <Label Grid.Row="1" Grid.ColumnSpan="3"
-                       Text="Tippe Zellen von OBEN nach UNTEN um einen Pfad zu bilden."
-                       FontSize="11"
-                       TextColor="#666"
-                       HorizontalTextAlignment="Center"/>
             </Grid>
         </Border>
 
-        <!-- SPIELFELD (CANVAS) - Nimmt den gesamten verfügbaren Platz -->
-        <Border Grid.Row="2" 
-                StrokeShape="RoundRectangle 16"
-                BackgroundColor="#30FFFFFF" 
-                Padding="4" 
-                StrokeThickness="0">
+        <!-- INFO BAR -->
+        <Border Grid.Row="1" 
+                Style="{StaticResource GlassCard}"
+                Margin="12,12,12,0"
+                Padding="14">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
 
+                <!-- Goal Chip -->
+                <Border BackgroundColor="{Binding GoalChipColor}"
+                        StrokeShape="RoundRectangle 10"
+                        StrokeThickness="0"
+                        Padding="12,8">
+                    <Label Text="{Binding GoalChipText}"
+                           TextColor="{StaticResource C_TextPrimary}"
+                           FontAttributes="Bold"
+                           FontSize="13"/>
+                </Border>
+
+                <!-- Instructions -->
+                <Label Grid.Column="1"
+                       Text="Tippe Zellen von oben nach unten"
+                       FontSize="12"
+                       TextColor="{StaticResource C_TextSecondary}"
+                       VerticalOptions="Center"
+                       HorizontalTextAlignment="Center"/>
+
+                <!-- Sum Display -->
+                <Border Grid.Column="2"
+                        BackgroundColor="{StaticResource C_GlassWhite}"
+                        StrokeShape="RoundRectangle 10"
+                        StrokeThickness="0"
+                        Padding="12,8">
+                    <Label Text="{Binding UserSum, StringFormat='Σ {0:0.##}'}"
+                           TextColor="{StaticResource C_TextPrimary}"
+                           FontAttributes="Bold"
+                           FontSize="14"/>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- GAME BOARD -->
+        <Border Grid.Row="2" 
+                Style="{StaticResource GlassCard}"
+                Margin="12,12,12,0">
             <skia:SKCanvasView x:Name="BoardCanvas"
                                IgnorePixelScaling="False"
                                EnableTouchEvents="True"
@@ -114,52 +95,49 @@
         </Border>
 
         <!-- BUTTONS -->
-        <Grid Grid.Row="3" 
-              ColumnDefinitions="*,*" 
-              RowDefinitions="Auto,Auto"
-              ColumnSpacing="10" 
-              RowSpacing="10">
+        <Border Grid.Row="3"
+                BackgroundColor="{StaticResource C_GlassWhite}"
+                StrokeThickness="0"
+                Padding="12,16">
+            <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="10">
 
-            <Button Grid.Row="0" Grid.Column="0"
-                    Text="👁️ Lösung"
-                    Command="{Binding ToggleSolutionCommand}"
-                    BackgroundColor="#9B59B6"
-                    TextColor="White"
-                    FontAttributes="Bold"
-                    CornerRadius="14" 
-                    HeightRequest="50"
-                    FontSize="14"/>
+                <Button Grid.Column="0"
+                        Text="👁️"
+                        Command="{Binding ToggleSolutionCommand}"
+                        BackgroundColor="{StaticResource C_Primary}"
+                        TextColor="{StaticResource C_TextPrimary}"
+                        FontSize="20"
+                        CornerRadius="14"
+                        HeightRequest="52"/>
 
-            <Button Grid.Row="0" Grid.Column="1"
-                    Text="🧹 Reset"
-                    Command="{Binding ResetCommand}"
-                    BackgroundColor="#E0E0E0"
-                    TextColor="#333"
-                    FontAttributes="Bold"
-                    CornerRadius="14" 
-                    HeightRequest="50"
-                    FontSize="14"/>
+                <Button Grid.Column="1"
+                        Text="🧹"
+                        Command="{Binding ResetCommand}"
+                        BackgroundColor="{StaticResource C_GlassHighlight}"
+                        TextColor="{StaticResource C_TextPrimary}"
+                        FontSize="20"
+                        CornerRadius="14"
+                        HeightRequest="52"/>
 
-            <Button Grid.Row="1" Grid.Column="0"
-                    Text="💡 Tipp (15)"
-                    Command="{Binding HintCommand}"
-                    BackgroundColor="#03DAC5"
-                    TextColor="#000"
-                    FontAttributes="Bold"
-                    CornerRadius="14" 
-                    HeightRequest="50"
-                    FontSize="14"/>
+                <Button Grid.Column="2"
+                        Text="💡"
+                        Command="{Binding HintCommand}"
+                        BackgroundColor="{StaticResource C_Warning}"
+                        TextColor="{StaticResource C_TextDark}"
+                        FontSize="20"
+                        CornerRadius="14"
+                        HeightRequest="52"/>
 
-            <Button Grid.Row="1" Grid.Column="1"
-                    Text="✅ Prüfen"
-                    Command="{Binding CheckCommand}"
-                    BackgroundColor="#27AE60"
-                    TextColor="White"
-                    FontAttributes="Bold"
-                    CornerRadius="14" 
-                    HeightRequest="50"
-                    FontSize="14"/>
-        </Grid>
+                <Button Grid.Column="3"
+                        Text="✅"
+                        Command="{Binding CheckCommand}"
+                        BackgroundColor="{StaticResource C_Success}"
+                        TextColor="{StaticResource C_TextPrimary}"
+                        FontSize="20"
+                        CornerRadius="14"
+                        HeightRequest="52"/>
+            </Grid>
+        </Border>
 
     </Grid>
 </ContentPage>

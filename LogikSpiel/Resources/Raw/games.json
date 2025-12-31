@@ -1,43 +1,59 @@
 ﻿[
     {
-        "Id": "codebreaker",
-        "Title": "Codebreaker (Mathe)",
-        "Image": "dotnet_bot.png",
-        "LevelCount": 12,
-        "RulesText": [
-            "Du musst einen Code entschlüsseln.",
-            "Hinweise sind mathematisch (Quersumme, Teilbarkeit, Beziehungen der Ziffern)."
+        "id": "codebreaker",
+        "title": "Codebreaker (Mathe)",
+        "description": "Knacke den Code mit logischen Hinweisen",
+        "image": "lockriddle.png",
+        "route": "PuzzlePage",
+        "levelCount": 50,
+        "difficulties": [ "easy", "normal", "hard", "master" ],
+        "rules": [
+            "Finde den richtigen Code um das Schloss zu öffnen",
+            "Nutze die Hinweise um die Ziffern zu ermitteln",
+            "Jeder Hinweis gibt dir Informationen über Position und Wert"
         ]
     },
     {
-        "Id": "math_cross",
-        "Title": "Math Cross",
-        "Image": "dotnet_bot.png",
-        "LevelCount": 12,
-        "RulesText": [
-            "Löse mathematische Kreuzworträtsel!"
+        "id": "math_cross",
+        "title": "Math Cross",
+        "description": "Löse das Mathe-Kreuzworträtsel mit Gleichungen",
+        "image": "cross.png",
+        "route": "MathCrossPage",
+        "levelCount": 50,
+        "difficulties": [ "easy", "normal", "hard", "master" ],
+        "rules": [
+            "Fülle das Gitter mit Zahlen und Operatoren",
+            "Jede Zeile und Spalte muss eine gültige Gleichung sein",
+            "Nutze die vorgegebenen Zahlen als Hinweise"
         ]
     },
     {
-        "Id": "pascal_triangle",
-        "Title": "Pascal Pfad",
-        "Image": "dotnet_bot.png",
-        "LevelCount": 30,
-        "RulesText": [
-            "Tippe dich von oben nach unten (nur links-unten oder rechts-unten).",
-            "Finde zuerst den Pfad mit der MAXIMALEN Summe, danach den mit der MINIMALEN Summe.",
-            "Erst wenn beide gelöst sind, ist das Level abgeschlossen."
+        "id": "pascal_triangle",
+        "title": "Pascal Pfad",
+        "description": "Finde den optimalen Pfad durch das Dreieck",
+        "image": "pascal.png",
+        "route": "PascalTrianglePage",
+        "levelCount": 50,
+        "difficulties": [ "easy", "normal", "hard", "master" ],
+        "rules": [
+            "Wähle einen Pfad von oben nach unten",
+            "Du kannst nur zu benachbarten Zellen in der nächsten Reihe",
+            "Finde die minimale oder maximale Summe je nach Aufgabe"
         ]
     },
     {
-        "Id": "math_hangman",
-        "Title": "Mathe Hangman",
-        "Image": "dotnet_bot.png",
-        "LevelCount": 30,
-        "RulesText": [
-            "Errate eine geheime Zahl.",
-            "Bei falschen Versuchen wird der Hangman Teil für Teil gezeichnet.",
-            "Eigenschaften der Zahl werden nach und nach aufgedeckt oder im Shop gekauft."
+        "id": "math_hangman",
+        "title": "Mathe Hangman",
+        "description": "Errate die Zahl anhand ihrer mathematischen Eigenschaften",
+        "image": "hangman.png",
+        "route": "MathHangmanPage",
+        "levelCount": 50,
+        "difficulties": [ "easy", "normal", "hard", "master" ],
+        "rules": [
+            "Eine geheime Zahl wurde gewählt",
+            "Du siehst alle mathematischen Eigenschaften der Zahl",
+            "Rate die Zahl - bei falschen Versuchen erscheint der Hangman",
+            "Du hast 6 Versuche bevor das Spiel vorbei ist"
         ]
     }
 ]

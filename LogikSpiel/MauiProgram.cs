@@ -31,7 +31,7 @@ public static class MauiProgram
         builder.Services.AddTransient<MainPageViewModel>();
         builder.Services.AddTransient<ProfileViewModel>();
         builder.Services.AddTransient<OnboardingViewModel>();
-        builder.Services.AddTransient<LearnViewModel>();
+        builder.Services.AddTransient<LearnPageViewModel>();
         builder.Services.AddTransient<GameHostPageViewModel>();
         builder.Services.AddTransient<GameMapPageViewModel>();
         builder.Services.AddTransient<PuzzlePageViewModel>();

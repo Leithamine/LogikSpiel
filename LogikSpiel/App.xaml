@@ -5,6 +5,10 @@
              x:Class="LogikSpiel.App">
     <Application.Resources>
         <ResourceDictionary>
+
+            <!-- ═══════════════════════════════════════════════════════════════
+                 CONVERTERS - Diese bleiben hier
+                 ═══════════════════════════════════════════════════════════════ -->
             <conv:StringNotNullOrEmptyConverter x:Key="StringNotNullOrEmptyConverter" />
             <conv:LockedToButtonTextConverter x:Key="LockedToButtonTextConverter" />
             <conv:BoolToColorConverter x:Key="BoolToColorConverter"/>
@@ -14,12 +18,16 @@
             <conv:SlotsHasNoDigitsConverter x:Key="SlotsHasNoDigitsConverter" />
             <conv:StringOrBulletConverter x:Key="StringOrBulletConverter" />
             <conv:NotEmptyCellConverter x:Key="NotEmptyCellConverter"/>
-            
+
+            <!-- ═══════════════════════════════════════════════════════════════
+                 STYLES - Alle Farben und Styles kommen aus Styles.xaml
+                 KEINE doppelten Definitionen hier!
+                 ═══════════════════════════════════════════════════════════════ -->
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
+                <!-- Styles.xaml enthält ALLE Farben, Gradients, Shadows, und Styles -->
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
-                <ResourceDictionary Source="Resources/Styles/ConverterResources.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -6,146 +6,157 @@
              xmlns:skia="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
              x:Class="LogikSpiel.View.PuzzlePage"
              x:DataType="vm:PuzzlePageViewModel"
+             x:Name="ThisPage"
              NavigationPage.HasNavigationBar="False"
-             Shell.NavBarIsVisible="False">
+             Shell.NavBarIsVisible="False"
+             Background="{StaticResource BgGradient}">
 
-    <ContentPage.Background>
-        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#BB86FC" Offset="0"/>
-            <GradientStop Color="#03DAC5" Offset="1"/>
-        </LinearGradientBrush>
-    </ContentPage.Background>
+    <Grid RowDefinitions="Auto,Auto,*" Padding="16" RowSpacing="16">
+        <Image Source="spielbg.jpg"
+           Grid.RowSpan="2"
+           Aspect="AspectFill"
+           Opacity="0.4"
+           InputTransparent="True" />
+        <!-- HEADER -->
+        <Border Grid.Row="0" Style="{StaticResource GlassCard}" Padding="12">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Button Grid.Column="0" Text="←" Style="{StaticResource BtnIcon}"
+                        Command="{Binding BackCommand}" IsEnabled="{Binding IsNotBusy}"/>
 
-    <!-- ✅ 3 Rows: Header / Input / Hints -->
-    <Grid RowDefinitions="Auto, Auto, *" Padding="20" RowSpacing="15">
+                <Label Grid.Column="1" Text="{Binding Title}" Style="{StaticResource H3}"
+                       HorizontalOptions="Center" VerticalOptions="Center"/>
 
-        <!-- Header -->
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" HeightRequest="50">
-            <Button Grid.Column="0" Text="&#x2190;" Command="{Binding BackCommand}"
-                    IsEnabled="{Binding IsNotBusy}"
-                    BackgroundColor="#20FFFFFF" TextColor="White" FontAttributes="Bold"
-                    WidthRequest="40" HeightRequest="40" CornerRadius="20" Padding="0"/>
+                <Border Grid.Column="2" Style="{StaticResource Chip}">
+                    <HorizontalStackLayout Spacing="4">
+                        <Label Text="💰" FontSize="14"/>
+                        <Label Text="{Binding Coins}" TextColor="{StaticResource C_Gold}" FontAttributes="Bold"/>
+                    </HorizontalStackLayout>
+                </Border>
+            </Grid>
+        </Border>
 
-            <Label Grid.Column="1" Text="{Binding Title}"
-                   TextColor="White" FontAttributes="Bold" FontSize="18"
-                   VerticalOptions="Center" HorizontalOptions="Center"/>
+        <!-- CODE INPUT -->
+        <Border Grid.Row="1" Style="{StaticResource GlowCard}">
+            <VerticalStackLayout Spacing="16">
 
-            <Label Grid.Column="2" Text="{Binding Coins, StringFormat='💰 {0}'}"
-                   TextColor="#FFD700" FontAttributes="Bold" FontSize="16"
-                   VerticalOptions="Center"/>
-        </Grid>
+                <Label Text="🔐 GIB DEN CODE EIN" 
+                       Style="{StaticResource Caption}"
+                       CharacterSpacing="3"
+                       HorizontalOptions="Center"/>
 
-        <!-- Input Panel -->
-        <Border Grid.Row="1" StrokeShape="RoundRectangle 20" BackgroundColor="Transparent" Padding="20" StrokeThickness="0">
-            <VerticalStackLayout Spacing="10">
-                <Label Text="GIB DEN CODE EIN" FontSize="12" TextColor="#555" HorizontalOptions="Center" CharacterSpacing="2"/>
-
-                <!-- ✅ Schloss: geschlossen beim Laden, öffnet sich bei Erfolg -->
                 <Image Source="{Binding LockImageSource}"
-                       HeightRequest="60"
-                       HorizontalOptions="Center"
-                       Margin="0,-2,0,0"/>
+                       HeightRequest="70"
+                       HorizontalOptions="Center"/>
 
-                <!--<Label Text="{Binding SecretSolution, StringFormat='Lösung (Debug): {0}'}"
-                       IsVisible="{Binding ShowSolutionForDebug}"
-                       FontSize="12" TextColor="#333" FontAttributes="Bold"
-                       HorizontalOptions="Center"/>-->
-
-                <HorizontalStackLayout BindableLayout.ItemsSource="{Binding InputDigits}"
-                                       Spacing="10" HorizontalOptions="Center">
+                <!-- Digit Input Boxes - MIT KORREKTEM x:DataType -->
+                <HorizontalStackLayout Spacing="12" HorizontalOptions="Center"
+                                       BindableLayout.ItemsSource="{Binding InputDigits}">
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="vm:DigitInputViewModel">
-                            <Border Stroke="#6200EE" StrokeThickness="2" StrokeShape="RoundRectangle 12"
-                                    HeightRequest="60" WidthRequest="50" BackgroundColor="White">
+                            <Border StrokeThickness="2"
+                                    Stroke="{StaticResource C_Primary}"
+                                    StrokeShape="RoundRectangle 14"
+                                    HeightRequest="65" WidthRequest="55"
+                                    BackgroundColor="{StaticResource C_BgLight}">
                                 <Entry Text="{Binding Digit}"
                                        Loaded="DigitEntry_Loaded"
                                        Unloaded="DigitEntry_Unloaded"
                                        TextChanged="DigitEntry_TextChanged"
                                        IsReadOnly="{Binding IsLocked}"
-                                       IsEnabled="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.IsNotBusy}"
                                        MaxLength="1"
                                        Keyboard="Numeric"
-                                       ReturnType="Next"
-                                       FontSize="28" FontAttributes="Bold" TextColor="#333"
-                                       HorizontalTextAlignment="Center" VerticalTextAlignment="Center"
+                                       FontSize="28" 
+                                       FontAttributes="Bold" 
+                                       TextColor="{StaticResource C_TextPrimary}"
+                                       HorizontalTextAlignment="Center" 
+                                       VerticalTextAlignment="Center"
                                        BackgroundColor="Transparent"/>
                             </Border>
                         </DataTemplate>
                     </BindableLayout.ItemTemplate>
                 </HorizontalStackLayout>
 
-                <!-- ✅ Buttons (bleiben wo sie sind – im Input-Bereich) -->
-                <Grid ColumnDefinitions="*, *" ColumnSpacing="15" Margin="0,8,0,0">
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
                     <Button Grid.Column="0" Text="💡 Tipp (10)"
+                            Style="{StaticResource BtnPrimary}"
                             Command="{Binding HintCommand}"
-                            IsEnabled="{Binding IsNotBusy}"
-                            BackgroundColor="#03DAC5" TextColor="#000" FontAttributes="Bold"
-                            CornerRadius="15" HeightRequest="55"/>
+                            IsEnabled="{Binding IsNotBusy}"/>
 
                     <Button Grid.Column="1" Text="🔓 Öffnen"
+                            Style="{StaticResource BtnAccent}"
                             Command="{Binding CheckCommand}"
-                            IsEnabled="{Binding IsNotBusy}"
-                            BackgroundColor="#BB86FC" TextColor="White" FontAttributes="Bold"
-                            CornerRadius="15" HeightRequest="55"/>
+                            IsEnabled="{Binding IsNotBusy}"/>
                 </Grid>
             </VerticalStackLayout>
         </Border>
 
-        <!-- Hints -->
+        <!-- HINTS LIST -->
         <Grid Grid.Row="2">
-            <CollectionView ItemsSource="{Binding Hints}" Margin="0,5">
+            <CollectionView ItemsSource="{Binding Hints}">
                 <CollectionView.Header>
-                    <Label Text="HINWEISE" FontSize="14" FontAttributes="Bold" TextColor="White" Margin="0,0,0,10"/>
+                    <HorizontalStackLayout Spacing="10" Margin="0,0,0,12">
+                        <BoxView WidthRequest="4" HeightRequest="24" 
+                                 Color="{StaticResource C_Accent}" CornerRadius="2"/>
+                        <Label Text="HINWEISE" Style="{StaticResource H3}"/>
+                    </HorizontalStackLayout>
                 </CollectionView.Header>
 
                 <CollectionView.ItemTemplate>
+                    <!-- KORREKTES x:DataType für LockHint -->
                     <DataTemplate x:DataType="model:LockHint">
-                        <Border StrokeShape="RoundRectangle 15" BackgroundColor="Transparent" Padding="15" Margin="0,0,0,10" StrokeThickness="0">
-                            <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="15">
-                                <VerticalStackLayout Grid.Column="0" Spacing="2" HorizontalOptions="Center">
-                                    <HorizontalStackLayout Spacing="4"
-                                                           BindableLayout.ItemsSource="{Binding Slots}"
-                                                           HorizontalOptions="Center">
-                                        <BindableLayout.ItemTemplate>
-                                            <DataTemplate x:DataType="x:String">
-                                                <Border StrokeThickness="0"
-                                                        BackgroundColor="White"
-                                                        StrokeShape="RoundRectangle 6"
-                                                        WidthRequest="22" HeightRequest="28"
-                                                        Padding="0">
-                                                    <Label Text="{Binding ., Converter={StaticResource StringOrBulletConverter}}"
-                                                           FontAttributes="Bold"
-                                                           FontSize="14"
-                                                           TextColor="#111"
-                                                           HorizontalOptions="Center"
-                                                           VerticalOptions="Center"
-                                                           HorizontalTextAlignment="Center"
-                                                           VerticalTextAlignment="Center"/>
-                                                </Border>
-                                            </DataTemplate>
-                                        </BindableLayout.ItemTemplate>
-                                    </HorizontalStackLayout>
-                                </VerticalStackLayout>
+                        <Border Style="{StaticResource GlassCard}" 
+                                Margin="0,0,0,10"
+                                Padding="14">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
 
-                                <Label Grid.Column="1" Text="{Binding Description}" FontSize="15" FontAttributes="Bold" TextColor="White"
-                                       VerticalOptions="Center" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"/>
-                                <Label Grid.Column="2" Text="{Binding Icon}" FontSize="20" VerticalOptions="Center"/>
+                                <!-- Slot Display -->
+                                <HorizontalStackLayout Spacing="4"
+                                                       BindableLayout.ItemsSource="{Binding Slots}"
+                                                       VerticalOptions="Center">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="x:String">
+                                            <Border StrokeThickness="0"
+                                                    BackgroundColor="{StaticResource C_BgLight}"
+                                                    StrokeShape="RoundRectangle 6"
+                                                    WidthRequest="26" HeightRequest="32"
+                                                    Padding="0">
+                                                <Label Text="{Binding .}"
+                                                       FontAttributes="Bold"
+                                                       FontSize="15"
+                                                       TextColor="{StaticResource C_TextPrimary}"
+                                                       HorizontalOptions="Center"
+                                                       VerticalOptions="Center"/>
+                                            </Border>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </HorizontalStackLayout>
+
+                                <Label Grid.Column="1" 
+                                       Text="{Binding Description}" 
+                                       Style="{StaticResource Body}"
+                                       VerticalOptions="Center"
+                                       LineBreakMode="WordWrap"/>
+
+                                <Label Grid.Column="2" 
+                                       Text="{Binding Icon}" 
+                                       FontSize="24" 
+                                       VerticalOptions="Center"/>
                             </Grid>
                         </Border>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
 
-            <!-- Busy Overlay -->
-            <Grid IsVisible="{Binding IsBusy}" BackgroundColor="#66000000">
-                <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="10">
-                    <ActivityIndicator IsRunning="True" />
-                    <Label Text="Erzeuge Rätsel..." TextColor="White" FontAttributes="Bold" HorizontalOptions="Center"/>
+            <!-- Loading -->
+            <Grid IsVisible="{Binding IsBusy}" BackgroundColor="#DD000000">
+                <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="12">
+                    <ActivityIndicator IsRunning="True" Color="{StaticResource C_Primary}"/>
+                    <Label Text="Erzeuge Rätsel..." Style="{StaticResource Body}"/>
                 </VerticalStackLayout>
             </Grid>
         </Grid>
 
-        <!-- ✅ SUCCESS OVERLAY (wie UnlockSuccessPage, aber in PuzzlePage) -->
+        <!-- CELEBRATION -->
         <Grid Grid.RowSpan="3"
               IsVisible="{Binding IsCelebrating}"
               BackgroundColor="#01000000"
@@ -159,26 +170,27 @@
                                HorizontalOptions="Fill"
                                VerticalOptions="Fill"/>
 
-            <VerticalStackLayout Spacing="16"
-                                 HorizontalOptions="Center"
-                                 VerticalOptions="Center">
+            <Border Style="{StaticResource GlowCard}"
+                    VerticalOptions="Center"
+                    HorizontalOptions="Center"
+                    Padding="40">
+                <VerticalStackLayout Spacing="20" HorizontalOptions="Center">
+                    <Label Text="🎉 GELÖST!" 
+                           Style="{StaticResource H1}"
+                           TextColor="{StaticResource C_Success}"
+                           HorizontalOptions="Center"/>
 
-                <Label Text="GELÖST! 🎉"
-                       TextColor="White"
-                       FontSize="26"
-                       FontAttributes="Bold"
-                       HorizontalTextAlignment="Center"/>
+                    <Image x:Name="OpenedLockImage"
+                           Source="openedlock.png"
+                           HeightRequest="120"
+                           HorizontalOptions="Center"/>
 
-                <Image x:Name="OpenedLockImage"
-                       Source="openedlock.png"
-                       HeightRequest="160"
-                       HorizontalOptions="Center"/>
-
-                <Label Text="{Binding RewardText}"
-                       TextColor="White"
-                       FontSize="16"
-                       HorizontalTextAlignment="Center"/>
-            </VerticalStackLayout>
+                    <Label Text="{Binding RewardText}"
+                           Style="{StaticResource H3}"
+                           TextColor="{StaticResource C_Gold}"
+                           HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+            </Border>
         </Grid>
 
     </Grid>

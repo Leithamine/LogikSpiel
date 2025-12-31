@@ -1,33 +1,133 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
              x:Class="LogikSpiel.View.OnboardingPage"
-             x:DataType="vm:OnboardingViewModel" 
-             BackgroundColor="#BB86FC">
-    <Grid RowDefinitions="*,Auto" Padding="30">
-        <VerticalStackLayout Spacing="20" VerticalOptions="Center">
-            <Label Text="Willkommen!" FontSize="32" FontAttributes="Bold" TextColor="White" HorizontalOptions="Center"/>
-            <Label Text="Verrate uns, wer du bist." TextColor="White" HorizontalOptions="Center"/>
+             x:DataType="vm:OnboardingViewModel"
+             NavigationPage.HasNavigationBar="False"
+             Shell.NavBarIsVisible="False"
+             Background="{StaticResource BgGradient}">
 
-            <Image Source="professor.png" HeightRequest="150" HorizontalOptions="Center"/>
+    <Grid RowDefinitions="*,Auto" Padding="24">
+        <Image Source="mainbg.jpg"
+       Grid.RowSpan="2"
+       Aspect="AspectFill"
+       Opacity="0.4"
+       InputTransparent="True" />
+        <!-- ═══════════════════════════════════════════════════════════════
+             CONTENT
+             ═══════════════════════════════════════════════════════════════ -->
+        <ScrollView VerticalOptions="Center">
+            <VerticalStackLayout Spacing="24" MaximumWidthRequest="400" HorizontalOptions="Center">
 
-            <Border StrokeShape="RoundRectangle 10" BackgroundColor="White" Padding="5">
-                <Entry Placeholder="Dein Name" Text="{Binding Name}" TextColor="Black" FontSize="18"/>
-            </Border>
+                <!-- Welcome Text -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="👋 Willkommen!" 
+                           Style="{StaticResource H1}" 
+                           HorizontalOptions="Center"/>
+                    <Label Text="Erstelle dein Profil und starte die Reise!" 
+                           Style="{StaticResource Body}" 
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center"/>
+                </VerticalStackLayout>
 
-            <Border StrokeShape="RoundRectangle 10" BackgroundColor="White" Padding="5">
-                <Entry Placeholder="Dein Alter (5-99)" Text="{Binding AgeText}" Keyboard="Numeric" TextColor="Black" FontSize="18"/>
-            </Border>
-        </VerticalStackLayout>
+                <!-- Mascot with Glow -->
+                <Border StrokeThickness="0" 
+                        StrokeShape="RoundRectangle 90"
+                        WidthRequest="180" HeightRequest="180"
+                        HorizontalOptions="Center">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="{StaticResource C_Primary}" Offset="0"/>
+                            <GradientStop Color="{StaticResource C_Secondary}" Offset="1"/>
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Border.Shadow>
+                        <Shadow Brush="{StaticResource C_Primary}" Offset="0,0" Radius="30"/>
+                    </Border.Shadow>
+                    <Border StrokeThickness="0"
+                            StrokeShape="RoundRectangle 85"
+                            WidthRequest="170" HeightRequest="170"
+                            BackgroundColor="{StaticResource C_BgDark}"
+                            HorizontalOptions="Center" VerticalOptions="Center">
+                        <Image Source="professor.png" 
+                               WidthRequest="150" HeightRequest="150" 
+                               Aspect="AspectFit"/>
+                    </Border>
+                </Border>
 
+                <!-- Input Fields -->
+                <VerticalStackLayout Spacing="16">
+
+                    <!-- Name Input -->
+                    <Border Style="{StaticResource GlassCard}" Padding="4">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                            <Border StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 12"
+                                    BackgroundColor="{StaticResource C_Primary}"
+                                    WidthRequest="48" HeightRequest="48"
+                                    Padding="0">
+                                <Label Text="👤" FontSize="22" 
+                                       HorizontalOptions="Center" VerticalOptions="Center"/>
+                            </Border>
+                            <Entry Grid.Column="1"
+                                   Placeholder="Dein Name"
+                                   Text="{Binding Name}"
+                                   TextColor="{StaticResource C_TextPrimary}"
+                                   PlaceholderColor="{StaticResource C_TextMuted}"
+                                   FontSize="18"
+                                   BackgroundColor="Transparent"
+                                   VerticalOptions="Center"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Age Input -->
+                    <Border Style="{StaticResource GlassCard}" Padding="4">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                            <Border StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 12"
+                                    BackgroundColor="{StaticResource C_Accent}"
+                                    WidthRequest="48" HeightRequest="48"
+                                    Padding="0">
+                                <Label Text="🎂" FontSize="22" 
+                                       HorizontalOptions="Center" VerticalOptions="Center"/>
+                            </Border>
+                            <Entry Grid.Column="1"
+                                   Placeholder="Dein Alter (5-99)"
+                                   Text="{Binding AgeText}"
+                                   Keyboard="Numeric"
+                                   TextColor="{StaticResource C_TextPrimary}"
+                                   PlaceholderColor="{StaticResource C_TextMuted}"
+                                   FontSize="18"
+                                   BackgroundColor="Transparent"
+                                   VerticalOptions="Center"/>
+                        </Grid>
+                    </Border>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             START BUTTON
+             ═══════════════════════════════════════════════════════════════ -->
         <Button Grid.Row="1" 
-                Text="Los geht's!"
+                Text="🚀 Los geht's!"
                 Command="{Binding CompleteOnboardingCommand}"
-                BackgroundColor="#03DAC5"
-                TextColor="Black"
-                FontAttributes="Bold"
-                CornerRadius="25"
+                IsEnabled="{Binding IsValid}"
                 HeightRequest="60"
-                IsEnabled="{Binding IsValid}"/>
+                FontSize="18"
+                Margin="0,20,0,0">
+            <Button.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop Color="{StaticResource C_Primary}" Offset="0"/>
+                    <GradientStop Color="{StaticResource C_Success}" Offset="1"/>
+                </LinearGradientBrush>
+            </Button.Background>
+            <Button.Shadow>
+                <Shadow Brush="{StaticResource C_Primary}" Offset="0,4" Radius="15"/>
+            </Button.Shadow>
+        </Button>
+
     </Grid>
 </ContentPage>

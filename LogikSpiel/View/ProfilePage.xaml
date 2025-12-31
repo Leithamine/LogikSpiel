@@ -1,72 +1,204 @@
+<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
              x:Class="LogikSpiel.View.ProfilePage"
              x:DataType="vm:ProfileViewModel"
              NavigationPage.HasNavigationBar="False"
-             Shell.NavBarIsVisible="False">
+             Shell.NavBarIsVisible="False"
+             Background="{StaticResource BgGradient}">
 
-    <ContentPage.Background>
-        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#BB86FC" Offset="0"/>
-            <GradientStop Color="#03DAC5" Offset="1"/>
-        </LinearGradientBrush>
-    </ContentPage.Background>
+    <Grid RowDefinitions="Auto,*" RowSpacing="0">
+        <Image Source="profileinfobg.jpg"
+       Grid.RowSpan="2"
+       Aspect="AspectFill"
+       Opacity="0.4"
+       InputTransparent="True" />
+        <!-- HEADER -->
+        <Border Grid.Row="0" 
+                BackgroundColor="{StaticResource C_GlassWhite}"
+                StrokeThickness="0"
+                Padding="16,12">
+            <Grid ColumnDefinitions="Auto,*,Auto">
 
-    <Grid RowDefinitions="Auto, *" RowSpacing="0">
+                <Button Grid.Column="0" 
+                        Text="←" 
+                        Style="{StaticResource IconButton}"
+                        Command="{Binding BackCommand}"/>
 
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" HeightRequest="60" Padding="15,0" BackgroundColor="#20000000">
-            <Button Grid.Column="0" Text="Zurück" Command="{Binding BackCommand}" 
-                    BackgroundColor="Transparent" TextColor="White" FontAttributes="Bold"/>
+                <Label Grid.Column="1" 
+                       Text="Mein Profil" 
+                       Style="{StaticResource H2}"
+                       HorizontalOptions="Center" 
+                       VerticalOptions="Center"/>
 
-            <Label Grid.Column="1" Text="Mein Profil" 
-                   TextColor="White" FontAttributes="Bold" FontSize="18" 
-                   VerticalOptions="Center" HorizontalOptions="Center"/>
+                <Border Grid.Column="2" Style="{StaticResource CoinBadge}">
+                    <Label Text="{Binding Coins, StringFormat='💰 {0}'}" 
+                           TextColor="{StaticResource C_Gold}" 
+                           FontAttributes="Bold"/>
+                </Border>
+            </Grid>
+        </Border>
 
-            <Label Grid.Column="2" Text="{Binding Coins, StringFormat='💰 {0}'}" 
-                   TextColor="#FFD700" FontAttributes="Bold" FontSize="16" VerticalOptions="Center"/>
-        </Grid>
-
+        <!-- CONTENT -->
         <ScrollView Grid.Row="1">
-            <VerticalStackLayout Padding="20" Spacing="25">
+            <VerticalStackLayout Spacing="16" Padding="16">
 
-                <Border StrokeShape="RoundRectangle 20" BackgroundColor="#F0FFFFFF" Padding="30" StrokeThickness="0">
-                    <VerticalStackLayout Spacing="10" HorizontalOptions="Center">
-                        <Image Source="professor.png" HeightRequest="120" WidthRequest="120" Aspect="AspectFit"/>
+                <!-- Profile Card -->
+                <Border Style="{StaticResource GlassCard}">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="20">
 
-                        <Label Text="{Binding Name}" FontSize="28" FontAttributes="Bold" TextColor="#2B2B2B" HorizontalOptions="Center"/>
-                        <Label Text="{Binding Age, StringFormat='Alter: {0}'}" FontSize="16" TextColor="#555" HorizontalOptions="Center"/>
-                        <Label Text="{Binding Id, StringFormat='ID: {0}'}" FontSize="10" TextColor="#888" HorizontalOptions="Center"/>
+                        <!-- Avatar -->
+                        <Border StrokeThickness="3" 
+                                Stroke="{StaticResource C_Primary}"
+                                WidthRequest="100" HeightRequest="100"
+                                StrokeShape="RoundRectangle 50"
+                                BackgroundColor="{StaticResource C_GlassWhite}">
+                            <Image Source="professor.png" Aspect="AspectFill"/>
+                        </Border>
+
+                        <!-- Info -->
+                        <VerticalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
+                            <Label Text="{Binding Name}" 
+                                   FontSize="24" FontAttributes="Bold" 
+                                   TextColor="{StaticResource C_TextPrimary}"/>
+
+                            <HorizontalStackLayout Spacing="8">
+                                <Border BackgroundColor="{StaticResource C_GlassHighlight}"
+                                        StrokeShape="RoundRectangle 8"
+                                        StrokeThickness="0"
+                                        Padding="8,4">
+                                    <Label Text="{Binding Age, StringFormat='🎂 {0} Jahre'}" 
+                                           FontSize="12" TextColor="{StaticResource C_TextSecondary}"/>
+                                </Border>
+                            </HorizontalStackLayout>
+
+                            <Label Text="{Binding Id, StringFormat='ID: {0}'}" 
+                                   FontSize="10" 
+                                   TextColor="{StaticResource C_TextMuted}"/>
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+
+                <!-- Stats Overview -->
+                <Border Style="{StaticResource GlassCard}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="📊 Statistiken" Style="{StaticResource H3}"/>
+
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                            <!-- Stat 1 -->
+                            <Border BackgroundColor="{StaticResource C_GlassWhite}"
+                                    StrokeShape="RoundRectangle 14"
+                                    StrokeThickness="0"
+                                    Padding="12">
+                                <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
+                                    <Label Text="🎮" FontSize="24" HorizontalOptions="Center"/>
+                                    <Label Text="42" FontSize="20" FontAttributes="Bold" 
+                                           TextColor="{StaticResource C_TextPrimary}" HorizontalOptions="Center"/>
+                                    <Label Text="Gespielt" FontSize="10" 
+                                           TextColor="{StaticResource C_TextMuted}"
+                                           HorizontalOptions="Center"/>
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <!-- Stat 2 -->
+                            <Border BackgroundColor="{StaticResource C_GlassWhite}"
+                                    StrokeShape="RoundRectangle 14"
+                                    StrokeThickness="0"
+                                    Padding="12">
+                                <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
+                                    <Label Text="✅" FontSize="24" HorizontalOptions="Center"/>
+                                    <Label Text="38" FontSize="20" FontAttributes="Bold" 
+                                           TextColor="{StaticResource C_Success}" 
+                                           HorizontalOptions="Center"/>
+                                    <Label Text="Gelöst" FontSize="10" 
+                                           TextColor="{StaticResource C_TextMuted}"
+                                           HorizontalOptions="Center"/>
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <!-- Stat 3 -->
+                            <Border BackgroundColor="{StaticResource C_GlassWhite}"
+                                    StrokeShape="RoundRectangle 14"
+                                    StrokeThickness="0"
+                                    Padding="12">
+                                <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
+                                    <Label Text="🔥" FontSize="24" HorizontalOptions="Center"/>
+                                    <Label Text="3" FontSize="20" FontAttributes="Bold" 
+                                           TextColor="{StaticResource C_Accent}" 
+                                           HorizontalOptions="Center"/>
+                                    <Label Text="Streak" FontSize="10" 
+                                           TextColor="{StaticResource C_TextMuted}"
+                                           HorizontalOptions="Center"/>
+                                </VerticalStackLayout>
+                            </Border>
+                        </Grid>
+
+                        <Button Text="Alle Statistiken →" 
+                                Style="{StaticResource SecondaryButton}"
+                                Command="{Binding ShowStatsCommand}"/>
                     </VerticalStackLayout>
                 </Border>
 
-                <Button Text="📊 Statistiken ansehen" 
-                        Command="{Binding ShowStatsCommand}"
-                        BackgroundColor="#FFFFFF"
-                        TextColor="#BB86FC"
-                        FontAttributes="Bold"
-                        CornerRadius="15"
-                        HeightRequest="60"/>
+                <!-- Settings Card -->
+                <Border Style="{StaticResource GlassCard}">
+                    <VerticalStackLayout Spacing="16">
+                        <Label Text="⚙️ Einstellungen" Style="{StaticResource H3}"/>
 
-                <Label Text="Einstellungen" FontSize="18" FontAttributes="Bold" TextColor="White" Margin="0,10,0,0"/>
-
-                <Border StrokeShape="RoundRectangle 15" BackgroundColor="#F0FFFFFF" Padding="15" StrokeThickness="0">
-                    <VerticalStackLayout Spacing="15">
-                        <Grid ColumnDefinitions="*, Auto">
-                            <Label Text="Musik" VerticalOptions="Center" TextColor="#333"/>
-                            <Switch Grid.Column="1" IsToggled="{Binding IsMusicEnabled}" OnColor="#BB86FC"/>
+                        <!-- Music Toggle -->
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <Border BackgroundColor="{StaticResource C_GlassHighlight}"
+                                    StrokeShape="RoundRectangle 12"
+                                    StrokeThickness="0"
+                                    WidthRequest="44" HeightRequest="44">
+                                <Label Text="🎵" FontSize="20" 
+                                       HorizontalOptions="Center" VerticalOptions="Center"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                <Label Text="Musik" TextColor="{StaticResource C_TextPrimary}" FontAttributes="Bold"/>
+                                <Label Text="Hintergrundmusik" FontSize="11" 
+                                       TextColor="{StaticResource C_TextMuted}"/>
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="2" 
+                                    IsToggled="{Binding IsMusicEnabled}" 
+                                    OnColor="{StaticResource C_Primary}"
+                                    ThumbColor="{StaticResource C_ChalkWhite}"/>
                         </Grid>
 
-                        <BoxView HeightRequest="1" Color="#DDD"/>
+                        <!-- Divider -->
+                        <BoxView HeightRequest="1" Color="{StaticResource C_GlassWhite}"/>
 
-                        <Grid ColumnDefinitions="*, Auto">
-                            <Label Text="Soundeffekte" VerticalOptions="Center" TextColor="#333"/>
-                            <Switch Grid.Column="1" IsToggled="{Binding IsSoundEnabled}" OnColor="#BB86FC"/>
+                        <!-- Sound Toggle -->
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <Border BackgroundColor="{StaticResource C_GlassHighlight}"
+                                    StrokeShape="RoundRectangle 12"
+                                    StrokeThickness="0"
+                                    WidthRequest="44" HeightRequest="44">
+                                <Label Text="🔊" FontSize="20" 
+                                       HorizontalOptions="Center" VerticalOptions="Center"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                <Label Text="Soundeffekte" TextColor="{StaticResource C_TextPrimary}" FontAttributes="Bold"/>
+                                <Label Text="Spielsounds" FontSize="11" 
+                                       TextColor="{StaticResource C_TextMuted}"/>
+                            </VerticalStackLayout>
+                            <Switch Grid.Column="2" 
+                                    IsToggled="{Binding IsSoundEnabled}" 
+                                    OnColor="{StaticResource C_Primary}"
+                                    ThumbColor="{StaticResource C_ChalkWhite}"/>
                         </Grid>
                     </VerticalStackLayout>
                 </Border>
+
+                <!-- App Info -->
+                <Label Text="Version 1.0.0 • Made with ❤️" 
+                       HorizontalOptions="Center"
+                       TextColor="{StaticResource C_TextMuted}"
+                       FontSize="11"
+                       Margin="0,8"/>
 
             </VerticalStackLayout>
         </ScrollView>
+
     </Grid>
 </ContentPage>
