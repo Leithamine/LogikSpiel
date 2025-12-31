@@ -1,5 +1,7 @@
-﻿using System.Collections.ObjectModel;
+﻿#nullable enable
+using System.Collections.ObjectModel;
 using LogikSpiel.Core;
+using LogikSpiel.Model;
 using LogikSpiel.Services;
 
 namespace LogikSpiel.ViewModel;
@@ -7,42 +9,65 @@ namespace LogikSpiel.ViewModel;
 public sealed class MainPageViewModel : ObservableObject
 {
     private readonly IGameCatalogService _catalog;
-    private readonly INavigationService _nav;
-    private readonly IUserProfileService _userService; 
-    public ObservableCollection<GameCardViewModel> Games { get; } = new();
+    private readonly IUserProfileService _userService;
+
+    private bool _isLoaded;
 
     private int _coins;
-    public int Coins { get => _coins; set => SetProperty(ref _coins, value); }
+    public int Coins { get => _coins; private set => SetProperty(ref _coins, value); }
 
-    public AsyncCommand<GameCardViewModel> OpenGameCommand { get; }
+    public ObservableCollection<GameDefinition> Games { get; } = new();
+
     public AsyncCommand OpenProfileCommand { get; }
+    public AsyncCommand<GameDefinition> OpenGameCommand { get; }
 
-    public MainPageViewModel(IGameCatalogService catalog, INavigationService nav, IUserProfileService userService)
+    public MainPageViewModel(
+        IGameCatalogService catalog,
+        IUserProfileService userService)
     {
         _catalog = catalog;
-        _nav = nav;
         _userService = userService;
 
-        OpenGameCommand = new AsyncCommand<GameCardViewModel>(async g =>
+        OpenProfileCommand = new AsyncCommand(async () =>
         {
-            if (g is null) return;
-            await _nav.GoToAsync("GameMap", new Dictionary<string, object>
-            {
-                ["gameId"] = g.Id
-            });
+            await Shell.Current.GoToAsync("ProfilePage");
         });
-        OpenProfileCommand = new AsyncCommand(async () => await _nav.GoToAsync("Profile"));
+
+        OpenGameCommand = new AsyncCommand<GameDefinition>(async game =>
+        {
+            if (game == null) return;
+
+            // ═══════════════════════════════════════════════════════════
+            // WICHTIG: Verwende die Route aus GameDefinition, nicht die ID!
+            // Navigiere zur GameMapPage mit der gameId
+            // ═══════════════════════════════════════════════════════════
+            await Shell.Current.GoToAsync($"GameMapPage?gameId={game.Id}");
+        });
     }
 
     public async Task EnsureLoadedAsync()
     {
+        if (_isLoaded) return;
+        _isLoaded = true;
+
+        await RefreshCoinsAsync();
+        await LoadGamesAsync();
+    }
+
+    public async Task RefreshCoinsAsync()
+    {
         var user = await _userService.GetUserAsync();
         Coins = user?.Coins ?? 0;
-        if (Games.Count > 0) return;
+    }
+
+    private async Task LoadGamesAsync()
+    {
+        Games.Clear();
 
         var games = await _catalog.LoadGamesAsync();
-        Games.Clear();
-        foreach (var g in games)
-            Games.Add(new GameCardViewModel(g));
+        foreach (var game in games)
+        {
+            Games.Add(game);
+        }
     }
 }

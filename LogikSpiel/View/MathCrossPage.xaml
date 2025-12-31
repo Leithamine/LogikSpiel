@@ -5,87 +5,127 @@
              xmlns:conv="clr-namespace:LogikSpiel.Converters"
              x:Class="LogikSpiel.View.MathCrossPage"
              x:DataType="vm:MathCrossPageViewModel"
+             x:Name="ThisPage"
              NavigationPage.HasNavigationBar="False"
              Shell.NavBarIsVisible="False"
-             x:Name="ThisPage">
+             Background="{StaticResource BgGradient}">
 
     <ContentPage.Resources>
         <conv:InvertBoolConverter x:Key="InvertBoolConverter"/>
     </ContentPage.Resources>
 
-    <ContentPage.Background>
-        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#BB86FC" Offset="0"/>
-            <GradientStop Color="#03DAC5" Offset="1"/>
-        </LinearGradientBrush>
-    </ContentPage.Background>
-
-    <Grid RowDefinitions="Auto,*,Auto" Padding="12" RowSpacing="10">
+    <Grid RowDefinitions="Auto,*,Auto" Padding="12" RowSpacing="12">
 
         <!-- HEADER -->
-        <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" HeightRequest="50">
-            <Button Grid.Column="0" Text="←" Command="{Binding BackCommand}"
-                    IsEnabled="{Binding IsNotBusy}" BackgroundColor="#20FFFFFF"
-                    TextColor="White" FontAttributes="Bold" FontSize="20"
-                    WidthRequest="44" HeightRequest="44" CornerRadius="22" Padding="0"/>
+        <Border Style="{StaticResource GlassCard}" Padding="12">
+            <Grid ColumnDefinitions="Auto,*,Auto">
+                <Button Grid.Column="0" Text="←" Style="{StaticResource BtnIcon}"
+                        Command="{Binding BackCommand}" IsEnabled="{Binding IsNotBusy}"/>
 
-            <VerticalStackLayout Grid.Column="1" Spacing="0" HorizontalOptions="Center" VerticalOptions="Center">
-                <Label Text="Math Cross" TextColor="White" FontAttributes="Bold" FontSize="18" HorizontalOptions="Center"/>
-                <Label Text="{Binding DifficultyText}" TextColor="White" FontSize="12" Opacity="0.9" HorizontalOptions="Center"/>
-            </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Label Text="Math Cross" Style="{StaticResource H3}" HorizontalOptions="Center"/>
+                    <Border StrokeThickness="0" StrokeShape="RoundRectangle 8"
+                            BackgroundColor="{StaticResource C_Secondary}" Padding="10,4">
+                        <Label Text="{Binding DifficultyText}" TextColor="White" FontSize="11" FontAttributes="Bold"/>
+                    </Border>
+                </VerticalStackLayout>
 
-            <Label Grid.Column="2" Text="{Binding Coins, StringFormat='💰 {0}'}"
-                   TextColor="#FFD700" FontAttributes="Bold" FontSize="15" VerticalOptions="Center"/>
-        </Grid>
+                <Border Grid.Column="2" Style="{StaticResource Chip}">
+                    <HorizontalStackLayout Spacing="4">
+                        <Label Text="💰" FontSize="14"/>
+                        <Label Text="{Binding Coins}" TextColor="{StaticResource C_Gold}" FontAttributes="Bold"/>
+                    </HorizontalStackLayout>
+                </Border>
+            </Grid>
+        </Border>
 
         <!-- BOARD -->
-        <Border Grid.Row="1" StrokeShape="RoundRectangle 16" BackgroundColor="#30FFFFFF"
-                Padding="8" StrokeThickness="0" x:Name="BoardContainer">
-            <ScrollView Orientation="Both" HorizontalScrollBarVisibility="Never" VerticalScrollBarVisibility="Never">
-                <Grid x:Name="BoardGrid" HorizontalOptions="Center" VerticalOptions="Center" RowSpacing="3" ColumnSpacing="3"/>
+        <Border Grid.Row="1" Style="{StaticResource GlassCard}" x:Name="BoardContainer">
+            <ScrollView Orientation="Both" 
+                        HorizontalScrollBarVisibility="Never" 
+                        VerticalScrollBarVisibility="Never">
+                <Grid x:Name="BoardGrid" 
+                      HorizontalOptions="Center" 
+                      VerticalOptions="Center" 
+                      RowSpacing="4" 
+                      ColumnSpacing="4"/>
             </ScrollView>
         </Border>
 
-        <!-- BOTTOM -->
-        <Border Grid.Row="2" StrokeShape="RoundRectangle 16" BackgroundColor="#E8FFFFFF"
-                Padding="12" StrokeThickness="0">
-            <VerticalStackLayout Spacing="10">
-                <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="8">
-                    <Button Grid.Column="0" Text="↩️" Command="{Binding ResetCommand}" IsEnabled="{Binding IsNotBusy}"
-                            BackgroundColor="#E0E0E0" TextColor="#333" FontAttributes="Bold" CornerRadius="12" HeightRequest="44" FontSize="18"/>
-                    <Button Grid.Column="1" Text="💡" Command="{Binding HintCommand}" IsEnabled="{Binding IsNotBusy}"
-                            BackgroundColor="#03DAC5" TextColor="#000" FontAttributes="Bold" CornerRadius="12" HeightRequest="44" FontSize="18"/>
-                    <Button Grid.Column="2" Text="⌫" Command="{Binding ClearCellCommand}" IsEnabled="{Binding HasSelection}"
-                            BackgroundColor="#FFB74D" TextColor="#000" FontAttributes="Bold" CornerRadius="12" HeightRequest="44" FontSize="18"/>
-                    <Button Grid.Column="3" Text="✓" Command="{Binding CheckCommand}" IsEnabled="{Binding IsNotBusy}"
-                            BackgroundColor="#4CAF50" TextColor="White" FontAttributes="Bold" CornerRadius="12" HeightRequest="44" FontSize="18"/>
+        <!-- CONTROLS -->
+        <Border Grid.Row="2" Style="{StaticResource SolidCard}" Padding="16">
+            <VerticalStackLayout Spacing="14">
+
+                <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="10">
+                    <Button Grid.Column="0" Text="↩️" 
+                            Style="{StaticResource BtnGhost}"
+                            HeightRequest="50"
+                            Command="{Binding ResetCommand}" 
+                            IsEnabled="{Binding IsNotBusy}"/>
+
+                    <Button Grid.Column="1" Text="💡" 
+                            BackgroundColor="{StaticResource C_Warning}"
+                            TextColor="#000"
+                            FontAttributes="Bold"
+                            CornerRadius="14"
+                            HeightRequest="50"
+                            Command="{Binding HintCommand}" 
+                            IsEnabled="{Binding IsNotBusy}"/>
+
+                    <Button Grid.Column="2" Text="⌫" 
+                            BackgroundColor="{StaticResource C_Accent}"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            CornerRadius="14"
+                            HeightRequest="50"
+                            Command="{Binding ClearCellCommand}" 
+                            IsEnabled="{Binding HasSelection}"/>
+
+                    <Button Grid.Column="3" Text="✓" 
+                            Style="{StaticResource BtnSuccess}"
+                            HeightRequest="50"
+                            Command="{Binding CheckCommand}" 
+                            IsEnabled="{Binding IsNotBusy}"/>
                 </Grid>
 
-                <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never" IsVisible="{Binding HasSelection}">
-                    <HorizontalStackLayout Spacing="6" HorizontalOptions="Center" BindableLayout.ItemsSource="{Binding CandidateTokens}">
+                <!-- Token Keyboard - MIT KORREKTEM x:DataType -->
+                <ScrollView Orientation="Horizontal" 
+                            HorizontalScrollBarVisibility="Never" 
+                            IsVisible="{Binding HasSelection}">
+                    <HorizontalStackLayout Spacing="8" HorizontalOptions="Center" 
+                                           BindableLayout.ItemsSource="{Binding CandidateTokens}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="x:String">
                                 <Button Text="{Binding .}"
                                         Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.TokenCommand}"
                                         CommandParameter="{Binding .}"
-                                        WidthRequest="52" HeightRequest="48" Padding="0"
-                                        BackgroundColor="White" TextColor="#333" FontAttributes="Bold"
-                                        FontSize="16" CornerRadius="10" BorderColor="#CCC" BorderWidth="1"/>
+                                        WidthRequest="56" HeightRequest="52"
+                                        BackgroundColor="{StaticResource C_BgLight}"
+                                        TextColor="{StaticResource C_TextPrimary}"
+                                        FontAttributes="Bold"
+                                        FontSize="17"
+                                        CornerRadius="12"
+                                        BorderColor="{StaticResource C_Primary}"
+                                        BorderWidth="2"/>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                     </HorizontalStackLayout>
                 </ScrollView>
 
-                <Label Text="Tippe auf ein Feld" IsVisible="{Binding HasSelection, Converter={StaticResource InvertBoolConverter}}"
-                       HorizontalOptions="Center" TextColor="#888" FontSize="13" FontAttributes="Italic"/>
+                <Label Text="👆 Tippe auf ein Feld" 
+                       IsVisible="{Binding HasSelection, Converter={StaticResource InvertBoolConverter}}"
+                       HorizontalOptions="Center"
+                       Style="{StaticResource Caption}"/>
             </VerticalStackLayout>
         </Border>
 
-        <!-- Loading -->
-        <Grid Grid.RowSpan="3" IsVisible="{Binding IsBusy}" BackgroundColor="#AA000000">
-            <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="12">
-                <ActivityIndicator IsRunning="True" Color="White" HeightRequest="50" WidthRequest="50"/>
-                <Label Text="Erzeuge Rätsel..." TextColor="White" FontAttributes="Bold" FontSize="16"/>
+        <!-- LOADING -->
+        <Grid Grid.RowSpan="3" IsVisible="{Binding IsBusy}" 
+              BackgroundColor="#DD000000" InputTransparent="False">
+            <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="16">
+                <ActivityIndicator IsRunning="True" Color="{StaticResource C_Primary}" 
+                                   HeightRequest="60" WidthRequest="60"/>
+                <Label Text="Erzeuge Rätsel..." Style="{StaticResource H3}"/>
             </VerticalStackLayout>
         </Grid>
     </Grid>

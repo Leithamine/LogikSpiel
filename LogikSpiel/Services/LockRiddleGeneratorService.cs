@@ -29,9 +29,7 @@ public class LockRiddleGeneratorService
         return GenerateWithHardGuarantee(length, minCoveredDigits, targetHints, rules, style);
     }
 
-    /// <summary>
-    /// Harte Validierung: konsistent + eindeutig und: keine leeren Slots & keine Wiederholungen in Hints.
-    /// </summary>
+
     public bool IsGameValid(LockRiddleGame game)
     {
         if (game == null) return false;
