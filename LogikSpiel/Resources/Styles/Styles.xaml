@@ -3,92 +3,135 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         🎨 NEUE FARBPALETTE - Lebendig & Modern
+         🌌 MATHE-WELT THEME
+         Vibe: Kreidetafel + Graph Paper + Eureka Glow + ruhige „Denkwelt“
          ═══════════════════════════════════════════════════════════════════ -->
-
-    <!-- Primary Colors - Vibrant Cyan/Teal -->
-    <Color x:Key="C_Primary">#00D9FF</Color>
-    <Color x:Key="C_PrimaryDark">#00A8CC</Color>
-    <Color x:Key="C_PrimaryLight">#7FFFFF</Color>
-
-    <!-- Secondary Colors - Electric Purple -->
-    <Color x:Key="C_Secondary">#B537F2</Color>
-    <Color x:Key="C_SecondaryDark">#8B2FC9</Color>
-    <Color x:Key="C_SecondaryLight">#E066FF</Color>
-
-    <!-- Accent Colors - Hot Pink/Coral -->
-    <Color x:Key="C_Accent">#FF6B9D</Color>
-    <Color x:Key="C_AccentDark">#E84A7F</Color>
-    <Color x:Key="C_AccentLight">#FFB3C6</Color>
-
-    <!-- Success/Warning/Error -->
-    <Color x:Key="C_Success">#00E676</Color>
-    <Color x:Key="C_Warning">#FFAB40</Color>
-    <Color x:Key="C_Error">#FF5252</Color>
-
-    <!-- Gold für Coins -->
-    <Color x:Key="C_Gold">#FFD700</Color>
-    <Color x:Key="C_GoldDark">#FFA500</Color>
-
-    <!-- Background Colors - Deep Dark with Purple tint -->
-    <Color x:Key="C_BgDark">#0A0A1A</Color>
-    <Color x:Key="C_BgMedium">#12122A</Color>
-    <Color x:Key="C_BgLight">#1A1A3A</Color>
-    <Color x:Key="C_BgCard">#20203A</Color>
-
-    <!-- Text Colors -->
-    <Color x:Key="C_TextPrimary">#FFFFFF</Color>
-    <Color x:Key="C_TextSecondary">#B8B8D0</Color>
-    <Color x:Key="C_TextMuted">#6B6B8A</Color>
-
-    <!-- Glass Colors -->
-    <Color x:Key="C_GlassWhite">#18FFFFFF</Color>
-    <Color x:Key="C_GlassBorder">#30FFFFFF</Color>
-    <Color x:Key="C_GlassHighlight">#40FFFFFF</Color>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         🌈 GRADIENTS
+         🎨 CORE COLORS
          ═══════════════════════════════════════════════════════════════════ -->
 
-    <!-- Main Background - Aurora Style -->
-    <LinearGradientBrush x:Key="BgGradient" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="#0F0C29" Offset="0.0"/>
-        <GradientStop Color="#302B63" Offset="0.5"/>
-        <GradientStop Color="#24243E" Offset="1.0"/>
+    <!-- Base World Background -->
+    <Color x:Key="C_WorldDeep">#0B1320</Color>
+    <!-- tiefes Nachtblau -->
+    <Color x:Key="C_WorldMid">#0E1B2B</Color>
+    <!-- mittleres Blau -->
+    <Color x:Key="C_WorldTeal">#0D2F36</Color>
+    <!-- ruhiges Teal -->
+    <Color x:Key="C_WorldViolet">#1B1530</Color>
+    <!-- kosmisches Violett -->
+
+    <!-- Chalkboard / Surface -->
+    <Color x:Key="C_BgDark">#0C1622</Color>
+    <Color x:Key="C_BgMedium">#112235</Color>
+    <Color x:Key="C_BgLight">#1A2E44</Color>
+    <Color x:Key="C_BgCard">#13263A</Color>
+
+    <!-- Graph/Paper -->
+    <Color x:Key="C_Paper">#FFF8F0</Color>
+    <Color x:Key="C_PaperSoft">#F5EDE3</Color>
+    <Color x:Key="C_InkDark">#0B1320</Color>
+
+    <!-- Primary = Chalk Blue -->
+    <Color x:Key="C_Primary">#5DADE2</Color>
+    <Color x:Key="C_PrimaryDark">#2D5A8A</Color>
+    <Color x:Key="C_PrimaryLight">#8CCAF0</Color>
+
+    <!-- Secondary = Cream Chalk/Paper -->
+    <Color x:Key="C_Secondary">#F5E6D3</Color>
+    <Color x:Key="C_SecondaryDark">#D4C4B0</Color>
+    <Color x:Key="C_SecondaryLight">#FFF8F0</Color>
+
+    <!-- Accent = Eureka Gold -->
+    <Color x:Key="C_Accent">#FFD54F</Color>
+    <Color x:Key="C_AccentDark">#C48C10</Color>
+    <Color x:Key="C_AccentLight">#FFEE99</Color>
+
+    <!-- Extra Neon Pop (für Highlights, Aktive Nodes, etc.) -->
+    <Color x:Key="C_NeonTeal">#00E5D4</Color>
+    <Color x:Key="C_NeonViolet">#B388FF</Color>
+
+    <!-- Status -->
+    <Color x:Key="C_Success">#2E7D32</Color>
+    <Color x:Key="C_SuccessLight">#4CAF50</Color>
+    <Color x:Key="C_Warning">#F57C00</Color>
+    <Color x:Key="C_WarningLight">#FFB74D</Color>
+    <Color x:Key="C_Error">#C62828</Color>
+    <Color x:Key="C_ErrorLight">#EF5350</Color>
+
+    <!-- Coins -->
+    <Color x:Key="C_Gold">#FFD700</Color>
+    <Color x:Key="C_GoldDark">#DAA520</Color>
+
+    <!-- Text -->
+    <Color x:Key="C_TextPrimary">#FFFFFF</Color>
+    <Color x:Key="C_TextSecondary">#D7E0EA</Color>
+    <Color x:Key="C_TextMuted">#93A4B5</Color>
+    <Color x:Key="C_TextDark">#0B1320</Color>
+
+    <!-- Chalk Colors (für kleine Akzente / Illustrationen) -->
+    <Color x:Key="C_ChalkWhite">#F8F9F9</Color>
+    <Color x:Key="C_ChalkYellow">#F4D03F</Color>
+    <Color x:Key="C_ChalkBlue">#5DADE2</Color>
+    <Color x:Key="C_ChalkGreen">#58D68D</Color>
+    <Color x:Key="C_ChalkPink">#F1948A</Color>
+
+    <!-- Glass / Overlays -->
+    <Color x:Key="C_GlassWhite">#14FFFFFF</Color>
+    <Color x:Key="C_GlassBorder">#22FFFFFF</Color>
+    <Color x:Key="C_GlassHighlight">#2AFFFFFF</Color>
+    <Color x:Key="C_Glass">#18FFFFFF</Color>
+    <Color x:Key="C_GlassStrong">#2EFFFFFF</Color>
+
+    <!-- Subtile Grid-Line Farbe (für Mathe-Look ohne echte Muster) -->
+    <Color x:Key="C_GridLine">#12FFFFFF</Color>
+    <Color x:Key="C_GridLineDark">#180B1320</Color>
+
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         🌈 GRADIENTS (Mathe-Welt)
+         ═══════════════════════════════════════════════════════════════════ -->
+
+    <!-- Haupt-Background: „Denkwelt“ (radial spotlight + dunkle Ränder) -->
+    <RadialGradientBrush x:Key="BgGradient" Center="0.5,0.32" Radius="1.05">
+        <GradientStop Color="#152B44" Offset="0.0"/>
+        <GradientStop Color="#0E1B2B" Offset="0.55"/>
+        <GradientStop Color="#0B1320" Offset="1.0"/>
+    </RadialGradientBrush>
+
+    <!-- Alternative: leicht mehr Teal (für Map/Hub) -->
+    <LinearGradientBrush x:Key="BgGradientTeal" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#0B1320" Offset="0.0"/>
+        <GradientStop Color="#0D2F36" Offset="0.55"/>
+        <GradientStop Color="#0E1B2B" Offset="1.0"/>
     </LinearGradientBrush>
 
-    <!-- Alternative - Sunset Vibes -->
-    <LinearGradientBrush x:Key="BgGradientWarm" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="#1A0A2E" Offset="0.0"/>
-        <GradientStop Color="#3D1A54" Offset="0.5"/>
-        <GradientStop Color="#2D1B4E" Offset="1.0"/>
+    <!-- Card Surface (Chalkboard depth) -->
+    <LinearGradientBrush x:Key="CardGradient" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#162A40" Offset="0.0"/>
+        <GradientStop Color="#112235" Offset="1.0"/>
     </LinearGradientBrush>
 
-    <!-- Card Gradients -->
-    <LinearGradientBrush x:Key="CardGradient" StartPoint="0,0" EndPoint="1,1">
-        <GradientStop Color="#25254A" Offset="0.0"/>
-        <GradientStop Color="#1A1A3A" Offset="1.0"/>
+    <!-- „Graph Paper“ Card – sehr leicht, eher für Learn/Profile Inhalte -->
+    <LinearGradientBrush x:Key="PaperCardGradient" StartPoint="0,0" EndPoint="0,1">
+        <GradientStop Color="#FFF8F0" Offset="0.0"/>
+        <GradientStop Color="#F5EDE3" Offset="1.0"/>
     </LinearGradientBrush>
 
-    <!-- Button Gradients -->
+    <!-- Buttons -->
     <LinearGradientBrush x:Key="BtnPrimaryGradient" StartPoint="0,0" EndPoint="1,0">
-        <GradientStop Color="#00D9FF" Offset="0.0"/>
-        <GradientStop Color="#00A8CC" Offset="1.0"/>
-    </LinearGradientBrush>
-
-    <LinearGradientBrush x:Key="BtnSecondaryGradient" StartPoint="0,0" EndPoint="1,0">
-        <GradientStop Color="#B537F2" Offset="0.0"/>
-        <GradientStop Color="#8B2FC9" Offset="1.0"/>
+        <GradientStop Color="#5DADE2" Offset="0.0"/>
+        <GradientStop Color="#2D5A8A" Offset="1.0"/>
     </LinearGradientBrush>
 
     <LinearGradientBrush x:Key="BtnAccentGradient" StartPoint="0,0" EndPoint="1,0">
-        <GradientStop Color="#FF6B9D" Offset="0.0"/>
-        <GradientStop Color="#FF8E53" Offset="1.0"/>
+        <GradientStop Color="#FFD54F" Offset="0.0"/>
+        <GradientStop Color="#E6A817" Offset="1.0"/>
     </LinearGradientBrush>
 
     <LinearGradientBrush x:Key="BtnSuccessGradient" StartPoint="0,0" EndPoint="1,0">
-        <GradientStop Color="#00E676" Offset="0.0"/>
-        <GradientStop Color="#00C853" Offset="1.0"/>
+        <GradientStop Color="#2E7D32" Offset="0.0"/>
+        <GradientStop Color="#43A047" Offset="1.0"/>
     </LinearGradientBrush>
 
     <LinearGradientBrush x:Key="GoldGradient" StartPoint="0,0" EndPoint="1,0">
@@ -96,15 +139,22 @@
         <GradientStop Color="#FFA500" Offset="1.0"/>
     </LinearGradientBrush>
 
+
     <!-- ═══════════════════════════════════════════════════════════════════
-         ✨ SHADOWS
+         ✨ SHADOWS (weicher, „Game“ Look)
          ═══════════════════════════════════════════════════════════════════ -->
 
-    <Shadow x:Key="ShadowSmall" Brush="#40000000" Offset="0,2" Radius="4"/>
-    <Shadow x:Key="ShadowMedium" Brush="#50000000" Offset="0,4" Radius="8"/>
-    <Shadow x:Key="ShadowLarge" Brush="#60000000" Offset="0,8" Radius="16"/>
-    <Shadow x:Key="ShadowGlow" Brush="#4000D9FF" Offset="0,0" Radius="20"/>
-    <Shadow x:Key="ShadowGlowPink" Brush="#40FF6B9D" Offset="0,0" Radius="20"/>
+    <Shadow x:Key="ShadowSmall" Brush="#35000000" Offset="0,2" Radius="4"/>
+    <Shadow x:Key="ShadowMedium" Brush="#45000000" Offset="0,5" Radius="10"/>
+    <Shadow x:Key="ShadowLarge" Brush="#60000000" Offset="0,10" Radius="18"/>
+    <Shadow x:Key="ShadowCard" Brush="#42000000" Offset="0,6" Radius="14"/>
+
+    <!-- Glows (Mathe Neon) -->
+    <Shadow x:Key="ShadowGlowGold" Brush="#33FFD54F" Offset="0,0" Radius="18"/>
+    <Shadow x:Key="ShadowGlowBlue" Brush="#335DADE2" Offset="0,0" Radius="18"/>
+    <Shadow x:Key="ShadowGlowTeal" Brush="#3300E5D4" Offset="0,0" Radius="18"/>
+    <Shadow x:Key="ShadowGlowViolet" Brush="#33B388FF" Offset="0,0" Radius="18"/>
+
 
     <!-- ═══════════════════════════════════════════════════════════════════
          📝 TYPOGRAPHY
@@ -114,12 +164,14 @@
         <Setter Property="FontSize" Value="28"/>
         <Setter Property="FontAttributes" Value="Bold"/>
         <Setter Property="TextColor" Value="{StaticResource C_TextPrimary}"/>
+        <Setter Property="CharacterSpacing" Value="0.4"/>
     </Style>
 
     <Style x:Key="H2" TargetType="Label">
         <Setter Property="FontSize" Value="22"/>
         <Setter Property="FontAttributes" Value="Bold"/>
         <Setter Property="TextColor" Value="{StaticResource C_TextPrimary}"/>
+        <Setter Property="CharacterSpacing" Value="0.2"/>
     </Style>
 
     <Style x:Key="H3" TargetType="Label">
@@ -133,131 +185,212 @@
         <Setter Property="TextColor" Value="{StaticResource C_TextSecondary}"/>
     </Style>
 
+    <Style x:Key="BodyLight" TargetType="Label">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="TextColor" Value="{StaticResource C_TextSecondary}"/>
+        <Setter Property="Opacity" Value="0.95"/>
+    </Style>
+
+    <Style x:Key="BodyDark" TargetType="Label">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="TextColor" Value="{StaticResource C_TextDark}"/>
+    </Style>
+
     <Style x:Key="Caption" TargetType="Label">
         <Setter Property="FontSize" Value="12"/>
         <Setter Property="TextColor" Value="{StaticResource C_TextMuted}"/>
     </Style>
 
+
     <!-- ═══════════════════════════════════════════════════════════════════
-         🎴 CARD STYLES
+         🎴 CARDS / SURFACES
          ═══════════════════════════════════════════════════════════════════ -->
 
-    <!-- Glass Card - Modern Glassmorphism -->
+    <!-- Chalk Glass Card -->
     <Style x:Key="GlassCard" TargetType="Border">
         <Setter Property="BackgroundColor" Value="{StaticResource C_GlassWhite}"/>
-        <Setter Property="Stroke" Value="{StaticResource C_GlassBorder}"/>
+        <Setter Property="Stroke" Value="{StaticResource C_GridLine}"/>
         <Setter Property="StrokeThickness" Value="1"/>
-        <Setter Property="StrokeShape" Value="RoundRectangle 20"/>
+        <Setter Property="StrokeShape" Value="RoundRectangle 18"/>
         <Setter Property="Padding" Value="16"/>
-        <Setter Property="Shadow" Value="{StaticResource ShadowMedium}"/>
+        <Setter Property="Shadow" Value="{StaticResource ShadowCard}"/>
     </Style>
 
-    <!-- Solid Card -->
+    <!-- Deep Chalk Card -->
     <Style x:Key="SolidCard" TargetType="Border">
         <Setter Property="BackgroundColor" Value="{StaticResource C_BgCard}"/>
-        <Setter Property="StrokeThickness" Value="0"/>
-        <Setter Property="StrokeShape" Value="RoundRectangle 20"/>
+        <Setter Property="Stroke" Value="{StaticResource C_GridLine}"/>
+        <Setter Property="StrokeThickness" Value="1"/>
+        <Setter Property="StrokeShape" Value="RoundRectangle 18"/>
         <Setter Property="Padding" Value="16"/>
-        <Setter Property="Shadow" Value="{StaticResource ShadowMedium}"/>
+        <Setter Property="Shadow" Value="{StaticResource ShadowCard}"/>
     </Style>
 
-    <!-- Glow Card - with neon border -->
+    <!-- Glow Card (Aktiv/Highlight) -->
     <Style x:Key="GlowCard" TargetType="Border">
         <Setter Property="BackgroundColor" Value="{StaticResource C_BgCard}"/>
         <Setter Property="Stroke" Value="{StaticResource C_Primary}"/>
         <Setter Property="StrokeThickness" Value="2"/>
-        <Setter Property="StrokeShape" Value="RoundRectangle 20"/>
+        <Setter Property="StrokeShape" Value="RoundRectangle 18"/>
         <Setter Property="Padding" Value="16"/>
-        <Setter Property="Shadow" Value="{StaticResource ShadowGlow}"/>
+        <Setter Property="Shadow" Value="{StaticResource ShadowGlowBlue}"/>
     </Style>
+
+    <!-- Paper Card (für Learn/Profile Inhalte) -->
+    <Style x:Key="SurfaceCard" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource PaperCardGradient}"/>
+        <Setter Property="Stroke" Value="#140B1320"/>
+        <Setter Property="StrokeThickness" Value="1"/>
+        <Setter Property="StrokeShape" Value="RoundRectangle 18"/>
+        <Setter Property="Padding" Value="16"/>
+        <Setter Property="Shadow" Value="{StaticResource ShadowCard}"/>
+    </Style>
+
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         🔘 BUTTON STYLES
+         🔘 BUTTONS
          ═══════════════════════════════════════════════════════════════════ -->
 
-    <!-- Primary Button - Cyan -->
     <Style x:Key="BtnPrimary" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource C_Primary}"/>
-        <Setter Property="TextColor" Value="#000000"/>
+        <Setter Property="BackgroundColor" Value="{StaticResource C_PrimaryDark}"/>
+        <Setter Property="TextColor" Value="#FFFFFF"/>
         <Setter Property="FontAttributes" Value="Bold"/>
         <Setter Property="FontSize" Value="16"/>
-        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="CornerRadius" Value="14"/>
         <Setter Property="HeightRequest" Value="52"/>
         <Setter Property="Padding" Value="24,0"/>
-        <Setter Property="Shadow" Value="{StaticResource ShadowGlow}"/>
+        <Setter Property="Shadow" Value="{StaticResource ShadowSmall}"/>
     </Style>
 
-    <!-- Secondary Button - Purple -->
+    <Style x:Key="PrimaryButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource C_PrimaryDark}"/>
+        <Setter Property="TextColor" Value="#FFFFFF"/>
+        <Setter Property="FontAttributes" Value="Bold"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="CornerRadius" Value="14"/>
+        <Setter Property="HeightRequest" Value="52"/>
+        <Setter Property="Padding" Value="24,0"/>
+    </Style>
+
     <Style x:Key="BtnSecondary" TargetType="Button">
         <Setter Property="BackgroundColor" Value="{StaticResource C_Secondary}"/>
-        <Setter Property="TextColor" Value="#FFFFFF"/>
+        <Setter Property="TextColor" Value="{StaticResource C_TextDark}"/>
         <Setter Property="FontAttributes" Value="Bold"/>
         <Setter Property="FontSize" Value="16"/>
-        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="CornerRadius" Value="14"/>
         <Setter Property="HeightRequest" Value="52"/>
         <Setter Property="Padding" Value="24,0"/>
     </Style>
 
-    <!-- Accent Button - Pink/Coral -->
+    <Style x:Key="SecondaryButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource C_Secondary}"/>
+        <Setter Property="TextColor" Value="{StaticResource C_TextDark}"/>
+        <Setter Property="FontAttributes" Value="Bold"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="CornerRadius" Value="14"/>
+        <Setter Property="HeightRequest" Value="52"/>
+        <Setter Property="Padding" Value="24,0"/>
+    </Style>
+
     <Style x:Key="BtnAccent" TargetType="Button">
         <Setter Property="BackgroundColor" Value="{StaticResource C_Accent}"/>
+        <Setter Property="TextColor" Value="{StaticResource C_TextDark}"/>
+        <Setter Property="FontAttributes" Value="Bold"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="CornerRadius" Value="14"/>
+        <Setter Property="HeightRequest" Value="52"/>
+        <Setter Property="Padding" Value="24,0"/>
+        <Setter Property="Shadow" Value="{StaticResource ShadowGlowGold}"/>
+    </Style>
+
+    <Style x:Key="AccentButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource C_Accent}"/>
+        <Setter Property="TextColor" Value="{StaticResource C_TextDark}"/>
+        <Setter Property="FontAttributes" Value="Bold"/>
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="CornerRadius" Value="14"/>
+        <Setter Property="HeightRequest" Value="52"/>
+        <Setter Property="Padding" Value="24,0"/>
+    </Style>
+
+    <Style x:Key="BtnSuccess" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="{StaticResource C_Success}"/>
         <Setter Property="TextColor" Value="#FFFFFF"/>
         <Setter Property="FontAttributes" Value="Bold"/>
         <Setter Property="FontSize" Value="16"/>
-        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="CornerRadius" Value="14"/>
         <Setter Property="HeightRequest" Value="52"/>
         <Setter Property="Padding" Value="24,0"/>
-        <Setter Property="Shadow" Value="{StaticResource ShadowGlowPink}"/>
+        <Setter Property="Shadow" Value="{StaticResource ShadowSmall}"/>
     </Style>
 
-    <!-- Success Button - Green -->
-    <Style x:Key="BtnSuccess" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource C_Success}"/>
-        <Setter Property="TextColor" Value="#000000"/>
-        <Setter Property="FontAttributes" Value="Bold"/>
-        <Setter Property="FontSize" Value="16"/>
-        <Setter Property="CornerRadius" Value="16"/>
-        <Setter Property="HeightRequest" Value="52"/>
-        <Setter Property="Padding" Value="24,0"/>
-    </Style>
-
-    <!-- Ghost Button - Transparent with border -->
     <Style x:Key="BtnGhost" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="Transparent"/>
+        <Setter Property="BackgroundColor" Value="#18FFFFFF"/>
         <Setter Property="TextColor" Value="{StaticResource C_TextPrimary}"/>
         <Setter Property="FontAttributes" Value="Bold"/>
         <Setter Property="FontSize" Value="14"/>
-        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="CornerRadius" Value="14"/>
         <Setter Property="HeightRequest" Value="48"/>
-        <Setter Property="BorderColor" Value="{StaticResource C_GlassBorder}"/>
+        <Setter Property="BorderColor" Value="{StaticResource C_GridLine}"/>
         <Setter Property="BorderWidth" Value="1"/>
     </Style>
 
-    <!-- Icon Button - Circle -->
-    <Style x:Key="BtnIcon" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="{StaticResource C_GlassWhite}"/>
+    <Style x:Key="GhostButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="#18FFFFFF"/>
         <Setter Property="TextColor" Value="{StaticResource C_TextPrimary}"/>
         <Setter Property="FontAttributes" Value="Bold"/>
-        <Setter Property="FontSize" Value="20"/>
-        <Setter Property="CornerRadius" Value="24"/>
-        <Setter Property="WidthRequest" Value="48"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="CornerRadius" Value="14"/>
         <Setter Property="HeightRequest" Value="48"/>
-        <Setter Property="Padding" Value="0"/>
-        <Setter Property="BorderColor" Value="{StaticResource C_GlassBorder}"/>
-        <Setter Property="BorderWidth" Value="1"/>
     </Style>
 
+    <Style x:Key="BtnIcon" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="#18FFFFFF"/>
+        <Setter Property="TextColor" Value="{StaticResource C_TextPrimary}"/>
+        <Setter Property="FontAttributes" Value="Bold"/>
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="CornerRadius" Value="22"/>
+        <Setter Property="WidthRequest" Value="44"/>
+        <Setter Property="HeightRequest" Value="44"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="BorderColor" Value="{StaticResource C_GridLine}"/>
+        <Setter Property="BorderWidth" Value="1"/>
+        <Setter Property="Shadow" Value="{StaticResource ShadowSmall}"/>
+    </Style>
+
+    <Style x:Key="IconButton" TargetType="Button">
+        <Setter Property="BackgroundColor" Value="#22FFFFFF"/>
+        <Setter Property="TextColor" Value="{StaticResource C_TextPrimary}"/>
+        <Setter Property="FontAttributes" Value="Bold"/>
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="CornerRadius" Value="22"/>
+        <Setter Property="WidthRequest" Value="44"/>
+        <Setter Property="HeightRequest" Value="44"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Shadow" Value="{StaticResource ShadowSmall}"/>
+    </Style>
+
+    <Style x:Key="AppBarButton" TargetType="Button">
+        <Setter Property="CornerRadius" Value="14"/>
+        <Setter Property="Padding" Value="12,10"/>
+        <Setter Property="FontAttributes" Value="Bold"/>
+        <Setter Property="BackgroundColor" Value="#22FFFFFF"/>
+        <Setter Property="TextColor" Value="White"/>
+    </Style>
+
+
     <!-- ═══════════════════════════════════════════════════════════════════
-         🏷️ CHIPS & BADGES
+         🏷️ CHIPS / BADGES (Mathe Labels)
          ═══════════════════════════════════════════════════════════════════ -->
 
     <Style x:Key="Chip" TargetType="Border">
-        <Setter Property="BackgroundColor" Value="{StaticResource C_GlassWhite}"/>
-        <Setter Property="Stroke" Value="{StaticResource C_GlassBorder}"/>
+        <Setter Property="BackgroundColor" Value="#18FFFFFF"/>
+        <Setter Property="Stroke" Value="{StaticResource C_GridLine}"/>
         <Setter Property="StrokeThickness" Value="1"/>
-        <Setter Property="StrokeShape" Value="RoundRectangle 14"/>
+        <Setter Property="StrokeShape" Value="RoundRectangle 12"/>
         <Setter Property="Padding" Value="12,6"/>
         <Setter Property="HeightRequest" Value="36"/>
+        <Setter Property="Shadow" Value="{StaticResource ShadowSmall}"/>
     </Style>
 
     <Style x:Key="Badge" TargetType="Border">
@@ -267,7 +400,18 @@
         <Setter Property="Padding" Value="8,4"/>
         <Setter Property="MinimumWidthRequest" Value="24"/>
         <Setter Property="MinimumHeightRequest" Value="24"/>
+        <Setter Property="Shadow" Value="{StaticResource ShadowGlowGold}"/>
     </Style>
+
+    <Style x:Key="CoinBadge" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="#22FFD700"/>
+        <Setter Property="Stroke" Value="{StaticResource C_Gold}"/>
+        <Setter Property="StrokeThickness" Value="1"/>
+        <Setter Property="StrokeShape" Value="RoundRectangle 14"/>
+        <Setter Property="Padding" Value="12,6"/>
+        <Setter Property="Shadow" Value="{StaticResource ShadowSmall}"/>
+    </Style>
+
 
     <!-- ═══════════════════════════════════════════════════════════════════
          📱 INPUT STYLES
@@ -278,6 +422,15 @@
         <Setter Property="TextColor" Value="{StaticResource C_TextPrimary}"/>
         <Setter Property="PlaceholderColor" Value="{StaticResource C_TextMuted}"/>
         <Setter Property="FontSize" Value="16"/>
+    </Style>
+
+    <Style x:Key="EntryPill" TargetType="Border">
+        <Setter Property="Stroke" Value="{StaticResource C_GridLine}"/>
+        <Setter Property="StrokeThickness" Value="1"/>
+        <Setter Property="BackgroundColor" Value="{StaticResource C_BgLight}"/>
+        <Setter Property="Shadow" Value="{StaticResource ShadowSmall}"/>
+        <Setter Property="StrokeShape" Value="RoundRectangle 14"/>
+        <Setter Property="Padding" Value="6"/>
     </Style>
 
 </ResourceDictionary>

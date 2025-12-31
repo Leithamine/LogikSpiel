@@ -10,7 +10,11 @@
              Background="{StaticResource BgGradient}">
 
     <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="12" RowSpacing="12">
-
+        <Image Source="spielbg.jpg"
+       Grid.RowSpan="2"
+       Aspect="AspectFill"
+       Opacity="0.4"
+       InputTransparent="True" />
         <!-- HEADER -->
         <Border Grid.Row="0" Style="{StaticResource GlassCard}" Padding="12">
             <Grid ColumnDefinitions="Auto,*,Auto">
@@ -21,11 +25,11 @@
                     <Label Text="🎯 Mathe Hangman" Style="{StaticResource H3}" HorizontalOptions="Center"/>
                     <Border StrokeThickness="0" StrokeShape="RoundRectangle 8"
                             BackgroundColor="{StaticResource C_Accent}" Padding="10,4">
-                        <Label Text="{Binding DifficultyText}" TextColor="White" FontSize="11" FontAttributes="Bold"/>
+                        <Label Text="{Binding DifficultyText}" TextColor="{StaticResource C_TextPrimary}" FontSize="11" FontAttributes="Bold"/>
                     </Border>
                 </VerticalStackLayout>
 
-                <Border Grid.Column="2" Style="{StaticResource Chip}">
+                <Border Grid.Column="2" Style="{StaticResource CoinBadge}">
                     <HorizontalStackLayout Spacing="4">
                         <Label Text="💰" FontSize="14"/>
                         <Label Text="{Binding Coins}" TextColor="{StaticResource C_Gold}" FontAttributes="Bold"/>
@@ -49,7 +53,7 @@
                             BackgroundColor="{StaticResource C_Error}" Padding="10,4"
                             Opacity="0.9">
                         <Label Text="{Binding WrongCount, StringFormat='Fehler: {0}/6'}" 
-                               TextColor="White" FontSize="12" FontAttributes="Bold"/>
+                               TextColor="{StaticResource C_TextPrimary}" FontSize="12" FontAttributes="Bold"/>
                     </Border>
                 </HorizontalStackLayout>
 
@@ -78,16 +82,16 @@
                     <Border.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                             <GradientStop Color="{StaticResource C_Warning}" Offset="0"/>
-                            <GradientStop Color="#FF8C00" Offset="1"/>
+                            <GradientStop Color="{StaticResource C_GoldDark}" Offset="1"/>
                         </LinearGradientBrush>
                     </Border.Background>
                     <Label Text="{Binding CurrentHint}" 
-                           TextColor="#000" 
+                           TextColor="{StaticResource C_TextDark}" 
                            FontAttributes="Bold" 
                            FontSize="14"/>
                 </Border>
 
-                <!-- Properties List - MIT KORREKTEM x:DataType -->
+                <!-- Properties List -->
                 <CollectionView Grid.Row="2" ItemsSource="{Binding VisibleProperties}">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="vm:NumberPropertyVM">
@@ -109,8 +113,8 @@
                                     <Button Grid.Column="1" Text="?" 
                                             WidthRequest="38" HeightRequest="38"
                                             CornerRadius="19"
-                                            BackgroundColor="{StaticResource C_Secondary}"
-                                            TextColor="White"
+                                            BackgroundColor="{StaticResource C_Primary}"
+                                            TextColor="{StaticResource C_TextPrimary}"
                                             FontAttributes="Bold"
                                             FontSize="16"
                                             Padding="0"
@@ -151,7 +155,7 @@
 
                 <Button Grid.Column="2" Text="💡"
                         BackgroundColor="{StaticResource C_Warning}"
-                        TextColor="#000"
+                        TextColor="{StaticResource C_TextDark}"
                         FontAttributes="Bold"
                         CornerRadius="14"
                         WidthRequest="56" HeightRequest="52"

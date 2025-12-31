@@ -9,10 +9,14 @@
              Background="{StaticResource BgGradient}">
 
     <Grid RowDefinitions="Auto,*" RowSpacing="0">
-
-        <!-- ═══════════════ HEADER ═══════════════ -->
+        <Image Source="profileinfobg.jpg"
+       Grid.RowSpan="2"
+       Aspect="AspectFill"
+       Opacity="0.4"
+       InputTransparent="True" />
+        <!-- HEADER -->
         <Border Grid.Row="0" 
-                BackgroundColor="#15FFFFFF"
+                BackgroundColor="{StaticResource C_GlassWhite}"
                 StrokeThickness="0"
                 Padding="16,12">
             <Grid ColumnDefinitions="Auto,*,Auto">
@@ -36,7 +40,7 @@
             </Grid>
         </Border>
 
-        <!-- ═══════════════ CONTENT ═══════════════ -->
+        <!-- CONTENT -->
         <ScrollView Grid.Row="1">
             <VerticalStackLayout Spacing="16" Padding="16">
 
@@ -46,10 +50,10 @@
 
                         <!-- Avatar -->
                         <Border StrokeThickness="3" 
-                                Stroke="{StaticResource C_Secondary}"
+                                Stroke="{StaticResource C_Primary}"
                                 WidthRequest="100" HeightRequest="100"
                                 StrokeShape="RoundRectangle 50"
-                                BackgroundColor="#20FFFFFF">
+                                BackgroundColor="{StaticResource C_GlassWhite}">
                             <Image Source="professor.png" Aspect="AspectFill"/>
                         </Border>
 
@@ -57,10 +61,10 @@
                         <VerticalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
                             <Label Text="{Binding Name}" 
                                    FontSize="24" FontAttributes="Bold" 
-                                   TextColor="White"/>
+                                   TextColor="{StaticResource C_TextPrimary}"/>
 
                             <HorizontalStackLayout Spacing="8">
-                                <Border BackgroundColor="#30FFFFFF"
+                                <Border BackgroundColor="{StaticResource C_GlassHighlight}"
                                         StrokeShape="RoundRectangle 8"
                                         StrokeThickness="0"
                                         Padding="8,4">
@@ -83,14 +87,14 @@
 
                         <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
                             <!-- Stat 1 -->
-                            <Border BackgroundColor="#20FFFFFF"
+                            <Border BackgroundColor="{StaticResource C_GlassWhite}"
                                     StrokeShape="RoundRectangle 14"
                                     StrokeThickness="0"
                                     Padding="12">
                                 <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
                                     <Label Text="🎮" FontSize="24" HorizontalOptions="Center"/>
                                     <Label Text="42" FontSize="20" FontAttributes="Bold" 
-                                           TextColor="White" HorizontalOptions="Center"/>
+                                           TextColor="{StaticResource C_TextPrimary}" HorizontalOptions="Center"/>
                                     <Label Text="Gespielt" FontSize="10" 
                                            TextColor="{StaticResource C_TextMuted}"
                                            HorizontalOptions="Center"/>
@@ -98,7 +102,7 @@
                             </Border>
 
                             <!-- Stat 2 -->
-                            <Border BackgroundColor="#20FFFFFF"
+                            <Border BackgroundColor="{StaticResource C_GlassWhite}"
                                     StrokeShape="RoundRectangle 14"
                                     StrokeThickness="0"
                                     Padding="12">
@@ -114,7 +118,7 @@
                             </Border>
 
                             <!-- Stat 3 -->
-                            <Border BackgroundColor="#20FFFFFF"
+                            <Border BackgroundColor="{StaticResource C_GlassWhite}"
                                     StrokeShape="RoundRectangle 14"
                                     StrokeThickness="0"
                                     Padding="12">
@@ -143,7 +147,7 @@
 
                         <!-- Music Toggle -->
                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-                            <Border BackgroundColor="#30FFFFFF"
+                            <Border BackgroundColor="{StaticResource C_GlassHighlight}"
                                     StrokeShape="RoundRectangle 12"
                                     StrokeThickness="0"
                                     WidthRequest="44" HeightRequest="44">
@@ -151,22 +155,22 @@
                                        HorizontalOptions="Center" VerticalOptions="Center"/>
                             </Border>
                             <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
-                                <Label Text="Musik" TextColor="White" FontAttributes="Bold"/>
+                                <Label Text="Musik" TextColor="{StaticResource C_TextPrimary}" FontAttributes="Bold"/>
                                 <Label Text="Hintergrundmusik" FontSize="11" 
                                        TextColor="{StaticResource C_TextMuted}"/>
                             </VerticalStackLayout>
                             <Switch Grid.Column="2" 
                                     IsToggled="{Binding IsMusicEnabled}" 
                                     OnColor="{StaticResource C_Primary}"
-                                    ThumbColor="White"/>
+                                    ThumbColor="{StaticResource C_ChalkWhite}"/>
                         </Grid>
 
                         <!-- Divider -->
-                        <BoxView HeightRequest="1" Color="#20FFFFFF"/>
+                        <BoxView HeightRequest="1" Color="{StaticResource C_GlassWhite}"/>
 
                         <!-- Sound Toggle -->
                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-                            <Border BackgroundColor="#30FFFFFF"
+                            <Border BackgroundColor="{StaticResource C_GlassHighlight}"
                                     StrokeShape="RoundRectangle 12"
                                     StrokeThickness="0"
                                     WidthRequest="44" HeightRequest="44">
@@ -174,14 +178,14 @@
                                        HorizontalOptions="Center" VerticalOptions="Center"/>
                             </Border>
                             <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
-                                <Label Text="Soundeffekte" TextColor="White" FontAttributes="Bold"/>
+                                <Label Text="Soundeffekte" TextColor="{StaticResource C_TextPrimary}" FontAttributes="Bold"/>
                                 <Label Text="Spielsounds" FontSize="11" 
                                        TextColor="{StaticResource C_TextMuted}"/>
                             </VerticalStackLayout>
                             <Switch Grid.Column="2" 
                                     IsToggled="{Binding IsSoundEnabled}" 
                                     OnColor="{StaticResource C_Primary}"
-                                    ThumbColor="White"/>
+                                    ThumbColor="{StaticResource C_ChalkWhite}"/>
                         </Grid>
                     </VerticalStackLayout>
                 </Border>

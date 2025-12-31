@@ -15,7 +15,11 @@
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*,Auto" Padding="12" RowSpacing="12">
-
+        <Image Source="spielbg.jpg"
+           Grid.RowSpan="2"
+           Aspect="AspectFill"
+           Opacity="0.4"
+           InputTransparent="True" />
         <!-- HEADER -->
         <Border Style="{StaticResource GlassCard}" Padding="12">
             <Grid ColumnDefinitions="Auto,*,Auto">
@@ -25,12 +29,12 @@
                 <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center" VerticalOptions="Center">
                     <Label Text="Math Cross" Style="{StaticResource H3}" HorizontalOptions="Center"/>
                     <Border StrokeThickness="0" StrokeShape="RoundRectangle 8"
-                            BackgroundColor="{StaticResource C_Secondary}" Padding="10,4">
-                        <Label Text="{Binding DifficultyText}" TextColor="White" FontSize="11" FontAttributes="Bold"/>
+                            BackgroundColor="{StaticResource C_Primary}" Padding="10,4">
+                        <Label Text="{Binding DifficultyText}" TextColor="{StaticResource C_TextPrimary}" FontSize="11" FontAttributes="Bold"/>
                     </Border>
                 </VerticalStackLayout>
 
-                <Border Grid.Column="2" Style="{StaticResource Chip}">
+                <Border Grid.Column="2" Style="{StaticResource CoinBadge}">
                     <HorizontalStackLayout Spacing="4">
                         <Label Text="💰" FontSize="14"/>
                         <Label Text="{Binding Coins}" TextColor="{StaticResource C_Gold}" FontAttributes="Bold"/>
@@ -65,7 +69,7 @@
 
                     <Button Grid.Column="1" Text="💡" 
                             BackgroundColor="{StaticResource C_Warning}"
-                            TextColor="#000"
+                            TextColor="{StaticResource C_TextDark}"
                             FontAttributes="Bold"
                             CornerRadius="14"
                             HeightRequest="50"
@@ -74,7 +78,7 @@
 
                     <Button Grid.Column="2" Text="⌫" 
                             BackgroundColor="{StaticResource C_Accent}"
-                            TextColor="White"
+                            TextColor="{StaticResource C_TextPrimary}"
                             FontAttributes="Bold"
                             CornerRadius="14"
                             HeightRequest="50"
@@ -88,7 +92,7 @@
                             IsEnabled="{Binding IsNotBusy}"/>
                 </Grid>
 
-                <!-- Token Keyboard - MIT KORREKTEM x:DataType -->
+                <!-- Token Keyboard -->
                 <ScrollView Orientation="Horizontal" 
                             HorizontalScrollBarVisibility="Never" 
                             IsVisible="{Binding HasSelection}">

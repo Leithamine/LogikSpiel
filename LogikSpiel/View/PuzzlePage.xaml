@@ -12,7 +12,11 @@
              Background="{StaticResource BgGradient}">
 
     <Grid RowDefinitions="Auto,Auto,*" Padding="16" RowSpacing="16">
-
+        <Image Source="spielbg.jpg"
+           Grid.RowSpan="2"
+           Aspect="AspectFill"
+           Opacity="0.4"
+           InputTransparent="True" />
         <!-- HEADER -->
         <Border Grid.Row="0" Style="{StaticResource GlassCard}" Padding="12">
             <Grid ColumnDefinitions="Auto,*,Auto">

@@ -10,10 +10,14 @@
              Background="{StaticResource BgGradient}">
 
     <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="0">
-
-        <!-- ═══════════════ HEADER ═══════════════ -->
+        <Image Source="spielbg.jpg"
+       Grid.RowSpan="2"
+       Aspect="AspectFill"
+       Opacity="0.4"
+       InputTransparent="True" />
+        <!-- HEADER -->
         <Border Grid.Row="0" 
-                BackgroundColor="#15FFFFFF"
+                BackgroundColor="{StaticResource C_GlassWhite}"
                 StrokeThickness="0"
                 Padding="12,10">
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
@@ -25,7 +29,7 @@
                 <Label Grid.Column="1"
                        Text="{Binding Title}"
                        FontSize="16" FontAttributes="Bold" 
-                       TextColor="White"
+                       TextColor="{StaticResource C_TextPrimary}"
                        HorizontalOptions="Center"
                        VerticalOptions="Center"
                        LineBreakMode="TailTruncation"/>
@@ -37,7 +41,7 @@
             </Grid>
         </Border>
 
-        <!-- ═══════════════ INFO BAR ═══════════════ -->
+        <!-- INFO BAR -->
         <Border Grid.Row="1" 
                 Style="{StaticResource GlassCard}"
                 Margin="12,12,12,0"
@@ -50,7 +54,7 @@
                         StrokeThickness="0"
                         Padding="12,8">
                     <Label Text="{Binding GoalChipText}"
-                           TextColor="White"
+                           TextColor="{StaticResource C_TextPrimary}"
                            FontAttributes="Bold"
                            FontSize="13"/>
                 </Border>
@@ -65,19 +69,19 @@
 
                 <!-- Sum Display -->
                 <Border Grid.Column="2"
-                        BackgroundColor="#20FFFFFF"
+                        BackgroundColor="{StaticResource C_GlassWhite}"
                         StrokeShape="RoundRectangle 10"
                         StrokeThickness="0"
                         Padding="12,8">
                     <Label Text="{Binding UserSum, StringFormat='Σ {0:0.##}'}"
-                           TextColor="White"
+                           TextColor="{StaticResource C_TextPrimary}"
                            FontAttributes="Bold"
                            FontSize="14"/>
                 </Border>
             </Grid>
         </Border>
 
-        <!-- ═══════════════ GAME BOARD ═══════════════ -->
+        <!-- GAME BOARD -->
         <Border Grid.Row="2" 
                 Style="{StaticResource GlassCard}"
                 Margin="12,12,12,0">
@@ -90,9 +94,9 @@
                                VerticalOptions="Fill"/>
         </Border>
 
-        <!-- ═══════════════ BUTTONS ═══════════════ -->
+        <!-- BUTTONS -->
         <Border Grid.Row="3"
-                BackgroundColor="#15FFFFFF"
+                BackgroundColor="{StaticResource C_GlassWhite}"
                 StrokeThickness="0"
                 Padding="12,16">
             <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="10">
@@ -101,7 +105,7 @@
                         Text="👁️"
                         Command="{Binding ToggleSolutionCommand}"
                         BackgroundColor="{StaticResource C_Primary}"
-                        TextColor="White"
+                        TextColor="{StaticResource C_TextPrimary}"
                         FontSize="20"
                         CornerRadius="14"
                         HeightRequest="52"/>
@@ -109,8 +113,8 @@
                 <Button Grid.Column="1"
                         Text="🧹"
                         Command="{Binding ResetCommand}"
-                        BackgroundColor="#30FFFFFF"
-                        TextColor="White"
+                        BackgroundColor="{StaticResource C_GlassHighlight}"
+                        TextColor="{StaticResource C_TextPrimary}"
                         FontSize="20"
                         CornerRadius="14"
                         HeightRequest="52"/>
@@ -118,8 +122,8 @@
                 <Button Grid.Column="2"
                         Text="💡"
                         Command="{Binding HintCommand}"
-                        BackgroundColor="{StaticResource C_Secondary}"
-                        TextColor="#0F0F23"
+                        BackgroundColor="{StaticResource C_Warning}"
+                        TextColor="{StaticResource C_TextDark}"
                         FontSize="20"
                         CornerRadius="14"
                         HeightRequest="52"/>
@@ -128,7 +132,7 @@
                         Text="✅"
                         Command="{Binding CheckCommand}"
                         BackgroundColor="{StaticResource C_Success}"
-                        TextColor="#0F0F23"
+                        TextColor="{StaticResource C_TextPrimary}"
                         FontSize="20"
                         CornerRadius="14"
                         HeightRequest="52"/>

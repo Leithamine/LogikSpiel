@@ -5,6 +5,10 @@
              x:Class="LogikSpiel.App">
     <Application.Resources>
         <ResourceDictionary>
+
+            <!-- ═══════════════════════════════════════════════════════════════
+                 CONVERTERS - Diese bleiben hier
+                 ═══════════════════════════════════════════════════════════════ -->
             <conv:StringNotNullOrEmptyConverter x:Key="StringNotNullOrEmptyConverter" />
             <conv:LockedToButtonTextConverter x:Key="LockedToButtonTextConverter" />
             <conv:BoolToColorConverter x:Key="BoolToColorConverter"/>
@@ -14,147 +18,16 @@
             <conv:SlotsHasNoDigitsConverter x:Key="SlotsHasNoDigitsConverter" />
             <conv:StringOrBulletConverter x:Key="StringOrBulletConverter" />
             <conv:NotEmptyCellConverter x:Key="NotEmptyCellConverter"/>
-            <!-- Colors -->
-            <Color x:Key="C_Primary">#BB86FC</Color>
-            <Color x:Key="C_Accent">#03DAC5</Color>
-            <Color x:Key="C_Gold">#FFD700</Color>
-            <Color x:Key="C_TextDark">#1D1D1F</Color>
-            <Color x:Key="C_TextLight">#FFFFFF</Color>
 
-            <!-- “Glass” surfaces -->
-            <Color x:Key="C_Glass">#33FFFFFF</Color>
-            <Color x:Key="C_GlassStrong">#55FFFFFF</Color>
-            <Color x:Key="C_Surface">#F8FFFFFF</Color>
-
-            <LinearGradientBrush x:Key="BgGradient" StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#BB86FC" Offset="0"/>
-                <GradientStop Color="#03DAC5" Offset="1"/>
-            </LinearGradientBrush>
-
-            <Shadow x:Key="ShadowCard" Brush="#33000000" Offset="0,8" Radius="18" />
-            <Shadow x:Key="ShadowSoft" Brush="#22000000" Offset="0,4" Radius="10" />
-
-            <!-- Typography -->
-            <Style x:Key="H1" TargetType="Label">
-                <Setter Property="FontSize" Value="26"/>
-                <Setter Property="FontAttributes" Value="Bold"/>
-                <Setter Property="TextColor" Value="{StaticResource C_TextLight}"/>
-            </Style>
-
-            <Style x:Key="H2" TargetType="Label">
-                <Setter Property="FontSize" Value="18"/>
-                <Setter Property="FontAttributes" Value="Bold"/>
-                <Setter Property="TextColor" Value="{StaticResource C_TextLight}"/>
-            </Style>
-
-            <Style x:Key="BodyLight" TargetType="Label">
-                <Setter Property="FontSize" Value="13"/>
-                <Setter Property="TextColor" Value="#EEFFFFFF"/>
-            </Style>
-
-            <Style x:Key="BodyDark" TargetType="Label">
-                <Setter Property="FontSize" Value="13"/>
-                <Setter Property="TextColor" Value="{StaticResource C_TextDark}"/>
-            </Style>
-
-            <!-- AppBar -->
-            <Style x:Key="AppBarButton" TargetType="Button">
-                <Setter Property="CornerRadius" Value="14"/>
-                <Setter Property="Padding" Value="12,10"/>
-                <Setter Property="FontAttributes" Value="Bold"/>
-                <Setter Property="BackgroundColor" Value="#30FFFFFF"/>
-                <Setter Property="TextColor" Value="White"/>
-            </Style>
-
-            <Style x:Key="IconButton" TargetType="Button">
-                <Setter Property="WidthRequest" Value="40"/>
-                <Setter Property="HeightRequest" Value="40"/>
-                <Setter Property="CornerRadius" Value="20"/>
-                <Setter Property="Padding" Value="0"/>
-                <Setter Property="BackgroundColor" Value="#35FFFFFF"/>
-                <Setter Property="TextColor" Value="White"/>
-                <Setter Property="FontAttributes" Value="Bold"/>
-            </Style>
-
-            <!-- Buttons -->
-            <Style x:Key="PrimaryButton" TargetType="Button">
-                <Setter Property="CornerRadius" Value="16"/>
-                <Setter Property="HeightRequest" Value="54"/>
-                <Setter Property="FontAttributes" Value="Bold"/>
-                <Setter Property="BackgroundColor" Value="{StaticResource C_Primary}"/>
-                <Setter Property="TextColor" Value="White"/>
-            </Style>
-
-            <Style x:Key="AccentButton" TargetType="Button">
-                <Setter Property="CornerRadius" Value="16"/>
-                <Setter Property="HeightRequest" Value="54"/>
-                <Setter Property="FontAttributes" Value="Bold"/>
-                <Setter Property="BackgroundColor" Value="{StaticResource C_Accent}"/>
-                <Setter Property="TextColor" Value="#111"/>
-            </Style>
-
-            <Style x:Key="GhostButton" TargetType="Button">
-                <Setter Property="CornerRadius" Value="16"/>
-                <Setter Property="HeightRequest" Value="54"/>
-                <Setter Property="FontAttributes" Value="Bold"/>
-                <Setter Property="BackgroundColor" Value="#22FFFFFF"/>
-                <Setter Property="TextColor" Value="White"/>
-            </Style>
-
-            <!-- Cards -->
-            <Style x:Key="GlassCard" TargetType="Border">
-                <Setter Property="StrokeThickness" Value="0"/>
-                <Setter Property="BackgroundColor" Value="{StaticResource C_Glass}"/>
-                <Setter Property="Shadow" Value="{StaticResource ShadowCard}"/>
-                <Setter Property="Padding" Value="16"/>
-                <Setter Property="StrokeShape">
-                    <Setter.Value>
-                        <RoundRectangle CornerRadius="22"/>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-
-            <Style x:Key="SurfaceCard" TargetType="Border">
-                <Setter Property="StrokeThickness" Value="0"/>
-                <Setter Property="BackgroundColor" Value="{StaticResource C_Surface}"/>
-                <Setter Property="Shadow" Value="{StaticResource ShadowCard}"/>
-                <Setter Property="Padding" Value="16"/>
-                <Setter Property="StrokeShape">
-                    <Setter.Value>
-                        <RoundRectangle CornerRadius="22"/>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-
-            <!-- Chips -->
-            <Style x:Key="Chip" TargetType="Border">
-                <Setter Property="StrokeThickness" Value="0"/>
-                <Setter Property="Padding" Value="10,6"/>
-                <Setter Property="BackgroundColor" Value="#35FFFFFF"/>
-                <Setter Property="StrokeShape">
-                    <Setter.Value>
-                        <RoundRectangle CornerRadius="14"/>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-
-            <!-- Entries -->
-            <Style x:Key="EntryPill" TargetType="Border">
-                <Setter Property="StrokeThickness" Value="0"/>
-                <Setter Property="BackgroundColor" Value="#FFFFFFFF"/>
-                <Setter Property="Shadow" Value="{StaticResource ShadowSoft}"/>
-                <Setter Property="StrokeShape">
-                    <Setter.Value>
-                        <RoundRectangle CornerRadius="14"/>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-
-        <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
+            <!-- ═══════════════════════════════════════════════════════════════
+                 STYLES - Alle Farben und Styles kommen aus Styles.xaml
+                 KEINE doppelten Definitionen hier!
+                 ═══════════════════════════════════════════════════════════════ -->
+            <ResourceDictionary.MergedDictionaries>
+                <!-- Styles.xaml enthält ALLE Farben, Gradients, Shadows, und Styles -->
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
-                <ResourceDictionary Source="Resources/Styles/ConverterResources.xaml"/>
             </ResourceDictionary.MergedDictionaries>
+
         </ResourceDictionary>
     </Application.Resources>
 </Application>
