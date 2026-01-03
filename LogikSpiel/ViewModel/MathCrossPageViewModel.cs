@@ -155,7 +155,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
 
             if (_userProfile != null)
             {
-                _userProfile.Coins -= 10;
+                _userProfile.Coins -= 10000;
                 Coins = _userProfile.Coins;
                 await _userService.SaveUserAsync(_userProfile);
             }
