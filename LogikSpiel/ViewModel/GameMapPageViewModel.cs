@@ -216,8 +216,7 @@ public sealed class GameMapPageViewModel : ObservableObject
 
             node.IsCompleted = progress.IsCompleted(spec);
 
-            if (realLevelNum == 1) node.IsUnlocked = true;
-            else node.IsUnlocked = progress.IsCompleted(spec.GameId, spec.DifficultyKey, realLevelNum - 1);
+            node.IsUnlocked = realLevelNum == currentLevelNumber;
 
             node.IsCurrent = (realLevelNum == currentLevelNumber);
 

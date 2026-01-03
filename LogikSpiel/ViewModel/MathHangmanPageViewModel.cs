@@ -16,6 +16,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
     private const int LivesMax = 6;
     private readonly IUserProfileService _userService;
     private readonly IMathHangmanService _hangmanService;
+    private readonly IGameProgressStore _progressStore;
     private readonly IDialogService _dialog;
     private readonly INavigationService _nav;
 
@@ -85,11 +86,13 @@ public sealed class MathHangmanPageViewModel : ObservableObject
     public MathHangmanPageViewModel(
         IUserProfileService userService,
         IMathHangmanService hangmanService,
+        IGameProgressStore progressStore,
         IDialogService dialog,
         INavigationService nav)
     {
         _userService = userService;
         _hangmanService = hangmanService;
+        _progressStore = progressStore;
         _dialog = dialog;
         _nav = nav;
 
@@ -181,8 +184,11 @@ public sealed class MathHangmanPageViewModel : ObservableObject
                 user.AddUsedNumber(_secret); // Hier wird die neue Methode genutzt
                 await _userService.SaveUserAsync(user);
             }
+            int completedLevel = LevelNumber;
+            await _progressStore.MarkLevelCompleteAsync(GameId, DifficultyKey, completedLevel);
             Preferences.Remove(GetSecretKey());
             await _dialog.AlertAsync("Gewonnen! 🎉", $"Richtig! Die Zahl war {_secret}\n+50 Coins");
+            LevelNumber = completedLevel + 1;
             await StartRoundAsync();
         }
         else
