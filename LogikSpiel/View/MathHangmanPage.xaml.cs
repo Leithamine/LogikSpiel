@@ -9,7 +9,6 @@ public partial class MathHangmanPage : ContentPage, IQueryAttributable
 {
     private readonly HangmanDrawable _hangmanDrawable = new();
     private bool _isLoaded;
-    private bool _isShaking;
 
     public MathHangmanPage(MathHangmanPageViewModel vm)
     {
@@ -29,7 +28,6 @@ public partial class MathHangmanPage : ContentPage, IQueryAttributable
             }
         };
 
-        vm.RequestNearMiss += () => MainThread.BeginInvokeOnMainThread(async () => await ShakeAsync());
     }
 
     protected override async void OnAppearing()
@@ -58,20 +56,4 @@ public partial class MathHangmanPage : ContentPage, IQueryAttributable
         Dispatcher.Dispatch(async () => await vm.LoadAsync(gameId, difficulty, level));
     }
 
-    private async Task ShakeAsync()
-    {
-        if (_isShaking || RootLayout == null) return;
-        _isShaking = true;
-
-        const uint duration = 45;
-        const double offset = 10;
-
-        await RootLayout.TranslateToAsync(offset, 0, duration, Easing.CubicInOut);
-        await RootLayout.TranslateToAsync(-offset, 0, duration, Easing.CubicInOut);
-        await RootLayout.TranslateToAsync(offset * 0.6, 0, duration, Easing.CubicInOut);
-        await RootLayout.TranslateToAsync(-offset * 0.6, 0, duration, Easing.CubicInOut);
-        await RootLayout.TranslateToAsync(0, 0, duration, Easing.CubicInOut);
-
-        _isShaking = false;
-    }
 }
