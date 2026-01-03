@@ -6,6 +6,7 @@ using LogikSpiel.Model;
 using LogikSpiel.Model.MathHangman;
 using LogikSpiel.Services;
 using LogikSpiel.Services.MathHangman;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Storage;
 
 namespace LogikSpiel.ViewModel;
