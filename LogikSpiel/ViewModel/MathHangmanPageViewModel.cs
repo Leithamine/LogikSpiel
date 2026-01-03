@@ -16,8 +16,6 @@ public sealed class MathHangmanPageViewModel : ObservableObject
     private readonly IMathHangmanService _hangmanService;
     private readonly IDialogService _dialog;
 
-    public event Action? RequestNearMiss;
-
     public string GameId { get; private set; } = "math_hangman";
     public string DifficultyKey { get; private set; } = "normal";
 
@@ -168,9 +166,6 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         }
         else
         {
-            if (Math.Abs(g - _secret) == 1)
-                RequestNearMiss?.Invoke();
-
             Lives = Math.Max(0, Lives - 1);
             CurrentHint = g < _secret ? "💡 Die Zahl ist GRÖSSER ⬆️" : "💡 Die Zahl ist KLEINER ⬇️";
 

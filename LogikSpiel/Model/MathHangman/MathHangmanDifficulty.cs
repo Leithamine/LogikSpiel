@@ -1,17 +1,36 @@
-﻿public static class MathHangmanDifficulty
+﻿// LogikSpiel/Model/MathHangman/MathHangmanDifficulty.cs
+#nullable enable
+using System;
+
+namespace LogikSpiel.Model.MathHangman;
+
+public static class MathHangmanDifficulty
 {
-    public static (int Min, int Max) Range(string key) => key switch
+    public const int MinSecret = 1;
+    public const int MaxSecret = 100000;
+
+    // Fixer Bereich für alle Level
+    public static (int Min, int Max) Range(string key) => (MinSecret, MaxSecret);
+
+    public static int RangeDelta(int level) => level switch
     {
-        _ => (10, 100000)
+        <= 250 => 50,
+        <= 750 => 150,
+        <= 1250 => 300,
+        _ => 500
     };
 
-    public static int RewardCoins(string key) => key switch
+    public static (int Min, int Max) VisibleRange(int secret, int level)
     {
-        _ => 50
-    };
+        int delta = RangeDelta(level);
+        int min = Math.Max(0, secret - delta);
+        int max = Math.Min(MaxSecret, secret + delta);
+        return (min, max);
+    }
 
-    public static double PriceMultiplier(string key) => key switch
-    {
-        _ => 1.25
-    };
+    // Jeder Sieg bringt 50 Coins
+    public static int RewardCoins(string key) => 50;
+
+    // Multiplikator auf 1.0, damit Basispreise (10) unverändert bleiben
+    public static double PriceMultiplier(string key) => 1.0;
 }
