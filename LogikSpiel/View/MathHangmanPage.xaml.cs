@@ -28,6 +28,7 @@ public partial class MathHangmanPage : ContentPage, IQueryAttributable
             }
         };
 
+        //vm.RequestNearMiss += () => MainThread.BeginInvokeOnMainThread(async () => await ShakeAsync());
     }
 
     protected override async void OnAppearing()
