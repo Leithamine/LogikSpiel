@@ -1,11 +1,9 @@
 ﻿#nullable enable
+using System;
 using Microsoft.Maui.Graphics;
 
 namespace LogikSpiel.View.Controls;
 
-/// <summary>
-/// Zeichnet den Hangman - passt sich automatisch an die Box-Größe an
-/// </summary>
 public sealed class HangmanDrawable : IDrawable
 {
     public int WrongCount { get; set; }
@@ -17,131 +15,126 @@ public sealed class HangmanDrawable : IDrawable
         float w = dirtyRect.Width;
         float h = dirtyRect.Height;
 
-        // Skalierungsfaktor basierend auf Box-Größe
+        // Skalierung
         float scale = Math.Min(w / 300f, h / 250f);
+        float offsetX = (w - 300 * scale) / 2f;
+        float offsetY = (h - 250 * scale) / 2f;
 
-        // Zentrieren
-        float offsetX = (w - 300 * scale) / 2;
-        float offsetY = (h - 250 * scale) / 2;
-
-        // Galgen Koordinaten (skaliert)
         float groundY = offsetY + 220 * scale;
         float poleX = offsetX + 70 * scale;
         float topY = offsetY + 30 * scale;
         float topX = offsetX + 200 * scale;
         float ropeY = offsetY + 50 * scale;
 
-        // Galgen zeichnen
-        canvas.StrokeColor = Color.FromRgba(255, 255, 255, 0.25f);
-        canvas.StrokeSize = 6 * scale;
-        canvas.StrokeLineCap = LineCap.Round;
+        int wc = Math.Clamp(WrongCount, 0, 6);
 
-        // Boden
+        // Farben: für hellen Hintergrund -> dunklere Linien
+        var gallows = Color.FromRgba(20, 20, 20, 0.55f);
+        var gallowsLight = Color.FromRgba(20, 20, 20, 0.35f);
+
+        var headStroke = Color.FromArgb("#E74C3C"); // kräftiges Rot
+        var bodyStroke = Color.FromArgb("#2C3E50"); // dunkel
+        var limbStroke = Color.FromArgb("#6C5CE7"); // violett, aber sichtbar
+
+        var face = Color.FromRgba(10, 10, 10, 0.85f);
+
+        // Galgen
+        canvas.StrokeLineCap = LineCap.Round;
+        canvas.StrokeSize = 6 * scale;
+        canvas.StrokeColor = gallows;
+
         canvas.DrawLine(offsetX + 20 * scale, groundY, offsetX + 280 * scale, groundY);
-        // Pfosten
         canvas.DrawLine(poleX, groundY, poleX, topY);
-        // Querbalken
         canvas.DrawLine(poleX, topY, topX, topY);
-        // Seil
+
         canvas.StrokeSize = 4 * scale;
+        canvas.StrokeColor = gallowsLight;
         canvas.DrawLine(topX, topY, topX, ropeY + 15 * scale);
 
-        // Figur Position
+        // Figur
         float headCx = topX;
         float headCy = ropeY + 45 * scale;
         float headR = 25 * scale;
 
-        // Farben
-        var headColor = Color.FromArgb("#FF6B6B");
-        var bodyColor = Color.FromArgb("#4ECDC4");
-        var limbColor = Color.FromArgb("#9B59B6");
-        var white = Color.FromRgba(255, 255, 255, 0.9f);
+        float neckY = headCy + headR + 5 * scale;
+        float bodyBottomY = neckY + 70 * scale;
+        float armY = neckY + 15 * scale;
 
-        int wc = Math.Clamp(WrongCount, 0, 6);
-
-        // Teil 1: Kopf
+        // Kopf
         if (wc >= 1)
         {
             canvas.StrokeSize = 4 * scale;
-            canvas.StrokeColor = headColor;
-            canvas.FillColor = Color.FromRgba(255, 255, 255, 0.1f);
+            canvas.StrokeColor = headStroke;
+            canvas.FillColor = Color.FromRgba(255, 255, 255, 0.55f);
             canvas.FillCircle(headCx, headCy, headR);
             canvas.DrawCircle(headCx, headCy, headR);
 
-            DrawFace(canvas, wc, headCx, headCy, headR, white, scale);
+            DrawFace(canvas, wc, headCx, headCy, headR, face, scale);
         }
 
-        float neckY = headCy + headR + 5 * scale;
-        float bodyBottomY = neckY + 70 * scale;
-
-        // Teil 2: Körper
+        // Körper
         if (wc >= 2)
         {
             canvas.StrokeSize = 5 * scale;
-            canvas.StrokeColor = bodyColor;
+            canvas.StrokeColor = bodyStroke;
             canvas.DrawLine(headCx, neckY, headCx, bodyBottomY);
         }
 
-        float armY = neckY + 15 * scale;
-
-        // Teil 3: Linker Arm
+        // Arme
         if (wc >= 3)
         {
             canvas.StrokeSize = 4 * scale;
-            canvas.StrokeColor = limbColor;
+            canvas.StrokeColor = limbStroke;
             canvas.DrawLine(headCx, armY, headCx - 40 * scale, armY + 40 * scale);
         }
 
-        // Teil 4: Rechter Arm
         if (wc >= 4)
         {
             canvas.StrokeSize = 4 * scale;
-            canvas.StrokeColor = limbColor;
+            canvas.StrokeColor = limbStroke;
             canvas.DrawLine(headCx, armY, headCx + 40 * scale, armY + 40 * scale);
         }
 
-        // Teil 5: Linkes Bein
+        // Beine
         if (wc >= 5)
         {
             canvas.StrokeSize = 5 * scale;
-            canvas.StrokeColor = limbColor;
+            canvas.StrokeColor = limbStroke;
             canvas.DrawLine(headCx, bodyBottomY, headCx - 30 * scale, bodyBottomY + 50 * scale);
         }
 
-        // Teil 6: Rechtes Bein
         if (wc >= 6)
         {
             canvas.StrokeSize = 5 * scale;
-            canvas.StrokeColor = limbColor;
+            canvas.StrokeColor = limbStroke;
             canvas.DrawLine(headCx, bodyBottomY, headCx + 30 * scale, bodyBottomY + 50 * scale);
         }
 
         canvas.RestoreState();
     }
 
-    private static void DrawFace(ICanvas canvas, int wc, float cx, float cy, float r, Color white, float scale)
+    private static void DrawFace(ICanvas canvas, int wc, float cx, float cy, float r, Color face, float scale)
     {
-        canvas.StrokeColor = white;
-        canvas.StrokeSize = 2 * scale;
-        canvas.FillColor = white;
+        canvas.StrokeColor = face;
+        canvas.FillColor = face;
 
         bool dead = wc >= 6;
         bool sad = wc >= 4;
 
-        float eyeY = cy - 5 * scale;
-        float eyeSpacing = 8 * scale;
-        float eyeSize = 3 * scale;
+        float eyeY = cy - 6 * scale;
+        float eyeSpacing = 9 * scale;
 
         if (!dead)
         {
-            // Normale Augen
-            canvas.FillCircle(cx - eyeSpacing, eyeY, eyeSize);
-            canvas.FillCircle(cx + eyeSpacing, eyeY, eyeSize);
+            // klare Augen
+            canvas.FillCircle(cx - eyeSpacing, eyeY, 2.8f * scale);
+            canvas.FillCircle(cx + eyeSpacing, eyeY, 2.8f * scale);
         }
         else
         {
             // X Augen
-            float xSize = 5 * scale;
+            canvas.StrokeSize = 2.2f * scale;
+            float xSize = 5f * scale;
             canvas.DrawLine(cx - eyeSpacing - xSize, eyeY - xSize, cx - eyeSpacing + xSize, eyeY + xSize);
             canvas.DrawLine(cx - eyeSpacing + xSize, eyeY - xSize, cx - eyeSpacing - xSize, eyeY + xSize);
             canvas.DrawLine(cx + eyeSpacing - xSize, eyeY - xSize, cx + eyeSpacing + xSize, eyeY + xSize);
@@ -149,23 +142,21 @@ public sealed class HangmanDrawable : IDrawable
         }
 
         // Mund
-        float mouthY = cy + 8 * scale;
-        float mouthWidth = 10 * scale;
+        canvas.StrokeSize = 2.4f * scale;
+        float mouthY = cy + 10 * scale;
+        float mouthW = 11 * scale;
 
         if (!dead && !sad)
         {
-            // Neutral
-            canvas.DrawLine(cx - mouthWidth, mouthY, cx + mouthWidth, mouthY);
+            canvas.DrawLine(cx - mouthW, mouthY, cx + mouthW, mouthY);
         }
         else if (sad && !dead)
         {
-            // Traurig
-            canvas.DrawArc(cx - mouthWidth, mouthY, mouthWidth * 2, 10 * scale, 0, 180, false, false);
+            canvas.DrawArc(cx - mouthW, mouthY - 2 * scale, mouthW * 2, 10 * scale, 0, 180, false, false);
         }
         else
         {
-            // Tot - offener Mund
-            canvas.DrawEllipse(cx - 5 * scale, mouthY, 10 * scale, 8 * scale);
+            canvas.DrawEllipse(cx - 5 * scale, mouthY - 2 * scale, 10 * scale, 8 * scale);
         }
     }
 }

@@ -6,25 +6,19 @@
     <Application.Resources>
         <ResourceDictionary>
 
-            <!-- ═══════════════════════════════════════════════════════════════
-                 CONVERTERS - Diese bleiben hier
-                 ═══════════════════════════════════════════════════════════════ -->
+            <!-- Converters -->
             <conv:StringNotNullOrEmptyConverter x:Key="StringNotNullOrEmptyConverter" />
             <conv:LockedToButtonTextConverter x:Key="LockedToButtonTextConverter" />
             <conv:BoolToColorConverter x:Key="BoolToColorConverter"/>
             <conv:CellTypeToColorConverter x:Key="CellTypeToColorConverter"/>
             <conv:InvertBoolConverter x:Key="InvertBoolConverter"/>
             <conv:SlotsHasDigitsConverter x:Key="SlotsHasDigitsConverter" />
-            <conv:SlotsHasNoDigitsConverter x:Key="SlotsHasNoDigitsConverter" />
             <conv:StringOrBulletConverter x:Key="StringOrBulletConverter" />
             <conv:NotEmptyCellConverter x:Key="NotEmptyCellConverter"/>
+            <conv:CellTypeToVisibilityConverter x:Key="CellTypeToVisibilityConverter"/>
 
-            <!-- ═══════════════════════════════════════════════════════════════
-                 STYLES - Alle Farben und Styles kommen aus Styles.xaml
-                 KEINE doppelten Definitionen hier!
-                 ═══════════════════════════════════════════════════════════════ -->
             <ResourceDictionary.MergedDictionaries>
-                <!-- Styles.xaml enthält ALLE Farben, Gradients, Shadows, und Styles -->
+                <ResourceDictionary Source="Resources/Styles/Colors.xaml" />
                 <ResourceDictionary Source="Resources/Styles/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
 

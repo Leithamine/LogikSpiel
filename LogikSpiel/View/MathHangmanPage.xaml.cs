@@ -12,21 +12,37 @@ public partial class MathHangmanPage : ContentPage, IQueryAttributable
     public MathHangmanPage(MathHangmanPageViewModel vm)
     {
         InitializeComponent();
+
         _vm = vm;
         BindingContext = _vm;
 
         HangmanView.Drawable = _drawable;
+
+        // Initial render
         _drawable.WrongCount = _vm.WrongCount;
         HangmanView.Invalidate();
 
-        _vm.PropertyChanged += (_, e) =>
+        // Safety: nicht doppelt subscriben
+        _vm.PropertyChanged -= Vm_PropertyChanged;
+        _vm.PropertyChanged += Vm_PropertyChanged;
+    }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+        _vm.PropertyChanged -= Vm_PropertyChanged;
+    }
+
+    private void Vm_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MathHangmanPageViewModel.WrongCount))
         {
-            if (e.PropertyName == nameof(MathHangmanPageViewModel.WrongCount))
+            MainThread.BeginInvokeOnMainThread(() =>
             {
                 _drawable.WrongCount = _vm.WrongCount;
                 HangmanView.Invalidate();
-            }
-        };
+            });
+        }
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)

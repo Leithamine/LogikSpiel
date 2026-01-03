@@ -1,4 +1,5 @@
-﻿using LogikSpiel.Services;
+﻿#nullable enable
+using LogikSpiel.Services;
 using LogikSpiel.View;
 using LogikSpiel.ViewModel;
 
@@ -18,7 +19,6 @@ public partial class App : Application
 
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        // 1. Lade-Screen erstellen
         var loadingPage = new ContentPage
         {
             BackgroundColor = Color.FromArgb("#BB86FC"),
@@ -34,28 +34,32 @@ public partial class App : Application
 
         var window = new Window(loadingPage);
 
-        // 2. Prüfung im Hintergrund
         Task.Run(async () =>
         {
-            // Kurze Pause, damit der Ladekreis sichtbar wird
-            await Task.Delay(500);
+            await Task.Delay(300);
 
-            // Datenbank prüfen
-            bool hasProfile = await _userService.HasProfileAsync();
+            bool hasProfile = false;
+            try
+            {
+                hasProfile = await _userService.HasProfileAsync();
+            }
+            catch
+            {
+                // falls DB/Storage in Release kurz braucht
+                hasProfile = false;
+            }
 
-            // 3. UI Update auf dem Haupt-Thread
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 if (hasProfile)
                 {
-                    // KORREKTUR: Wir übergeben _services wieder, da deine AppShell das verlangt
-                    window.Page = new AppShell(_services);
+                    // ✅ Shell über DI holen (wichtig!)
+                    window.Page = _services.GetRequiredService<AppShell>();
                 }
                 else
                 {
-                    // ViewModel holen und übergeben
-                    var onboardingVM = _services.GetRequiredService<OnboardingViewModel>();
-                    window.Page = new OnboardingPage(onboardingVM);
+                    // ✅ OnboardingPage über DI holen (damit VM injected wird)
+                    window.Page = _services.GetRequiredService<OnboardingPage>();
                 }
             });
         });

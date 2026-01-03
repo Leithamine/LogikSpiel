@@ -6,68 +6,49 @@
              x:DataType="vm:OnboardingViewModel"
              NavigationPage.HasNavigationBar="False"
              Shell.NavBarIsVisible="False"
-             Background="{StaticResource BgGradient}">
+             BackgroundImageSource="gamebg.png">
 
     <Grid RowDefinitions="*,Auto" Padding="24">
-        <Image Source="mainbg.jpg"
-       Grid.RowSpan="2"
-       Aspect="AspectFill"
-       Opacity="0.4"
-       InputTransparent="True" />
-        <!-- ═══════════════════════════════════════════════════════════════
-             CONTENT
-             ═══════════════════════════════════════════════════════════════ -->
-        <ScrollView VerticalOptions="Center">
-            <VerticalStackLayout Spacing="24" MaximumWidthRequest="400" HorizontalOptions="Center">
 
-                <!-- Welcome Text -->
+        <ScrollView VerticalOptions="Center">
+            <VerticalStackLayout Spacing="24" MaximumWidthRequest="420" HorizontalOptions="Center">
+
                 <VerticalStackLayout Spacing="8">
-                    <Label Text="👋 Willkommen!" 
-                           Style="{StaticResource H1}" 
+                    <Label Text="👋 Willkommen!"
+                           Style="{StaticResource H1}"
                            HorizontalOptions="Center"/>
-                    <Label Text="Erstelle dein Profil und starte die Reise!" 
-                           Style="{StaticResource Body}" 
+                    <Label Text="Erstelle dein Profil und starte die Reise!"
+                           Style="{StaticResource Body}"
                            HorizontalOptions="Center"
                            HorizontalTextAlignment="Center"/>
                 </VerticalStackLayout>
 
-                <!-- Mascot with Glow -->
-                <Border StrokeThickness="0" 
+                <Border StrokeThickness="0"
                         StrokeShape="RoundRectangle 90"
                         WidthRequest="180" HeightRequest="180"
-                        HorizontalOptions="Center">
-                    <Border.Background>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                            <GradientStop Color="{StaticResource C_Primary}" Offset="0"/>
-                            <GradientStop Color="{StaticResource C_Secondary}" Offset="1"/>
-                        </LinearGradientBrush>
-                    </Border.Background>
-                    <Border.Shadow>
-                        <Shadow Brush="{StaticResource C_Primary}" Offset="0,0" Radius="30"/>
-                    </Border.Shadow>
+                        BackgroundColor="{StaticResource C_GlassHighlight}"
+                        HorizontalOptions="Center"
+                        Shadow="{StaticResource ShadowGlowBlue}">
                     <Border StrokeThickness="0"
                             StrokeShape="RoundRectangle 85"
                             WidthRequest="170" HeightRequest="170"
-                            BackgroundColor="{StaticResource C_BgDark}"
+                            BackgroundColor="{StaticResource C_GlassSoft}"
                             HorizontalOptions="Center" VerticalOptions="Center">
-                        <Image Source="professor.png" 
-                               WidthRequest="150" HeightRequest="150" 
+                        <Image Source="professor.png"
+                               WidthRequest="150" HeightRequest="150"
                                Aspect="AspectFit"/>
                     </Border>
                 </Border>
-
-                <!-- Input Fields -->
                 <VerticalStackLayout Spacing="16">
-
-                    <!-- Name Input -->
-                    <Border Style="{StaticResource GlassCard}" Padding="4">
+                    <Border Style="{StaticResource GlassCard}" Padding="8">
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                             <Border StrokeThickness="0"
                                     StrokeShape="RoundRectangle 12"
                                     BackgroundColor="{StaticResource C_Primary}"
                                     WidthRequest="48" HeightRequest="48"
                                     Padding="0">
-                                <Label Text="👤" FontSize="22" 
+                                <Label Text="👤" FontSize="22"
+                                       TextColor="{StaticResource C_TextOnColor}"
                                        HorizontalOptions="Center" VerticalOptions="Center"/>
                             </Border>
                             <Entry Grid.Column="1"
@@ -81,15 +62,15 @@
                         </Grid>
                     </Border>
 
-                    <!-- Age Input -->
-                    <Border Style="{StaticResource GlassCard}" Padding="4">
+                    <Border Style="{StaticResource GlassCard}" Padding="8">
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
                             <Border StrokeThickness="0"
                                     StrokeShape="RoundRectangle 12"
                                     BackgroundColor="{StaticResource C_Accent}"
                                     WidthRequest="48" HeightRequest="48"
                                     Padding="0">
-                                <Label Text="🎂" FontSize="22" 
+                                <Label Text="🎂" FontSize="22"
+                                       TextColor="{StaticResource C_TextPrimary}"
                                        HorizontalOptions="Center" VerticalOptions="Center"/>
                             </Border>
                             <Entry Grid.Column="1"
@@ -103,31 +84,23 @@
                                    VerticalOptions="Center"/>
                         </Grid>
                     </Border>
+
                 </VerticalStackLayout>
 
             </VerticalStackLayout>
         </ScrollView>
 
-        <!-- ═══════════════════════════════════════════════════════════════
-             START BUTTON
-             ═══════════════════════════════════════════════════════════════ -->
-        <Button Grid.Row="1" 
+        <Button Grid.Row="1"
                 Text="🚀 Los geht's!"
                 Command="{Binding CompleteOnboardingCommand}"
                 IsEnabled="{Binding IsValid}"
                 HeightRequest="60"
                 FontSize="18"
-                Margin="0,20,0,0">
-            <Button.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                    <GradientStop Color="{StaticResource C_Primary}" Offset="0"/>
-                    <GradientStop Color="{StaticResource C_Success}" Offset="1"/>
-                </LinearGradientBrush>
-            </Button.Background>
-            <Button.Shadow>
-                <Shadow Brush="{StaticResource C_Primary}" Offset="0,4" Radius="15"/>
-            </Button.Shadow>
-        </Button>
+                Margin="0,20,0,0"
+                BackgroundColor="{StaticResource C_Primary}"
+                TextColor="{StaticResource C_TextOnColor}"
+                CornerRadius="16"
+                Shadow="{StaticResource ShadowMedium}"/>
 
     </Grid>
 </ContentPage>
