@@ -6,6 +6,7 @@ using LogikSpiel.Model;
 using LogikSpiel.Model.MathHangman;
 using LogikSpiel.Services;
 using LogikSpiel.Services.MathHangman;
+using Microsoft.Maui.Storage;
 
 namespace LogikSpiel.ViewModel;
 
@@ -15,6 +16,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
     private readonly IUserProfileService _userService;
     private readonly IMathHangmanService _hangmanService;
     private readonly IDialogService _dialog;
+    private readonly INavigationService _nav;
 
     public string GameId { get; private set; } = "math_hangman";
     public string DifficultyKey { get; private set; } = "normal";
@@ -79,11 +81,16 @@ public sealed class MathHangmanPageViewModel : ObservableObject
     public AsyncCommand HintCommand { get; }
     public AsyncCommand<NumberPropertyVM> ExplainPropertyCommand { get; }
 
-    public MathHangmanPageViewModel(IUserProfileService userService, IMathHangmanService hangmanService, IDialogService dialog)
+    public MathHangmanPageViewModel(
+        IUserProfileService userService,
+        IMathHangmanService hangmanService,
+        IDialogService dialog,
+        INavigationService nav)
     {
         _userService = userService;
         _hangmanService = hangmanService;
         _dialog = dialog;
+        _nav = nav;
 
         GuessCommand = new AsyncCommand(GuessAsync);
         HintCommand = new AsyncCommand(BuyHintAsync);
@@ -121,18 +128,30 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         var user = await _userService.GetUserAsync();
         Coins = user?.Coins ?? 0;
 
-        // "Nie wieder"-Logik: Generiere Zahl, bis sie neu ist
-        int attempts = 0;
-        do
+        string secretKey = GetSecretKey();
+        if (Preferences.ContainsKey(secretKey))
         {
-            _secret = _hangmanService.GenerateSecretNumber(DifficultyKey);
-            attempts++;
-            // Falls der User schon fast alle Zahlen (unwahrscheinlich) hat, brechen wir nach 100 Versuchen ab
-        } while (user != null && user.UsedNumbers.Contains(_secret) && attempts < 100);
+            _secret = Preferences.Get(secretKey, MathHangmanDifficulty.MinSecret);
+        }
+        else
+        {
+            // "Nie wieder"-Logik: Generiere Zahl, bis sie neu ist
+            int attempts = 0;
+            do
+            {
+                _secret = _hangmanService.GenerateSecretNumber(DifficultyKey);
+                attempts++;
+                // Falls der User schon fast alle Zahlen (unwahrscheinlich) hat, brechen wir nach 100 Versuchen ab
+            } while (user != null && user.UsedNumbers.Contains(_secret) && attempts < 100);
+            Preferences.Set(secretKey, _secret);
+        }
 
         (int minRange, int maxRange) = MathHangmanDifficulty.VisibleRange(_secret, LevelNumber);
         RangeMin = minRange;
         RangeMax = maxRange;
+
+        int digitSum = _secret.ToString().Sum(c => c - '0');
+        VisibleProperties.Add(new NumberPropertyVM("Quersumme", $"Summe der Ziffern = {digitSum}.", $"{digitSum}"));
 
         var props = _hangmanService.GetAllTrueProperties(_secret);
         foreach (var p in props)
@@ -161,6 +180,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
                 user.AddUsedNumber(_secret); // Hier wird die neue Methode genutzt
                 await _userService.SaveUserAsync(user);
             }
+            Preferences.Remove(GetSecretKey());
             await _dialog.AlertAsync("Gewonnen! 🎉", $"Richtig! Die Zahl war {_secret}\n+50 Coins");
             await StartRoundAsync();
         }
@@ -173,7 +193,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
             {
                 IsFinished = true;
                 await _dialog.AlertAsync("Verloren 😢", $"Die Zahl war: {_secret}");
-                await StartRoundAsync();
+                await _nav.GoBackAsync();
             }
         }
     }
@@ -215,4 +235,6 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         string message = $"{property.KidDescription}\nBeispiele: {property.Examples}";
         await _dialog.AlertAsync(property.Key, message);
     }
+
+    private string GetSecretKey() => $"MATH_HANGMAN_SECRET_{GameId}_{DifficultyKey}_{LevelNumber}";
 }
