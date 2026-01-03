@@ -58,6 +58,9 @@ public sealed class MathHangmanPageViewModel : ObservableObject
 
     public string DifficultyText => $"Bereich: {RangeMin:N0} – {RangeMax:N0} (Lv {LevelNumber})";
 
+    private string _quersummeText = "";
+    public string QuersummeText { get => _quersummeText; private set => SetProperty(ref _quersummeText, value); }
+
     private int _coins;
     public int Coins { get => _coins; private set => SetProperty(ref _coins, value); }
 
@@ -155,7 +158,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         RangeMax = maxRange;
 
         int digitSum = _secret.ToString().Sum(c => c - '0');
-        VisibleProperties.Add(new NumberPropertyVM("Quersumme", $"Summe der Ziffern = {digitSum}.", ""));
+        QuersummeText = $"Quersumme: {digitSum}";
 
         var props = _hangmanService.GetAllTrueProperties(_secret);
         foreach (var p in props)
@@ -199,8 +202,6 @@ public sealed class MathHangmanPageViewModel : ObservableObject
             {
                 IsFinished = true;
                 await _dialog.AlertAsync("Verloren 😢", $"Die Zahl war: {_secret}");
-                await MainThread.InvokeOnMainThreadAsync(async () =>
-                    await _nav.GoToAsync("GameMapPage", new Dictionary<string, object> { ["gameId"] = GameId }));
             }
         }
     }
