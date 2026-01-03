@@ -8,8 +8,7 @@ public sealed class MathHangmanService : IMathHangmanService
     public int GenerateSecretNumber(int seed, string difficultyKey)
     {
         var (min, max) = MathHangmanDifficulty.Range(difficultyKey);
-        var rng = new Random(seed);
-        return rng.Next(min, max + 1);
+        return Random.Shared.Next(min, max + 1);
     }
 
     public IReadOnlyList<NumberProperty> GetAllTrueProperties(int n)

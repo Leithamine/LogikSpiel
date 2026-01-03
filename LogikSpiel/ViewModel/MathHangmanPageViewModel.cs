@@ -23,14 +23,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
     public string DifficultyKey { get; private set; } = "normal";
     public int LevelNumber { get; private set; } = 1;
 
-    public string DifficultyText => DifficultyKey switch
-    {
-        "easy" => "Einfach",
-        "normal" => "Normal",
-        "hard" => "Schwer",
-        "master" => "Master",
-        _ => DifficultyKey
-    };
+    public string DifficultyText => "Zufällig";
 
     private int _coins;
     public int Coins { get => _coins; private set => SetProperty(ref _coins, value); }
@@ -127,12 +120,13 @@ public sealed class MathHangmanPageViewModel : ObservableObject
     private void BuildShop()
     {
         ShopItems.Clear();
-        ShopItems.Add(new ShopHint("range", "📊 Zahlenbereich", "Zeigt [min, max] Bereich", 15));
-        ShopItems.Add(new ShopHint("tight", "🎯 Enger Bereich", "Kleinerer Bereich", 25));
-        ShopItems.Add(new ShopHint("digits", "🔢 Stellenanzahl", "Wie viele Ziffern", 10));
-        ShopItems.Add(new ShopHint("sumdigits", "➕ Quersumme", "Summe aller Ziffern", 18));
-        ShopItems.Add(new ShopHint("last", "⬇️ Letzte Ziffer", "Endziffer der Zahl", 20));
-        ShopItems.Add(new ShopHint("first", "⬆️ Erste Ziffer", "Anfangsziffer", 20));
+        ShopItems.Add(new ShopHint("digits", "🔢 Stellenanzahl", "Die Zahl hat x Stellen.", 10));
+        ShopItems.Add(new ShopHint("parity", "⚖️ Gerade/Ungerade", "Sie ist gerade oder ungerade.", 12));
+        ShopItems.Add(new ShopHint("divisible", "➗ Teilbar durch x", "Sie ist teilbar durch x.", 18));
+        ShopItems.Add(new ShopHint("sumdigits", "➕ Quersumme", "Quersumme ist x.", 18));
+        ShopItems.Add(new ShopHint("position", "📍 Ziffernposition", "Position Ziffer ist …", 20));
+        ShopItems.Add(new ShopHint("contains", "🔎 Ziffer enthalten", "Die Zahl enthält die Ziffer.", 16));
+        ShopItems.Add(new ShopHint("range", "📊 Zahlenbereich", "Die Zahl liegt zwischen A und B.", 15));
     }
 
     private async Task StartRoundAsync()
@@ -145,6 +139,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
 
         _currentSeed = StableHash($"{GameId}:{DifficultyKey}:{LevelNumber}");
         _secret = _hangmanService.GenerateSecretNumber(_currentSeed, DifficultyKey);
+        BuildShop();
 
         // ALLE TRUE-Eigenschaften sofort anzeigen
         var allTrue = _hangmanService.GetAllTrueProperties(_secret);
@@ -248,24 +243,52 @@ public sealed class MathHangmanPageViewModel : ObservableObject
     {
         CurrentHint = h.Id switch
         {
-            "range" => $"📊 Bereich: [{_rangeA}, {_rangeB}]",
-            "tight" => GetTightRange(),
-            "digits" => $"🔢 Stellen: {_secret.ToString().Length}",
-            "sumdigits" => $"➕ Quersumme: {SumDigits(_secret)}",
-            "last" => $"⬇️ Letzte Ziffer: {_secret % 10}",
-            "first" => $"⬆️ Erste Ziffer: {_secret.ToString()[0]}",
+            "range" => $"📊 Die Zahl liegt zwischen {_rangeA} und {_rangeB}.",
+            "digits" => $"🔢 Die Zahl hat {_secret.ToString().Length} Stellen.",
+            "sumdigits" => $"➕ Quersumme ist {SumDigits(_secret)}.",
+            "parity" => _secret % 2 == 0 ? "⚖️ Sie ist gerade." : "⚖️ Sie ist ungerade.",
+            "divisible" => GetDivisibleHint(),
+            "contains" => GetContainsDigitHint(),
+            "position" => GetPositionDigitHint(),
             _ => "Hinweis"
         };
     }
 
-    private string GetTightRange()
+    private string GetDivisibleHint()
     {
-        var (min, max) = MathHangmanDifficulty.Range(DifficultyKey);
-        var rng = new Random(_secret ^ 0xBEEF);
-        int width = Math.Max(5, (max - min) / 20);
-        _rangeA = Math.Max(min, _secret - rng.Next(2, width));
-        _rangeB = Math.Min(max, _secret + rng.Next(2, width));
-        return $"🎯 Enger Bereich: [{_rangeA}, {_rangeB}]";
+        int? divisor = PickDivisorHint();
+        return divisor.HasValue
+            ? $"➗ Sie ist teilbar durch {divisor.Value}."
+            : $"📊 Die Zahl liegt zwischen {_rangeA} und {_rangeB}.";
+    }
+
+    private int? PickDivisorHint()
+    {
+        int[] candidates = { 2, 3, 4, 5, 6, 7, 8, 9, 11 };
+        var possible = candidates.Where(d => _secret % d == 0).ToList();
+        if (possible.Count == 0)
+            return null;
+
+        var rng = new Random(_currentSeed ^ _secret);
+        return possible[rng.Next(possible.Count)];
+    }
+
+    private string GetContainsDigitHint()
+    {
+        var digits = _secret.ToString().Select(c => c - '0').Distinct().ToList();
+        var rng = new Random(_currentSeed ^ 0x1234);
+        int digit = digits[rng.Next(digits.Count)];
+        return $"🔎 Die Zahl enthält die Ziffer {digit}.";
+    }
+
+    private string GetPositionDigitHint()
+    {
+        var s = _secret.ToString();
+        var rng = new Random(_currentSeed ^ 0x7777);
+        int index = rng.Next(s.Length);
+        int position = index + 1;
+        char digit = s[index];
+        return $"📍 Position {position} ist die Ziffer {digit}.";
     }
 
     private static int SumDigits(int n) => Math.Abs(n).ToString().Sum(c => c - '0');
