@@ -45,22 +45,31 @@ public sealed class HangmanDrawable : IDrawable
             float eyeOffsetX = 7 * scale;
             float eyeOffsetY = 5 * scale;
             float eyeRadius = 2.5f * scale;
-            canvas.FillCircle(headCenterX - eyeOffsetX, headCenterY - eyeOffsetY, eyeRadius);
-            canvas.FillCircle(headCenterX + eyeOffsetX, headCenterY - eyeOffsetY, eyeRadius);
-
-            canvas.StrokeColor = shadowColor;
-            canvas.StrokeSize = 3 * scale;
-            if (WrongCount <= 2)
+            if (WrongCount >= 6)
             {
-                canvas.DrawArc(headCenterX - 8 * scale, headCenterY - 2 * scale, 16 * scale, 12 * scale, 20, 140, false, false);
-            }
-            else if (WrongCount <= 4)
-            {
-                canvas.DrawLine(headCenterX - 7 * scale, headCenterY + 6 * scale, headCenterX + 7 * scale, headCenterY + 6 * scale);
+                float xSize = 4 * scale;
+                canvas.StrokeSize = 2.5f * scale;
+                canvas.StrokeColor = shadowColor;
+                canvas.DrawLine(headCenterX - eyeOffsetX - xSize, headCenterY - eyeOffsetY - xSize, headCenterX - eyeOffsetX + xSize, headCenterY - eyeOffsetY + xSize);
+                canvas.DrawLine(headCenterX - eyeOffsetX - xSize, headCenterY - eyeOffsetY + xSize, headCenterX - eyeOffsetX + xSize, headCenterY - eyeOffsetY - xSize);
+                canvas.DrawLine(headCenterX + eyeOffsetX - xSize, headCenterY - eyeOffsetY - xSize, headCenterX + eyeOffsetX + xSize, headCenterY - eyeOffsetY + xSize);
+                canvas.DrawLine(headCenterX + eyeOffsetX - xSize, headCenterY - eyeOffsetY + xSize, headCenterX + eyeOffsetX + xSize, headCenterY - eyeOffsetY - xSize);
             }
             else
             {
-                canvas.DrawArc(headCenterX - 8 * scale, headCenterY + 2 * scale, 16 * scale, 12 * scale, 200, 140, false, false);
+                canvas.FillCircle(headCenterX - eyeOffsetX, headCenterY - eyeOffsetY, eyeRadius);
+                canvas.FillCircle(headCenterX + eyeOffsetX, headCenterY - eyeOffsetY, eyeRadius);
+            }
+
+            canvas.StrokeColor = shadowColor;
+            canvas.StrokeSize = 3 * scale;
+            if (WrongCount <= 3)
+            {
+                canvas.DrawLine(headCenterX - 6 * scale, headCenterY + 6 * scale, headCenterX + 6 * scale, headCenterY + 6 * scale);
+            }
+            else
+            {
+                canvas.DrawArc(headCenterX - 9 * scale, headCenterY + 2 * scale, 18 * scale, 14 * scale, 0, 180, false, false);
             }
         }
 

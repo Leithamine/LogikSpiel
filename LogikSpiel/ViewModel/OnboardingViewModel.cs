@@ -48,7 +48,7 @@ public class OnboardingViewModel : ObservableObject
                 {
                     Name = Name,
                     Age = age,
-                    Coins = 10,
+                    Coins = 100,
                     CreatedAt = DateTime.Now
                 };
 

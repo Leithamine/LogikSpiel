@@ -15,6 +15,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
     private const int LivesMax = 6;
     private readonly IUserProfileService _userService;
     private readonly IMathHangmanService _hangmanService;
+    private readonly IGameProgressStore _progressStore;
     private readonly IDialogService _dialog;
     private readonly INavigationService _nav;
 
@@ -56,6 +57,9 @@ public sealed class MathHangmanPageViewModel : ObservableObject
 
     public string DifficultyText => $"Bereich: {RangeMin:N0} – {RangeMax:N0} (Lv {LevelNumber})";
 
+    private string _quersummeText = "";
+    public string QuersummeText { get => _quersummeText; private set => SetProperty(ref _quersummeText, value); }
+
     private int _coins;
     public int Coins { get => _coins; private set => SetProperty(ref _coins, value); }
 
@@ -84,11 +88,13 @@ public sealed class MathHangmanPageViewModel : ObservableObject
     public MathHangmanPageViewModel(
         IUserProfileService userService,
         IMathHangmanService hangmanService,
+        IGameProgressStore progressStore,
         IDialogService dialog,
         INavigationService nav)
     {
         _userService = userService;
         _hangmanService = hangmanService;
+        _progressStore = progressStore;
         _dialog = dialog;
         _nav = nav;
 
@@ -151,7 +157,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         RangeMax = maxRange;
 
         int digitSum = _secret.ToString().Sum(c => c - '0');
-        VisibleProperties.Add(new NumberPropertyVM("Quersumme", $"Summe der Ziffern = {digitSum}.", $"{digitSum}"));
+        QuersummeText = $"Quersumme: {digitSum}";
 
         var props = _hangmanService.GetAllTrueProperties(_secret);
         foreach (var p in props)
@@ -180,20 +186,21 @@ public sealed class MathHangmanPageViewModel : ObservableObject
                 user.AddUsedNumber(_secret); // Hier wird die neue Methode genutzt
                 await _userService.SaveUserAsync(user);
             }
+            int completedLevel = LevelNumber;
+            await _progressStore.MarkLevelCompleteAsync(GameId, DifficultyKey, completedLevel);
             Preferences.Remove(GetSecretKey());
             await _dialog.AlertAsync("Gewonnen! 🎉", $"Richtig! Die Zahl war {_secret}\n+50 Coins");
+            LevelNumber = completedLevel + 1;
             await StartRoundAsync();
         }
         else
         {
             Lives = Math.Max(0, Lives - 1);
-            CurrentHint = g < _secret ? "💡 Die Zahl ist GRÖSSER ⬆️" : "💡 Die Zahl ist KLEINER ⬇️";
 
             if (Lives <= 0)
             {
                 IsFinished = true;
                 await _dialog.AlertAsync("Verloren 😢", $"Die Zahl war: {_secret}");
-                await _nav.GoBackAsync();
             }
         }
     }

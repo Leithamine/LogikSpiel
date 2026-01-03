@@ -23,10 +23,13 @@ public partial class MathHangmanPage : ContentPage, IQueryAttributable
         // Überwache Fehleränderungen für das Neuzeichnen
         vm.PropertyChanged += (s, e) =>
         {
-            if (e.PropertyName == nameof(vm.WrongCount))
+            if (e.PropertyName == nameof(vm.WrongCount) || e.PropertyName == nameof(vm.Lives))
             {
-                _hangmanDrawable.WrongCount = vm.WrongCount;
-                HangmanView.Invalidate(); // Erzwingt Refresh der Grafik
+                Dispatcher.Dispatch(() =>
+                {
+                    _hangmanDrawable.WrongCount = vm.WrongCount;
+                    HangmanView.Invalidate(); // Erzwingt Refresh der Grafik
+                });
             }
         };
 
