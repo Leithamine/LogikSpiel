@@ -132,7 +132,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
             // Falls der User schon fast alle Zahlen (unwahrscheinlich) hat, brechen wir nach 100 Versuchen ab
         } while (user != null && user.UsedNumbers.Contains(_secret) && attempts < 100);
 
-        var (minRange, maxRange) = MathHangmanDifficulty.VisibleRange(_secret, LevelNumber);
+        (int minRange, int maxRange) = MathHangmanDifficulty.VisibleRange(_secret, LevelNumber);
         RangeMin = minRange;
         RangeMax = maxRange;
 

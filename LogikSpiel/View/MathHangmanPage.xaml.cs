@@ -1,4 +1,5 @@
 // LogikSpiel/View/MathHangmanPage.xaml.cs
+using LogikSpiel.Core;
 using LogikSpiel.View.Controls;
 using LogikSpiel.ViewModel;
 
@@ -65,11 +66,11 @@ public partial class MathHangmanPage : ContentPage, IQueryAttributable
         const uint duration = 45;
         const double offset = 10;
 
-        await RootLayout.TranslateTo(offset, 0, duration, Easing.CubicInOut);
-        await RootLayout.TranslateTo(-offset, 0, duration, Easing.CubicInOut);
-        await RootLayout.TranslateTo(offset * 0.6, 0, duration, Easing.CubicInOut);
-        await RootLayout.TranslateTo(-offset * 0.6, 0, duration, Easing.CubicInOut);
-        await RootLayout.TranslateTo(0, 0, duration, Easing.CubicInOut);
+        await RootLayout.TranslateToAsync(offset, 0, duration, Easing.CubicInOut);
+        await RootLayout.TranslateToAsync(-offset, 0, duration, Easing.CubicInOut);
+        await RootLayout.TranslateToAsync(offset * 0.6, 0, duration, Easing.CubicInOut);
+        await RootLayout.TranslateToAsync(-offset * 0.6, 0, duration, Easing.CubicInOut);
+        await RootLayout.TranslateToAsync(0, 0, duration, Easing.CubicInOut);
 
         _isShaking = false;
     }
