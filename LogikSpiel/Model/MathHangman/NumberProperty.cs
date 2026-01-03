@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using System;
 
 namespace LogikSpiel.ViewModel;
 
@@ -11,6 +12,7 @@ public sealed class NumberPropertyVM
     public string KidDescription { get; }
     public string Examples { get; }
     public bool HasExamples => !string.IsNullOrWhiteSpace(Examples);
+    public bool ShowExamples => HasExamples && !string.Equals(Key, "Quersumme", StringComparison.OrdinalIgnoreCase);
     public string TitleLine => $"✓ {Key}";
 
     public NumberPropertyVM(string key, string kidDescription, string examples)

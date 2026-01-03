@@ -112,7 +112,7 @@
                                            Text="{Binding Examples, StringFormat='Beispiele: {0}'}"
                                            TextColor="{StaticResource C_TextMuted}"
                                            FontSize="12"
-                                           IsVisible="{Binding HasExamples}"/>
+                                           IsVisible="{Binding ShowExamples}"/>
                                 </Grid>
                             </Border>
                         </DataTemplate>
