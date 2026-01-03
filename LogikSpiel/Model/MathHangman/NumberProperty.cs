@@ -10,6 +10,7 @@ public sealed class NumberPropertyVM
     public string Key { get; }
     public string KidDescription { get; }
     public string Examples { get; }
+    public bool HasExamples => !string.IsNullOrWhiteSpace(Examples);
     public string TitleLine => $"✓ {Key}";
 
     public NumberPropertyVM(string key, string kidDescription, string examples)
