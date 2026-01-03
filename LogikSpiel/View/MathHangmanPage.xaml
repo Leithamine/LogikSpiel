@@ -17,10 +17,10 @@
                         Command="{Binding BackCommand}"/>
 
                 <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center" VerticalOptions="Center">
-                    <Label Text="🎯 Mathe Hangman" Style="{StaticResource H3}" HorizontalOptions="Center"/>
+                    <Label Text="🎯 Mathe-Hangman" Style="{StaticResource H3}" HorizontalOptions="Center"/>
                     <Border StrokeThickness="0" StrokeShape="RoundRectangle 8"
                             BackgroundColor="{StaticResource C_Accent}" Padding="10,4">
-                        <Label Text="{Binding DifficultyText}" TextColor="{StaticResource C_TextPrimary}" FontSize="11" FontAttributes="Bold"/>
+                        <Label Text="{Binding DifficultyText}" TextColor="{StaticResource C_TextDark}" FontSize="11" FontAttributes="Bold"/>
                     </Border>
                 </VerticalStackLayout>
                 <Border Grid.Column="2" Style="{StaticResource CoinBadge}">

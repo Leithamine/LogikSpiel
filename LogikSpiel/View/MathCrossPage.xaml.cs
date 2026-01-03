@@ -42,7 +42,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable
             var border = new Border
             {
                 StrokeThickness = 1,
-                Stroke = Color.FromArgb("#CCCCCC"),
+                Stroke = Color.FromArgb("#4DFFFFFF"),
                 StrokeShape = new RoundRectangle { CornerRadius = 6 },
                 Padding = 0
             };
@@ -61,7 +61,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable
                     FontAttributes = FontAttributes.Bold,
                     FontSize = 15,
                     BackgroundColor = Colors.Transparent,
-                    TextColor = Color.FromArgb("#222"),
+                    TextColor = Colors.White,
                     BorderWidth = 0
                 };
                 btn.SetBinding(Button.TextProperty, new Binding(nameof(MathCrossCellViewModel.EditableText), source: cellVm));
@@ -75,7 +75,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable
                     HorizontalTextAlignment = TextAlignment.Center,
                     VerticalTextAlignment = TextAlignment.Center,
                     FontAttributes = FontAttributes.Bold,
-                    TextColor = Color.FromArgb("#333"),
+                    TextColor = Color.FromArgb("#DADADA"),
                     FontSize = 15
                 };
                 lbl.SetBinding(Label.TextProperty, new Binding(nameof(MathCrossCellViewModel.DisplayText), source: cellVm));
