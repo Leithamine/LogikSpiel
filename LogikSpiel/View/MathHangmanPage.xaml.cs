@@ -8,6 +8,7 @@ public partial class MathHangmanPage : ContentPage, IQueryAttributable
 {
     private readonly MathHangmanPageViewModel _vm;
     private readonly HangmanDrawable _drawable = new();
+    private bool _hasSized;
 
     public MathHangmanPage(MathHangmanPageViewModel vm)
     {
@@ -17,6 +18,7 @@ public partial class MathHangmanPage : ContentPage, IQueryAttributable
         BindingContext = _vm;
 
         HangmanView.Drawable = _drawable;
+        HangmanView.SizeChanged += HangmanView_SizeChanged;
 
         // Initial render
         _drawable.WrongCount = _vm.WrongCount;
@@ -31,6 +33,7 @@ public partial class MathHangmanPage : ContentPage, IQueryAttributable
     {
         base.OnDisappearing();
         _vm.PropertyChanged -= Vm_PropertyChanged;
+        HangmanView.SizeChanged -= HangmanView_SizeChanged;
     }
 
     private void Vm_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -43,6 +46,16 @@ public partial class MathHangmanPage : ContentPage, IQueryAttributable
                 HangmanView.Invalidate();
             });
         }
+    }
+
+    private void HangmanView_SizeChanged(object? sender, EventArgs e)
+    {
+        if (_hasSized || HangmanView.Width <= 0 || HangmanView.Height <= 0)
+            return;
+
+        _hasSized = true;
+        _drawable.WrongCount = _vm.WrongCount;
+        HangmanView.Invalidate();
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
