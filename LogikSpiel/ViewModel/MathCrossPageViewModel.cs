@@ -422,11 +422,11 @@ public sealed class MathCrossPageViewModel : ObservableObject
     public Color GetCellColor(MathCrossCell cell, bool sel)
     {
         if (cell.Type == CellType.Empty) return Colors.Transparent;
-        if (sel) return Color.FromArgb("#FFF3B0");
-        if (cell.Type == CellType.Equals) return Color.FromArgb("#E8E8E8");
-        if (cell.IsGiven) return Color.FromArgb("#D8D8D8");
-        if (cell.Type == CellType.Operator) return Color.FromArgb("#FFEAA7");
-        return Colors.White;
+        if (sel) return Color.FromArgb("#3A4A64");
+        if (cell.Type == CellType.Equals) return Color.FromArgb("#2B3140");
+        if (cell.IsGiven) return Color.FromArgb("#313B4A");
+        if (cell.Type == CellType.Operator) return Color.FromArgb("#2F3442");
+        return Color.FromArgb("#242C3A");
     }
 
     private static string DiffName(string k) => k switch

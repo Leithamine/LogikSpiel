@@ -28,15 +28,15 @@ public sealed class HangmanDrawable : IDrawable
 
         int wc = Math.Clamp(WrongCount, 0, 6);
 
-        // Farben: für hellen Hintergrund -> dunklere Linien
-        var gallows = Color.FromRgba(20, 20, 20, 0.55f);
-        var gallowsLight = Color.FromRgba(20, 20, 20, 0.35f);
+        // Farben: für dunklen Hintergrund -> helle Linien
+        var gallows = Color.FromRgba(255, 255, 255, 0.55f);
+        var gallowsLight = Color.FromRgba(255, 255, 255, 0.35f);
 
-        var headStroke = Color.FromArgb("#E74C3C"); // kräftiges Rot
-        var bodyStroke = Color.FromArgb("#2C3E50"); // dunkel
-        var limbStroke = Color.FromArgb("#6C5CE7"); // violett, aber sichtbar
+        var headStroke = Color.FromArgb("#FF6B6B"); // warmes Rot
+        var bodyStroke = Color.FromArgb("#E6E9EF"); // hell
+        var limbStroke = Color.FromArgb("#B8A9FF"); // helles Violett
 
-        var face = Color.FromRgba(10, 10, 10, 0.85f);
+        var face = Color.FromRgba(255, 255, 255, 0.9f);
 
         // Galgen
         canvas.StrokeLineCap = LineCap.Round;
@@ -65,7 +65,7 @@ public sealed class HangmanDrawable : IDrawable
         {
             canvas.StrokeSize = 4 * scale;
             canvas.StrokeColor = headStroke;
-            canvas.FillColor = Color.FromRgba(255, 255, 255, 0.55f);
+            canvas.FillColor = Color.FromRgba(255, 255, 255, 0.12f);
             canvas.FillCircle(headCx, headCy, headR);
             canvas.DrawCircle(headCx, headCy, headR);
 

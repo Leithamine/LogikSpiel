@@ -70,7 +70,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
     private int _genToken = 0;
 
-    public string Title => $"Code Knacker – {DiffName(DifficultyKey)}";
+    public string Title => $"Code-Knacker – {DiffName(DifficultyKey)}";
 
     public bool ShowSolutionForDebug => true;
     public string SecretSolution => _secretSolution;

@@ -2,10 +2,10 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
-    <!-- Hintergrund-Images sind sehr hell → wir nehmen helle Glass-Flächen + dunkle Texte -->
-    <Color x:Key="C_TextPrimary">#101216</Color>
-    <Color x:Key="C_TextSecondary">#3B3F48</Color>
-    <Color x:Key="C_TextMuted">#707785</Color>
+    <!-- Dark UI: dunkler Hintergrund → helle Texte -->
+    <Color x:Key="C_TextPrimary">#FFFFFF</Color>
+    <Color x:Key="C_TextSecondary">#DADADA</Color>
+    <Color x:Key="C_TextMuted">#B0B6C2</Color>
     <Color x:Key="C_TextOnDark">#FFFFFF</Color>
 
     <!-- Core Brand (passt zu Sky/Pastel) -->
@@ -25,15 +25,15 @@
     <Color x:Key="C_Error">#EB5757</Color>
 
     <!-- Glass / Surfaces -->
-    <Color x:Key="C_Surface">#F8FAFF</Color>
-    <Color x:Key="C_SurfaceStrong">#FFFFFF</Color>
+    <Color x:Key="C_Surface">#1C2330</Color>
+    <Color x:Key="C_SurfaceStrong">#232B38</Color>
 
-    <!-- “Glass” auf hellen BGs: weiß, aber leicht transparent -->
-    <Color x:Key="C_GlassWhite">#D9FFFFFF</Color>
-    <!-- 85% -->
-    <Color x:Key="C_GlassStrong">#F2FFFFFF</Color>
-    <!-- 95% -->
-    <Color x:Key="C_GlassHighlight">#B3FFFFFF</Color>
+    <!-- Dunkles Glass auf dunklen BGs -->
+    <Color x:Key="C_GlassWhite">#CC1E2532</Color>
+    <!-- 80% -->
+    <Color x:Key="C_GlassStrong">#E61E2532</Color>
+    <!-- 90% -->
+    <Color x:Key="C_GlassHighlight">#B31E2532</Color>
     <!-- 70% -->
     <!-- Aliase / fehlende Keys, die in XAML verwendet werden -->
     <Color x:Key="C_GoldDark">#C99A16</Color>
@@ -43,30 +43,30 @@
     <Color x:Key="C_TextDark">#101216</Color>
     <!-- Alias zu C_TextPrimary -->
 
-    <Color x:Key="C_BgLight">#F3F6FF</Color>
+    <Color x:Key="C_BgLight">#1B2230</Color>
     <!-- passt zu InputBg -->
-    <Color x:Key="C_BgDark">#1A1D24</Color>
+    <Color x:Key="C_BgDark">#121722</Color>
     <!-- dunkle Fläche (z.B. Hangman) -->
 
-    <Color x:Key="C_GlassSoft">#B3FFFFFF</Color>
-    <!-- 70% White (du hast C_GlassHighlight so ähnlich) -->
-    <Color x:Key="C_Divider">#22000000</Color>
+    <Color x:Key="C_GlassSoft">#991E2532</Color>
+    <!-- 60% -->
+    <Color x:Key="C_Divider">#22FFFFFF</Color>
     <!-- dezente Trennlinie -->
 
     <Color x:Key="C_Accent2">#F2994A</Color>
     <!-- nimm Warning als Accent2 -->
 
-    <!-- Borders (auf hellen BGs brauchen wir dunkle, sehr subtile Kanten) -->
-    <Color x:Key="C_BorderSoft">#22000000</Color>
+    <!-- Borders (auf dunklen BGs brauchen wir helle, sehr subtile Kanten) -->
+    <Color x:Key="C_BorderSoft">#33FFFFFF</Color>
     <!-- sehr soft -->
-    <Color x:Key="C_Border">#33000000</Color>
+    <Color x:Key="C_Border">#4DFFFFFF</Color>
 
     <!-- Cards -->
-    <Color x:Key="C_Card">#E6FFFFFF</Color>
-    <Color x:Key="C_CardInner">#FFFFFFFF</Color>
+    <Color x:Key="C_Card">#CC222B39</Color>
+    <Color x:Key="C_CardInner">#FF2A3342</Color>
 
     <!-- Inputs -->
-    <Color x:Key="C_InputBg">#F3F6FF</Color>
+    <Color x:Key="C_InputBg">#1F2733</Color>
     <Color x:Key="C_InputBorder">#332F80ED</Color>
 
     <!-- Coins -->
@@ -81,13 +81,13 @@
     <!-- soft pink -->
 
     <!-- Nodes -->
-    <Color x:Key="C_NodeLockedFill">#E6FFFFFF</Color>
-    <Color x:Key="C_NodeLockedStroke">#33000000</Color>
+    <Color x:Key="C_NodeLockedFill">#2A313E</Color>
+    <Color x:Key="C_NodeLockedStroke">#3C4656</Color>
 
-    <Color x:Key="C_NodeDoneFill">#D6ECFF</Color>
+    <Color x:Key="C_NodeDoneFill">#2F80ED</Color>
     <Color x:Key="C_NodeDoneStroke">#2F80ED</Color>
 
-    <Color x:Key="C_NodeCurrentFill">#FFFFFF</Color>
-    <Color x:Key="C_NodeCurrentStroke">#2F80ED</Color>
+    <Color x:Key="C_NodeCurrentFill">#1E2532</Color>
+    <Color x:Key="C_NodeCurrentStroke">#F2C94C</Color>
 
 </ResourceDictionary>
