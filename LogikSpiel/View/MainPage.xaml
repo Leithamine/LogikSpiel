@@ -8,29 +8,25 @@
              x:Name="RootPage"
              NavigationPage.HasNavigationBar="False"
              Shell.NavBarIsVisible="False"
-             Background="{StaticResource BgGradient}">
+             BackgroundImageSource="gamebg.png">
 
     <Grid RowDefinitions="Auto,*" RowSpacing="0">
-            <Image Source="mainbg.jpg"
-           Grid.RowSpan="2"
-           Aspect="AspectFill"
-           Opacity="0.4"
-           InputTransparent="True" />
+
         <!-- HEADER -->
-        <Border Grid.Row="0" 
+        <Border Grid.Row="0"
                 Style="{StaticResource GlassCard}"
                 Margin="16,16,16,0"
                 Padding="16,12">
             <Grid ColumnDefinitions="*,Auto">
 
-                <!-- Logo & Title -->
                 <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
-                    <Border StrokeShape="RoundRectangle 12" 
+                    <Border StrokeShape="RoundRectangle 12"
                             StrokeThickness="0"
                             BackgroundColor="{StaticResource C_Primary}"
                             WidthRequest="48" HeightRequest="48"
                             Padding="0">
-                        <Label Text="🧩" FontSize="26" 
+                        <Label Text="🧩" FontSize="26"
+                               TextColor="{StaticResource C_TextOnColor}"
                                HorizontalOptions="Center" VerticalOptions="Center"/>
                     </Border>
                     <VerticalStackLayout Spacing="0" VerticalOptions="Center">
@@ -39,29 +35,30 @@
                     </VerticalStackLayout>
                 </HorizontalStackLayout>
 
-                <!-- Profile & Coins -->
                 <HorizontalStackLayout Grid.Column="1" Spacing="12" VerticalOptions="Center">
                     <Border Style="{StaticResource Chip}">
                         <HorizontalStackLayout Spacing="6">
                             <Label Text="💰" FontSize="16"/>
-                            <Label Text="{Binding Coins}" 
-                                   TextColor="{StaticResource C_Gold}" 
-                                   FontAttributes="Bold" 
+                            <Label Text="{Binding Coins}"
+                                   TextColor="{StaticResource C_GoldDark}"
+                                   FontAttributes="Bold"
                                    FontSize="15"/>
                         </HorizontalStackLayout>
                     </Border>
 
-                    <Border StrokeShape="RoundRectangle 22" 
+                    <Border StrokeShape="RoundRectangle 22"
                             Stroke="{StaticResource C_Primary}"
                             StrokeThickness="2"
-                            WidthRequest="44" HeightRequest="44" 
-                            Padding="0">
+                            WidthRequest="44" HeightRequest="44"
+                            Padding="0"
+                            BackgroundColor="{StaticResource C_GlassSoft}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding OpenProfileCommand}"/>
                         </Border.GestureRecognizers>
                         <Image Source="professor.png" Aspect="AspectFill"/>
                     </Border>
                 </HorizontalStackLayout>
+
             </Grid>
         </Border>
 
@@ -69,42 +66,33 @@
         <ScrollView Grid.Row="1" Padding="16">
             <VerticalStackLayout Spacing="20">
 
-                <!-- Welcome -->
                 <VerticalStackLayout Spacing="8" Margin="0,10,0,0">
                     <Label Text="👋 Willkommen zurück!" Style="{StaticResource H1}" HorizontalOptions="Center"/>
                     <Label Text="Wähle ein Spiel und starte!" Style="{StaticResource Body}" HorizontalOptions="Center"/>
                 </VerticalStackLayout>
 
-                <!-- App Logo - mit Fallback Emoji falls Bild fehlt -->
-                <Border StrokeThickness="0" 
+                <Border StrokeThickness="0"
                         StrokeShape="RoundRectangle 30"
-                        BackgroundColor="{StaticResource C_GlassWhite}"
+                        BackgroundColor="{StaticResource C_GlassHighlight}"
                         WidthRequest="160" HeightRequest="160"
                         HorizontalOptions="Center"
-                        Shadow="{StaticResource ShadowGlow}">
+                        Shadow="{StaticResource ShadowGlowBlue}">
                     <Grid>
-                        <!-- Versuche Bild zu laden -->
-                        <Image Source="applogo.png" 
-                               WidthRequest="140" HeightRequest="140" 
+                        <Image Source="applogo.png"
+                               WidthRequest="140" HeightRequest="140"
                                Aspect="AspectFit"/>
-                        <!-- Fallback falls Bild nicht existiert -->
-                        <Label Text="🧠" FontSize="80" 
-                               HorizontalOptions="Center" VerticalOptions="Center"
-                               IsVisible="False"/>
                     </Grid>
                 </Border>
 
-                <!-- Games Section Title -->
                 <HorizontalStackLayout Spacing="10" Margin="0,10,0,0">
-                    <BoxView WidthRequest="4" HeightRequest="24" 
-                             Color="{StaticResource C_Primary}" 
+                    <BoxView WidthRequest="4" HeightRequest="24"
+                             Color="{StaticResource C_Primary}"
                              CornerRadius="2"/>
                     <Label Text="Spiele" Style="{StaticResource H2}"/>
                 </HorizontalStackLayout>
 
-                <!-- Games Grid -->
-                <FlexLayout Wrap="Wrap" 
-                            JustifyContent="SpaceBetween" 
+                <FlexLayout Wrap="Wrap"
+                            JustifyContent="SpaceBetween"
                             AlignItems="Start"
                             BindableLayout.ItemsSource="{Binding Games}">
                     <BindableLayout.ItemTemplate>
@@ -113,31 +101,29 @@
                                     WidthRequest="165"
                                     Margin="0,0,0,16">
                                 <Border.GestureRecognizers>
-                                    <TapGestureRecognizer 
+                                    <TapGestureRecognizer
                                         Command="{Binding Source={x:Reference RootPage}, Path=BindingContext.OpenGameCommand}"
                                         CommandParameter="{Binding .}"/>
                                 </Border.GestureRecognizers>
 
                                 <VerticalStackLayout Spacing="12">
-                                    <!-- Game Image -->
-                                    <Border StrokeThickness="0" 
+
+                                    <Border StrokeThickness="0"
                                             StrokeShape="RoundRectangle 14"
                                             HeightRequest="100"
-                                            BackgroundColor="{StaticResource C_BgLight}">
-                                        <Image Source="{Binding Image}" 
+                                            BackgroundColor="{StaticResource C_GlassSoft}">
+                                        <Image Source="{Binding Image}"
                                                Aspect="AspectFit"
                                                Margin="10"/>
                                     </Border>
 
-                                    <!-- Game Title -->
-                                    <Label Text="{Binding Title}" 
+                                    <Label Text="{Binding Title}"
                                            Style="{StaticResource H3}"
                                            FontSize="15"
                                            HorizontalTextAlignment="Center"
                                            LineBreakMode="TailTruncation"/>
 
-                                    <!-- Play Button -->
-                                    <Button Text="▶ Spielen" 
+                                    <Button Text="▶ Spielen"
                                             Style="{StaticResource BtnPrimary}"
                                             HeightRequest="42"
                                             FontSize="14"

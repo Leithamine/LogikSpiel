@@ -6,192 +6,169 @@
              x:DataType="vm:ProfileViewModel"
              NavigationPage.HasNavigationBar="False"
              Shell.NavBarIsVisible="False"
-             Background="{StaticResource BgGradient}">
+             BackgroundImageSource="gamebg.png">
 
     <Grid RowDefinitions="Auto,*" RowSpacing="0">
-        <Image Source="profileinfobg.jpg"
-       Grid.RowSpan="2"
-       Aspect="AspectFill"
-       Opacity="0.4"
-       InputTransparent="True" />
-        <!-- HEADER -->
-        <Border Grid.Row="0" 
-                BackgroundColor="{StaticResource C_GlassWhite}"
-                StrokeThickness="0"
-                Padding="16,12">
+
+        <Border Grid.Row="0"
+                Style="{StaticResource GlassCard}"
+                Padding="16,12"
+                Margin="16,16,16,0">
             <Grid ColumnDefinitions="Auto,*,Auto">
 
-                <Button Grid.Column="0" 
-                        Text="←" 
-                        Style="{StaticResource IconButton}"
+                <Button Grid.Column="0"
+                        Text="←"
+                        Style="{StaticResource BtnIcon}"
                         Command="{Binding BackCommand}"/>
 
-                <Label Grid.Column="1" 
-                       Text="Mein Profil" 
+                <Label Grid.Column="1"
+                       Text="Mein Profil"
                        Style="{StaticResource H2}"
-                       HorizontalOptions="Center" 
+                       HorizontalOptions="Center"
                        VerticalOptions="Center"/>
 
                 <Border Grid.Column="2" Style="{StaticResource CoinBadge}">
-                    <Label Text="{Binding Coins, StringFormat='💰 {0}'}" 
-                           TextColor="{StaticResource C_Gold}" 
+                    <Label Text="{Binding Coins, StringFormat='💰 {0}'}"
+                           TextColor="{StaticResource C_GoldDark}"
                            FontAttributes="Bold"/>
                 </Border>
+
             </Grid>
         </Border>
 
-        <!-- CONTENT -->
         <ScrollView Grid.Row="1">
             <VerticalStackLayout Spacing="16" Padding="16">
 
-                <!-- Profile Card -->
                 <Border Style="{StaticResource GlassCard}">
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="20">
 
-                        <!-- Avatar -->
-                        <Border StrokeThickness="3" 
+                        <Border StrokeThickness="3"
                                 Stroke="{StaticResource C_Primary}"
                                 WidthRequest="100" HeightRequest="100"
                                 StrokeShape="RoundRectangle 50"
-                                BackgroundColor="{StaticResource C_GlassWhite}">
+                                BackgroundColor="{StaticResource C_GlassSoft}">
                             <Image Source="professor.png" Aspect="AspectFill"/>
                         </Border>
 
-                        <!-- Info -->
                         <VerticalStackLayout Grid.Column="1" Spacing="6" VerticalOptions="Center">
-                            <Label Text="{Binding Name}" 
-                                   FontSize="24" FontAttributes="Bold" 
+                            <Label Text="{Binding Name}"
+                                   FontSize="24" FontAttributes="Bold"
                                    TextColor="{StaticResource C_TextPrimary}"/>
 
-                            <HorizontalStackLayout Spacing="8">
-                                <Border BackgroundColor="{StaticResource C_GlassHighlight}"
-                                        StrokeShape="RoundRectangle 8"
-                                        StrokeThickness="0"
-                                        Padding="8,4">
-                                    <Label Text="{Binding Age, StringFormat='🎂 {0} Jahre'}" 
-                                           FontSize="12" TextColor="{StaticResource C_TextSecondary}"/>
-                                </Border>
-                            </HorizontalStackLayout>
+                            <Border BackgroundColor="{StaticResource C_GlassSoft}"
+                                    StrokeShape="RoundRectangle 8"
+                                    StrokeThickness="0"
+                                    Padding="8,4">
+                                <Label Text="{Binding Age, StringFormat='🎂 {0} Jahre'}"
+                                       FontSize="12"
+                                       TextColor="{StaticResource C_TextSecondary}"/>
+                            </Border>
 
-                            <Label Text="{Binding Id, StringFormat='ID: {0}'}" 
-                                   FontSize="10" 
+                            <Label Text="{Binding Id, StringFormat='ID: {0}'}"
+                                   FontSize="10"
                                    TextColor="{StaticResource C_TextMuted}"/>
                         </VerticalStackLayout>
+
                     </Grid>
                 </Border>
 
-                <!-- Stats Overview -->
                 <Border Style="{StaticResource GlassCard}">
                     <VerticalStackLayout Spacing="12">
                         <Label Text="📊 Statistiken" Style="{StaticResource H3}"/>
 
                         <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
-                            <!-- Stat 1 -->
-                            <Border BackgroundColor="{StaticResource C_GlassWhite}"
+
+                            <Border BackgroundColor="{StaticResource C_GlassSoft}"
                                     StrokeShape="RoundRectangle 14"
                                     StrokeThickness="0"
                                     Padding="12">
                                 <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
                                     <Label Text="🎮" FontSize="24" HorizontalOptions="Center"/>
-                                    <Label Text="42" FontSize="20" FontAttributes="Bold" 
+                                    <Label Text="42" FontSize="20" FontAttributes="Bold"
                                            TextColor="{StaticResource C_TextPrimary}" HorizontalOptions="Center"/>
-                                    <Label Text="Gespielt" FontSize="10" 
-                                           TextColor="{StaticResource C_TextMuted}"
-                                           HorizontalOptions="Center"/>
+                                    <Label Text="Gespielt" FontSize="10"
+                                           TextColor="{StaticResource C_TextMuted}" HorizontalOptions="Center"/>
                                 </VerticalStackLayout>
                             </Border>
 
-                            <!-- Stat 2 -->
-                            <Border BackgroundColor="{StaticResource C_GlassWhite}"
+                            <Border BackgroundColor="{StaticResource C_GlassSoft}"
                                     StrokeShape="RoundRectangle 14"
                                     StrokeThickness="0"
                                     Padding="12">
                                 <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
                                     <Label Text="✅" FontSize="24" HorizontalOptions="Center"/>
-                                    <Label Text="38" FontSize="20" FontAttributes="Bold" 
-                                           TextColor="{StaticResource C_Success}" 
-                                           HorizontalOptions="Center"/>
-                                    <Label Text="Gelöst" FontSize="10" 
-                                           TextColor="{StaticResource C_TextMuted}"
-                                           HorizontalOptions="Center"/>
+                                    <Label Text="38" FontSize="20" FontAttributes="Bold"
+                                           TextColor="{StaticResource C_Success}" HorizontalOptions="Center"/>
+                                    <Label Text="Gelöst" FontSize="10"
+                                           TextColor="{StaticResource C_TextMuted}" HorizontalOptions="Center"/>
                                 </VerticalStackLayout>
                             </Border>
 
-                            <!-- Stat 3 -->
-                            <Border BackgroundColor="{StaticResource C_GlassWhite}"
+                            <Border BackgroundColor="{StaticResource C_GlassSoft}"
                                     StrokeShape="RoundRectangle 14"
                                     StrokeThickness="0"
                                     Padding="12">
                                 <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
                                     <Label Text="🔥" FontSize="24" HorizontalOptions="Center"/>
-                                    <Label Text="3" FontSize="20" FontAttributes="Bold" 
-                                           TextColor="{StaticResource C_Accent}" 
-                                           HorizontalOptions="Center"/>
-                                    <Label Text="Streak" FontSize="10" 
-                                           TextColor="{StaticResource C_TextMuted}"
-                                           HorizontalOptions="Center"/>
+                                    <Label Text="3" FontSize="20" FontAttributes="Bold"
+                                           TextColor="{StaticResource C_Accent2}" HorizontalOptions="Center"/>
+                                    <Label Text="Streak" FontSize="10"
+                                           TextColor="{StaticResource C_TextMuted}" HorizontalOptions="Center"/>
                                 </VerticalStackLayout>
                             </Border>
+
                         </Grid>
 
-                        <Button Text="Alle Statistiken →" 
-                                Style="{StaticResource SecondaryButton}"
+                        <Button Text="Alle Statistiken →"
+                                Style="{StaticResource BtnGhost}"
                                 Command="{Binding ShowStatsCommand}"/>
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- Settings Card -->
                 <Border Style="{StaticResource GlassCard}">
                     <VerticalStackLayout Spacing="16">
                         <Label Text="⚙️ Einstellungen" Style="{StaticResource H3}"/>
 
-                        <!-- Music Toggle -->
                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-                            <Border BackgroundColor="{StaticResource C_GlassHighlight}"
+                            <Border BackgroundColor="{StaticResource C_GlassSoft}"
                                     StrokeShape="RoundRectangle 12"
                                     StrokeThickness="0"
                                     WidthRequest="44" HeightRequest="44">
-                                <Label Text="🎵" FontSize="20" 
+                                <Label Text="🎵" FontSize="20"
                                        HorizontalOptions="Center" VerticalOptions="Center"/>
                             </Border>
                             <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
                                 <Label Text="Musik" TextColor="{StaticResource C_TextPrimary}" FontAttributes="Bold"/>
-                                <Label Text="Hintergrundmusik" FontSize="11" 
-                                       TextColor="{StaticResource C_TextMuted}"/>
+                                <Label Text="Hintergrundmusik" FontSize="11" TextColor="{StaticResource C_TextMuted}"/>
                             </VerticalStackLayout>
-                            <Switch Grid.Column="2" 
-                                    IsToggled="{Binding IsMusicEnabled}" 
-                                    OnColor="{StaticResource C_Primary}"
-                                    ThumbColor="{StaticResource C_ChalkWhite}"/>
+                            <Switch Grid.Column="2"
+                                    IsToggled="{Binding IsMusicEnabled}"
+                                    OnColor="{StaticResource C_Primary}"/>
                         </Grid>
 
-                        <!-- Divider -->
-                        <BoxView HeightRequest="1" Color="{StaticResource C_GlassWhite}"/>
+                        <BoxView HeightRequest="1" Color="{StaticResource C_Divider}"/>
 
-                        <!-- Sound Toggle -->
                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-                            <Border BackgroundColor="{StaticResource C_GlassHighlight}"
+                            <Border BackgroundColor="{StaticResource C_GlassSoft}"
                                     StrokeShape="RoundRectangle 12"
                                     StrokeThickness="0"
                                     WidthRequest="44" HeightRequest="44">
-                                <Label Text="🔊" FontSize="20" 
+                                <Label Text="🔊" FontSize="20"
                                        HorizontalOptions="Center" VerticalOptions="Center"/>
                             </Border>
                             <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
                                 <Label Text="Soundeffekte" TextColor="{StaticResource C_TextPrimary}" FontAttributes="Bold"/>
-                                <Label Text="Spielsounds" FontSize="11" 
-                                       TextColor="{StaticResource C_TextMuted}"/>
+                                <Label Text="Spielsounds" FontSize="11" TextColor="{StaticResource C_TextMuted}"/>
                             </VerticalStackLayout>
-                            <Switch Grid.Column="2" 
-                                    IsToggled="{Binding IsSoundEnabled}" 
-                                    OnColor="{StaticResource C_Primary}"
-                                    ThumbColor="{StaticResource C_ChalkWhite}"/>
+                            <Switch Grid.Column="2"
+                                    IsToggled="{Binding IsSoundEnabled}"
+                                    OnColor="{StaticResource C_Primary}"/>
                         </Grid>
+
                     </VerticalStackLayout>
                 </Border>
 
-                <!-- App Info -->
-                <Label Text="Version 1.0.0 • Made with ❤️" 
+                <Label Text="Version 1.0.0 • Made with ❤️"
                        HorizontalOptions="Center"
                        TextColor="{StaticResource C_TextMuted}"
                        FontSize="11"

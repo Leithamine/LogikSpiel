@@ -8,33 +8,43 @@
              x:Name="RootPage"
              NavigationPage.HasNavigationBar="False"
              Shell.NavBarIsVisible="False"
-             Background="{StaticResource BgGradient}">
+             BackgroundImageSource="gamebg.png">
 
     <Grid RowDefinitions="Auto,*">
-        <Image Source="mapbg.jpg"
-               Grid.RowSpan="2"
-               Aspect="AspectFill"
-               Opacity="0.4"
-               InputTransparent="True" />
+
         <!-- HEADER -->
-        <Border Grid.Row="0" 
-                Style="{StaticResource GlassCard}" 
+        <Border Grid.Row="0"
+                Style="{StaticResource GlassCard}"
                 Margin="12,12,12,0"
                 Padding="12">
             <Grid ColumnDefinitions="Auto,*,Auto">
 
-                <Button Grid.Column="0" Text="←" Style="{StaticResource BtnIcon}"
+                <Button Grid.Column="0"
+                        Text="←"
+                        Style="{StaticResource BtnIcon}"
                         Command="{Binding BackCommand}"/>
 
-                <VerticalStackLayout Grid.Column="1" Spacing="4" HorizontalOptions="Center" VerticalOptions="Center">
-                    <Label Text="{Binding Title}" Style="{StaticResource H3}" HorizontalOptions="Center"/>
+                <VerticalStackLayout Grid.Column="1" Spacing="4"
+                                     HorizontalOptions="Center"
+                                     VerticalOptions="Center">
+                    <Label Text="{Binding Title}"
+                           Style="{StaticResource H3}"
+                           HorizontalOptions="Center"/>
+
                     <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
-                        <Border StrokeThickness="0" StrokeShape="RoundRectangle 8"
-                                BackgroundColor="{StaticResource C_Primary}" Padding="10,4">
-                            <Label Text="{Binding DifficultyLabel}" TextColor="White" FontSize="11" FontAttributes="Bold"/>
+                        <Border StrokeThickness="0"
+                                StrokeShape="RoundRectangle 8"
+                                BackgroundColor="{StaticResource C_Primary}"
+                                Padding="10,4">
+                            <Label Text="{Binding DifficultyLabel}"
+                                   TextColor="White"
+                                   FontSize="11"
+                                   FontAttributes="Bold"/>
                         </Border>
-                        <Button Text="⚙️" 
-                                WidthRequest="32" HeightRequest="28"
+
+                        <Button Text="⚙️"
+                                WidthRequest="32"
+                                HeightRequest="28"
                                 CornerRadius="8"
                                 BackgroundColor="{StaticResource C_GlassWhite}"
                                 Padding="0"
@@ -44,22 +54,26 @@
                 </VerticalStackLayout>
 
                 <HorizontalStackLayout Grid.Column="2" Spacing="10" VerticalOptions="Center">
-                    <Button Text="📚" 
+                    <Button Text="📚"
                             Style="{StaticResource BtnIcon}"
-                            WidthRequest="40" HeightRequest="40"
+                            WidthRequest="40"
+                            HeightRequest="40"
                             Command="{Binding RulesCommand}"/>
 
                     <Border Style="{StaticResource CoinBadge}">
                         <HorizontalStackLayout Spacing="4">
                             <Label Text="💰" FontSize="14"/>
-                            <Label Text="{Binding Coins}" TextColor="{StaticResource C_Gold}" FontAttributes="Bold"/>
+                            <Label Text="{Binding Coins}"
+                                   TextColor="{StaticResource C_Gold}"
+                                   FontAttributes="Bold"/>
                         </HorizontalStackLayout>
                     </Border>
 
-                    <Border StrokeShape="RoundRectangle 20" 
+                    <Border StrokeShape="RoundRectangle 20"
                             Stroke="{StaticResource C_Primary}"
                             StrokeThickness="2"
-                            WidthRequest="40" HeightRequest="40" 
+                            WidthRequest="40"
+                            HeightRequest="40"
                             Padding="0">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer Command="{Binding OpenProfileCommand}"/>
@@ -67,15 +81,18 @@
                         <Image Source="professor.png" Aspect="AspectFill"/>
                     </Border>
                 </HorizontalStackLayout>
+
             </Grid>
         </Border>
 
         <!-- MAP -->
-        <ScrollView Grid.Row="1" x:Name="MapScrollView" 
+        <ScrollView Grid.Row="1"
+                    x:Name="MapScrollView"
                     VerticalScrollBarVisibility="Never"
                     Padding="12">
             <Grid HeightRequest="{Binding MapHeight}">
 
+                <!-- (optional) Lottie Background -->
                 <skia:SKLottieView x:Name="BackgroundLottie"
                                    Source="{Binding MapLottieSource}"
                                    RepeatCount="-1"
@@ -83,121 +100,178 @@
                                    VerticalOptions="Fill"
                                    InputTransparent="True"/>
 
+                <!-- PATH -->
                 <GraphicsView x:Name="PathView"
                               InputTransparent="True"
-                              HorizontalOptions="Fill" 
+                              HorizontalOptions="Fill"
                               VerticalOptions="Fill"/>
 
-                <!-- Level Nodes -->
+                <!-- LEVEL NODES -->
                 <AbsoluteLayout BindableLayout.ItemsSource="{Binding Nodes}">
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="vm:LevelNodeViewModel">
+
                             <Grid AbsoluteLayout.LayoutBounds="{Binding Bounds}"
                                   AbsoluteLayout.LayoutFlags="PositionProportional"
-                                  WidthRequest="70" HeightRequest="70">
+                                  WidthRequest="70"
+                                  HeightRequest="70">
 
-                                <Border StrokeThickness="3"
+                                <Border x:Name="NodeBorder"
+                                        StrokeThickness="3"
                                         StrokeShape="RoundRectangle 28"
-                                        WidthRequest="56" HeightRequest="56"
-                                        HorizontalOptions="Center" 
+                                        WidthRequest="56"
+                                        HeightRequest="56"
+                                        HorizontalOptions="Center"
                                         VerticalOptions="Center"
-                                        BackgroundColor="{StaticResource C_BgCard}"
-                                        Stroke="{StaticResource C_GlassBorder}">
+                                        BackgroundColor="#F2FFFFFF"
+                                        Stroke="#66FFFFFF">
+
                                     <Border.GestureRecognizers>
-                                        <TapGestureRecognizer 
+                                        <TapGestureRecognizer
                                             Command="{Binding Source={x:Reference RootPage}, Path=BindingContext.OpenLevelCommand}"
                                             CommandParameter="{Binding .}"/>
                                     </Border.GestureRecognizers>
 
-                                    <Label Text="{Binding LevelNumber}" 
-                                           HorizontalOptions="Center" 
+                                    <!-- NUMBER -->
+                                    <Label x:Name="NodeLabel"
+                                           Text="{Binding LevelNumber}"
+                                           HorizontalOptions="Center"
                                            VerticalOptions="Center"
-                                           FontAttributes="Bold" 
+                                           FontAttributes="Bold"
                                            FontSize="18"
-                                           TextColor="{StaticResource C_TextPrimary}"/>
+                                           TextColor="#1A1A1A">
+                                        <Label.Triggers>
 
+                                            <!-- LOCKED -->
+                                            <DataTrigger TargetType="Label"
+                                                         Binding="{Binding IsUnlocked}"
+                                                         Value="False">
+                                                <Setter Property="TextColor" Value="#7A7A7A"/>
+                                                <Setter Property="Opacity" Value="0.9"/>
+                                            </DataTrigger>
+
+                                            <!-- COMPLETED -->
+                                            <DataTrigger TargetType="Label"
+                                                         Binding="{Binding IsCompleted}"
+                                                         Value="True">
+                                                <Setter Property="TextColor" Value="White"/>
+                                                <Setter Property="Opacity" Value="1"/>
+                                            </DataTrigger>
+
+                                        </Label.Triggers>
+                                    </Label>
+
+                                    <!-- BORDER TRIGGERS -->
                                     <Border.Triggers>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IsCompleted}" Value="True">
-                                            <Setter Property="BackgroundColor" Value="{StaticResource C_Success}"/>
-                                            <Setter Property="Stroke" Value="{StaticResource C_Success}"/>
+
+                                        <!-- LOCKED -->
+                                        <DataTrigger TargetType="Border"
+                                                     Binding="{Binding IsUnlocked}"
+                                                     Value="False">
+                                            <Setter Property="BackgroundColor" Value="#DFFFFFFF"/>
+                                            <Setter Property="Stroke" Value="#55FFFFFF"/>
+                                            <Setter Property="Opacity" Value="0.92"/>
                                         </DataTrigger>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IsCurrent}" Value="True">
-                                            <Setter Property="StrokeThickness" Value="4"/>
-                                            <Setter Property="Stroke" Value="{StaticResource C_Primary}"/>
-                                            <Setter Property="BackgroundColor" Value="{StaticResource C_BgLight}"/>
-                                            <Setter Property="Scale" Value="1.15"/>
+
+                                        <!-- COMPLETED (statt grün: schönes Blau passend zum Himmel) -->
+                                        <DataTrigger TargetType="Border"
+                                                     Binding="{Binding IsCompleted}"
+                                                     Value="True">
+                                            <Setter Property="BackgroundColor" Value="#5DADE2"/>
+                                            <Setter Property="Stroke" Value="#5DADE2"/>
+                                            <Setter Property="StrokeThickness" Value="3"/>
                                         </DataTrigger>
+
+                                        <!-- CURRENT (Goldener Ring, weil Coins/Accent) -->
+                                        <DataTrigger TargetType="Border"
+                                                     Binding="{Binding IsCurrent}"
+                                                     Value="True">
+                                            <Setter Property="BackgroundColor" Value="#FFFFFFFF"/>
+                                            <Setter Property="Stroke" Value="#FFD54F"/>
+                                            <Setter Property="StrokeThickness" Value="5"/>
+                                            <Setter Property="Scale" Value="1.18"/>
+                                        </DataTrigger>
+
                                     </Border.Triggers>
                                 </Border>
 
-                                <Image Source="professor.png" 
+                                <!-- Mascot on current -->
+                                <Image Source="professor.png"
                                        IsVisible="{Binding IsCurrent}"
-                                       WidthRequest="30" HeightRequest="30"
-                                       HorizontalOptions="End" 
+                                       WidthRequest="30"
+                                       HeightRequest="30"
+                                       HorizontalOptions="End"
                                        VerticalOptions="Start"
                                        Margin="0,-8,-8,0"/>
                             </Grid>
+
                         </DataTemplate>
                     </BindableLayout.ItemTemplate>
                 </AbsoluteLayout>
 
+                <!-- CLOUD TOP -->
                 <AbsoluteLayout InputTransparent="True">
                     <Image Source="wolke.png"
-                           Aspect="Fill" 
+                           Aspect="Fill"
                            AbsoluteLayout.LayoutBounds="{Binding CloudBounds}"
                            AbsoluteLayout.LayoutFlags="PositionProportional,WidthProportional"/>
                 </AbsoluteLayout>
+
             </Grid>
         </ScrollView>
 
         <!-- SETTINGS OVERLAY -->
-        <Grid Grid.Row="1" IsVisible="{Binding IsSettingsOpen}" 
-              BackgroundColor="#DD000000" 
+        <Grid Grid.Row="1"
+              IsVisible="{Binding IsSettingsOpen}"
+              BackgroundColor="#AA000000"
               Padding="20">
             <Grid.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding ToggleSettingsCommand}"/>
             </Grid.GestureRecognizers>
 
             <Border Style="{StaticResource SolidCard}"
-                    VerticalOptions="Center" 
-                    MaximumWidthRequest="400"
+                    VerticalOptions="Center"
+                    MaximumWidthRequest="420"
                     Padding="24">
                 <VerticalStackLayout Spacing="20">
 
-                    <Label Text="🎮 Schwierigkeit" 
-                           Style="{StaticResource H2}" 
+                    <Label Text="🎮 Schwierigkeit"
+                           Style="{StaticResource H2}"
                            HorizontalOptions="Center"/>
 
-                    <FlexLayout Wrap="Wrap" JustifyContent="Center" Direction="Row">
-                        <Button Text="🌱 Einfach" 
+                    <FlexLayout Wrap="Wrap"
+                                JustifyContent="Center"
+                                Direction="Row">
+                        <Button Text="🌱 Einfach"
                                 Style="{StaticResource BtnSuccess}"
                                 Margin="6"
                                 WidthRequest="140"
-                                Command="{Binding ChangeDifficultyCommand}" 
+                                Command="{Binding ChangeDifficultyCommand}"
                                 CommandParameter="easy"/>
-                        <Button Text="⭐ Normal" 
+                        <Button Text="⭐ Normal"
                                 Style="{StaticResource BtnPrimary}"
                                 Margin="6"
                                 WidthRequest="140"
-                                Command="{Binding ChangeDifficultyCommand}" 
+                                Command="{Binding ChangeDifficultyCommand}"
                                 CommandParameter="normal"/>
-                        <Button Text="🔥 Schwer" 
+                        <Button Text="🔥 Schwer"
                                 Style="{StaticResource BtnAccent}"
                                 Margin="6"
                                 WidthRequest="140"
-                                Command="{Binding ChangeDifficultyCommand}" 
+                                Command="{Binding ChangeDifficultyCommand}"
                                 CommandParameter="hard"/>
-                        <Button Text="👑 Master" 
+                        <Button Text="👑 Master"
                                 Style="{StaticResource BtnSecondary}"
                                 Margin="6"
                                 WidthRequest="140"
-                                Command="{Binding ChangeDifficultyCommand}" 
+                                Command="{Binding ChangeDifficultyCommand}"
                                 CommandParameter="master"/>
                     </FlexLayout>
 
-                    <Button Text="Abbrechen" 
+                    <Button Text="Abbrechen"
                             Style="{StaticResource BtnGhost}"
                             Command="{Binding ToggleSettingsCommand}"/>
+
                 </VerticalStackLayout>
             </Border>
         </Grid>

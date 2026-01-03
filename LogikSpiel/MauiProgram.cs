@@ -15,7 +15,9 @@ public static class MauiProgram
         builder
             .UseMauiApp<App>()
             .UseSkiaSharp();
-        //SQLitePCL.Batteries_V2.Init();
+
+        SQLitePCL.Batteries_V2.Init();
+
         // Services
         builder.Services.AddSingleton<IGameCatalogService>(sp => new AppPackageGameCatalogService("games.json"));
         builder.Services.AddSingleton<IUserProfileService, SqliteUserProfileService>();
@@ -27,6 +29,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<PascalTriangleGeneratorService>();
         builder.Services.AddSingleton<MathCrossGeneratorService>();
         builder.Services.AddSingleton<IMathHangmanService, MathHangmanService>();
+
         // ViewModels
         builder.Services.AddTransient<MainPageViewModel>();
         builder.Services.AddTransient<ProfileViewModel>();
@@ -38,7 +41,11 @@ public static class MauiProgram
         builder.Services.AddTransient<PascalTrianglePageViewModel>();
         builder.Services.AddTransient<MathCrossPageViewModel>();
         builder.Services.AddTransient<MathHangmanPageViewModel>();
-        // Pages
+
+        // Pages (✅ ALLE Pages registrieren, die Shell/DI bauen soll)
+        builder.Services.AddTransient<MainPage>();
+        builder.Services.AddTransient<GameMapPage>();
+
         builder.Services.AddTransient<LearnPage>();
         builder.Services.AddTransient<GameHostPage>();
         builder.Services.AddTransient<OnboardingPage>();
@@ -47,6 +54,7 @@ public static class MauiProgram
         builder.Services.AddTransient<PascalTrianglePage>();
         builder.Services.AddTransient<MathCrossPage>();
         builder.Services.AddTransient<MathHangmanPage>();
+
         // Shell
         builder.Services.AddSingleton<AppShell>();
 
