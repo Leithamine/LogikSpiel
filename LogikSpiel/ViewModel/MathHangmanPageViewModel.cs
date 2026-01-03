@@ -188,7 +188,6 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         else
         {
             Lives = Math.Max(0, Lives - 1);
-            CurrentHint = g < _secret ? "💡 Die Zahl ist GRÖSSER ⬆️" : "💡 Die Zahl ist KLEINER ⬇️";
 
             if (Lives <= 0)
             {
