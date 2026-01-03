@@ -6,6 +6,7 @@ using LogikSpiel.Model;
 using LogikSpiel.Model.MathHangman;
 using LogikSpiel.Services;
 using LogikSpiel.Services.MathHangman;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Storage;
 
 namespace LogikSpiel.ViewModel;
@@ -151,7 +152,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         RangeMax = maxRange;
 
         int digitSum = _secret.ToString().Sum(c => c - '0');
-        VisibleProperties.Add(new NumberPropertyVM("Quersumme", $"Summe der Ziffern = {digitSum}.", $"{digitSum}"));
+        VisibleProperties.Add(new NumberPropertyVM("Quersumme", $"Summe der Ziffern = {digitSum}.", $"{_secret} → {digitSum}"));
 
         var props = _hangmanService.GetAllTrueProperties(_secret);
         foreach (var p in props)
@@ -187,13 +188,13 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         else
         {
             Lives = Math.Max(0, Lives - 1);
-            CurrentHint = g < _secret ? "💡 Die Zahl ist GRÖSSER ⬆️" : "💡 Die Zahl ist KLEINER ⬇️";
 
             if (Lives <= 0)
             {
                 IsFinished = true;
                 await _dialog.AlertAsync("Verloren 😢", $"Die Zahl war: {_secret}");
-                await _nav.GoBackAsync();
+                await MainThread.InvokeOnMainThreadAsync(async () =>
+                    await _nav.GoToAsync("GameMapPage", new Dictionary<string, object> { ["gameId"] = GameId }));
             }
         }
     }

@@ -72,22 +72,22 @@ public sealed class HangmanDrawable : IDrawable
             canvas.DrawLine(headCenterX, headCenterY + headRadius, headCenterX, groundY - 85 * scale); // Körper
         }
 
-        if (WrongCount >= 3)
+        if (WrongCount >= 2)
         {
             canvas.DrawLine(headCenterX, groundY - 120 * scale, headCenterX - 28 * scale, groundY - 100 * scale); // Arm 1
         }
 
-        if (WrongCount >= 4)
+        if (WrongCount >= 3)
         {
             canvas.DrawLine(headCenterX, groundY - 120 * scale, headCenterX + 28 * scale, groundY - 100 * scale); // Arm 2
         }
 
-        if (WrongCount >= 5)
+        if (WrongCount >= 4)
         {
             canvas.DrawLine(headCenterX, groundY - 85 * scale, headCenterX - 18 * scale, groundY - 40 * scale); // Bein 1
         }
 
-        if (WrongCount >= 6)
+        if (WrongCount >= 5)
         {
             canvas.DrawLine(headCenterX, groundY - 85 * scale, headCenterX + 18 * scale, groundY - 40 * scale); // Bein 2
         }
