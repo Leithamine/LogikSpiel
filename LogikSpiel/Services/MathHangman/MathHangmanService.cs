@@ -6,7 +6,7 @@ namespace LogikSpiel.Services.MathHangman;
 
 public sealed class MathHangmanService : IMathHangmanService
 {
-    public int GenerateSecretNumber(int seed, string difficultyKey)
+    public int GenerateSecretNumber(string difficultyKey)
     {
         var (min, max) = MathHangmanDifficulty.Range(difficultyKey);
         return Random.Shared.Next(min, max + 1);

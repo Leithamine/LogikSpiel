@@ -4,9 +4,11 @@ using LogikSpiel.ViewModel;
 
 namespace LogikSpiel.View;
 
-public partial class MathHangmanPage : ContentPage
+public partial class MathHangmanPage : ContentPage, IQueryAttributable
 {
     private readonly HangmanDrawable _hangmanDrawable = new();
+    private bool _isLoaded;
+    private bool _isShaking;
 
     public MathHangmanPage(MathHangmanPageViewModel vm)
     {
@@ -16,7 +18,7 @@ public partial class MathHangmanPage : ContentPage
         // Drawable der GraphicsView im XAML zuweisen
         HangmanView.Drawable = _hangmanDrawable;
 
-        // Überwache Fehleränderungen für das Neuzeichnen
+        // Ãœberwache FehlerÃ¤nderungen fÃ¼r das Neuzeichnen
         vm.PropertyChanged += (s, e) =>
         {
             if (e.PropertyName == nameof(vm.WrongCount))
@@ -25,11 +27,50 @@ public partial class MathHangmanPage : ContentPage
                 HangmanView.Invalidate(); // Erzwingt Refresh der Grafik
             }
         };
+
+        vm.RequestNearMiss += () => MainThread.BeginInvokeOnMainThread(async () => await ShakeAsync());
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        if (BindingContext is MathHangmanPageViewModel vm) await vm.StartRoundAsync();
+
+        if (!_isLoaded && BindingContext is MathHangmanPageViewModel vm)
+        {
+            await vm.LoadAsync("math_hangman", "normal", 1);
+            _isLoaded = true;
+        }
+    }
+
+    public void ApplyQueryAttributes(IDictionary<string, object> query)
+    {
+        if (BindingContext is not MathHangmanPageViewModel vm) return;
+        _isLoaded = true;
+
+        var gameId = query.TryGetValue("gameId", out var idObj) ? idObj?.ToString() ?? "math_hangman" : "math_hangman";
+        var difficulty = query.TryGetValue("difficulty", out var diffObj) ? diffObj?.ToString() ?? "normal" : "normal";
+
+        int level = 1;
+        if (query.TryGetValue("level", out var lvObj))
+            int.TryParse(lvObj?.ToString(), out level);
+
+        Dispatcher.Dispatch(async () => await vm.LoadAsync(gameId, difficulty, level));
+    }
+
+    private async Task ShakeAsync()
+    {
+        if (_isShaking || RootLayout == null) return;
+        _isShaking = true;
+
+        const uint duration = 45;
+        const double offset = 10;
+
+        await RootLayout.TranslateTo(offset, 0, duration, Easing.CubicInOut);
+        await RootLayout.TranslateTo(-offset, 0, duration, Easing.CubicInOut);
+        await RootLayout.TranslateTo(offset * 0.6, 0, duration, Easing.CubicInOut);
+        await RootLayout.TranslateTo(-offset * 0.6, 0, duration, Easing.CubicInOut);
+        await RootLayout.TranslateTo(0, 0, duration, Easing.CubicInOut);
+
+        _isShaking = false;
     }
 }
