@@ -9,7 +9,7 @@
              Shell.NavBarIsVisible="False"
              BackgroundImageSource="gamebg.png">
 
-    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="12" RowSpacing="12">
+    <Grid x:Name="RootLayout" RowDefinitions="Auto,Auto,*,Auto" Padding="12" RowSpacing="12">
         <!-- HEADER -->
         <Border Grid.Row="0" Style="{StaticResource GlassCard}" Padding="12">
             <Grid ColumnDefinitions="Auto,*,Auto">
@@ -94,8 +94,8 @@
                                     BackgroundColor="{StaticResource C_BgLight}"
                                     Padding="14"
                                     Margin="0,4">
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                                    <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+                                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="4">
+                                    <HorizontalStackLayout Grid.Row="0" Spacing="10" VerticalOptions="Center">
                                         <Label Text="✓" TextColor="{StaticResource C_Success}" 
                                                FontSize="16" FontAttributes="Bold"/>
                                         <Label Text="{Binding Key}" 
@@ -104,7 +104,17 @@
                                                FontSize="14"/>
                                     </HorizontalStackLayout>
 
-                                    <Button Grid.Column="1" Text="?" 
+                                    <Label Grid.Row="1"
+                                           Text="{Binding KidDescription}"
+                                           TextColor="{StaticResource C_TextMuted}"
+                                           FontSize="12"/>
+
+                                    <Label Grid.Row="2"
+                                           Text="{Binding Examples, StringFormat='Beispiele: {0}'}"
+                                           TextColor="{StaticResource C_TextMuted}"
+                                           FontSize="12"/>
+
+                                    <Button Grid.Row="0" Grid.RowSpan="3" Grid.Column="1" Text="?" 
                                             WidthRequest="38" HeightRequest="38"
                                             CornerRadius="19"
                                             BackgroundColor="{StaticResource C_Primary}"

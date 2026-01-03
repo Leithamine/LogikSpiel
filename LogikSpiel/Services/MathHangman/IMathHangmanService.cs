@@ -6,6 +6,6 @@ namespace LogikSpiel.Services.MathHangman;
 
 public interface IMathHangmanService
 {
-    int GenerateSecretNumber(int seed, string difficultyKey);
+    int GenerateSecretNumber(string difficultyKey);
     IReadOnlyList<NumberProperty> GetAllTrueProperties(int n);
 }
