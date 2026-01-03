@@ -1,16 +1,16 @@
 ﻿[
     {
         "id": "codebreaker",
-        "title": "Codebreaker (Mathe)",
+        "title": "Code-Knacker (Mathe)",
         "description": "Knacke den Code mit logischen Hinweisen",
         "image": "lockriddle.png",
         "route": "PuzzlePage",
         "levelCount": 50,
         "difficulties": [ "easy", "normal", "hard", "master" ],
         "rules": [
-            "Finde den richtigen Code um das Schloss zu öffnen",
-            "Nutze die Hinweise um die Ziffern zu ermitteln",
-            "Jeder Hinweis gibt dir Informationen über Position und Wert"
+            "Finde den richtigen Code, um das Schloss zu öffnen",
+            "Jeder Hinweis zeigt dir, ob eine Zahl im Code vorkommt und ob sie an der richtigen Position steht",
+            "Gewonnen hast du, wenn alle Ziffern richtig platziert sind"
         ]
     },
     {
@@ -22,9 +22,9 @@
         "levelCount": 50,
         "difficulties": [ "easy", "normal", "hard", "master" ],
         "rules": [
-            "Fülle das Gitter mit Zahlen und Operatoren",
-            "Jede Zeile und Spalte muss eine gültige Gleichung sein",
-            "Nutze die vorgegebenen Zahlen als Hinweise"
+            "Fülle das Gitter mit Zahlen und Rechenoperatoren (+ − × ÷), sodass jede Zeile und Spalte eine gültige Gleichung ergibt",
+            "Du darfst vorgegebene Felder nicht ändern",
+            "Gewonnen ist das Level, wenn alle Gleichungen stimmen"
         ]
     },
     {
@@ -36,24 +36,23 @@
         "levelCount": 50,
         "difficulties": [ "easy", "normal", "hard", "master" ],
         "rules": [
-            "Wähle einen Pfad von oben nach unten",
-            "Du kannst nur zu benachbarten Zellen in der nächsten Reihe",
-            "Finde die minimale oder maximale Summe je nach Aufgabe"
+            "Wähle einen zusammenhängenden Pfad von oben nach unten",
+            "Du darfst pro Reihe nur eine der beiden benachbarten Zellen wählen",
+            "Ziel ist die minimale oder maximale Summe gemäß Aufgabe"
         ]
     },
     {
         "id": "math_hangman",
-        "title": "Mathe Hangman",
+        "title": "Mathe-Hangman",
         "description": "Errate die Zahl anhand ihrer mathematischen Eigenschaften",
         "image": "hangman.png",
         "route": "MathHangmanPage",
         "levelCount": 50,
         "difficulties": [ "easy", "normal", "hard", "master" ],
         "rules": [
-            "Eine geheime Zahl wurde gewählt",
-            "Du siehst alle mathematischen Eigenschaften der Zahl",
-            "Rate die Zahl - bei falschen Versuchen erscheint der Hangman",
-            "Du hast 6 Versuche bevor das Spiel vorbei ist"
+            "Errate die geheime Zahl",
+            "Die Hinweise zeigen Eigenschaften der Zahl",
+            "Nach 6 falschen Versuchen ist das Spiel vorbei"
         ]
     }
 ]

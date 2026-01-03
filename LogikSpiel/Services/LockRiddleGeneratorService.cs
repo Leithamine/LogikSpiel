@@ -647,7 +647,7 @@ public class LockRiddleGeneratorService
             Code = string.Join(" ", slots),
             WellPlaced = 0,
             WrongPlaced = 0,
-            Description = "Keine Zahl korrekt",
+            Description = "Keine Zahl ist korrekt",
             Icon = "❌"
         };
     }
@@ -828,7 +828,9 @@ public class LockRiddleGeneratorService
 
         string desc = (well, wrong) switch
         {
-            (0, 0) => "In diesem Tipp ist keine Zahl korrekt",
+            (0, 0) => "Keine Zahl ist korrekt",
+            (1, 0) => "Eine Zahl ist korrekt und richtig platziert",
+            (0, 1) => "Eine Zahl ist korrekt, aber falsch platziert",
             ( > 0, 0) => $"In diesem Tipp sind {well} {Plural(well, "Zahl", "Zahlen")} korrekt und richtig platziert",
             (0, > 0) => $"In diesem Tipp sind {wrong} {Plural(wrong, "Zahl", "Zahlen")} korrekt, aber falsch platziert",
             _ => $"In diesem Tipp sind {well + wrong} {Plural(well + wrong, "Zahl", "Zahlen")} korrekt: {well} richtig platziert, {wrong} falsch platziert"

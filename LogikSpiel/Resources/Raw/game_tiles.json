@@ -1,7 +1,7 @@
 [
     {
         "Id": "cb1",
-        "Title": "Codebreaker L1",
+        "Title": "Code-Knacker L1",
         "Image": "dotnet_bot.png",
         "GameId": "Codebreaker",
         "LevelNumber": 1,
@@ -10,7 +10,7 @@
     },
     {
         "Id": "cb2",
-        "Title": "Codebreaker L2",
+        "Title": "Code-Knacker L2",
         "Image": "dotnet_bot.png",
         "GameId": "Codebreaker",
         "LevelNumber": 2,

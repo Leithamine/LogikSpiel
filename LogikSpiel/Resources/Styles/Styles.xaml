@@ -3,9 +3,9 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
 
     <!-- Shadows: auf hellen BGs eher “soft” -->
-    <Shadow x:Key="ShadowSmall" Brush="#22000000" Offset="0,2" Radius="6"/>
-    <Shadow x:Key="ShadowMedium" Brush="#2A000000" Offset="0,6" Radius="14"/>
-    <Shadow x:Key="ShadowCard" Brush="#26000000" Offset="0,10" Radius="18"/>
+    <Shadow x:Key="ShadowSmall" Brush="#33000000" Offset="0,2" Radius="6"/>
+    <Shadow x:Key="ShadowMedium" Brush="#3D000000" Offset="0,6" Radius="14"/>
+    <Shadow x:Key="ShadowCard" Brush="#33000000" Offset="0,10" Radius="18"/>
     <Shadow x:Key="ShadowGlowBlue" Brush="#332F80ED" Offset="0,0" Radius="22"/>
 
     <!-- BUTTONS (erst definieren, dann Alias benutzen!) -->
@@ -47,7 +47,7 @@
 
     <Style x:Key="BtnAccent" TargetType="Button">
         <Setter Property="BackgroundColor" Value="{StaticResource C_Accent}"/>
-        <Setter Property="TextColor" Value="{StaticResource C_TextPrimary}"/>
+        <Setter Property="TextColor" Value="{StaticResource C_TextDark}"/>
         <Setter Property="FontAttributes" Value="Bold"/>
         <Setter Property="CornerRadius" Value="14"/>
         <Setter Property="HeightRequest" Value="50"/>
@@ -141,7 +141,7 @@
     </Style>
 
     <Style x:Key="CoinBadge" TargetType="Border">
-        <Setter Property="BackgroundColor" Value="#E6FFFFFF"/>
+        <Setter Property="BackgroundColor" Value="{StaticResource C_GlassStrong}"/>
         <Setter Property="Stroke" Value="#33F2C94C"/>
         <Setter Property="StrokeThickness" Value="1"/>
         <Setter Property="StrokeShape" Value="RoundRectangle 14"/>

@@ -123,8 +123,8 @@
                                         HeightRequest="56"
                                         HorizontalOptions="Center"
                                         VerticalOptions="Center"
-                                        BackgroundColor="#F2FFFFFF"
-                                        Stroke="#66FFFFFF">
+                                        BackgroundColor="{StaticResource C_NodeLockedFill}"
+                                        Stroke="{StaticResource C_NodeLockedStroke}">
 
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer
@@ -139,14 +139,14 @@
                                            VerticalOptions="Center"
                                            FontAttributes="Bold"
                                            FontSize="18"
-                                           TextColor="#1A1A1A">
+                                           TextColor="{StaticResource C_TextPrimary}">
                                         <Label.Triggers>
 
                                             <!-- LOCKED -->
                                             <DataTrigger TargetType="Label"
                                                          Binding="{Binding IsUnlocked}"
                                                          Value="False">
-                                                <Setter Property="TextColor" Value="#7A7A7A"/>
+                                                <Setter Property="TextColor" Value="{StaticResource C_TextMuted}"/>
                                                 <Setter Property="Opacity" Value="0.9"/>
                                             </DataTrigger>
 
@@ -154,7 +154,7 @@
                                             <DataTrigger TargetType="Label"
                                                          Binding="{Binding IsCompleted}"
                                                          Value="True">
-                                                <Setter Property="TextColor" Value="White"/>
+                                                <Setter Property="TextColor" Value="{StaticResource C_TextOnDark}"/>
                                                 <Setter Property="Opacity" Value="1"/>
                                             </DataTrigger>
 
@@ -168,17 +168,17 @@
                                         <DataTrigger TargetType="Border"
                                                      Binding="{Binding IsUnlocked}"
                                                      Value="False">
-                                            <Setter Property="BackgroundColor" Value="#DFFFFFFF"/>
-                                            <Setter Property="Stroke" Value="#55FFFFFF"/>
-                                            <Setter Property="Opacity" Value="0.92"/>
+                                            <Setter Property="BackgroundColor" Value="{StaticResource C_NodeLockedFill}"/>
+                                            <Setter Property="Stroke" Value="{StaticResource C_NodeLockedStroke}"/>
+                                            <Setter Property="Opacity" Value="1"/>
                                         </DataTrigger>
 
                                         <!-- COMPLETED (statt grün: schönes Blau passend zum Himmel) -->
                                         <DataTrigger TargetType="Border"
                                                      Binding="{Binding IsCompleted}"
                                                      Value="True">
-                                            <Setter Property="BackgroundColor" Value="#5DADE2"/>
-                                            <Setter Property="Stroke" Value="#5DADE2"/>
+                                            <Setter Property="BackgroundColor" Value="{StaticResource C_NodeDoneFill}"/>
+                                            <Setter Property="Stroke" Value="{StaticResource C_NodeDoneStroke}"/>
                                             <Setter Property="StrokeThickness" Value="3"/>
                                         </DataTrigger>
 
@@ -186,10 +186,11 @@
                                         <DataTrigger TargetType="Border"
                                                      Binding="{Binding IsCurrent}"
                                                      Value="True">
-                                            <Setter Property="BackgroundColor" Value="#FFFFFFFF"/>
-                                            <Setter Property="Stroke" Value="#FFD54F"/>
+                                            <Setter Property="BackgroundColor" Value="{StaticResource C_NodeCurrentFill}"/>
+                                            <Setter Property="Stroke" Value="{StaticResource C_NodeCurrentStroke}"/>
                                             <Setter Property="StrokeThickness" Value="5"/>
                                             <Setter Property="Scale" Value="1.18"/>
+                                            <Setter Property="Shadow" Value="{StaticResource ShadowGlowBlue}"/>
                                         </DataTrigger>
 
                                     </Border.Triggers>
