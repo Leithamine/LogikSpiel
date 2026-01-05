@@ -17,7 +17,7 @@
         <!-- HEADER -->
         <Border Style="{StaticResource GlassCard}" Padding="12">
             <Grid ColumnDefinitions="Auto,*,Auto">
-                <Button Grid.Column="0" Text="←" Style="{StaticResource BtnIcon}"
+                <Button Grid.Column="0" Text="Zurück" Style="{StaticResource BtnIcon}"
                         Command="{Binding BackCommand}" IsEnabled="{Binding IsNotBusy}"/>
 
                 <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center" VerticalOptions="Center">

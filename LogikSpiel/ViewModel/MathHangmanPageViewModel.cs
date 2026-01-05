@@ -82,6 +82,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
     public ObservableCollection<NumberPropertyVM> VisibleProperties { get; } = new();
     public ObservableCollection<ShopHint> ShopItems { get; } = new();
 
+    public AsyncCommand BackCommand { get; }
     public AsyncCommand GuessCommand { get; }
     public AsyncCommand HintCommand { get; }
     public AsyncCommand<NumberPropertyVM> ExplainPropertyCommand { get; }
@@ -99,6 +100,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         _dialog = dialog;
         _nav = nav;
 
+        BackCommand = new AsyncCommand(ConfirmBackAsync);
         GuessCommand = new AsyncCommand(GuessAsync);
         HintCommand = new AsyncCommand(BuyHintAsync);
         ExplainPropertyCommand = new AsyncCommand<NumberPropertyVM>(ExplainPropertyAsync);
@@ -242,6 +244,13 @@ public sealed class MathHangmanPageViewModel : ObservableObject
 
         string message = $"{property.KidDescription}\nBeispiele: {property.Examples}";
         await _dialog.AlertAsync(property.Key, message);
+    }
+
+    private async Task ConfirmBackAsync()
+    {
+        bool leave = await _dialog.ConfirmAsync("Zurück", "Möchtest du das Rätsel verlassen?");
+        if (!leave) return;
+        await _nav.GoBackAsync();
     }
 
     private string GetSecretKey() => $"MATH_HANGMAN_SECRET_{GameId}_{DifficultyKey}_{LevelNumber}";

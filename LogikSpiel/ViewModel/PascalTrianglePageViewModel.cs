@@ -111,7 +111,7 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
         _userService = userService;
         _generator = generator;
 
-        BackCommand = new AsyncCommand(() => _nav.GoBackAsync());
+        BackCommand = new AsyncCommand(ConfirmBackAsync);
 
         ToggleSolutionCommand = new AsyncCommand(() =>
         {
@@ -414,5 +414,12 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
 
             return Math.Abs(hash);
         }
+    }
+
+    private async Task ConfirmBackAsync()
+    {
+        bool leave = await _dialog.ConfirmAsync("Zurück", "Möchtest du das Rätsel verlassen?");
+        if (!leave) return;
+        await _nav.GoBackAsync();
     }
 }

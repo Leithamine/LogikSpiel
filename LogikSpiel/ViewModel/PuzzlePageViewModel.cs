@@ -99,7 +99,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
         _riddleGenerator = riddleGenerator;
         _riddleState = riddleState;
 
-        BackCommand = new AsyncCommand(() => _nav.GoBackAsync());
+        BackCommand = new AsyncCommand(ConfirmBackAsync);
         CheckCommand = new AsyncCommand(CheckSolutionAsync);
 
         HintCommand = new AsyncCommand(async () =>
@@ -137,6 +137,13 @@ public sealed class PuzzlePageViewModel : ObservableObject
         }
 
         await StartNewRoundAsync();
+    }
+
+    private async Task ConfirmBackAsync()
+    {
+        bool leave = await _dialog.ConfirmAsync("Zurück", "Möchtest du das Rätsel verlassen?");
+        if (!leave) return;
+        await _nav.GoBackAsync();
     }
 
     private async Task StartNewRoundAsync()

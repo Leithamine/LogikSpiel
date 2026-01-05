@@ -106,7 +106,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
         _userService = userService;
         _generator = generator;
 
-        BackCommand = new AsyncCommand(() => _nav.GoBackAsync());
+        BackCommand = new AsyncCommand(ConfirmBackAsync);
 
         ResetCommand = new AsyncCommand(async () =>
         {
@@ -446,6 +446,13 @@ public sealed class MathCrossPageViewModel : ObservableObject
             foreach (var c in s) { h ^= c; h *= 16777619; }
             return Math.Abs(h);
         }
+    }
+
+    private async Task ConfirmBackAsync()
+    {
+        bool leave = await _dialog.ConfirmAsync("Zurück", "Möchtest du das Rätsel verlassen?");
+        if (!leave) return;
+        await _nav.GoBackAsync();
     }
 }
 
