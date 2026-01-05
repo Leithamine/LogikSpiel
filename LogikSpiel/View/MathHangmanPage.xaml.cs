@@ -9,7 +9,7 @@ public partial class MathHangmanPage : ContentPage, IQueryAttributable
 {
     private readonly HangmanDrawable _hangmanDrawable = new();
     private bool _isLoaded;
-
+    //
     public MathHangmanPage(MathHangmanPageViewModel vm)
     {
         InitializeComponent();
