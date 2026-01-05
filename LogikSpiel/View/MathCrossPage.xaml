@@ -95,6 +95,7 @@
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="x:String">
                                 <Button Text="{Binding .}"
+                                        x:DataType="{x:Null}"
                                         Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.TokenCommand}"
                                         CommandParameter="{Binding .}"
                                         WidthRequest="56" HeightRequest="52"
