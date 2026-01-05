@@ -2,13 +2,14 @@
 using LogikSpiel.ViewModel;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Graphics;
-using Controls = Microsoft.Maui.Controls;
-
+using MauiControls = Microsoft.Maui.Controls;
+using Microsoft.Maui;
+using Microsoft.Maui.Layouts; 
 namespace LogikSpiel.View;
 
-public partial class NumberRainPage : Controls.ContentPage, Controls.IQueryAttributable
+public partial class NumberRainPage : MauiControls.ContentPage, MauiControls.IQueryAttributable
 {
-    private readonly Dictionary<string, Controls.View> _views = new();
+    private readonly Dictionary<string, MauiControls.View> _views = new();
     private readonly Random _random = new();
     private bool _isLoaded;
     private double _canvasWidth;
@@ -64,14 +65,14 @@ public partial class NumberRainPage : Controls.ContentPage, Controls.IQueryAttri
         });
     }
 
-    private Controls.Button BuildNumberButton(NumberRainPageViewModel.NumberRainSpawn spawn)
+    private MauiControls.Button BuildNumberButton(NumberRainPageViewModel.NumberRainSpawn spawn)
     {
-        var button = new Controls.Button
+        var button = new MauiControls.Button
         {
             Text = spawn.Value.ToString(),
             BackgroundColor = Color.FromArgb("#1E88E5"),
             TextColor = Colors.White,
-            FontAttributes = FontAttributes.Bold,
+            FontAttributes = MauiControls.FontAttributes.Bold,
             FontSize = 16,
             CornerRadius = 16,
             HeightRequest = 42,
@@ -82,18 +83,18 @@ public partial class NumberRainPage : Controls.ContentPage, Controls.IQueryAttri
         double maxX = Math.Max(0, _canvasWidth - 70);
         double x = _random.NextDouble() * maxX;
 
-        Controls.AbsoluteLayout.SetLayoutBounds(button, new Rect(x, -50, 68, 42));
-        Controls.AbsoluteLayout.SetLayoutFlags(button, Controls.AbsoluteLayoutFlags.None);
+        MauiControls.AbsoluteLayout.SetLayoutBounds(button, new Rect(x, -50, 68, 42));
+        MauiControls.AbsoluteLayout.SetLayoutFlags(button, AbsoluteLayoutFlags.None);
 
         button.Clicked += async (_, __) => await HandleSelectionAsync(spawn.Id);
 
         return button;
     }
 
-    private async Task AnimateFallAsync(NumberRainPageViewModel.NumberRainSpawn spawn, Controls.View view)
+    private async Task AnimateFallAsync(NumberRainPageViewModel.NumberRainSpawn spawn, MauiControls.View view)
     {
         double endY = _canvasHeight + 60;
-        await view.TranslateTo(0, endY, (uint)spawn.FallDurationMs, Easing.Linear);
+        await view.TranslateToAsync(0, endY, (uint)spawn.FallDurationMs, Easing.Linear);
 
         if (_views.ContainsKey(spawn.Id))
         {
