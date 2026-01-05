@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
+             xmlns:conv="clr-namespace:LogikSpiel.Converters"
+             x:Class="LogikSpiel.View.NumberRainPage"
+             x:DataType="vm:NumberRainPageViewModel"
+             NavigationPage.HasNavigationBar="False"
+             Shell.NavBarIsVisible="False"
+             BackgroundImageSource="gamebg.png">
+    <ContentPage.Resources>
+        <conv:StringNotNullOrEmptyConverter x:Key="StringNotNullOrEmptyConverter" />
+    </ContentPage.Resources>
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="12" RowSpacing="12">
+        <!-- HEADER -->
+        <Border Style="{StaticResource GlassCard}" Padding="12">
+            <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto">
+                <Button Grid.Column="0" Grid.RowSpan="2" Text="Zurück" Style="{StaticResource BtnIcon}"
+                        Command="{Binding BackCommand}" />
+
+                <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Label Text="Zahlenregen" Style="{StaticResource H3}" HorizontalOptions="Center"/>
+                    <Border StrokeThickness="0" StrokeShape="RoundRectangle 8"
+                            BackgroundColor="{StaticResource C_Primary}" Padding="10,4">
+                        <Label Text="{Binding DifficultyLabel}" TextColor="{StaticResource C_TextOnColor}" FontSize="11" FontAttributes="Bold"/>
+                    </Border>
+                </VerticalStackLayout>
+
+                <Border Grid.Column="2" Style="{StaticResource CoinBadge}" HorizontalOptions="End">
+                    <HorizontalStackLayout Spacing="4">
+                        <Label Text="💰" FontSize="14"/>
+                        <Label Text="{Binding Coins}" TextColor="{StaticResource C_Gold}" FontAttributes="Bold"/>
+                    </HorizontalStackLayout>
+                </Border>
+
+                <Label Grid.Column="1" Grid.Row="1" Text="{Binding LivesText}" HorizontalOptions="Center" Style="{StaticResource Caption}"/>
+            </Grid>
+        </Border>
+
+        <!-- TASK -->
+        <Border Grid.Row="1" Style="{StaticResource GlassCard}" Padding="12">
+            <VerticalStackLayout Spacing="6">
+                <Label Text="{Binding TaskTitle}" Style="{StaticResource H3}"/>
+                <Label Text="{Binding TaskDetail}" Style="{StaticResource Caption}"
+                       IsVisible="{Binding TaskDetail, Converter={StaticResource StringNotNullOrEmptyConverter}}"/>
+
+                <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="12">
+                    <Label Grid.Column="0" Text="{Binding TimerText}" Style="{StaticResource Caption}" IsVisible="{Binding IsTimed}"/>
+                    <Label Grid.Column="1" Text="{Binding ComboText}" Style="{StaticResource Caption}" IsVisible="{Binding HasCombo}"/>
+                    <Label Grid.Column="2" Text="{Binding LevelNumber, StringFormat='Level {0}'}" Style="{StaticResource Caption}"/>
+                </Grid>
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- RAIN FIELD -->
+        <Border Grid.Row="2" Style="{StaticResource SolidCard}" Padding="6">
+            <AbsoluteLayout x:Name="RainCanvas" />
+        </Border>
+
+        <!-- OBJECTIVES -->
+        <Border Grid.Row="3" Style="{StaticResource GlassCard}" Padding="12" IsVisible="{Binding HasObjectives}">
+            <VerticalStackLayout BindableLayout.ItemsSource="{Binding Objectives}" Spacing="6">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:NumberRainObjectiveProgress">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Text="{Binding Title}" Style="{StaticResource Caption}"/>
+                            <Label Grid.Column="1" Text="{Binding ProgressText}" Style="{StaticResource Caption}"/>
+                        </Grid>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+        </Border>
+    </Grid>
+</ContentPage>

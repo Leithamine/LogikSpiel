@@ -128,6 +128,7 @@ public sealed class GameMapPageViewModel : ObservableObject
 
                 "math_cross" => "MathCrossPage",
                 "math_hangman" => "MathHangmanPage",
+                "number_rain" => "NumberRainPage",
 
                 // Default (bis du weitere Spiele implementierst)
                 _ => "PuzzlePage"
