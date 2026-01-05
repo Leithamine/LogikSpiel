@@ -54,5 +54,19 @@
             "Die Hinweise zeigen Eigenschaften der Zahl",
             "Nach 6 falschen Versuchen ist das Spiel vorbei"
         ]
+    },
+    {
+        "id": "number_rain",
+        "title": "Zahlenregen",
+        "description": "Wähle schnell die passenden Zahlen aus dem Regen",
+        "image": "applogo.png",
+        "route": "NumberRainPage",
+        "levelCount": 10000,
+        "difficulties": [ "easy", "normal", "hard", "master" ],
+        "rules": [
+            "Oben steht deine Aufgabe, pro Schwierigkeit gibt es viele Varianten",
+            "Tippe passende Zahlen an, falsche Klicks kosten Leben",
+            "Verpasste Zielzahlen kosten Leben – du hast 3 Leben"
+        ]
     }
 ]
