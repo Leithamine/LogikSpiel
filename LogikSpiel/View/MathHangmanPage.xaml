@@ -69,8 +69,8 @@
                         <Label Text="{Binding DifficultyText}" TextColor="{StaticResource C_TextDark}" FontSize="18" FontAttributes="Bold"/>
                     </Border>
                     <Border StrokeThickness="0" StrokeShape="RoundRectangle 8"
-                            BackgroundColor="{StaticResource C_BgLight}" Padding="10,6">
-                        <Label Text="{Binding QuersummeText}" TextColor="{StaticResource C_TextPrimary}" FontSize="14" FontAttributes="Bold"/>
+                            BackgroundColor="{StaticResource C_Accent}" Padding="10,4">
+                        <Label Text="{Binding QuersummeText}" TextColor="{StaticResource C_TextDark}" FontSize="18" FontAttributes="Bold"/>
                     </Border>
                 </VerticalStackLayout>
                 <Border Grid.Row="2"
