@@ -110,10 +110,12 @@ public sealed class MathHangmanPageViewModel : ObservableObject
     private void BuildShop()
     {
         ShopItems.Clear();
-        // Alle Hinweise kosten 10 Coins
-        ShopItems.Add(new ShopHintItemViewModel("digits", "🔢 Stellenanzahl", "Anzahl der Ziffern", 10));
-        ShopItems.Add(new ShopHintItemViewModel("contains", "🔎 Ziffer enthalten", "Welche Ziffer ist dabei?", 10));
-        ShopItems.Add(new ShopHintItemViewModel("mod3", "🔁 Modulo 3", "Rest bei Division durch 3", 10));
+
+        // Neue Hinweise (alle 10 Coins)
+        ShopItems.Add(new ShopHintItemViewModel("lastDigit", "🔚 Letzte Ziffer", "Welche Einerziffer?", 10));
+        ShopItems.Add(new ShopHintItemViewModel("firstDigit", "🔝 Erste Ziffer", "Welche führende Ziffer?", 10));
+        ShopItems.Add(new ShopHintItemViewModel("distinctCount", "🎲 Anzahl verschiedener Ziffern", "Wie viele verschiedene Ziffern?", 10));
+        ShopItems.Add(new ShopHintItemViewModel("hasDouble", "♻️ Doppelte Ziffer?", "Gibt es doppelte Ziffern?", 10));
     }
 
     public async Task LoadAsync(string gameId, string difficultyKey, int level)
@@ -249,11 +251,17 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         }
 
         // Hinweis-Logik
+        string s = _secret.ToString();
+
         string hintText = selectedItem.Id switch
         {
-            "digits" => $"🔢 Die Zahl hat {_secret.ToString().Length} Stellen.",
-            "contains" => $"🔎 Die Ziffer {PickContainedDigit()} ist enthalten.",
-            _ => $"🔁 Rest bei Division durch 3: {_secret % 3}."
+            "lastDigit" => $"🔚 Die letzte Ziffer ist {s[^1]}.",
+            "firstDigit" => $"🔝 Die erste Ziffer ist {s[0]}.",
+            "distinctCount" => $"🎲 Die Zahl hat {s.Distinct().Count()} verschiedene Ziffern.",
+            "hasDouble" => s.Length != s.Distinct().Count()
+                                ? "♻️ Es gibt mindestens eine doppelte Ziffer."
+                                : "♻️ Alle Ziffern sind verschieden.",
+            _ => "💡 Hinweis nicht verfügbar."
         };
 
         selectedItem.IsPurchased = true;
