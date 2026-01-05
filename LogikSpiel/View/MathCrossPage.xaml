@@ -95,7 +95,7 @@
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="x:String">
                                 <Button Text="{Binding .}"
-                                        Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.TokenCommand}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.TokenCommand}"
                                         CommandParameter="{Binding .}"
                                         WidthRequest="56" HeightRequest="52"
                                         BackgroundColor="{StaticResource C_BgLight}"
