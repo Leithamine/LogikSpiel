@@ -131,7 +131,8 @@
 
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.OpenLevelCommand}"
+                                            x:DataType="{x:Null}"
+                                            Command="{Binding Source={x:Reference RootPage}, Path=BindingContext.OpenLevelCommand}"
                                             CommandParameter="{Binding .}"/>
                                     </Border.GestureRecognizers>
 
