@@ -17,17 +17,23 @@ public partial class MathHangmanPage : ContentPage, IQueryAttributable
 
         // Drawable der GraphicsView im XAML zuweisen
         HangmanView.Drawable = _hangmanDrawable;
+        _hangmanDrawable.WrongCount = vm.WrongCount;
+        HangmanView.Invalidate();
 
         // Überwache Fehleränderungen für das Neuzeichnen
         vm.PropertyChanged += (s, e) =>
         {
-            if (e.PropertyName == nameof(vm.WrongCount))
+            if (e.PropertyName == nameof(vm.WrongCount) || e.PropertyName == nameof(vm.Lives))
             {
-                _hangmanDrawable.WrongCount = vm.WrongCount;
-                HangmanView.Invalidate(); // Erzwingt Refresh der Grafik
+                Dispatcher.Dispatch(() =>
+                {
+                    _hangmanDrawable.WrongCount = vm.WrongCount;
+                    HangmanView.Invalidate(); // Erzwingt Refresh der Grafik
+                });
             }
         };
 
+        //vm.RequestNearMiss += () => MainThread.BeginInvokeOnMainThread(async () => await ShakeAsync());
     }
 
     protected override async void OnAppearing()
@@ -38,6 +44,8 @@ public partial class MathHangmanPage : ContentPage, IQueryAttributable
         {
             await vm.LoadAsync("math_hangman", "normal", 1);
             _isLoaded = true;
+            _hangmanDrawable.WrongCount = vm.WrongCount;
+            HangmanView.Invalidate();
         }
     }
 
@@ -53,7 +61,12 @@ public partial class MathHangmanPage : ContentPage, IQueryAttributable
         if (query.TryGetValue("level", out var lvObj))
             int.TryParse(lvObj?.ToString(), out level);
 
-        Dispatcher.Dispatch(async () => await vm.LoadAsync(gameId, difficulty, level));
+        Dispatcher.Dispatch(async () =>
+        {
+            await vm.LoadAsync(gameId, difficulty, level);
+            _hangmanDrawable.WrongCount = vm.WrongCount;
+            HangmanView.Invalidate();
+        });
     }
 
 }

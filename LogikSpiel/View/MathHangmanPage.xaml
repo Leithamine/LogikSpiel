@@ -18,10 +18,6 @@
 
                 <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center" VerticalOptions="Center">
                     <Label Text="🎯 Mathe-Hangman" Style="{StaticResource H3}" HorizontalOptions="Center"/>
-                    <Border StrokeThickness="0" StrokeShape="RoundRectangle 8"
-                            BackgroundColor="{StaticResource C_Accent}" Padding="10,4">
-                        <Label Text="{Binding DifficultyText}" TextColor="{StaticResource C_TextDark}" FontSize="11" FontAttributes="Bold"/>
-                    </Border>
                 </VerticalStackLayout>
                 <Border Grid.Column="2" Style="{StaticResource CoinBadge}">
                     <HorizontalStackLayout Spacing="4">
@@ -67,8 +63,17 @@
             <Grid RowDefinitions="Auto,Auto,*" RowSpacing="10">
 
                 <Label Text="✨ Eigenschaften der Zahl" Style="{StaticResource H3}"/>
-
-                <Border Grid.Row="1"
+                <VerticalStackLayout Grid.Row="1" Spacing="6">
+                    <Border StrokeThickness="0" StrokeShape="RoundRectangle 8"
+                            BackgroundColor="{StaticResource C_Accent}" Padding="10,4">
+                        <Label Text="{Binding DifficultyText}" TextColor="{StaticResource C_TextDark}" FontSize="18" FontAttributes="Bold"/>
+                    </Border>
+                    <Border StrokeThickness="0" StrokeShape="RoundRectangle 8"
+                            BackgroundColor="{StaticResource C_Accent}" Padding="10,4">
+                        <Label Text="{Binding QuersummeText}" TextColor="{StaticResource C_TextDark}" FontSize="18" FontAttributes="Bold"/>
+                    </Border>
+                </VerticalStackLayout>
+                <Border Grid.Row="2"
                         StrokeThickness="0"
                         StrokeShape="RoundRectangle 12"
                         Padding="12"
@@ -112,18 +117,8 @@
                                     <Label Grid.Row="2"
                                            Text="{Binding Examples, StringFormat='Beispiele: {0}'}"
                                            TextColor="{StaticResource C_TextMuted}"
-                                           FontSize="12"/>
-
-                                    <Button Grid.Row="0" Grid.RowSpan="3" Grid.Column="1" Text="?" 
-                                            WidthRequest="38" HeightRequest="38"
-                                            CornerRadius="19"
-                                            BackgroundColor="{StaticResource C_Primary}"
-                                            TextColor="{StaticResource C_TextPrimary}"
-                                            FontAttributes="Bold"
-                                            FontSize="16"
-                                            Padding="0"
-                                            Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.ExplainPropertyCommand}"
-                                            CommandParameter="{Binding .}"/>
+                                           FontSize="12"
+                                           IsVisible="{Binding ShowExamples}"/>
                                 </Grid>
                             </Border>
                         </DataTemplate>

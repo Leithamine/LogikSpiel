@@ -40,6 +40,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Compile Remove="Core\ViewAnimationExtensions.cs" />
 	  <Compile Remove="Model\MathHangman\NumberProperty.cs" />
 	  <Compile Remove="Model\MathHangman\ShopHint.cs" />
 	</ItemGroup>
