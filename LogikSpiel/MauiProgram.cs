@@ -41,6 +41,7 @@ public static class MauiProgram
         builder.Services.AddTransient<PascalTrianglePageViewModel>();
         builder.Services.AddTransient<MathCrossPageViewModel>();
         builder.Services.AddTransient<MathHangmanPageViewModel>();
+        builder.Services.AddTransient<NumberRainPageViewModel>();
 
         // Pages (✅ ALLE Pages registrieren, die Shell/DI bauen soll)
         builder.Services.AddTransient<MainPage>();
@@ -54,6 +55,7 @@ public static class MauiProgram
         builder.Services.AddTransient<PascalTrianglePage>();
         builder.Services.AddTransient<MathCrossPage>();
         builder.Services.AddTransient<MathHangmanPage>();
+        builder.Services.AddTransient<NumberRainPage>();
 
         // Shell
         builder.Services.AddSingleton<AppShell>();
