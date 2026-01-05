@@ -225,15 +225,19 @@ public sealed class MathHangmanPageViewModel : ObservableObject
             return;
         }
 
-        var options = ShopItems
+        var optionItems = ShopItems
             .Where(item => item.CanPurchase)
-            .Select(item => $"{item.Title} ({item.Price} 💰)")
-            .ToArray();
+            .ToList();
+        var optionMap = optionItems.ToDictionary(
+            item => $"{item.Title} ({item.Price} 💰)",
+            item => item);
+        var options = optionMap.Keys.ToArray();
         var choice = await Shell.Current.DisplayActionSheetAsync("💡 Hinweis kaufen", "Abbrechen", null, options);
 
         if (string.IsNullOrEmpty(choice) || choice == "Abbrechen") return;
 
-        var selectedItem = ShopItems.FirstOrDefault(item => choice.StartsWith(item.Title, StringComparison.Ordinal));
+        if (!optionMap.TryGetValue(choice, out var selectedItem))
+            return;
         if (selectedItem == null || selectedItem.IsPurchased) return;
 
         var user = await _userService.GetUserAsync();
