@@ -11,30 +11,41 @@
 
     <Grid x:Name="RootLayout"
           RowDefinitions="Auto,Auto,*,Auto"
-          Padding="12"
-          RowSpacing="12">
+          Padding="{OnIdiom Phone=8, Desktop=12}"
+          RowSpacing="{OnIdiom Phone=8, Desktop=12}">
 
         <!-- HEADER -->
-        <Border Grid.Row="0" Style="{StaticResource GlassCard}" Padding="12">
-            <Grid ColumnDefinitions="Auto,*,Auto">
+        <Border Grid.Row="0"
+                Style="{StaticResource GlassCard}"
+                Padding="{OnIdiom Phone=8, Desktop=12}"
+                Margin="0">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
                 <Button Grid.Column="0"
                         Text="Zurück"
                         Style="{StaticResource BtnIcon}"
-                        WidthRequest="88"
-                        HeightRequest="48"
-                        Padding="12,0"
+                        WidthRequest="{OnIdiom Phone=76, Desktop=88}"
+                        HeightRequest="{OnIdiom Phone=40, Desktop=48}"
+                        Padding="10,0"
                         Command="{Binding BackCommand}" />
 
                 <VerticalStackLayout Grid.Column="1"
-                                     Spacing="2"
+                                     Spacing="0"
                                      HorizontalOptions="Center"
                                      VerticalOptions="Center">
                     <Label Text="🎯 Mathe-Hangman"
                            Style="{StaticResource H3}"
                            HorizontalOptions="Center" />
+
+                    <Label Text="{Binding LevelNumber, StringFormat='Level {0}'}"
+                           TextColor="{StaticResource C_TextMuted}"
+                           FontSize="14"
+                           HorizontalOptions="Center" 
+                           FontAttributes="Bold"/>
                 </VerticalStackLayout>
 
-                <Border Grid.Column="2" Style="{StaticResource CoinBadge}">
+                <Border Grid.Column="2"
+                        Style="{StaticResource CoinBadge}"
+                        Padding="{OnIdiom Phone=8, Desktop=10}">
                     <HorizontalStackLayout Spacing="4">
                         <Label Text="💰" FontSize="14" />
                         <Label Text="{Binding Coins}"
@@ -46,28 +57,25 @@
         </Border>
 
         <!-- HANGMAN -->
-        <Border Grid.Row="1" Style="{StaticResource GlowCard}" HeightRequest="260">
-            <Grid RowDefinitions="Auto,*" RowSpacing="10">
-
-                <!-- Lives + Level -->
+        <Border Grid.Row="1"
+                Style="{StaticResource GlowCard}"
+                HeightRequest="{OnIdiom Phone=200, Desktop=260}"
+                Padding="{OnIdiom Phone=8, Desktop=12}">
+            <Grid RowDefinitions="Auto,*" RowSpacing="{OnIdiom Phone=6, Desktop=10}">
                 <VerticalStackLayout Spacing="2" HorizontalOptions="Center">
                     <HorizontalStackLayout Spacing="6" HorizontalOptions="Center">
-                        <Label Text="❤️" FontSize="18" />
+                        <Label Text="❤️" FontSize="16" />
                         <Label Text="{Binding Lives}"
                                Style="{StaticResource H3}"
                                TextColor="{StaticResource C_Accent}" />
                     </HorizontalStackLayout>
-
-                    <Label Text="{Binding LevelNumber, StringFormat='Level {0}'}"
-                           TextColor="{StaticResource C_TextMuted}"
-                           FontSize="12"
-                           HorizontalOptions="Center" />
                 </VerticalStackLayout>
 
                 <Border Grid.Row="1"
                         StrokeThickness="0"
-                        StrokeShape="RoundRectangle 16"
-                        BackgroundColor="{StaticResource C_BgDark}">
+                        StrokeShape="RoundRectangle 14"
+                        BackgroundColor="{StaticResource C_BgDark}"
+                        Padding="0">
                     <GraphicsView x:Name="HangmanView"
                                   HorizontalOptions="Fill"
                                   VerticalOptions="Fill" />
@@ -75,10 +83,14 @@
             </Grid>
         </Border>
 
-        <!-- PROPERTIES (Eigenschaften FIX, Hinweise scrollen) -->
-        <Border Grid.Row="2" Style="{StaticResource GlassCard}" Padding="12">
-
-            <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="07">
+        <!-- PROPERTIES -->
+        <Border Grid.Row="2"
+                Style="{StaticResource GlassCard}"
+                Padding="{OnIdiom Phone=10, Desktop=12}"
+                Margin="0">
+   
+            <Grid RowDefinitions="Auto,Auto,Auto,*"
+                  RowSpacing="{OnIdiom Phone=6, Desktop=10}">
 
                 <Label Grid.Row="0"
                        Text="✨ Eigenschaften der Zahl"
@@ -89,62 +101,63 @@
                     <Border StrokeThickness="0"
                             StrokeShape="RoundRectangle 8"
                             BackgroundColor="{StaticResource C_Accent}"
-                            Padding="10,4">
+                            Padding="{OnIdiom Phone=8, Desktop=10}">
                         <Label Text="{Binding DifficultyText}"
                                TextColor="{StaticResource C_TextDark}"
-                               FontSize="18"
+                               FontSize="{OnIdiom Phone=16, Desktop=18}"
                                FontAttributes="Bold" />
                     </Border>
 
                     <Border StrokeThickness="0"
                             StrokeShape="RoundRectangle 8"
                             BackgroundColor="{StaticResource C_Accent}"
-                            Padding="10,4">
+                            Padding="{OnIdiom Phone=8, Desktop=10}">
                         <Label Text="{Binding QuersummeText}"
                                TextColor="{StaticResource C_TextDark}"
-                               FontSize="18"
+                               FontSize="{OnIdiom Phone=16, Desktop=18}"
                                FontAttributes="Bold" />
                     </Border>
                 </VerticalStackLayout>
 
-                <!-- Eigenschaften (FIX sichtbar, nicht scrollen) -->
+                <!-- Eigenschaften (kompakt, fix sichtbar) -->
                 <VerticalStackLayout Grid.Row="2"
-                                     Spacing="8"
+                                     Spacing="3"
                                      BindableLayout.ItemsSource="{Binding VisibleProperties}">
+
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="vm:NumberPropertyVM">
                             <Border StrokeThickness="0"
-                                    StrokeShape="RoundRectangle 14"
+                                    StrokeShape="RoundRectangle 12"
                                     BackgroundColor="{StaticResource C_BgLight}"
-                                    Padding="14"
-                                    Margin="0,4">
+                                    Padding="{OnIdiom Phone=8, Desktop=10}"
+                                    Margin="0,1">
                                 <Grid ColumnDefinitions="*,Auto"
                                       RowDefinitions="Auto,Auto,Auto"
-                                      ColumnSpacing="12"
-                                      RowSpacing="4">
+                                      ColumnSpacing="8"
+                                      RowSpacing="1">
 
                                     <HorizontalStackLayout Grid.Row="0"
-                                                           Spacing="10"
+                                                           Spacing="6"
                                                            VerticalOptions="Center">
                                         <Label Text="✓"
                                                TextColor="{StaticResource C_Success}"
-                                               FontSize="16"
+                                               FontSize="18"
                                                FontAttributes="Bold" />
                                         <Label Text="{Binding Key}"
                                                TextColor="{StaticResource C_TextPrimary}"
                                                FontAttributes="Bold"
-                                               FontSize="14" />
+                                               FontSize="{OnIdiom Phone=18, Desktop=19}" />
                                     </HorizontalStackLayout>
 
                                     <Label Grid.Row="1"
                                            Text="{Binding KidDescription}"
                                            TextColor="{StaticResource C_TextMuted}"
-                                           FontSize="12" />
+                                           FontSize="{OnIdiom Phone=16, Desktop=17}" />
 
                                     <Label Grid.Row="2"
                                            Text="{Binding Examples, StringFormat='Beispiele: {0}'}"
                                            TextColor="{StaticResource C_TextMuted}"
-                                           FontSize="12"
+                                           FontSize="{OnIdiom Phone=16, Desktop=17}"
                                            IsVisible="{Binding ShowExamples}" />
                                 </Grid>
                             </Border>
@@ -152,24 +165,24 @@
                     </BindableLayout.ItemTemplate>
                 </VerticalStackLayout>
 
-                <!-- Hinweise (SCROLLEN) -->
+                <!-- Hinweise (scrollen) -->
                 <Grid Grid.Row="3"
-      IsVisible="{Binding HasHints}"
-      RowDefinitions="Auto,*"
-      RowSpacing="8">
+                      IsVisible="{Binding HasHints}"
+                      RowDefinitions="Auto,*"
+                      RowSpacing="6">
 
                     <Label Grid.Row="0"
-           Text="💡 Hinweise"
-           Style="{StaticResource H3}" />
+                           Text="💡 Hinweise"
+                           Style="{StaticResource H3}" />
 
                     <CollectionView Grid.Row="1"
-                    ItemsSource="{Binding PurchasedHints}">
+                                    ItemsSource="{Binding PurchasedHints}">
                         <CollectionView.ItemTemplate>
                             <DataTemplate x:DataType="x:String">
                                 <Border StrokeThickness="0"
-                        StrokeShape="RoundRectangle 12"
-                        Padding="12"
-                        Margin="0,0,0,8">
+                                        StrokeShape="RoundRectangle 12"
+                                        Padding="{OnIdiom Phone=10, Desktop=12}"
+                                        Margin="0,0,0,6">
                                     <Border.Background>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                             <GradientStop Color="{StaticResource C_Warning}" Offset="0" />
@@ -178,10 +191,10 @@
                                     </Border.Background>
 
                                     <Label Text="{Binding}"
-                           TextColor="{StaticResource C_TextDark}"
-                           FontAttributes="Bold"
-                           FontSize="14"
-                           LineBreakMode="WordWrap" />
+                                           TextColor="{StaticResource C_TextDark}"
+                                           FontAttributes="Bold"
+                                           FontSize="{OnIdiom Phone=16, Desktop=17}"
+                                           LineBreakMode="WordWrap" />
                                 </Border>
                             </DataTemplate>
                         </CollectionView.ItemTemplate>
@@ -189,12 +202,13 @@
 
                 </Grid>
 
-
             </Grid>
         </Border>
 
         <!-- INPUT -->
-        <Border Grid.Row="3" Style="{StaticResource SolidCard}" Padding="16">
+        <Border Grid.Row="3"
+                Style="{StaticResource SolidCard}"
+                Padding="{OnIdiom Phone=10, Desktop=16}">
             <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
 
                 <Border StrokeThickness="2"
@@ -208,16 +222,16 @@
                            BackgroundColor="Transparent"
                            TextColor="{StaticResource C_TextPrimary}"
                            PlaceholderColor="{StaticResource C_TextMuted}"
-                           FontSize="18"
-                           FontAttributes="Bold" />
+                           FontSize="{OnIdiom Phone=16, Desktop=18}"
+                           FontAttributes="Bold"/>
                 </Border>
 
                 <Button Grid.Column="1"
                         Text="✓"
                         Style="{StaticResource BtnSuccess}"
-                        WidthRequest="56"
-                        HeightRequest="52"
-                        FontSize="22"
+                        WidthRequest="{OnIdiom Phone=52, Desktop=56}"
+                        HeightRequest="{OnIdiom Phone=48, Desktop=52}"
+                        FontSize="{OnIdiom Phone=20, Desktop=22}"
                         Command="{Binding GuessCommand}" />
 
                 <Button Grid.Column="2"
@@ -226,9 +240,9 @@
                         TextColor="{StaticResource C_TextDark}"
                         FontAttributes="Bold"
                         CornerRadius="14"
-                        WidthRequest="56"
-                        HeightRequest="52"
-                        FontSize="22"
+                        WidthRequest="{OnIdiom Phone=52, Desktop=56}"
+                        HeightRequest="{OnIdiom Phone=48, Desktop=52}"
+                        FontSize="{OnIdiom Phone=20, Desktop=22}"
                         Command="{Binding HintCommand}" />
             </Grid>
         </Border>
