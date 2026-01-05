@@ -14,13 +14,13 @@
         <Border Grid.Row="0" Style="{StaticResource GlassCard}" Padding="12">
             <Grid ColumnDefinitions="Auto,*,Auto">
                 <Button Grid.Column="0" Text="Zurück" Style="{StaticResource BtnIcon}"
+                        WidthRequest="88"
+                        HeightRequest="48"
+                        Padding="12,0"
                         Command="{Binding BackCommand}"/>
 
                 <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center" VerticalOptions="Center">
                     <Label Text="🎯 Mathe-Hangman" Style="{StaticResource H3}" HorizontalOptions="Center"/>
-                    <Label Text="{Binding LevelNumber, StringFormat='Level {0}'}"
-                           Style="{StaticResource Caption}"
-                           HorizontalOptions="Center"/>
                 </VerticalStackLayout>
                 <Border Grid.Column="2" Style="{StaticResource CoinBadge}">
                     <HorizontalStackLayout Spacing="4">
@@ -56,7 +56,7 @@
 
         <!-- PROPERTIES -->
         <Border Grid.Row="2" Style="{StaticResource GlassCard}" Padding="12">
-            <Grid RowDefinitions="Auto,Auto,*" RowSpacing="10">
+            <Grid RowDefinitions="Auto,Auto,Auto,*" RowSpacing="10">
 
                 <Label Text="✨ Eigenschaften der Zahl" Style="{StaticResource H3}"/>
                 <VerticalStackLayout Grid.Row="1" Spacing="6">
@@ -69,25 +69,32 @@
                         <Label Text="{Binding QuersummeText}" TextColor="{StaticResource C_TextDark}" FontSize="18" FontAttributes="Bold"/>
                     </Border>
                 </VerticalStackLayout>
-                <Border Grid.Row="2"
-                        StrokeThickness="0"
-                        StrokeShape="RoundRectangle 12"
-                        Padding="12"
-                        IsVisible="{Binding HasHint}">
-                    <Border.Background>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                            <GradientStop Color="{StaticResource C_Warning}" Offset="0"/>
-                            <GradientStop Color="{StaticResource C_GoldDark}" Offset="1"/>
-                        </LinearGradientBrush>
-                    </Border.Background>
-                    <Label Text="{Binding CurrentHint}" 
-                           TextColor="{StaticResource C_TextDark}" 
-                           FontAttributes="Bold" 
-                           FontSize="14"/>
-                </Border>
+                <VerticalStackLayout Grid.Row="2"
+                                     Spacing="8"
+                                     BindableLayout.ItemsSource="{Binding PurchasedHints}"
+                                     IsVisible="{Binding HasHints}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate>
+                            <Border StrokeThickness="0"
+                                    StrokeShape="RoundRectangle 12"
+                                    Padding="12">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                        <GradientStop Color="{StaticResource C_Warning}" Offset="0"/>
+                                        <GradientStop Color="{StaticResource C_GoldDark}" Offset="1"/>
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Label Text="{Binding .}"
+                                       TextColor="{StaticResource C_TextDark}"
+                                       FontAttributes="Bold"
+                                       FontSize="14"/>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
 
                 <!-- Properties List -->
-                <CollectionView Grid.Row="2" ItemsSource="{Binding VisibleProperties}">
+                <CollectionView Grid.Row="3" ItemsSource="{Binding VisibleProperties}">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="vm:NumberPropertyVM">
                             <Border StrokeThickness="0"

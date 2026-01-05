@@ -56,7 +56,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         }
     }
 
-    public string DifficultyText => $"Bereich: {RangeMin:N0} – {RangeMax:N0} (Lv {LevelNumber})";
+    public string DifficultyText => $"Bereich: {RangeMin:N0} – {RangeMax:N0}";
 
     private string _quersummeText = "";
     public string QuersummeText { get => _quersummeText; private set => SetProperty(ref _quersummeText, value); }
@@ -75,9 +75,8 @@ public sealed class MathHangmanPageViewModel : ObservableObject
     private string _guessText = "";
     public string GuessText { get => _guessText; set => SetProperty(ref _guessText, value); }
 
-    private string _currentHint = "";
-    public string CurrentHint { get => _currentHint; private set { SetProperty(ref _currentHint, value); OnPropertyChanged(nameof(HasHint)); } }
-    public bool HasHint => !string.IsNullOrWhiteSpace(CurrentHint);
+    public ObservableCollection<string> PurchasedHints { get; } = new();
+    public bool HasHints => PurchasedHints.Count > 0;
 
     public ObservableCollection<NumberPropertyVM> VisibleProperties { get; } = new();
     public ObservableCollection<ShopHint> ShopItems { get; } = new();
@@ -104,6 +103,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         GuessCommand = new AsyncCommand(GuessAsync);
         HintCommand = new AsyncCommand(BuyHintAsync);
         ExplainPropertyCommand = new AsyncCommand<NumberPropertyVM>(ExplainPropertyAsync);
+        PurchasedHints.CollectionChanged += (_, __) => OnPropertyChanged(nameof(HasHints));
         BuildShop();
     }
 
@@ -112,9 +112,8 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         ShopItems.Clear();
         // Alle Hinweise kosten 10 Coins
         ShopItems.Add(new ShopHint("digits", "🔢 Stellenanzahl", "Anzahl der Ziffern", 10));
-        ShopItems.Add(new ShopHint("sumdigits", "➕ Quersumme", "Summe aller Ziffern", 10));
-        ShopItems.Add(new ShopHint("parity", "⚖️ Gerade/Ungerade", "Ist die Zahl durch 2 teilbar?", 10));
         ShopItems.Add(new ShopHint("contains", "🔎 Ziffer enthalten", "Welche Ziffer ist dabei?", 10));
+        ShopItems.Add(new ShopHint("mod3", "🔁 Modulo 3", "Rest bei Division durch 3", 10));
     }
 
     public async Task LoadAsync(string gameId, string difficultyKey, int level)
@@ -131,7 +130,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         IsFinished = false;
         Lives = LivesMax;
         GuessText = "";
-        CurrentHint = "";
+        PurchasedHints.Clear();
         VisibleProperties.Clear();
 
         var user = await _userService.GetUserAsync();
@@ -232,10 +231,17 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         }
 
         // Hinweis-Logik
-        if (choice.Contains("Stellenanzahl")) CurrentHint = $"🔢 Die Zahl hat {_secret.ToString().Length} Stellen.";
-        else if (choice.Contains("Quersumme")) CurrentHint = $"➕ Die Quersumme ist {_secret.ToString().Sum(c => c - '0')}.";
-        else if (choice.Contains("Gerade")) CurrentHint = _secret % 2 == 0 ? "⚖️ Sie ist gerade." : "⚖️ Sie ist ungerade.";
-        else CurrentHint = "Hinweis gekauft!";
+        string hintText = choice.Contains("Stellenanzahl")
+            ? $"🔢 Die Zahl hat {_secret.ToString().Length} Stellen."
+            : choice.Contains("Ziffer enthalten")
+                ? $"🔎 Die Ziffer {PickContainedDigit()} ist enthalten."
+                : $"🔁 Rest bei Division durch 3: {_secret % 3}.";
+
+        if (!PurchasedHints.Contains(hintText))
+        {
+            PurchasedHints.Add(hintText);
+            OnPropertyChanged(nameof(HasHints));
+        }
     }
 
     private async Task ExplainPropertyAsync(NumberPropertyVM? property)
@@ -251,6 +257,12 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         bool leave = await _dialog.ConfirmAsync("Zurück", "Möchtest du das Rätsel verlassen?");
         if (!leave) return;
         await _nav.GoBackAsync();
+    }
+
+    private string PickContainedDigit()
+    {
+        var digits = _secret.ToString().Distinct().ToArray();
+        return digits.Length == 0 ? "0" : digits[Random.Shared.Next(digits.Length)].ToString();
     }
 
     private string GetSecretKey() => $"MATH_HANGMAN_SECRET_{GameId}_{DifficultyKey}_{LevelNumber}";
