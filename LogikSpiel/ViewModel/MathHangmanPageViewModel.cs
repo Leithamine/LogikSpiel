@@ -79,7 +79,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
     public bool HasHints => PurchasedHints.Count > 0;
 
     public ObservableCollection<NumberPropertyVM> VisibleProperties { get; } = new();
-    public ObservableCollection<ShopHint> ShopItems { get; } = new();
+    public ObservableCollection<ShopHintItemViewModel> ShopItems { get; } = new();
 
     public AsyncCommand BackCommand { get; }
     public AsyncCommand GuessCommand { get; }
@@ -111,9 +111,9 @@ public sealed class MathHangmanPageViewModel : ObservableObject
     {
         ShopItems.Clear();
         // Alle Hinweise kosten 10 Coins
-        ShopItems.Add(new ShopHint("digits", "🔢 Stellenanzahl", "Anzahl der Ziffern", 10));
-        ShopItems.Add(new ShopHint("contains", "🔎 Ziffer enthalten", "Welche Ziffer ist dabei?", 10));
-        ShopItems.Add(new ShopHint("mod3", "🔁 Modulo 3", "Rest bei Division durch 3", 10));
+        ShopItems.Add(new ShopHintItemViewModel("digits", "🔢 Stellenanzahl", "Anzahl der Ziffern", 10));
+        ShopItems.Add(new ShopHintItemViewModel("contains", "🔎 Ziffer enthalten", "Welche Ziffer ist dabei?", 10));
+        ShopItems.Add(new ShopHintItemViewModel("mod3", "🔁 Modulo 3", "Rest bei Division durch 3", 10));
     }
 
     public async Task LoadAsync(string gameId, string difficultyKey, int level)
@@ -132,6 +132,8 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         GuessText = "";
         PurchasedHints.Clear();
         VisibleProperties.Clear();
+        foreach (var item in ShopItems)
+            item.IsPurchased = false;
 
         var user = await _userService.GetUserAsync();
         Coins = user?.Coins ?? 0;
@@ -217,26 +219,44 @@ public sealed class MathHangmanPageViewModel : ObservableObject
             return;
         }
 
-        var options = ShopItems.Select(h => $"{h.Title} (10 💰)").ToArray();
+        if (ShopItems.All(item => item.IsPurchased))
+        {
+            await _dialog.AlertAsync("Hinweise", "Alle Hinweise wurden bereits gekauft.");
+            return;
+        }
+
+        var optionItems = ShopItems
+            .Where(item => item.CanPurchase)
+            .ToList();
+        var optionMap = optionItems.ToDictionary(
+            item => $"{item.Title} ({item.Price} 💰)",
+            item => item);
+        var options = optionMap.Keys.ToArray();
         var choice = await Shell.Current.DisplayActionSheetAsync("💡 Hinweis kaufen", "Abbrechen", null, options);
 
         if (string.IsNullOrEmpty(choice) || choice == "Abbrechen") return;
 
+        if (!optionMap.TryGetValue(choice, out var selectedItem))
+            return;
+        if (selectedItem == null || selectedItem.IsPurchased) return;
+
         var user = await _userService.GetUserAsync();
         if (user != null)
         {
-            user.Coins -= 10;
+            user.Coins -= selectedItem.Price;
             await _userService.SaveUserAsync(user);
             Coins = user.Coins;
         }
 
         // Hinweis-Logik
-        string hintText = choice.Contains("Stellenanzahl")
-            ? $"🔢 Die Zahl hat {_secret.ToString().Length} Stellen."
-            : choice.Contains("Ziffer enthalten")
-                ? $"🔎 Die Ziffer {PickContainedDigit()} ist enthalten."
-                : $"🔁 Rest bei Division durch 3: {_secret % 3}.";
+        string hintText = selectedItem.Id switch
+        {
+            "digits" => $"🔢 Die Zahl hat {_secret.ToString().Length} Stellen.",
+            "contains" => $"🔎 Die Ziffer {PickContainedDigit()} ist enthalten.",
+            _ => $"🔁 Rest bei Division durch 3: {_secret % 3}."
+        };
 
+        selectedItem.IsPurchased = true;
         if (!PurchasedHints.Contains(hintText))
         {
             PurchasedHints.Add(hintText);
