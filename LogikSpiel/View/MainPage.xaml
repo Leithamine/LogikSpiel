@@ -102,7 +102,7 @@
                                     Margin="0,0,0,16">
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer
-                                        Command="{Binding Source={x:Reference RootPage}, Path=BindingContext.OpenGameCommand}"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.OpenGameCommand}"
                                         CommandParameter="{Binding .}"/>
                                 </Border.GestureRecognizers>
 
@@ -127,7 +127,7 @@
                                             Style="{StaticResource BtnPrimary}"
                                             HeightRequest="42"
                                             FontSize="14"
-                                            Command="{Binding Source={x:Reference RootPage}, Path=BindingContext.OpenGameCommand}"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.OpenGameCommand}"
                                             CommandParameter="{Binding .}"/>
                                 </VerticalStackLayout>
                             </Border>
