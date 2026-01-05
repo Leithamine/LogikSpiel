@@ -95,6 +95,9 @@
 		<MauiXaml Update="View\MathHangmanPage.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
+		<MauiXaml Update="View\NumberRainPage.xaml">
+		  <Generator>MSBuild:Compile</Generator>
+		</MauiXaml>
 		<MauiXaml Update="View\OnboardingPage.xaml">
 			<Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
