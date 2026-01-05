@@ -9,7 +9,6 @@ public partial class MathHangmanPage : ContentPage, IQueryAttributable
 {
     private readonly HangmanDrawable _hangmanDrawable = new();
     private bool _isLoaded;
-    //
     public MathHangmanPage(MathHangmanPageViewModel vm)
     {
         InitializeComponent();
@@ -33,7 +32,6 @@ public partial class MathHangmanPage : ContentPage, IQueryAttributable
             }
         };
 
-        //vm.RequestNearMiss += () => MainThread.BeginInvokeOnMainThread(async () => await ShakeAsync());
     }
 
     protected override async void OnAppearing()
