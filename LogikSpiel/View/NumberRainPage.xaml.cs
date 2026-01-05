@@ -1,14 +1,14 @@
 #nullable enable
 using LogikSpiel.ViewModel;
 using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
+using Controls = Microsoft.Maui.Controls;
 
 namespace LogikSpiel.View;
 
-public partial class NumberRainPage : ContentPage, IQueryAttributable
+public partial class NumberRainPage : Controls.ContentPage, Controls.IQueryAttributable
 {
-    private readonly Dictionary<string, View> _views = new();
+    private readonly Dictionary<string, Controls.View> _views = new();
     private readonly Random _random = new();
     private bool _isLoaded;
     private double _canvasWidth;
@@ -64,9 +64,9 @@ public partial class NumberRainPage : ContentPage, IQueryAttributable
         });
     }
 
-    private Button BuildNumberButton(NumberRainPageViewModel.NumberRainSpawn spawn)
+    private Controls.Button BuildNumberButton(NumberRainPageViewModel.NumberRainSpawn spawn)
     {
-        var button = new Button
+        var button = new Controls.Button
         {
             Text = spawn.Value.ToString(),
             BackgroundColor = Color.FromArgb("#1E88E5"),
@@ -82,15 +82,15 @@ public partial class NumberRainPage : ContentPage, IQueryAttributable
         double maxX = Math.Max(0, _canvasWidth - 70);
         double x = _random.NextDouble() * maxX;
 
-        AbsoluteLayout.SetLayoutBounds(button, new Rect(x, -50, 68, 42));
-        AbsoluteLayout.SetLayoutFlags(button, AbsoluteLayoutFlags.None);
+        Controls.AbsoluteLayout.SetLayoutBounds(button, new Rect(x, -50, 68, 42));
+        Controls.AbsoluteLayout.SetLayoutFlags(button, Controls.AbsoluteLayoutFlags.None);
 
         button.Clicked += async (_, __) => await HandleSelectionAsync(spawn.Id);
 
         return button;
     }
 
-    private async Task AnimateFallAsync(NumberRainPageViewModel.NumberRainSpawn spawn, View view)
+    private async Task AnimateFallAsync(NumberRainPageViewModel.NumberRainSpawn spawn, Controls.View view)
     {
         double endY = _canvasHeight + 60;
         await view.TranslateTo(0, endY, (uint)spawn.FallDurationMs, Easing.Linear);
