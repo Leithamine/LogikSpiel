@@ -56,7 +56,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         }
     }
 
-    public string DifficultyText => $"Bereich: {RangeMin:N0} – {RangeMax:N0} (Lv {LevelNumber})";
+    public string DifficultyText => $"Bereich: {RangeMin:N0} – {RangeMax:N0}";
 
     private string _quersummeText = "";
     public string QuersummeText { get => _quersummeText; private set => SetProperty(ref _quersummeText, value); }
@@ -75,13 +75,13 @@ public sealed class MathHangmanPageViewModel : ObservableObject
     private string _guessText = "";
     public string GuessText { get => _guessText; set => SetProperty(ref _guessText, value); }
 
-    private string _currentHint = "";
-    public string CurrentHint { get => _currentHint; private set { SetProperty(ref _currentHint, value); OnPropertyChanged(nameof(HasHint)); } }
-    public bool HasHint => !string.IsNullOrWhiteSpace(CurrentHint);
+    public ObservableCollection<string> PurchasedHints { get; } = new();
+    public bool HasHints => PurchasedHints.Count > 0;
 
     public ObservableCollection<NumberPropertyVM> VisibleProperties { get; } = new();
-    public ObservableCollection<ShopHint> ShopItems { get; } = new();
+    public ObservableCollection<ShopHintItemViewModel> ShopItems { get; } = new();
 
+    public AsyncCommand BackCommand { get; }
     public AsyncCommand GuessCommand { get; }
     public AsyncCommand HintCommand { get; }
     public AsyncCommand<NumberPropertyVM> ExplainPropertyCommand { get; }
@@ -99,20 +99,23 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         _dialog = dialog;
         _nav = nav;
 
+        BackCommand = new AsyncCommand(ConfirmBackAsync);
         GuessCommand = new AsyncCommand(GuessAsync);
         HintCommand = new AsyncCommand(BuyHintAsync);
         ExplainPropertyCommand = new AsyncCommand<NumberPropertyVM>(ExplainPropertyAsync);
+        PurchasedHints.CollectionChanged += (_, __) => OnPropertyChanged(nameof(HasHints));
         BuildShop();
     }
 
     private void BuildShop()
     {
         ShopItems.Clear();
-        // Alle Hinweise kosten 10 Coins
-        ShopItems.Add(new ShopHint("digits", "🔢 Stellenanzahl", "Anzahl der Ziffern", 10));
-        ShopItems.Add(new ShopHint("sumdigits", "➕ Quersumme", "Summe aller Ziffern", 10));
-        ShopItems.Add(new ShopHint("parity", "⚖️ Gerade/Ungerade", "Ist die Zahl durch 2 teilbar?", 10));
-        ShopItems.Add(new ShopHint("contains", "🔎 Ziffer enthalten", "Welche Ziffer ist dabei?", 10));
+
+        // Neue Hinweise (alle 10 Coins)
+        ShopItems.Add(new ShopHintItemViewModel("lastDigit", "🔚 Letzte Ziffer", "Welche Einerziffer?", 10));
+        ShopItems.Add(new ShopHintItemViewModel("firstDigit", "🔝 Erste Ziffer", "Welche führende Ziffer?", 10));
+        ShopItems.Add(new ShopHintItemViewModel("distinctCount", "🎲 Anzahl verschiedener Ziffern", "Wie viele verschiedene Ziffern?", 10));
+        ShopItems.Add(new ShopHintItemViewModel("hasDouble", "♻️ Doppelte Ziffer?", "Gibt es doppelte Ziffern?", 10));
     }
 
     public async Task LoadAsync(string gameId, string difficultyKey, int level)
@@ -129,8 +132,10 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         IsFinished = false;
         Lives = LivesMax;
         GuessText = "";
-        CurrentHint = "";
+        PurchasedHints.Clear();
         VisibleProperties.Clear();
+        foreach (var item in ShopItems)
+            item.IsPurchased = false;
 
         var user = await _userService.GetUserAsync();
         Coins = user?.Coins ?? 0;
@@ -216,24 +221,55 @@ public sealed class MathHangmanPageViewModel : ObservableObject
             return;
         }
 
-        var options = ShopItems.Select(h => $"{h.Title} (10 💰)").ToArray();
+        if (ShopItems.All(item => item.IsPurchased))
+        {
+            await _dialog.AlertAsync("Hinweise", "Alle Hinweise wurden bereits gekauft.");
+            return;
+        }
+
+        var optionItems = ShopItems
+            .Where(item => item.CanPurchase)
+            .ToList();
+        var optionMap = optionItems.ToDictionary(
+            item => $"{item.Title} ({item.Price} 💰)",
+            item => item);
+        var options = optionMap.Keys.ToArray();
         var choice = await Shell.Current.DisplayActionSheetAsync("💡 Hinweis kaufen", "Abbrechen", null, options);
 
         if (string.IsNullOrEmpty(choice) || choice == "Abbrechen") return;
 
+        if (!optionMap.TryGetValue(choice, out var selectedItem))
+            return;
+        if (selectedItem == null || selectedItem.IsPurchased) return;
+
         var user = await _userService.GetUserAsync();
         if (user != null)
         {
-            user.Coins -= 10;
+            user.Coins -= selectedItem.Price;
             await _userService.SaveUserAsync(user);
             Coins = user.Coins;
         }
 
         // Hinweis-Logik
-        if (choice.Contains("Stellenanzahl")) CurrentHint = $"🔢 Die Zahl hat {_secret.ToString().Length} Stellen.";
-        else if (choice.Contains("Quersumme")) CurrentHint = $"➕ Die Quersumme ist {_secret.ToString().Sum(c => c - '0')}.";
-        else if (choice.Contains("Gerade")) CurrentHint = _secret % 2 == 0 ? "⚖️ Sie ist gerade." : "⚖️ Sie ist ungerade.";
-        else CurrentHint = "Hinweis gekauft!";
+        string s = _secret.ToString();
+
+        string hintText = selectedItem.Id switch
+        {
+            "lastDigit" => $"🔚 Die letzte Ziffer ist {s[^1]}.",
+            "firstDigit" => $"🔝 Die erste Ziffer ist {s[0]}.",
+            "distinctCount" => $"🎲 Die Zahl hat {s.Distinct().Count()} verschiedene Ziffern.",
+            "hasDouble" => s.Length != s.Distinct().Count()
+                                ? "♻️ Es gibt mindestens eine doppelte Ziffer."
+                                : "♻️ Alle Ziffern sind verschieden.",
+            _ => "💡 Hinweis nicht verfügbar."
+        };
+
+        selectedItem.IsPurchased = true;
+        if (!PurchasedHints.Contains(hintText))
+        {
+            PurchasedHints.Add(hintText);
+            OnPropertyChanged(nameof(HasHints));
+        }
     }
 
     private async Task ExplainPropertyAsync(NumberPropertyVM? property)
@@ -242,6 +278,19 @@ public sealed class MathHangmanPageViewModel : ObservableObject
 
         string message = $"{property.KidDescription}\nBeispiele: {property.Examples}";
         await _dialog.AlertAsync(property.Key, message);
+    }
+
+    private async Task ConfirmBackAsync()
+    {
+        bool leave = await _dialog.ConfirmAsync("Zurück", "Möchtest du das Rätsel verlassen?");
+        if (!leave) return;
+        await _nav.GoBackAsync();
+    }
+
+    private string PickContainedDigit()
+    {
+        var digits = _secret.ToString().Distinct().ToArray();
+        return digits.Length == 0 ? "0" : digits[Random.Shared.Next(digits.Length)].ToString();
     }
 
     private string GetSecretKey() => $"MATH_HANGMAN_SECRET_{GameId}_{DifficultyKey}_{LevelNumber}";

@@ -17,7 +17,7 @@
         <!-- HEADER -->
         <Border Style="{StaticResource GlassCard}" Padding="12">
             <Grid ColumnDefinitions="Auto,*,Auto">
-                <Button Grid.Column="0" Text="←" Style="{StaticResource BtnIcon}"
+                <Button Grid.Column="0" Text="Zurück" Style="{StaticResource BtnIcon}"
                         Command="{Binding BackCommand}" IsEnabled="{Binding IsNotBusy}"/>
 
                 <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center" VerticalOptions="Center">
@@ -95,6 +95,7 @@
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="x:String">
                                 <Button Text="{Binding .}"
+                                        x:DataType="{x:Null}"
                                         Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.TokenCommand}"
                                         CommandParameter="{Binding .}"
                                         WidthRequest="56" HeightRequest="52"

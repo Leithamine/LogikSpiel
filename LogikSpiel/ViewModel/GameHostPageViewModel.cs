@@ -8,6 +8,7 @@ public sealed class GameHostPageViewModel : ObservableObject
 {
     private readonly IGameCatalogService _catalog;
     private readonly IGameProgressStore _progressStore;
+    private readonly IDialogService _dialog;
     private readonly INavigationService _nav;
 
     public string GameId { get; private set; } = "";
@@ -25,13 +26,18 @@ public sealed class GameHostPageViewModel : ObservableObject
     public AsyncCommand RulesCommand { get; }
     public AsyncCommand SolveCommand { get; }
 
-    public GameHostPageViewModel(IGameCatalogService catalog, IGameProgressStore progressStore, INavigationService nav)
+    public GameHostPageViewModel(
+        IGameCatalogService catalog,
+        IGameProgressStore progressStore,
+        IDialogService dialog,
+        INavigationService nav)
     {
         _catalog = catalog;
         _progressStore = progressStore;
+        _dialog = dialog;
         _nav = nav;
 
-        BackCommand = new AsyncCommand(() => _nav.GoBackAsync());
+        BackCommand = new AsyncCommand(ConfirmBackAsync);
 
         RulesCommand = new AsyncCommand(async () =>
         {
@@ -79,4 +85,11 @@ public sealed class GameHostPageViewModel : ObservableObject
         "god" => "Gott",
         _ => key
     };
+
+    private async Task ConfirmBackAsync()
+    {
+        bool leave = await _dialog.ConfirmAsync("Zurück", "Möchtest du das Rätsel verlassen?");
+        if (!leave) return;
+        await _nav.GoBackAsync();
+    }
 }

@@ -535,7 +535,6 @@ public sealed class MathCrossGeneratorService
     {
         // Erzeuge ein garantiertes 8-Gleichungen Grid im Gitter-Muster
         int eqLen = s.EquationLength;
-        int numEq = 8;
 
         // 4 horizontal + 4 vertikal in einem Gitter
         int rows = eqLen * 2 + 3;

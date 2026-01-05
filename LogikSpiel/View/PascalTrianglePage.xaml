@@ -16,7 +16,7 @@
                 Padding="12,10">
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
 
-                <Button Grid.Column="0" Text="←" 
+                <Button Grid.Column="0" Text="Zurück" 
                         Style="{StaticResource IconButton}"
                         Command="{Binding BackCommand}"/>
 
