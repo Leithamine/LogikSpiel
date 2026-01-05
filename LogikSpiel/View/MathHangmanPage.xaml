@@ -38,13 +38,6 @@
                         <Label Text="{Binding Lives}" Style="{StaticResource H3}" 
                                TextColor="{StaticResource C_Accent}"/>
                     </HorizontalStackLayout>
-
-                    <Border StrokeThickness="0" StrokeShape="RoundRectangle 8"
-                            BackgroundColor="{StaticResource C_Error}" Padding="10,4"
-                            Opacity="0.9">
-                        <Label Text="{Binding WrongCount, StringFormat='Fehler: {0}/6'}" 
-                               TextColor="{StaticResource C_TextPrimary}" FontSize="12" FontAttributes="Bold"/>
-                    </Border>
                 </HorizontalStackLayout>
 
                 <Border Grid.Row="1" 
