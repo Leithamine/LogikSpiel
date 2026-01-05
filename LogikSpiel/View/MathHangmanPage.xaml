@@ -13,11 +13,14 @@
         <!-- HEADER -->
         <Border Grid.Row="0" Style="{StaticResource GlassCard}" Padding="12">
             <Grid ColumnDefinitions="Auto,*,Auto">
-                <Button Grid.Column="0" Text="←" Style="{StaticResource BtnIcon}"
+                <Button Grid.Column="0" Text="Zurück" Style="{StaticResource BtnIcon}"
                         Command="{Binding BackCommand}"/>
 
                 <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center" VerticalOptions="Center">
                     <Label Text="🎯 Mathe-Hangman" Style="{StaticResource H3}" HorizontalOptions="Center"/>
+                    <Label Text="{Binding LevelNumber, StringFormat='Level {0}'}"
+                           Style="{StaticResource Caption}"
+                           HorizontalOptions="Center"/>
                 </VerticalStackLayout>
                 <Border Grid.Column="2" Style="{StaticResource CoinBadge}">
                     <HorizontalStackLayout Spacing="4">

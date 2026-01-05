@@ -16,7 +16,7 @@
              ═══════════════════════════════════════════════════════════════ -->
         <Border Style="{StaticResource GlassCard}" Padding="12">
             <Grid ColumnDefinitions="Auto,*,Auto">
-                <Button Grid.Column="0" Text="←" Style="{StaticResource BtnIcon}"
+                <Button Grid.Column="0" Text="Zurück" Style="{StaticResource BtnIcon}"
                         Command="{Binding BackCommand}"/>
 
                 <Label Grid.Column="1" Text="{Binding Title}" Style="{StaticResource H3}"
