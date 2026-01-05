@@ -103,6 +103,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         GuessCommand = new AsyncCommand(GuessAsync);
         HintCommand = new AsyncCommand(BuyHintAsync);
         ExplainPropertyCommand = new AsyncCommand<NumberPropertyVM>(ExplainPropertyAsync);
+        PurchasedHints.CollectionChanged += (_, __) => OnPropertyChanged(nameof(HasHints));
         BuildShop();
     }
 
@@ -130,7 +131,6 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         Lives = LivesMax;
         GuessText = "";
         PurchasedHints.Clear();
-        OnPropertyChanged(nameof(HasHints));
         VisibleProperties.Clear();
 
         var user = await _userService.GetUserAsync();
