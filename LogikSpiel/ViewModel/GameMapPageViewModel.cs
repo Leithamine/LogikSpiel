@@ -80,7 +80,7 @@ public sealed class GameMapPageViewModel : ObservableObject
         _nav = nav;
         _userService = userService;
 
-        BackCommand = new AsyncCommand(() => _nav.GoBackAsync());
+        BackCommand = new AsyncCommand(() => _nav.GoToAsync("//Main"));
 
         OpenProfileCommand = new AsyncCommand(async () =>
             await _nav.GoToAsync("ProfilePage"));
