@@ -216,6 +216,8 @@ public sealed class NumberRainPageViewModel : ObservableObject
         _spawnTimer.Tick += (_, _) => SpawnNumber();
         _spawnTimer.Start();
 
+        SpawnNumber();
+
         _updateTimer?.Stop();
         _updateTimer = _dispatcher.CreateTimer();
         _updateTimer.Interval = TimeSpan.FromMilliseconds(33);
