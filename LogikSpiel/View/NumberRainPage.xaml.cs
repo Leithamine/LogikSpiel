@@ -1,5 +1,5 @@
 using LogikSpiel.ViewModel;
-
+using Microsoft.Maui.Controls;
 namespace LogikSpiel.View;
 
 public partial class NumberRainPage : ContentPage, IQueryAttributable
