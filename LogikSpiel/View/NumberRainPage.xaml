@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
+             xmlns:resx="clr-namespace:LogikSpiel.Resources.Strings"
              x:Class="LogikSpiel.View.NumberRainPage"
              x:DataType="vm:NumberRainPageViewModel"
              x:Name="RootPage"
@@ -23,7 +24,7 @@
                 Padding="{OnIdiom Phone=8, Desktop=12}">
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{OnIdiom Phone=8, Desktop=12}">
                 <Button Grid.Column="0"
-                        Text="Zurück"
+                        Text="{resx:Translate Key=Common_Back}"
                         Style="{StaticResource BtnIcon}"
                         WidthRequest="{OnIdiom Phone=76, Desktop=88}"
                         HeightRequest="{OnIdiom Phone=40, Desktop=48}"
@@ -34,10 +35,10 @@
                                      Spacing="2"
                                      HorizontalOptions="Center"
                                      VerticalOptions="Center">
-                    <Label Text="🌧️ Zahlenregen"
+                    <Label Text="{resx:Translate Key=NumberRain_Title}"
                            Style="{StaticResource H2}"
                            HorizontalOptions="Center" />
-                    <Label Text="{Binding LevelNumber, StringFormat='Level {0}'}"
+                    <Label Text="{Binding LevelNumber, StringFormat={x:Static resx:AppResources.Common_LevelFormat}}"
                            TextColor="{StaticResource C_TextMuted}"
                            FontSize="{OnIdiom Phone=12, Desktop=14}"
                            HorizontalOptions="Center"
@@ -72,7 +73,7 @@
                 Padding="{OnIdiom Phone=10, Desktop=12}">
             <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="{OnIdiom Phone=8, Desktop=10}">
                 <HorizontalStackLayout Spacing="8">
-                    <Label Text="🧩 Mission"
+                    <Label Text="{resx:Translate Key=NumberRain_MissionTitle}"
                            Style="{StaticResource H3}" />
                     <Border Style="{StaticResource Chip}" Padding="10,4">
                         <Label Text="{Binding QuestModeLabel}"
@@ -112,20 +113,20 @@
                       RowDefinitions="{OnIdiom Phone='Auto,Auto', Desktop='Auto'}"
                       RowSpacing="8">
                     <Button Grid.Column="0"
-                            Text="Starten"
+                            Text="{resx:Translate Key=NumberRain_Start}"
                             Style="{StaticResource BtnPrimary}"
                             Command="{Binding StartCommand}"
                             IsEnabled="{Binding CanStart}" />
 
                     <Button Grid.Column="{OnIdiom Phone=1, Desktop=1}"
                             Grid.Row="{OnIdiom Phone=0, Desktop=0}"
-                            Text="Erklärung"
+                            Text="{resx:Translate Key=NumberRain_Explain}"
                             Style="{StaticResource BtnSecondary}"
                             Command="{Binding ExplainCommand}" />
 
                     <Button Grid.Column="{OnIdiom Phone=2, Desktop=2}"
                             Grid.Row="{OnIdiom Phone=0, Desktop=0}"
-                            Text="Abbrechen"
+                            Text="{resx:Translate Key=Common_Cancel}"
                             Style="{StaticResource BtnSecondary}"
                             Command="{Binding CancelCommand}"
                             IsEnabled="{Binding IsRunning}" />
@@ -197,7 +198,7 @@
                 Grid.ColumnSpan="2"
                 Style="{StaticResource GlassCard}"
                 Padding="{OnIdiom Phone=8, Desktop=10}">
-            <Label Text="Tippe die richtigen Zahlen an, bevor sie unten verschwinden."
+            <Label Text="{resx:Translate Key=NumberRain_TapInstruction}"
                    Style="{StaticResource Body}" />
         </Border>
 

@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
+using LogikSpiel.Services.Localization;
 using LogikSpiel.View;
 using Microsoft.Maui.Graphics;
 
@@ -38,7 +39,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
         }
     }
 
-    public string Title => $"Math Cross – {DiffName(DifficultyKey)} (Lv {LevelNumber})";
+    public string Title => LocalizationService.Format("MathCross_TitleFormat", DiffName(DifficultyKey), LevelNumber);
     public string DifficultyText => DiffName(DifficultyKey);
 
     private MathCrossGame? _game;
@@ -113,7 +114,11 @@ public sealed class MathCrossPageViewModel : ObservableObject
         ResetCommand = new AsyncCommand(async () =>
         {
             if (Game == null) return;
-            bool confirm = await _dialog.ConfirmAsync("Reset", "Alle Eingaben löschen?", "Ja", "Nein");
+            bool confirm = await _dialog.ConfirmAsync(
+                LocalizationService.GetString("MathCross_ResetTitle"),
+                LocalizationService.GetString("MathCross_ResetMessage"),
+                LocalizationService.GetString("Common_Yes"),
+                LocalizationService.GetString("Common_No"));
             if (!confirm) return;
 
             foreach (var vm in FlatCells)
@@ -133,11 +138,15 @@ public sealed class MathCrossPageViewModel : ObservableObject
         {
             if (Coins < 10)
             {
-                await _dialog.AlertAsync("Nicht genug Coins", "Du brauchst 10 Coins!");
+                await _dialog.AlertAsync(
+                    LocalizationService.GetString("Common_NotEnoughCoinsTitle"),
+                    LocalizationService.Format("Common_NeedCoinsFormat", 10));
                 return;
             }
 
-            bool buy = await _dialog.ConfirmAsync("Tipp kaufen?", "Ein Feld für 10 Coins?");
+            bool buy = await _dialog.ConfirmAsync(
+                LocalizationService.GetString("MathCross_BuyHintTitle"),
+                LocalizationService.Format("MathCross_BuyHintMessage", 10));
             if (!buy) return;
 
             var empty = FlatCells
@@ -147,7 +156,9 @@ public sealed class MathCrossPageViewModel : ObservableObject
 
             if (empty == null)
             {
-                await _dialog.AlertAsync("Kein Tipp", "Alle Felder ausgefüllt!");
+                await _dialog.AlertAsync(
+                    LocalizationService.GetString("MathCross_NoHintTitle"),
+                    LocalizationService.GetString("MathCross_NoHintMessage"));
                 return;
             }
 
@@ -233,7 +244,9 @@ public sealed class MathCrossPageViewModel : ObservableObject
 
         if (game == null || game.Rows == 0)
         {
-            await _dialog.AlertAsync("Fehler", "Konnte kein Rätsel generieren.");
+            await _dialog.AlertAsync(
+                LocalizationService.GetString("MathCross_ErrorTitle"),
+                LocalizationService.GetString("MathCross_ErrorGenerateMessage"));
             return;
         }
 
@@ -354,7 +367,9 @@ public sealed class MathCrossPageViewModel : ObservableObject
         if (missing.Count > 0)
         {
             SelectedCell = missing[0];
-            await _dialog.AlertAsync("Fehlt noch", $"Es fehlen {missing.Count} Felder.");
+            await _dialog.AlertAsync(
+                LocalizationService.GetString("MathCross_MissingTitle"),
+                LocalizationService.Format("MathCross_MissingMessageFormat", missing.Count));
             return;
         }
 
@@ -375,7 +390,9 @@ public sealed class MathCrossPageViewModel : ObservableObject
                 ClearSelections();
                 vm.IsSelected = true;
                 SelectedCell = vm;
-                await _dialog.AlertAsync("Falsch", "Mindestens ein Feld ist falsch.");
+                await _dialog.AlertAsync(
+                    LocalizationService.GetString("MathCross_WrongTitle"),
+                    LocalizationService.GetString("MathCross_WrongMessage"));
                 return;
             }
         }
@@ -389,7 +406,9 @@ public sealed class MathCrossPageViewModel : ObservableObject
             await _userService.SaveUserAsync(_userProfile);
         }
 
-        await _dialog.AlertAsync("Super! 🎉", $"+{reward} Coins");
+        await _dialog.AlertAsync(
+            LocalizationService.GetString("MathCross_SuccessTitle"),
+            LocalizationService.Format("Common_CoinsRewardFormat", reward));
         await _progressStore.MarkLevelCompleteAsync(GameId, DifficultyKey, LevelNumber);
 
         LevelNumber++;
@@ -431,14 +450,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
         return Color.FromArgb("#242C3A");
     }
 
-    private static string DiffName(string k) => k switch
-    {
-        "easy" => "Einfach",
-        "normal" => "Normal",
-        "hard" => "Schwer",
-        "master" => "Master",
-        _ => k
-    };
+    private static string DiffName(string k) => LocalizationService.GetDifficultyLabel(k);
 
     private static int StableHash(string s)
     {
@@ -453,10 +465,10 @@ public sealed class MathCrossPageViewModel : ObservableObject
     private async Task ConfirmBackAsync()
     {
         bool leave = await _dialog.ConfirmAsync(
-            "Zurück",
-            "Möchtest du das Rätsel verlassen?",
-            "Ja",
-            "Nein");
+            LocalizationService.GetString("Common_Back"),
+            LocalizationService.GetString("Common_LeavePuzzlePrompt"),
+            LocalizationService.GetString("Common_Yes"),
+            LocalizationService.GetString("Common_No"));
 
         if (!leave) return;
 

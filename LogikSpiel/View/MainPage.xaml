@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
+             xmlns:resx="clr-namespace:LogikSpiel.Resources.Strings"
              xmlns:model="clr-namespace:LogikSpiel.Model"
              x:Class="LogikSpiel.View.MainPage"
              x:DataType="vm:MainPageViewModel"
@@ -30,8 +31,8 @@
                                HorizontalOptions="Center" VerticalOptions="Center"/>
                     </Border>
                     <VerticalStackLayout Spacing="0" VerticalOptions="Center">
-                        <Label Text="Logik Spiele" Style="{StaticResource H3}"/>
-                        <Label Text="Trainiere dein Gehirn" Style="{StaticResource Caption}"/>
+                        <Label Text="{resx:Translate Key=Main_Title}" Style="{StaticResource H3}"/>
+                        <Label Text="{resx:Translate Key=Main_Subtitle}" Style="{StaticResource Caption}"/>
                     </VerticalStackLayout>
                 </HorizontalStackLayout>
 
@@ -67,8 +68,8 @@
             <VerticalStackLayout Spacing="20">
 
                 <VerticalStackLayout Spacing="8" Margin="0,10,0,0">
-                    <Label Text="👋 Willkommen zurück!" Style="{StaticResource H1}" HorizontalOptions="Center"/>
-                    <Label Text="Wähle ein Spiel und starte!" Style="{StaticResource Body}" HorizontalOptions="Center"/>
+                    <Label Text="{resx:Translate Key=Main_Welcome}" Style="{StaticResource H1}" HorizontalOptions="Center"/>
+                    <Label Text="{resx:Translate Key=Main_WelcomeSub}" Style="{StaticResource Body}" HorizontalOptions="Center"/>
                 </VerticalStackLayout>
 
                 <Border StrokeThickness="0"
@@ -88,7 +89,7 @@
                     <BoxView WidthRequest="4" HeightRequest="24"
                              Color="{StaticResource C_Primary}"
                              CornerRadius="2"/>
-                    <Label Text="Spiele" Style="{StaticResource H2}"/>
+                    <Label Text="{resx:Translate Key=Main_GamesTitle}" Style="{StaticResource H2}"/>
                 </HorizontalStackLayout>
 
                 <FlexLayout Wrap="Wrap"
@@ -123,7 +124,7 @@
                                            HorizontalTextAlignment="Center"
                                            LineBreakMode="TailTruncation"/>
 
-                                    <Button Text="▶ Spielen"
+                                    <Button Text="{resx:Translate Key=Main_PlayButton}"
                                             Style="{StaticResource BtnPrimary}"
                                             HeightRequest="42"
                                             FontSize="14"

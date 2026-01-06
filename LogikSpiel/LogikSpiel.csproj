@@ -115,4 +115,18 @@
 		</MauiXaml>
 	</ItemGroup>
 
+	<ItemGroup>
+		<EmbeddedResource Update="Resources\Strings\AppResources.resx">
+			<Generator>PublicResXFileCodeGenerator</Generator>
+			<CustomToolNamespace>LogikSpiel.Resources.Strings</CustomToolNamespace>
+		</EmbeddedResource>
+		<EmbeddedResource Update="Resources\Strings\AppResources.de.resx" />
+		<EmbeddedResource Update="Resources\Strings\AppResources.en.resx" />
+		<EmbeddedResource Update="Resources\Strings\AppResources.es.resx" />
+		<EmbeddedResource Update="Resources\Strings\AppResources.fr.resx" />
+		<EmbeddedResource Update="Resources\Strings\AppResources.it.resx" />
+		<EmbeddedResource Update="Resources\Strings\AppResources.pt.resx" />
+		<EmbeddedResource Update="Resources\Strings\AppResources.ar.resx" />
+	</ItemGroup>
+
 </Project>

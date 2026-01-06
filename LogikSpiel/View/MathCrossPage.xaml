@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
+             xmlns:resx="clr-namespace:LogikSpiel.Resources.Strings"
              xmlns:conv="clr-namespace:LogikSpiel.Converters"
              x:Class="LogikSpiel.View.MathCrossPage"
              x:DataType="vm:MathCrossPageViewModel"
@@ -17,11 +18,11 @@
         <!-- HEADER -->
         <Border Style="{StaticResource GlassCard}" Padding="12">
             <Grid ColumnDefinitions="Auto,*,Auto">
-                <Button Grid.Column="0" Text="Zurück" Style="{StaticResource BtnIcon}"
+                <Button Grid.Column="0" Text="{resx:Translate Key=Common_Back}" Style="{StaticResource BtnIcon}"
                         Command="{Binding BackCommand}" IsEnabled="{Binding IsNotBusy}"/>
 
                 <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center" VerticalOptions="Center">
-                    <Label Text="Math Cross" Style="{StaticResource H3}" HorizontalOptions="Center"/>
+                    <Label Text="{resx:Translate Key=MathCross_Title}" Style="{StaticResource H3}" HorizontalOptions="Center"/>
                     <Border StrokeThickness="0" StrokeShape="RoundRectangle 8"
                             BackgroundColor="{StaticResource C_Primary}" Padding="10,4">
                         <Label Text="{Binding DifficultyText}" TextColor="{StaticResource C_TextOnColor}" FontSize="11" FontAttributes="Bold"/>
@@ -111,7 +112,7 @@
                     </HorizontalStackLayout>
                 </ScrollView>
 
-                <Label Text="👆 Tippe auf ein Feld" 
+                <Label Text="{resx:Translate Key=MathCross_Tip}" 
                        IsVisible="{Binding HasSelection, Converter={StaticResource InvertBoolConverter}}"
                        HorizontalOptions="Center"
                        Style="{StaticResource Caption}"/>
@@ -124,7 +125,7 @@
             <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="16">
                 <ActivityIndicator IsRunning="True" Color="{StaticResource C_Primary}" 
                                    HeightRequest="60" WidthRequest="60"/>
-                <Label Text="Erzeuge Rätsel..." Style="{StaticResource H3}"/>
+                <Label Text="{resx:Translate Key=MathCross_Generating}" Style="{StaticResource H3}"/>
             </VerticalStackLayout>
         </Grid>
     </Grid>
