@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
+             x:Class="LogikSpiel.View.NumberRainPage"
+             x:DataType="vm:NumberRainPageViewModel"
+             x:Name="ThisPage"
+             NavigationPage.HasNavigationBar="False"
+             Shell.NavBarIsVisible="False"
+             BackgroundImageSource="gamebg.png">
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto"
+          Padding="{OnIdiom Phone=8, Desktop=12}"
+          RowSpacing="{OnIdiom Phone=8, Desktop=12}">
+
+        <Border Grid.Row="0"
+                Style="{StaticResource GlassCard}"
+                Padding="{OnIdiom Phone=8, Desktop=12}">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                <Button Grid.Column="0"
+                        Text="Zurück"
+                        Style="{StaticResource BtnIcon}"
+                        WidthRequest="{OnIdiom Phone=76, Desktop=88}"
+                        HeightRequest="{OnIdiom Phone=40, Desktop=48}"
+                        Padding="10,0"
+                        Command="{Binding BackCommand}" />
+
+                <VerticalStackLayout Grid.Column="1"
+                                     Spacing="0"
+                                     HorizontalOptions="Center"
+                                     VerticalOptions="Center">
+                    <Label Text="🌧️ Zahlenregen"
+                           Style="{StaticResource H3}"
+                           HorizontalOptions="Center" />
+                    <Label Text="{Binding LevelNumber, StringFormat='Level {0}'}"
+                           TextColor="{StaticResource C_TextMuted}"
+                           FontSize="14"
+                           HorizontalOptions="Center"
+                           FontAttributes="Bold"/>
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Grid.Column="2" Spacing="6" HorizontalOptions="End">
+                    <Border Style="{StaticResource CoinBadge}" Padding="{OnIdiom Phone=6, Desktop=8}">
+                        <HorizontalStackLayout Spacing="4">
+                            <Label Text="💰" FontSize="14" />
+                            <Label Text="{Binding Coins}"
+                                   TextColor="{StaticResource C_Gold}"
+                                   FontAttributes="Bold" />
+                        </HorizontalStackLayout>
+                    </Border>
+                    <Border Style="{StaticResource Chip}" Padding="{OnIdiom Phone=6, Desktop=8}">
+                        <HorizontalStackLayout Spacing="6">
+                            <Label Text="❤️" FontSize="14" />
+                            <Label Text="{Binding LivesDisplay}"
+                                   TextColor="{StaticResource C_Accent}"
+                                   FontAttributes="Bold" />
+                        </HorizontalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1"
+                Style="{StaticResource GlassCard}"
+                Padding="{OnIdiom Phone=10, Desktop=12}">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
+                <Label Text="🧩 Mission"
+                       Style="{StaticResource H3}" />
+
+                <Label Grid.Row="1"
+                       Text="{Binding QuestText}"
+                       Style="{StaticResource Body}" />
+
+                <Label Grid.Row="2"
+                       Text="{Binding ActiveRuleText}"
+                       Style="{StaticResource Body}"
+                       TextColor="{StaticResource C_TextMuted}"
+                       IsVisible="{Binding HasActiveRule}" />
+
+                <HorizontalStackLayout Grid.Row="3" Spacing="10">
+                    <Label Text="{Binding ProgressText}"
+                           Style="{StaticResource Body}" />
+                    <Label Text="{Binding TimeRemaining, StringFormat='⏱ {0}s'}"
+                           Style="{StaticResource Body}"
+                           TextColor="{StaticResource C_TextMuted}"
+                           IsVisible="{Binding ShowTimer}" />
+                </HorizontalStackLayout>
+
+                <HorizontalStackLayout Grid.Row="4" Spacing="12">
+                    <Button Text="Starten"
+                            Style="{StaticResource BtnPrimary}"
+                            Command="{Binding StartCommand}"
+                            IsEnabled="{Binding CanStart}" />
+                    <Button Text="Abbrechen"
+                            Style="{StaticResource BtnSecondary}"
+                            Command="{Binding CancelCommand}"
+                            IsEnabled="{Binding IsRunning}" />
+                    <Label Text="{Binding StatusText}"
+                           VerticalOptions="Center"
+                           TextColor="{StaticResource C_TextMuted}"
+                           FontSize="12" />
+                </HorizontalStackLayout>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2"
+                Style="{StaticResource GlowCard}"
+                Padding="0">
+            <AbsoluteLayout x:Name="RainArena"
+                            BindableLayout.ItemsSource="{Binding ActiveNumbers}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="vm:FallingNumberViewModel">
+                        <Border StrokeThickness="0"
+                                StrokeShape="RoundRectangle 12"
+                                BackgroundColor="{StaticResource C_Accent}"
+                                WidthRequest="56"
+                                HeightRequest="56"
+                                AbsoluteLayout.LayoutBounds="{Binding Bounds}"
+                                AbsoluteLayout.LayoutFlags="None">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding BindingContext.NumberTapCommand, Source={x:Reference ThisPage}}"
+                                                      CommandParameter="{Binding .}" />
+                            </Border.GestureRecognizers>
+                            <Label Text="{Binding Value}"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center"
+                                   TextColor="{StaticResource C_TextDark}"
+                                   FontAttributes="Bold"
+                                   FontSize="18" />
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </AbsoluteLayout>
+        </Border>
+
+        <Border Grid.Row="3"
+                Style="{StaticResource GlassCard}"
+                Padding="{OnIdiom Phone=8, Desktop=10}">
+            <Label Text="Tippe die richtigen Zahlen an, bevor sie unten verschwinden." 
+                   Style="{StaticResource Body}" />
+        </Border>
+    </Grid>
+</ContentPage>

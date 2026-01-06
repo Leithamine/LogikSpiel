@@ -54,5 +54,19 @@
             "Die Hinweise zeigen Eigenschaften der Zahl",
             "Nach 6 falschen Versuchen ist das Spiel vorbei"
         ]
+    },
+    {
+        "id": "number_rain",
+        "title": "Zahlenregen",
+        "description": "Reagiere schnell und sammle die richtigen Zahlen",
+        "image": "cross.png",
+        "route": "NumberRainPage",
+        "levelCount": 9999,
+        "difficulties": [ "easy", "normal", "hard", "master" ],
+        "rules": [
+            "Tippe auf die Zahlen, die zur Mission passen",
+            "Falsche Auswahl oder ein verpasstes Ziel kostet ein Leben",
+            "Du hast 3 Leben – je schneller und genauer, desto besser"
+        ]
     }
 ]
