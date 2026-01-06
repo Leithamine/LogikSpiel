@@ -626,9 +626,27 @@ public sealed class NumberRainPageViewModel : ObservableObject
 
     private async Task ConfirmBackAsync()
     {
-        bool leave = await _dialog.ConfirmAsync("Zurück", "Möchtest du das Spiel verlassen?");
-        if (!leave) return;
-        await _nav.GoBackAsync();
+        bool retry = await _dialog.ConfirmAsync(
+            "Zurück",
+            "Level neu starten oder zur Karte?",
+            "Wiederholen",
+            "Zurück");
+
+        if (retry)
+        {
+            StopTimers();
+            ActiveNumbers.Clear();
+            PrepareQuest();
+            StartTimers();
+            return;
+        }
+
+        var parameters = new Dictionary<string, object>
+        {
+            ["gameId"] = GameId ?? "number_rain"
+        };
+
+        await _nav.GoToAsync(nameof(GameMapPage), parameters);
     }
 
     private static int StableHash(string s)
