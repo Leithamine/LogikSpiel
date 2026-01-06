@@ -13,11 +13,11 @@ public sealed class NumberRainQuestGeneratorService
         int safeLevel = Math.Max(1, level);
         return difficultyKey.ToLowerInvariant() switch
         {
-            "easy" => BuildSettings(1, 50, 6, safeLevel, 900, 70, 12, 18, 20, 90, 5, 8),
-            "normal" => BuildSettings(1, 80, 8, safeLevel, 820, 95, 18, 25, 20, 90, 7, 10),
-            "hard" => BuildSettings(1, 140, 12, safeLevel, 740, 120, 22, 35, 20, 90, 10, 15),
-            "master" => BuildSettings(1, 220, 18, safeLevel, 660, 145, 30, 50, 20, 90, 12, 20),
-            _ => BuildSettings(1, 70, 7, safeLevel, 860, 85, 15, 20, 20, 90, 6, 9)
+            "easy" => BuildSettings(1, 50, 6, safeLevel, 900, 55, 12, 18, 20, 90, 5, 8),
+            "normal" => BuildSettings(1, 80, 8, safeLevel, 820, 75, 18, 25, 20, 90, 7, 10),
+            "hard" => BuildSettings(1, 140, 12, safeLevel, 740, 95, 22, 35, 20, 90, 10, 15),
+            "master" => BuildSettings(1, 220, 18, safeLevel, 660, 115, 30, 50, 20, 90, 12, 20),
+            _ => BuildSettings(1, 70, 7, safeLevel, 860, 65, 15, 20, 20, 90, 6, 9)
         };
     }
 
