@@ -11,11 +11,11 @@ public sealed class NumberRainQuestGeneratorService
     public NumberRainDifficultySettings GetSettings(string difficultyKey)
         => difficultyKey.ToLowerInvariant() switch
         {
-            "easy" => new NumberRainDifficultySettings(1, 40, 900, 120, 6, 9, 18, 26, 5, 7),
-            "normal" => new NumberRainDifficultySettings(1, 80, 800, 150, 7, 11, 15, 22, 6, 9),
-            "hard" => new NumberRainDifficultySettings(1, 140, 700, 185, 8, 12, 12, 20, 7, 10),
-            "master" => new NumberRainDifficultySettings(1, 240, 650, 210, 9, 14, 10, 18, 8, 12),
-            _ => new NumberRainDifficultySettings(1, 60, 850, 135, 6, 9, 16, 22, 6, 8)
+            "easy" => new NumberRainDifficultySettings(1, 999, 850, 130, 12, 18, 20, 90, 5, 8),
+            "normal" => new NumberRainDifficultySettings(1, 999, 750, 160, 18, 25, 20, 90, 7, 10),
+            "hard" => new NumberRainDifficultySettings(1, 9999, 650, 190, 22, 35, 20, 90, 10, 15),
+            "master" => new NumberRainDifficultySettings(1, 9999, 550, 230, 30, 50, 20, 90, 12, 20),
+            _ => new NumberRainDifficultySettings(1, 999, 800, 145, 15, 20, 20, 90, 6, 9)
         };
 
     public NumberRainQuest GenerateQuest(string difficultyKey, int level, int seed)

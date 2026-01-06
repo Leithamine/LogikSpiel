@@ -290,10 +290,13 @@ public sealed class NumberRainPageViewModel : ObservableObject
 
         int value = PickSpawnValue();
 
+        double speedVariation = 0.8 + (Random.Shared.NextDouble() * 0.4);
+        double individualSpeed = _settings.FallSpeed * speedVariation;
+
         double size = 56;
         double x = Random.Shared.NextDouble() * Math.Max(0, _arenaWidth - size);
 
-        var vm = new FallingNumberViewModel(value, x, -size, size);
+        var vm = new FallingNumberViewModel(value, x, -size, size, individualSpeed);
         ActiveNumbers.Add(vm);
     }
 
@@ -301,12 +304,11 @@ public sealed class NumberRainPageViewModel : ObservableObject
     {
         if (!IsRunning || _settings is null || _quest is null) return;
 
-        double speed = _settings.FallSpeed;
         var toRemove = new List<FallingNumberViewModel>();
 
         foreach (var number in ActiveNumbers)
         {
-            number.Y += speed * deltaSeconds;
+            number.Y += number.Speed * deltaSeconds;
 
             if (number.Y > _arenaHeight)
             {
@@ -741,6 +743,7 @@ public sealed class FallingNumberViewModel : ObservableObject
     private double _size;
 
     public int Value { get; }
+    public double Speed { get; }
 
     public double X
     {
@@ -774,11 +777,12 @@ public sealed class FallingNumberViewModel : ObservableObject
 
     public Rect Bounds => new(X, Y, Size, Size);
 
-    public FallingNumberViewModel(int value, double x, double y, double size)
+    public FallingNumberViewModel(int value, double x, double y, double size, double speed)
     {
         Value = value;
         _x = x;
         _y = y;
         _size = size;
+        Speed = speed;
     }
 }
