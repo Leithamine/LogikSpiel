@@ -452,6 +452,17 @@ public sealed class NumberRainPageViewModel : ObservableObject
         return rulePredicate?.Invoke(value, _lastSelection) ?? false;
     }
 
+    private bool ShouldCountMissOnFall(int value)
+    {
+        if (_quest is null) return false;
+
+        bool isAvoid = _quest.AvoidPredicate?.Invoke(value, _lastSelection) ?? false;
+        if (isAvoid)
+            return false;
+
+        return IsTarget(value);
+    }
+
     private void ApplyMiss()
     {
         if (_ending) return;
