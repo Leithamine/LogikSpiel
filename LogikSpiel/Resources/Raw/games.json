@@ -59,7 +59,7 @@
         "id": "number_rain",
         "title": "Zahlenregen",
         "description": "Reagiere schnell und sammle die richtigen Zahlen",
-        "image": "cross.png",
+        "image": "rain.png",
         "route": "NumberRainPage",
         "levelCount": 9999,
         "difficulties": [ "easy", "normal", "hard", "master" ],
