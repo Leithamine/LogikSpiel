@@ -509,7 +509,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
             "Spiel vorbei",
             "Du hast alle Leben verloren.",
             "Wiederholen",
-            "Abbrechen");
+            "Zurück");
 
         if (retry)
         {

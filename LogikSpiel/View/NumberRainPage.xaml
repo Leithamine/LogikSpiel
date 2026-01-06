@@ -4,6 +4,7 @@
              xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
              x:Class="LogikSpiel.View.NumberRainPage"
              x:DataType="vm:NumberRainPageViewModel"
+             x:Name="RootPage"
              NavigationPage.HasNavigationBar="False"
              Shell.NavBarIsVisible="False"
              BackgroundImageSource="gamebg.png">
@@ -163,19 +164,17 @@
                                          AbsoluteLayout.LayoutFlags="None"
                                          BackgroundColor="Transparent"
                                          InputTransparent="False">
-
                                 <ContentView.GestureRecognizers>
-                                    <!-- FIX: RelativeSource statt x:Reference (Android-sicher) -->
                                     <TapGestureRecognizer
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.NumberTapCommand}"
+                                        Command="{Binding Source={x:Reference RootPage}, Path=BindingContext.NumberTapCommand}"
                                         CommandParameter="{Binding .}" />
                                 </ContentView.GestureRecognizers>
-
                                 <Border StrokeThickness="1"
                                         Stroke="#66FFFFFF"
                                         StrokeShape="RoundRectangle 14"
                                         Shadow="{StaticResource ShadowSmall}"
-                                        InputTransparent="False">
+                                        InputTransparent="False"
+                                        IsEnabled="True">
                                     <Border.Background>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                                             <GradientStop Color="{StaticResource C_Accent}" Offset="0.0" />
