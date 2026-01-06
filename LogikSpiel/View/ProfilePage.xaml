@@ -154,6 +154,27 @@
                                     StrokeShape="RoundRectangle 12"
                                     StrokeThickness="0"
                                     WidthRequest="44" HeightRequest="44">
+                                <Label Text="🌐" FontSize="20"
+                                       HorizontalOptions="Center" VerticalOptions="Center"/>
+                            </Border>
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
+                                <Label Text="{resx:Translate Key=Profile_LanguageTitle}" TextColor="{StaticResource C_TextPrimary}" FontAttributes="Bold"/>
+                                <Label Text="{resx:Translate Key=Profile_LanguageSubtitle}" FontSize="11" TextColor="{StaticResource C_TextMuted}"/>
+                            </VerticalStackLayout>
+                            <Picker Grid.Column="2"
+                                    ItemsSource="{Binding Languages}"
+                                    SelectedItem="{Binding SelectedLanguage}"
+                                    ItemDisplayBinding="{Binding DisplayName}"
+                                    Title="{resx:Translate Key=Profile_LanguageTitle}"/>
+                        </Grid>
+
+                        <BoxView HeightRequest="1" Color="{StaticResource C_Divider}"/>
+
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                            <Border BackgroundColor="{StaticResource C_GlassSoft}"
+                                    StrokeShape="RoundRectangle 12"
+                                    StrokeThickness="0"
+                                    WidthRequest="44" HeightRequest="44">
                                 <Label Text="🔊" FontSize="20"
                                        HorizontalOptions="Center" VerticalOptions="Center"/>
                             </Border>
