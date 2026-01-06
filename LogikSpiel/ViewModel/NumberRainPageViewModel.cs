@@ -318,7 +318,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
             {
                 toRemove.Add(number);
                 // Nur wenn das Spiel wirklich aktiv läuft und die Arena bereit ist
-                if (ShouldCountMissOnFall(number.Value))
+                if (ShouldCountMissOnFallNumber(number.Value))
                     ApplyMiss();
             }
         }
@@ -675,7 +675,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
         return _nav.GoToAsync(nameof(GameMapPage), navigationParameters);
     }
 
-    private bool ShouldCountMissOnFall(int value)
+    private bool ShouldCountMissOnFallNumber(int value)
     {
         if (_quest is null) return false;
 
