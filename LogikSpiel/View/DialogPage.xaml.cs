@@ -44,10 +44,25 @@ public partial class DialogPage : ContentPage
         if (!_tcs.TrySetResult(result))
             return;
 
-        if (!Navigation.ModalStack.Contains(this))
-            return;
+        var navigation = Navigation;
+        if (!navigation.ModalStack.Contains(this))
+        {
+            var mainNavigation = Application.Current?.MainPage?.Navigation;
+            if (mainNavigation?.ModalStack?.Contains(this) == true)
+            {
+                navigation = mainNavigation;
+            }
+            else if (Shell.Current?.Navigation?.ModalStack?.Contains(this) == true)
+            {
+                navigation = Shell.Current.Navigation;
+            }
+            else
+            {
+                return;
+            }
+        }
 
         await MainThread.InvokeOnMainThreadAsync(async () =>
-            await Navigation.PopModalAsync());
+            await navigation.PopModalAsync());
     }
 }
