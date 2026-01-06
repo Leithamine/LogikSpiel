@@ -1,8 +1,10 @@
-﻿using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
+using LogikSpiel.View;
 
 namespace LogikSpiel.ViewModel;
 
@@ -141,9 +143,20 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
     private async Task ConfirmBackAsync()
     {
-        bool leave = await _dialog.ConfirmAsync("Zurück", "Möchtest du das Rätsel verlassen?");
+        bool leave = await _dialog.ConfirmAsync(
+            "Zurück",
+            "Möchtest du das Rätsel verlassen?",
+            "Ja",
+            "Nein");
+
         if (!leave) return;
-        await _nav.GoBackAsync();
+
+        var parameters = new Dictionary<string, object>
+        {
+            ["gameId"] = GameId
+        };
+
+        await _nav.GoToAsync(nameof(GameMapPage), parameters);
     }
 
     private async Task StartNewRoundAsync()

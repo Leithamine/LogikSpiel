@@ -88,7 +88,11 @@ public sealed class GameHostPageViewModel : ObservableObject
 
     private async Task ConfirmBackAsync()
     {
-        bool leave = await _dialog.ConfirmAsync("Zurück", "Möchtest du das Rätsel verlassen?");
+        bool leave = await _dialog.ConfirmAsync(
+            "Zurück",
+            "Möchtest du das Rätsel verlassen?",
+            "Ja",
+            "Nein");
         if (!leave) return;
         await _nav.GoBackAsync();
     }

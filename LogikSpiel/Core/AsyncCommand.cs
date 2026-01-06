@@ -1,5 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Windows.Input;
+using LogikSpiel.Services;
+using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Controls;
 
 namespace LogikSpiel.Core;
 
@@ -86,8 +89,11 @@ public sealed class AsyncCommand<T> : ICommand
             {
                 await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    if (Shell.Current is not null)
-                        await Shell.Current.DisplayAlertAsync("Fehler", ex.ToString(), "OK");
+                    var dialogService = Application.Current?.Handler?.MauiContext?.Services?.GetService<IDialogService>();
+                    if (dialogService is not null)
+                    {
+                        await dialogService.AlertAsync("Fehler", ex.ToString(), "OK");
+                    }
                 });
             }
             catch { }
