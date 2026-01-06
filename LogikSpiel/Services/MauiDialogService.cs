@@ -6,7 +6,8 @@ namespace LogikSpiel.Services;
 public sealed class MauiDialogService : IDialogService
 {
     // Hilfsproperty, um die aktuelle Seite zu finden
-    private Page? CurrentPage => Application.Current?.Windows?.FirstOrDefault()?.Page;
+    private Page? CurrentPage => Shell.Current?.CurrentPage
+                                 ?? Application.Current?.Windows?.FirstOrDefault()?.Page;
 
     public async Task AlertAsync(string title, string message, string ok = "OK")
     {

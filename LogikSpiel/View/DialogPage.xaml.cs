@@ -1,5 +1,6 @@
 #nullable enable
 using System.Threading.Tasks;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 
 namespace LogikSpiel.View;
@@ -43,7 +44,10 @@ public partial class DialogPage : ContentPage
         if (!_tcs.TrySetResult(result))
             return;
 
-        if (Navigation.ModalStack.Contains(this))
-            await Navigation.PopModalAsync();
+        if (!Navigation.ModalStack.Contains(this))
+            return;
+
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+            await Navigation.PopModalAsync());
     }
 }
