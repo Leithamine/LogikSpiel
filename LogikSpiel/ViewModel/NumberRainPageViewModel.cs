@@ -39,6 +39,8 @@ public sealed class NumberRainPageViewModel : ObservableObject
 
     private bool _ending; // verhindert mehrfachen Dialog / mehrfaches EndRound
     private bool _endRoundScheduled;
+    private bool _timedResolutionPending;
+    private string? _lastQuestSignature;
 
     public ObservableCollection<FallingNumberViewModel> ActiveNumbers { get; } = new();
 
@@ -185,7 +187,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
         if (IsRunning) return Task.CompletedTask;
 
         _settings = _generator.GetSettings(DifficultyKey);
-        PrepareQuest();
+        //PrepareQuest();
         StartTimers();
 
         return Task.CompletedTask;
@@ -203,10 +205,12 @@ public sealed class NumberRainPageViewModel : ObservableObject
     private void PrepareQuest()
     {
         _ending = false;
+        _endRoundScheduled = false;
+        _timedResolutionPending = false;
 
         _settings ??= _generator.GetSettings(DifficultyKey);
         int seed = StableHash($"{GameId}:{DifficultyKey}:{LevelNumber}");
-        _quest = _generator.GenerateQuest(DifficultyKey, LevelNumber, seed);
+        _quest = GenerateQuestWithVariation(seed);
 
         QuestText = _quest.Description;
         QuestModeLabel = QuestModeToLabel(_quest.Mode);
@@ -281,32 +285,37 @@ public sealed class NumberRainPageViewModel : ObservableObject
 
     private void SpawnNumber()
     {
-        if (!IsRunning || _settings is null) return;
-        if (_arenaWidth <= 0 || _arenaHeight <= 0) return;
+        // FIX: Kein Spawn, wenn die Arena noch keine Größe hat
+        if (!IsRunning || _settings is null || _arenaWidth <= 0 || _arenaHeight <= 0) return;
 
-        int value = Random.Shared.Next(_settings.MinValue, _settings.MaxValue + 1);
+        int value = PickSpawnValue();
+
+        // Individuelle Geschwindigkeit (80% bis 120% der Basisgeschwindigkeit)
+        double speedVariation = 0.8 + (Random.Shared.NextDouble() * 0.4);
+        double individualSpeed = _settings.FallSpeed * speedVariation;
 
         double size = 56;
         double x = Random.Shared.NextDouble() * Math.Max(0, _arenaWidth - size);
 
-        var vm = new FallingNumberViewModel(value, x, -size, size);
+        var vm = new FallingNumberViewModel(value, x, -size, size, individualSpeed);
         ActiveNumbers.Add(vm);
     }
 
     private void UpdateNumbers(double deltaSeconds)
     {
-        if (!IsRunning || _settings is null || _quest is null) return;
+        // FIX: Prüfe _arenaHeight. Wenn 0, bewegen wir nichts und prüfen keine Fehler.
+        if (!IsRunning || _settings is null || _quest is null || _arenaHeight <= 0) return;
 
-        double speed = _settings.FallSpeed;
         var toRemove = new List<FallingNumberViewModel>();
 
         foreach (var number in ActiveNumbers)
         {
-            number.Y += speed * deltaSeconds;
+            number.Y += number.Speed * deltaSeconds;
 
             if (number.Y > _arenaHeight)
             {
                 toRemove.Add(number);
+                // Nur wenn das Spiel wirklich aktiv läuft und die Arena bereit ist
                 if (IsTarget(number.Value))
                     ApplyMiss();
             }
@@ -328,12 +337,21 @@ public sealed class NumberRainPageViewModel : ObservableObject
         UpdateActiveRule();
 
         if (TimeRemaining <= 0 && _quest.TimeLimitSeconds > 0)
+        {
+            if (_timedResolutionPending) return;
+            _timedResolutionPending = true;
+            IsRunning = false;
             _ = ResolveTimedOutcomeAsync();
+        }
     }
 
     private async Task ResolveTimedOutcomeAsync()
     {
-        if (_quest is null) return;
+        if (_quest is null)
+        {
+            _timedResolutionPending = false;
+            return;
+        }
 
         StopTimers();
         IsRunning = false;
@@ -348,11 +366,13 @@ public sealed class NumberRainPageViewModel : ObservableObject
         };
 
         await EndRoundAsync(success);
+        _timedResolutionPending = false;
     }
 
     private async Task HandleNumberTapAsync(FallingNumberViewModel? number)
     {
         if (number is null || _quest is null || !IsRunning) return;
+        if (_quest.TimeLimitSeconds > 0 && TimeRemaining <= 0) return;
 
         ActiveNumbers.Remove(number);
 
@@ -655,6 +675,69 @@ public sealed class NumberRainPageViewModel : ObservableObject
             return Math.Abs(h);
         }
     }
+
+    private NumberRainQuest GenerateQuestWithVariation(int seed)
+    {
+        const int maxAttempts = 5;
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            var quest = _generator.GenerateQuest(DifficultyKey, LevelNumber, seed + attempt);
+            var signature = $"{quest.Mode}:{quest.Description}";
+            if (!string.Equals(signature, _lastQuestSignature, StringComparison.Ordinal))
+            {
+                _lastQuestSignature = signature;
+                return quest;
+            }
+        }
+
+        var fallback = _generator.GenerateQuest(DifficultyKey, LevelNumber, seed + maxAttempts);
+        _lastQuestSignature = $"{fallback.Mode}:{fallback.Description}";
+        return fallback;
+    }
+
+    private int PickSpawnValue()
+    {
+        if (_settings is null)
+            return 0;
+
+        int min = _settings.MinValue;
+        int max = _settings.MaxValue;
+        if (_quest is null)
+            return Random.Shared.Next(min, max + 1);
+
+        Func<int, int?, bool>? predicate = null;
+
+        if (_quest.Mode == NumberRainQuestMode.Switch)
+            predicate = CurrentSwitchRule()?.Predicate;
+        else if (_quest.Mode == NumberRainQuestMode.Dynamic)
+            predicate = _quest.Rules.FirstOrDefault()?.Predicate;
+        else if (_quest.Goals.Count > 0)
+            predicate = (v, last) => _quest.Goals.Any(g => g.Predicate(v, last));
+        else
+            predicate = _quest.Rules.FirstOrDefault()?.Predicate;
+
+        if (predicate is null)
+            return Random.Shared.Next(min, max + 1);
+
+        var targets = new List<int>();
+        for (int v = min; v <= max; v++)
+        {
+            if (predicate(v, _lastSelection))
+                targets.Add(v);
+        }
+
+        if (targets.Count == 0)
+            return Random.Shared.Next(min, max + 1);
+
+        int rangeCount = max - min + 1;
+        double ratio = targets.Count / (double)rangeCount;
+        double targetChance = Math.Clamp(0.25 + (0.5 - ratio), 0.2, 0.75);
+
+        if (Random.Shared.NextDouble() < targetChance)
+            return targets[Random.Shared.Next(targets.Count)];
+
+        return Random.Shared.Next(min, max + 1);
+    }
 }
 public sealed class FallingNumberViewModel : ObservableObject
 {
@@ -663,6 +746,7 @@ public sealed class FallingNumberViewModel : ObservableObject
     private double _size;
 
     public int Value { get; }
+    public double Speed { get; }
 
     public double X
     {
@@ -696,11 +780,12 @@ public sealed class FallingNumberViewModel : ObservableObject
 
     public Rect Bounds => new(X, Y, Size, Size);
 
-    public FallingNumberViewModel(int value, double x, double y, double size)
+    public FallingNumberViewModel(int value, double x, double y, double size, double speed)
     {
         Value = value;
         _x = x;
         _y = y;
         _size = size;
+        Speed = speed;
     }
 }
