@@ -11,7 +11,7 @@ public partial class NumberRainPage : ContentPage, IQueryAttributable
         InitializeComponent();
         BindingContext = vm;
 
-        // WICHTIG: Arena-Größe für Spawn/Bounds
+        // WICHTIG: Arena-Grï¿½ï¿½e fï¿½r Spawn/Bounds
         RainArena.SizeChanged += (_, _) =>
         {
             if (BindingContext is NumberRainPageViewModel viewModel)
