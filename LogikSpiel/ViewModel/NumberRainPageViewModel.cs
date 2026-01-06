@@ -551,13 +551,8 @@ public sealed class NumberRainPageViewModel : ObservableObject
             await MainThread.InvokeOnMainThreadAsync(async () =>
                 await _dialog.AlertAsync("Super! 🎉", $"+{reward} Coins"));
 
-            var parameters = new Dictionary<string, object>
-            {
-                ["gameId"] = GameId ?? "number_rain"
-            };
-
             await MainThread.InvokeOnMainThreadAsync(async () =>
-                await _nav.GoToAsync(nameof(GameMapPage), parameters));
+                await NavigateToGameMapAsync());
             return;
         }
 
@@ -577,13 +572,8 @@ public sealed class NumberRainPageViewModel : ObservableObject
         }
 
         // ✅ Zur Karte zurück
-        var parameters = new Dictionary<string, object>
-        {
-            ["gameId"] = GameId ?? "number_rain"
-        };
-
         await MainThread.InvokeOnMainThreadAsync(async () =>
-            await _nav.GoToAsync(nameof(GameMapPage), parameters));
+            await NavigateToGameMapAsync());
     }
 
     private void UpdateProgressText()
@@ -672,12 +662,27 @@ public sealed class NumberRainPageViewModel : ObservableObject
 
         if (!leave) return;
 
-        var parameters = new Dictionary<string, object>
+        await NavigateToGameMapAsync();
+    }
+
+    private Task NavigateToGameMapAsync()
+    {
+        var navigationParameters = new Dictionary<string, object>
         {
             ["gameId"] = GameId ?? "number_rain"
         };
 
-        await _nav.GoToAsync(nameof(GameMapPage), parameters);
+        return _nav.GoToAsync(nameof(GameMapPage), navigationParameters);
+    }
+
+    private bool ShouldCountMissOnFall(int value)
+    {
+        if (_quest is null) return false;
+
+        bool isAvoid = _quest.AvoidPredicate?.Invoke(value, _lastSelection) ?? false;
+        if (isAvoid) return false;
+
+        return IsTarget(value);
     }
 
     private static int StableHash(string s)
