@@ -187,7 +187,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
         if (IsRunning) return Task.CompletedTask;
 
         _settings = _generator.GetSettings(DifficultyKey);
-        PrepareQuest();
+        //PrepareQuest();
         StartTimers();
 
         return Task.CompletedTask;
@@ -285,11 +285,12 @@ public sealed class NumberRainPageViewModel : ObservableObject
 
     private void SpawnNumber()
     {
-        if (!IsRunning || _settings is null) return;
-        if (_arenaWidth <= 0 || _arenaHeight <= 0) return;
+        // FIX: Kein Spawn, wenn die Arena noch keine Größe hat
+        if (!IsRunning || _settings is null || _arenaWidth <= 0 || _arenaHeight <= 0) return;
 
         int value = PickSpawnValue();
 
+        // Individuelle Geschwindigkeit (80% bis 120% der Basisgeschwindigkeit)
         double speedVariation = 0.8 + (Random.Shared.NextDouble() * 0.4);
         double individualSpeed = _settings.FallSpeed * speedVariation;
 
@@ -302,7 +303,8 @@ public sealed class NumberRainPageViewModel : ObservableObject
 
     private void UpdateNumbers(double deltaSeconds)
     {
-        if (!IsRunning || _settings is null || _quest is null) return;
+        // FIX: Prüfe _arenaHeight. Wenn 0, bewegen wir nichts und prüfen keine Fehler.
+        if (!IsRunning || _settings is null || _quest is null || _arenaHeight <= 0) return;
 
         var toRemove = new List<FallingNumberViewModel>();
 
@@ -313,6 +315,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
             if (number.Y > _arenaHeight)
             {
                 toRemove.Add(number);
+                // Nur wenn das Spiel wirklich aktiv läuft und die Arena bereit ist
                 if (IsTarget(number.Value))
                     ApplyMiss();
             }

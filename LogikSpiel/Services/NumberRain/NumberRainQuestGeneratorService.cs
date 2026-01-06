@@ -13,8 +13,8 @@ public sealed class NumberRainQuestGeneratorService
         {
             "easy" => new NumberRainDifficultySettings(1, 999, 850, 130, 12, 18, 20, 90, 5, 8),
             "normal" => new NumberRainDifficultySettings(1, 999, 750, 160, 18, 25, 20, 90, 7, 10),
-            "hard" => new NumberRainDifficultySettings(1, 9999, 650, 190, 22, 35, 20, 90, 10, 15),
-            "master" => new NumberRainDifficultySettings(1, 9999, 550, 230, 30, 50, 20, 90, 12, 20),
+            "hard" => new NumberRainDifficultySettings(1, 999, 650, 190, 22, 35, 20, 90, 10, 15),
+            "master" => new NumberRainDifficultySettings(1, 999, 550, 230, 30, 50, 20, 90, 12, 20),
             _ => new NumberRainDifficultySettings(1, 999, 800, 145, 15, 20, 20, 90, 6, 9)
         };
 
@@ -41,11 +41,15 @@ public sealed class NumberRainQuestGeneratorService
     {
         return new List<Func<Random, NumberRainQuest>>
         {
-            rnd => CreateCountQuest($"Wähle {Target(rnd, settings, level)} gerade Zahlen", "Gerade",
-                (v, _) => NumberRainRuleLibrary.IsEven(v), Target(rnd, settings, level)),
+            rnd => {
+                int n = Target(rnd, settings, level);
+                return CreateCountQuest($"Wähle {n} gerade Zahlen", "Gerade", (v, _) => NumberRainRuleLibrary.IsEven(v), n);
+            },
 
-            rnd => CreateCountQuest($"Wähle {Target(rnd, settings, level)} ungerade Zahlen", "Ungerade",
-                (v, _) => NumberRainRuleLibrary.IsOdd(v), Target(rnd, settings, level)),
+            rnd => {
+                int n = Target(rnd, settings, level);
+                return CreateCountQuest($"Wähle {n} ungerade Zahlen", "Ungerade", (v, _) => NumberRainRuleLibrary.IsOdd(v), n);
+            },
 
             rnd =>
             {
@@ -777,7 +781,7 @@ public sealed class NumberRainQuestGeneratorService
 
     private static int Target(Random rnd, NumberRainDifficultySettings settings, int level)
     {
-        int boost = Math.Min(6, level / 6);
+        int boost = (level - 1) / 2; // Alle 2 Level steigt das Ziel um 1
         int min = settings.MinTarget + boost;
         int max = settings.MaxTarget + boost;
         return rnd.Next(min, max + 1);
