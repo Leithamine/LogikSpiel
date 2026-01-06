@@ -1,66 +1,93 @@
 #nullable enable
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Xml.Linq;
 using LogikSpiel.Core;
+using LogikSpiel.Model.NumberRain;
 using LogikSpiel.Services;
+using LogikSpiel.Services.NumberRain;
+using LogikSpiel.View;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Dispatching;
 
 namespace LogikSpiel.ViewModel;
 
 public sealed class NumberRainPageViewModel : ObservableObject
 {
-    private const int LivesMax = 3;
+    private readonly INavigationService _nav;
+    private readonly IDialogService _dialog;
     private readonly IUserProfileService _userService;
     private readonly IGameProgressStore _progressStore;
-    private readonly IDialogService _dialog;
-    private readonly INavigationService _nav;
+    private readonly NumberRainQuestGeneratorService _generator;
+    private readonly IDispatcher _dispatcher;
 
-    private readonly Dictionary<string, NumberRainSpawn> _activeSpawns = new();
-    private readonly ObservableCollection<NumberRainObjectiveProgress> _objectives = new();
+    private NumberRainDifficultySettings? _settings;
+    private NumberRainQuest? _quest;
     private IDispatcherTimer? _spawnTimer;
-    private IDispatcherTimer? _countdownTimer;
-    private IDispatcherTimer? _switchTimer;
+    private IDispatcherTimer? _updateTimer;
+    private IDispatcherTimer? _secondTimer;
 
-    private NumberRainTask? _task;
-    private DifficultySettings _settings;
-    private Random _random = new();
+    private int? _lastSelection;
+    private double _elapsedSeconds;
+    private int _combo;
+    private int _misses;
+    private int[] _goalProgress = Array.Empty<int>();
 
-    private int? _lastSelectedValue;
-    private int _hits;
+    private bool _ending; // verhindert mehrfachen Dialog / mehrfaches EndRound
+    private bool _endRoundScheduled;
 
-    public event Action<NumberRainSpawn>? Spawned;
-    public event Action? ClearRequested;
-
-    public string GameId { get; private set; } = "number_rain";
-    public string DifficultyKey { get; private set; } = "easy";
-
-    private int _levelNumber = 1;
-    public int LevelNumber
-    {
-        get => _levelNumber;
-        private set => SetProperty(ref _levelNumber, value);
-    }
+    public ObservableCollection<FallingNumberViewModel> ActiveNumbers { get; } = new();
 
     private int _coins;
     public int Coins { get => _coins; private set => SetProperty(ref _coins, value); }
 
-    private int _lives = LivesMax;
+    private string _questText = "Bereit? Tippe auf Starten!";
+    public string QuestText { get => _questText; private set => SetProperty(ref _questText, value); }
+
+    private string _questModeLabel = "Modus";
+    public string QuestModeLabel { get => _questModeLabel; private set => SetProperty(ref _questModeLabel, value); }
+
+    private string _progressText = string.Empty;
+    public string ProgressText { get => _progressText; private set => SetProperty(ref _progressText, value); }
+
+    private string _statusText = "";
+    public string StatusText { get => _statusText; private set => SetProperty(ref _statusText, value); }
+
+    private string _activeRuleText = string.Empty;
+    public string ActiveRuleText { get => _activeRuleText; private set => SetProperty(ref _activeRuleText, value); }
+
+    private bool _hasActiveRule;
+    public bool HasActiveRule { get => _hasActiveRule; private set => SetProperty(ref _hasActiveRule, value); }
+
+    private int _lives = 3;
     public int Lives
     {
         get => _lives;
         private set
         {
             if (SetProperty(ref _lives, value))
-                OnPropertyChanged(nameof(LivesText));
+                OnPropertyChanged(nameof(LivesDisplay));
         }
     }
 
-    public string LivesText => new string('❤', Math.Max(0, Lives));
+    public string LivesDisplay => new string('❤', Math.Max(0, Lives));
 
-    private string _taskTitle = "";
-    public string TaskTitle { get => _taskTitle; private set => SetProperty(ref _taskTitle, value); }
+    private bool _isRunning;
+    public bool IsRunning
+    {
+        get => _isRunning;
+        private set
+        {
+            if (SetProperty(ref _isRunning, value))
+                OnPropertyChanged(nameof(CanStart));
+        }
+    }
 
-    private string _taskDetail = "";
-    public string TaskDetail { get => _taskDetail; private set => SetProperty(ref _taskDetail, value); }
+    public bool CanStart => !IsRunning;
 
     private int _timeRemaining;
     public int TimeRemaining
@@ -69,27 +96,22 @@ public sealed class NumberRainPageViewModel : ObservableObject
         private set
         {
             if (SetProperty(ref _timeRemaining, value))
-                OnPropertyChanged(nameof(TimerText));
+                OnPropertyChanged(nameof(ShowTimer));
         }
     }
 
-    public string TimerText => TimeRemaining > 0 ? $"⏱ {TimeRemaining}s" : "";
+    public bool ShowTimer => _quest is not null && _quest.TimeLimitSeconds > 0;
 
-    private int _comboCurrent;
-    public int ComboCurrent
+    private string _difficultyKey = "normal";
+    public string DifficultyKey
     {
-        get => _comboCurrent;
+        get => _difficultyKey;
         private set
         {
-            if (SetProperty(ref _comboCurrent, value))
-                OnPropertyChanged(nameof(ComboText));
+            if (!SetProperty(ref _difficultyKey, value)) return;
+            OnPropertyChanged(nameof(DifficultyLabel));
         }
     }
-
-    public string ComboText => _task?.ComboTarget > 0 ? $"Combo {ComboCurrent}/{_task.ComboTarget}" : "";
-
-    public ObservableCollection<NumberRainObjectiveProgress> Objectives => _objectives;
-    public bool HasObjectives => Objectives.Count > 0;
 
     public string DifficultyLabel => DifficultyKey switch
     {
@@ -100,1188 +122,585 @@ public sealed class NumberRainPageViewModel : ObservableObject
         _ => DifficultyKey
     };
 
-    public bool IsTimed => _task?.TimeLimitSeconds > 0 || _task?.SurvivalSeconds > 0;
-    public bool HasCombo => _task?.ComboTarget > 0;
+    private int _levelNumber = 1;
+    public int LevelNumber
+    {
+        get => _levelNumber;
+        private set => SetProperty(ref _levelNumber, value);
+    }
+
+    public string? GameId { get; private set; }
+
+    private double _arenaWidth;
+    private double _arenaHeight;
 
     public AsyncCommand BackCommand { get; }
+    public AsyncCommand StartCommand { get; }
+    public AsyncCommand CancelCommand { get; }
+    public AsyncCommand<FallingNumberViewModel> NumberTapCommand { get; }
 
     public NumberRainPageViewModel(
+        INavigationService nav,
+        IDialogService dialog,
         IUserProfileService userService,
         IGameProgressStore progressStore,
-        IDialogService dialog,
-        INavigationService nav)
+        NumberRainQuestGeneratorService generator)
     {
+        _nav = nav;
+        _dialog = dialog;
         _userService = userService;
         _progressStore = progressStore;
-        _dialog = dialog;
-        _nav = nav;
+        _generator = generator;
+
+        _dispatcher = Application.Current?.Dispatcher
+                      ?? throw new InvalidOperationException("Dispatcher not available");
 
         BackCommand = new AsyncCommand(ConfirmBackAsync);
+        StartCommand = new AsyncCommand(StartAsync);
+        CancelCommand = new AsyncCommand(CancelAsync);
+        NumberTapCommand = new AsyncCommand<FallingNumberViewModel>(HandleNumberTapAsync);
     }
 
-    public async Task LoadAsync(string gameId, string difficultyKey, int level)
+    public async Task LoadAsync(string gameId, string difficulty, int level)
     {
         GameId = string.IsNullOrWhiteSpace(gameId) ? "number_rain" : gameId;
-        DifficultyKey = string.IsNullOrWhiteSpace(difficultyKey) ? "easy" : difficultyKey;
+        DifficultyKey = string.IsNullOrWhiteSpace(difficulty) ? "normal" : difficulty;
         LevelNumber = Math.Max(1, level);
 
-        var user = await _userService.GetUserAsync();
-        Coins = user?.Coins ?? 0;
+        var profile = await _userService.GetUserAsync();
+        Coins = profile?.Coins ?? 0;
 
-        await StartLevelAsync();
+        _settings = _generator.GetSettings(DifficultyKey);
+        PrepareQuest();
     }
 
-    public void Stop()
+    public void UpdateArenaSize(double width, double height)
     {
-        StopTimers();
-        _activeSpawns.Clear();
-        ClearRequested?.Invoke();
+        _arenaWidth = width;
+        _arenaHeight = height;
     }
 
-    private async Task StartLevelAsync()
+    private Task StartAsync()
     {
-        StopTimers();
-        _activeSpawns.Clear();
-        _objectives.Clear();
-        ClearRequested?.Invoke();
+        if (IsRunning) return Task.CompletedTask;
 
-        Lives = LivesMax;
-        ComboCurrent = 0;
-        _hits = 0;
-        _lastSelectedValue = null;
-
-        _settings = DifficultySettings.For(DifficultyKey);
-        _random = new Random(StableHash($"{GameId}:{DifficultyKey}:{LevelNumber}"));
-
-        BuildTask();
+        _settings = _generator.GetSettings(DifficultyKey);
+        PrepareQuest();
         StartTimers();
+
+        return Task.CompletedTask;
     }
 
-    private void BuildTask()
+    private Task CancelAsync()
     {
-        _task = NumberRainTaskFactory.Create(_random, _settings, DifficultyKey);
-        TaskTitle = _task.Title;
-        TaskDetail = _task.Detail;
-
-        _objectives.Clear();
-        foreach (var obj in _task.Objectives)
-            _objectives.Add(new NumberRainObjectiveProgress(obj.Title, obj.Target, obj.Predicate));
-
-        OnPropertyChanged(nameof(HasObjectives));
-        OnPropertyChanged(nameof(IsTimed));
-        OnPropertyChanged(nameof(HasCombo));
-        OnPropertyChanged(nameof(ComboText));
+        StopTimers();
+        ActiveNumbers.Clear();
+        IsRunning = false;
+        StatusText = "Gestoppt.";
+        return Task.CompletedTask;
     }
+
+    private void PrepareQuest()
+    {
+        _ending = false;
+
+        _settings ??= _generator.GetSettings(DifficultyKey);
+        int seed = StableHash($"{GameId}:{DifficultyKey}:{LevelNumber}");
+        _quest = _generator.GenerateQuest(DifficultyKey, LevelNumber, seed);
+
+        QuestText = _quest.Description;
+        QuestModeLabel = QuestModeToLabel(_quest.Mode);
+
+        _goalProgress = _quest.Goals.Select(_ => 0).ToArray();
+        _lastSelection = null;
+        _combo = 0;
+        _misses = 0;
+        _elapsedSeconds = 0;
+
+        Lives = 3;
+        TimeRemaining = _quest.TimeLimitSeconds;
+
+        ActiveRuleText = string.Empty;
+        HasActiveRule = false;
+
+        StatusText = "Bereit für den Start.";
+        UpdateProgressText();
+        UpdateActiveRule();
+    }
+
+    private static string QuestModeToLabel(NumberRainQuestMode mode) => mode switch
+    {
+        NumberRainQuestMode.Count => "Zählen",
+        NumberRainQuestMode.Timed => "Zeit",
+        NumberRainQuestMode.Avoid => "Vermeiden",
+        NumberRainQuestMode.Multi => "Multi",
+        NumberRainQuestMode.Combo => "Combo",
+        NumberRainQuestMode.Survival => "Survival",
+        NumberRainQuestMode.Dynamic => "Dynamisch",
+        NumberRainQuestMode.Switch => "Wechsel",
+        _ => "Modus"
+    };
 
     private void StartTimers()
     {
+        if (_settings is null || _quest is null) return;
+
+        IsRunning = true;
+        StatusText = "Zahlenregen läuft!";
+
         StopTimers();
 
-        var dispatcher = Application.Current?.Dispatcher;
-        if (dispatcher is null) return;
-
-        _spawnTimer = dispatcher.CreateTimer();
+        _spawnTimer = _dispatcher.CreateTimer();
         _spawnTimer.Interval = TimeSpan.FromMilliseconds(_settings.SpawnIntervalMs);
-        _spawnTimer.Tick += OnSpawnTick;
+        _spawnTimer.Tick += (_, _) => SpawnNumber();
         _spawnTimer.Start();
 
-        if (_task?.TimeLimitSeconds > 0)
-        {
-            TimeRemaining = _task.TimeLimitSeconds;
-            _countdownTimer = dispatcher.CreateTimer();
-            _countdownTimer.Interval = TimeSpan.FromSeconds(1);
-            _countdownTimer.Tick += OnCountdownTick;
-            _countdownTimer.Start();
-        }
-        else if (_task?.SurvivalSeconds > 0)
-        {
-            TimeRemaining = _task.SurvivalSeconds;
-            _countdownTimer = dispatcher.CreateTimer();
-            _countdownTimer.Interval = TimeSpan.FromSeconds(1);
-            _countdownTimer.Tick += OnSurvivalTick;
-            _countdownTimer.Start();
-        }
+        // Sofort-Spawn
+        SpawnNumber();
 
-        if (_task?.SwitchRule is not null)
+        _updateTimer = _dispatcher.CreateTimer();
+        _updateTimer.Interval = TimeSpan.FromMilliseconds(33);
+        _updateTimer.Tick += (_, _) => UpdateNumbers(0.033);
+        _updateTimer.Start();
+
+        if (_quest.TimeLimitSeconds > 0 || _quest.Mode == NumberRainQuestMode.Switch)
         {
-            _switchTimer = dispatcher.CreateTimer();
-            _switchTimer.Interval = TimeSpan.FromSeconds(_task.SwitchRule.SwitchSeconds);
-            _switchTimer.Tick += OnSwitchTick;
-            _switchTimer.Start();
+            _secondTimer = _dispatcher.CreateTimer();
+            _secondTimer.Interval = TimeSpan.FromSeconds(1);
+            _secondTimer.Tick += (_, _) => TickSecond();
+            _secondTimer.Start();
         }
     }
 
     private void StopTimers()
     {
-        if (_spawnTimer is not null)
-        {
-            _spawnTimer.Stop();
-            _spawnTimer.Tick -= OnSpawnTick;
-            _spawnTimer = null;
-        }
-
-        if (_countdownTimer is not null)
-        {
-            _countdownTimer.Stop();
-            _countdownTimer.Tick -= OnCountdownTick;
-            _countdownTimer.Tick -= OnSurvivalTick;
-            _countdownTimer = null;
-        }
-
-        if (_switchTimer is not null)
-        {
-            _switchTimer.Stop();
-            _switchTimer.Tick -= OnSwitchTick;
-            _switchTimer = null;
-        }
-    }
-
-    private void OnSpawnTick(object? sender, EventArgs e) => SpawnNumber();
-
-    private void OnCountdownTick(object? sender, EventArgs e) => TickCountdown();
-
-    private void OnSurvivalTick(object? sender, EventArgs e) => TickSurvival();
-
-    private void OnSwitchTick(object? sender, EventArgs e) => ToggleSwitchRule();
-
-    private void TickCountdown()
-    {
-        if (_task is null || _task.TimeLimitSeconds <= 0) return;
-
-        TimeRemaining = Math.Max(0, TimeRemaining - 1);
-        if (TimeRemaining > 0) return;
-
-        _countdownTimer?.Stop();
-        _countdownTimer = null;
-
-        _ = HandleTimeExpiredAsync();
-    }
-
-    private void TickSurvival()
-    {
-        if (_task is null || _task.SurvivalSeconds <= 0) return;
-
-        TimeRemaining = Math.Max(0, TimeRemaining - 1);
-        if (TimeRemaining > 0) return;
-
-        _countdownTimer?.Stop();
-        _countdownTimer = null;
-
-        _ = HandleSurvivalCompleteAsync();
-    }
-
-    private async Task HandleTimeExpiredAsync()
-    {
-        if (IsCompleted())
-        {
-            await CompleteLevelAsync();
-            return;
-        }
-
-        await ApplyMistakeAsync("⏱ Zeit abgelaufen!");
-        if (Lives > 0)
-        {
-            ClearRequested?.Invoke();
-            _activeSpawns.Clear();
-            BuildTask();
-            StartTimers();
-        }
-    }
-
-    private async Task HandleSurvivalCompleteAsync()
-    {
-        if (_task is null) return;
-
-        if (_hits >= _task.MinimumHits)
-        {
-            await CompleteLevelAsync();
-            return;
-        }
-
-        await ApplyMistakeAsync("Nicht genug Treffer im Survival-Level!");
-        if (Lives > 0)
-        {
-            ClearRequested?.Invoke();
-            _activeSpawns.Clear();
-            BuildTask();
-            StartTimers();
-        }
-    }
-
-    private void ToggleSwitchRule()
-    {
-        if (_task?.SwitchRule is null) return;
-
-        _task.SwitchRule.Toggle();
-        TaskDetail = _task.SwitchRule.CurrentDescription;
+        _spawnTimer?.Stop();
+        _updateTimer?.Stop();
+        _secondTimer?.Stop();
     }
 
     private void SpawnNumber()
     {
-        if (_task is null) return;
+        if (!IsRunning || _settings is null) return;
+        if (_arenaWidth <= 0 || _arenaHeight <= 0) return;
 
-        int value = GenerateNumber();
-        var spawn = new NumberRainSpawn(
-            Guid.NewGuid().ToString(),
-            value,
-            _settings.FallDurationMs);
+        int value = Random.Shared.Next(_settings.MinValue, _settings.MaxValue + 1);
 
-        _activeSpawns[spawn.Id] = spawn;
-        Spawned?.Invoke(spawn);
+        double size = 56;
+        double x = Random.Shared.NextDouble() * Math.Max(0, _arenaWidth - size);
+
+        var vm = new FallingNumberViewModel(value, x, -size, size);
+        ActiveNumbers.Add(vm);
     }
 
-    private int GenerateNumber()
+    private void UpdateNumbers(double deltaSeconds)
     {
-        if (_task is null) return _random.Next(_settings.MinValue, _settings.MaxValue + 1);
+        if (!IsRunning || _settings is null || _quest is null) return;
 
-        bool preferTarget = _random.NextDouble() < 0.65;
-        if (preferTarget)
+        double speed = _settings.FallSpeed;
+        var toRemove = new List<FallingNumberViewModel>();
+
+        foreach (var number in ActiveNumbers)
         {
-            var predicate = PickTargetPredicate();
-            for (int i = 0; i < 25; i++)
+            number.Y += speed * deltaSeconds;
+
+            if (number.Y > _arenaHeight)
             {
-                int candidate = _random.Next(_settings.MinValue, _settings.MaxValue + 1);
-                if (predicate(candidate)) return candidate;
+                toRemove.Add(number);
+                if (IsTarget(number.Value))
+                    ApplyMiss();
             }
         }
 
-        return _random.Next(_settings.MinValue, _settings.MaxValue + 1);
+        foreach (var number in toRemove)
+            ActiveNumbers.Remove(number);
     }
 
-    private Func<int, bool> PickTargetPredicate()
+    private void TickSecond()
     {
-        if (_task is null) return _ => false;
+        if (!IsRunning || _quest is null) return;
 
-        if (_task.Mode is NumberRainTaskMode.ChainGreater)
-            return n => _lastSelectedValue is null || n > _lastSelectedValue.Value;
+        _elapsedSeconds += 1;
 
-        if (_task.Mode is NumberRainTaskMode.ChainDivisible)
-            return n => _lastSelectedValue is null || (_lastSelectedValue.Value != 0 && n % _lastSelectedValue.Value == 0);
+        if (_quest.TimeLimitSeconds > 0)
+            TimeRemaining = Math.Max(0, TimeRemaining - 1);
 
-        if (_task.Mode is NumberRainTaskMode.Switch && _task.SwitchRule is not null)
-            return _task.SwitchRule.CurrentPredicate;
+        UpdateActiveRule();
 
-        if (_task.Mode is NumberRainTaskMode.Combo && _task.ComboPredicate is not null)
-            return _task.ComboPredicate;
-
-        var pending = _objectives.FirstOrDefault(o => !o.IsCompleted) ?? _objectives.FirstOrDefault();
-        return pending?.Predicate ?? (_ => false);
+        if (TimeRemaining <= 0 && _quest.TimeLimitSeconds > 0)
+            _ = ResolveTimedOutcomeAsync();
     }
 
-    public async Task SelectNumberAsync(string id)
+    private async Task ResolveTimedOutcomeAsync()
     {
-        if (!_activeSpawns.TryGetValue(id, out var spawn)) return;
-        _activeSpawns.Remove(id);
-
-        if (_task is null) return;
-
-        if (_task.BombPredicate?.Invoke(spawn.Value) == true)
-        {
-            await ApplyMistakeAsync($"💣 Bombe! {spawn.Value} war tabu.");
-            return;
-        }
-
-        bool isTarget = IsTargetValue(spawn.Value);
-        if (!isTarget)
-        {
-            ComboCurrent = 0;
-            await ApplyMistakeAsync($"❌ {spawn.Value} war falsch.");
-            return;
-        }
-
-        RegisterHit(spawn.Value);
-    }
-
-    public async Task HandleMissAsync(string id)
-    {
-        if (!_activeSpawns.TryGetValue(id, out var spawn)) return;
-        _activeSpawns.Remove(id);
-
-        if (_task is null) return;
-
-        if (IsTargetValue(spawn.Value))
-        {
-            ComboCurrent = 0;
-            await ApplyMistakeAsync($"⌛ {spawn.Value} verpasst.");
-        }
-    }
-
-    private bool IsTargetValue(int value)
-    {
-        if (_task is null) return false;
-
-        return _task.Mode switch
-        {
-            NumberRainTaskMode.ChainGreater => _lastSelectedValue is null || value > _lastSelectedValue.Value,
-            NumberRainTaskMode.ChainDivisible => _lastSelectedValue is null || (_lastSelectedValue.Value != 0 && value % _lastSelectedValue.Value == 0),
-            NumberRainTaskMode.Switch when _task.SwitchRule is not null => _task.SwitchRule.CurrentPredicate(value),
-            NumberRainTaskMode.Combo when _task.ComboPredicate is not null => _task.ComboPredicate(value),
-            _ => _objectives.Any(o => o.Predicate(value))
-        };
-    }
-
-    private void RegisterHit(int value)
-    {
-        if (_task is null) return;
-
-        _hits++;
-
-        if (_task.Mode == NumberRainTaskMode.Combo)
-        {
-            ComboCurrent++;
-            if (_task.ComboTarget > 0 && ComboCurrent >= _task.ComboTarget)
-            {
-                _ = CompleteLevelAsync();
-            }
-            return;
-        }
-
-        if (_task.Mode is NumberRainTaskMode.ChainGreater or NumberRainTaskMode.ChainDivisible)
-        {
-            _lastSelectedValue = value;
-            TaskDetail = $"Letzte Wahl: {value}";
-        }
-
-        if (_objectives.Count == 0) return;
-
-        var target = _objectives.FirstOrDefault(o => !o.IsCompleted && o.Predicate(value))
-                     ?? _objectives.FirstOrDefault(o => o.Predicate(value));
-
-        if (target is not null)
-        {
-            target.Increment();
-        }
-
-        if (IsCompleted())
-        {
-            _ = CompleteLevelAsync();
-        }
-    }
-
-    private bool IsCompleted()
-    {
-        if (_task is null) return false;
-
-        if (_task.Mode == NumberRainTaskMode.Combo)
-            return _task.ComboTarget > 0 && ComboCurrent >= _task.ComboTarget;
-
-        if (_task.Mode == NumberRainTaskMode.Survival)
-            return TimeRemaining == 0 && _hits >= _task.MinimumHits;
-
-        return _objectives.All(o => o.IsCompleted);
-    }
-
-    private async Task CompleteLevelAsync()
-    {
-        if (_task is null) return;
+        if (_quest is null) return;
 
         StopTimers();
-        ClearRequested?.Invoke();
-        _activeSpawns.Clear();
+        IsRunning = false;
 
-        int reward = DifficultyKey switch
+        bool success = _quest.Mode switch
         {
-            "easy" => 5,
-            "normal" => 8,
-            "hard" => 12,
-            "master" => 18,
-            _ => 5
+            NumberRainQuestMode.Timed => AreGoalsComplete(),
+            NumberRainQuestMode.Survival => _quest.MinHits == 0
+                ? _misses <= _quest.MaxMisses
+                : TotalHits() >= _quest.MinHits,
+            _ => AreGoalsComplete()
         };
 
-        var user = await _userService.GetUserAsync();
-        if (user is not null)
-        {
-            user.Coins += reward;
-            await _userService.SaveUserAsync(user);
-            Coins = user.Coins;
-        }
-
-        int completedLevel = LevelNumber;
-        await _progressStore.MarkLevelCompleteAsync(GameId, DifficultyKey, completedLevel);
-
-        await _dialog.AlertAsync("Level geschafft!", $"Super! +{reward} Coins");
-
-        LevelNumber = completedLevel + 1;
-        await StartLevelAsync();
+        await EndRoundAsync(success);
     }
 
-    private async Task ApplyMistakeAsync(string message)
+    private async Task HandleNumberTapAsync(FallingNumberViewModel? number)
     {
-        Lives = Math.Max(0, Lives - 1);
+        if (number is null || _quest is null || !IsRunning) return;
 
-        if (Lives <= 0)
+        ActiveNumbers.Remove(number);
+
+        int? previousLast = _lastSelection;
+
+        bool isAvoid = _quest.AvoidPredicate?.Invoke(number.Value, previousLast) ?? false;
+        bool isTarget = IsTarget(number.Value);
+
+        if (isAvoid || !isTarget)
         {
-            StopTimers();
-            ClearRequested?.Invoke();
-            _activeSpawns.Clear();
-            await _dialog.AlertAsync("Game Over", "Keine Leben mehr. Versuch es erneut!");
-            await StartLevelAsync();
+            ApplyMiss();
+            UpdateProgressText();
             return;
         }
 
-        await _dialog.AlertAsync("Achtung", message);
+        _lastSelection = number.Value;
+
+        if (_quest.Mode == NumberRainQuestMode.Combo)
+        {
+            _combo++;
+            if (_combo >= _quest.ComboTarget)
+            {
+                await EndRoundAsync(true);
+                return;
+            }
+        }
+        else
+        {
+            _combo = 0;
+        }
+
+        if (_quest.Mode == NumberRainQuestMode.Multi || _quest.Goals.Count > 1)
+        {
+            for (int i = 0; i < _quest.Goals.Count; i++)
+            {
+                var goal = _quest.Goals[i];
+                if (_goalProgress[i] >= goal.TargetCount) continue;
+
+                if (goal.Predicate(number.Value, previousLast))
+                {
+                    _goalProgress[i]++;
+                    break;
+                }
+            }
+        }
+        else if (_quest.Goals.Count > 0)
+        {
+            _goalProgress[0]++;
+        }
+
+        UpdateProgressText();
+
+        if (AreGoalsComplete())
+            await EndRoundAsync(true);
+    }
+
+    private bool IsTarget(int value)
+    {
+        if (_quest is null) return false;
+
+        if (_quest.Mode == NumberRainQuestMode.Switch)
+        {
+            var rule = CurrentSwitchRule();
+            return rule?.Predicate(value, _lastSelection) ?? false;
+        }
+
+        var rulePredicate = _quest.Rules.FirstOrDefault()?.Predicate;
+
+        if (_quest.Mode == NumberRainQuestMode.Dynamic && rulePredicate is not null)
+            return rulePredicate(value, _lastSelection);
+
+        if (_quest.Goals.Count > 0)
+            return _quest.Goals.Any(g => g.Predicate(value, _lastSelection));
+
+        return rulePredicate?.Invoke(value, _lastSelection) ?? false;
+    }
+
+    private void ApplyMiss()
+    {
+        if (_ending) return;
+
+        _misses++;
+        _combo = 0;
+
+        Lives = Math.Max(0, Lives - 1);
+
+        // Survival Miss-Limit
+        if (_quest?.Mode == NumberRainQuestMode.Survival && _quest.MaxMisses > 0 && _misses > _quest.MaxMisses)
+        {
+            ScheduleEndRound(false);
+            return;
+        }
+
+        // Game Over
+        if (Lives <= 0)
+            ScheduleEndRound(false);
+    }
+
+    private int TotalHits() => _goalProgress.Sum();
+
+    private bool AreGoalsComplete()
+    {
+        if (_quest is null) return false;
+
+        if (_quest.Mode == NumberRainQuestMode.Combo)
+            return _combo >= _quest.ComboTarget;
+
+        for (int i = 0; i < _quest.Goals.Count; i++)
+        {
+            if (_goalProgress[i] < _quest.Goals[i].TargetCount)
+                return false;
+        }
+        return true;
+    }
+
+    private void ScheduleEndRound(bool success)
+    {
+        if (_ending || _endRoundScheduled) return;
+        _endRoundScheduled = true;
+        _dispatcher.Dispatch(async () =>
+        {
+            await EndRoundAsync(success);
+            _endRoundScheduled = false;
+        });
+    }
+
+    private Task EndRoundAsync(bool success)
+    {
+        if (_ending) return Task.CompletedTask;
+        _ending = true;
+        return EndRoundInternalAsync(success);
+    }
+
+    private async Task EndRoundInternalAsync(bool success)
+    {
+
+        StopTimers();
+        IsRunning = false;
+        ActiveNumbers.Clear();
+
+        if (success)
+        {
+            int reward = DifficultyKey switch
+            {
+                "easy" => 5,
+                "normal" => 8,
+                "hard" => 12,
+                "master" => 18,
+                _ => 5
+            };
+
+            var user = await _userService.GetUserAsync();
+            if (user is not null)
+            {
+                user.Coins += reward;
+                Coins = user.Coins;
+                await _userService.SaveUserAsync(user);
+            }
+
+            if (!string.IsNullOrWhiteSpace(GameId))
+                await _progressStore.MarkLevelCompleteAsync(GameId!, DifficultyKey, LevelNumber);
+
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+                await _dialog.AlertAsync("Super! 🎉", $"+{reward} Coins"));
+
+            LevelNumber++;
+            PrepareQuest();
+            return;
+        }
+
+        // ✅ GameOver-Dialog: Wiederholen / Abbrechen
+        bool retry = await MainThread.InvokeOnMainThreadAsync(async () =>
+            await _dialog.ConfirmAsync(
+                "Spiel vorbei",
+                "Du hast alle Leben verloren.",
+                "Wiederholen",
+                "Zurück"));
+
+        if (retry)
+        {
+            PrepareQuest();
+            StartTimers(); // sofort neu starten
+            return;
+        }
+
+        // ✅ Zur Karte zurück
+        var parameters = new Dictionary<string, object>
+        {
+            ["gameId"] = GameId ?? "number_rain"
+        };
+
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+            await _nav.GoToAsync(nameof(GameMapPage), parameters));
+    }
+
+    private void UpdateProgressText()
+    {
+        if (_quest is null)
+        {
+            ProgressText = string.Empty;
+            return;
+        }
+
+        if (_quest.Mode == NumberRainQuestMode.Combo)
+        {
+            ProgressText = $"Combo: {_combo}/{_quest.ComboTarget}";
+            return;
+        }
+
+        if (_quest.Mode == NumberRainQuestMode.Survival)
+        {
+            ProgressText = _quest.MinHits > 0
+                ? $"Treffer: {TotalHits()}/{_quest.MinHits} • Fehler: {_misses}/{_quest.MaxMisses}"
+                : $"Fehler: {_misses}/{_quest.MaxMisses}";
+            return;
+        }
+
+        if (_quest.Goals.Count == 1)
+        {
+            ProgressText = $"{_quest.Goals[0].Label}: {_goalProgress[0]}/{_quest.Goals[0].TargetCount}";
+            return;
+        }
+
+        var parts = new List<string>();
+        for (int i = 0; i < _quest.Goals.Count; i++)
+        {
+            var g = _quest.Goals[i];
+            parts.Add($"{g.Label}: {_goalProgress[i]}/{g.TargetCount}");
+        }
+
+        ProgressText = string.Join(" • ", parts);
+    }
+
+    private void UpdateActiveRule()
+    {
+        if (_quest is null)
+        {
+            ActiveRuleText = string.Empty;
+            HasActiveRule = false;
+            return;
+        }
+
+        if (_quest.Mode == NumberRainQuestMode.Switch)
+        {
+            var rule = CurrentSwitchRule();
+            ActiveRuleText = rule is null ? string.Empty : $"Aktive Regel: {rule.Label}";
+            HasActiveRule = !string.IsNullOrWhiteSpace(ActiveRuleText);
+            return;
+        }
+
+        if (_quest.Mode == NumberRainQuestMode.Dynamic && _quest.Rules.Count > 0)
+        {
+            ActiveRuleText = $"Regel: {_quest.Rules[0].Label}";
+            HasActiveRule = true;
+            return;
+        }
+
+        ActiveRuleText = string.Empty;
+        HasActiveRule = false;
+    }
+
+    private NumberRainRule? CurrentSwitchRule()
+    {
+        if (_quest is null || _quest.Mode != NumberRainQuestMode.Switch || _quest.Rules.Count < 2)
+            return null;
+
+        int interval = Math.Max(1, _quest.SwitchIntervalSeconds);
+        int index = ((int)_elapsedSeconds / interval) % _quest.Rules.Count;
+        return _quest.Rules[index];
     }
 
     private async Task ConfirmBackAsync()
     {
-        bool leave = await _dialog.ConfirmAsync("Zurück", "Möchtest du das Spiel verlassen?");
+        bool leave = await _dialog.ConfirmAsync(
+            "Zurück",
+            "Möchtest du das Spiel verlassen?",
+            "Ja",
+            "Nein");
+
         if (!leave) return;
-        Stop();
-        await _nav.GoBackAsync();
+
+        var parameters = new Dictionary<string, object>
+        {
+            ["gameId"] = GameId ?? "number_rain"
+        };
+
+        await _nav.GoToAsync(nameof(GameMapPage), parameters);
     }
 
     private static int StableHash(string s)
     {
         unchecked
         {
-            const int fnvOffset = (int)2166136261;
-            const int fnvPrime = 16777619;
-            int hash = fnvOffset;
-
+            int h = (int)2166136261;
             foreach (var c in s)
             {
-                hash ^= c;
-                hash *= fnvPrime;
+                h ^= c;
+                h *= 16777619;
             }
+            return Math.Abs(h);
+        }
+    }
+}
+public sealed class FallingNumberViewModel : ObservableObject
+{
+    private double _x;
+    private double _y;
+    private double _size;
 
-            return Math.Abs(hash);
+    public int Value { get; }
+
+    public double X
+    {
+        get => _x;
+        set
+        {
+            if (SetProperty(ref _x, value))
+                OnPropertyChanged(nameof(Bounds));
         }
     }
 
-    private sealed class DifficultySettings
+    public double Y
     {
-        public int MinValue { get; init; }
-        public int MaxValue { get; init; }
-        public int SpawnIntervalMs { get; init; }
-        public int FallDurationMs { get; init; }
-        public int MinTarget { get; init; }
-        public int MaxTarget { get; init; }
-        public int MinTime { get; init; }
-        public int MaxTime { get; init; }
-        public int MinCombo { get; init; }
-        public int MaxCombo { get; init; }
-        public int MinSurvivalHits { get; init; }
-        public int MaxSurvivalHits { get; init; }
-        public int MinSurvivalSeconds { get; init; }
-        public int MaxSurvivalSeconds { get; init; }
-
-        public static DifficultySettings For(string key) => key switch
+        get => _y;
+        set
         {
-            "easy" => new DifficultySettings
-            {
-                MinValue = 1,
-                MaxValue = 80,
-                SpawnIntervalMs = 750,
-                FallDurationMs = 5200,
-                MinTarget = 6,
-                MaxTarget = 12,
-                MinTime = 15,
-                MaxTime = 25,
-                MinCombo = 5,
-                MaxCombo = 9,
-                MinSurvivalHits = 6,
-                MaxSurvivalHits = 10,
-                MinSurvivalSeconds = 16,
-                MaxSurvivalSeconds = 26
-            },
-            "normal" => new DifficultySettings
-            {
-                MinValue = 10,
-                MaxValue = 150,
-                SpawnIntervalMs = 650,
-                FallDurationMs = 4800,
-                MinTarget = 8,
-                MaxTarget = 14,
-                MinTime = 16,
-                MaxTime = 26,
-                MinCombo = 6,
-                MaxCombo = 10,
-                MinSurvivalHits = 7,
-                MaxSurvivalHits = 12,
-                MinSurvivalSeconds = 18,
-                MaxSurvivalSeconds = 28
-            },
-            "hard" => new DifficultySettings
-            {
-                MinValue = 20,
-                MaxValue = 260,
-                SpawnIntervalMs = 560,
-                FallDurationMs = 4400,
-                MinTarget = 10,
-                MaxTarget = 16,
-                MinTime = 18,
-                MaxTime = 30,
-                MinCombo = 7,
-                MaxCombo = 11,
-                MinSurvivalHits = 9,
-                MaxSurvivalHits = 14,
-                MinSurvivalSeconds = 20,
-                MaxSurvivalSeconds = 32
-            },
-            "master" => new DifficultySettings
-            {
-                MinValue = 30,
-                MaxValue = 420,
-                SpawnIntervalMs = 520,
-                FallDurationMs = 4200,
-                MinTarget = 10,
-                MaxTarget = 18,
-                MinTime = 20,
-                MaxTime = 32,
-                MinCombo = 8,
-                MaxCombo = 12,
-                MinSurvivalHits = 10,
-                MaxSurvivalHits = 16,
-                MinSurvivalSeconds = 22,
-                MaxSurvivalSeconds = 36
-            },
-            _ => new DifficultySettings
-            {
-                MinValue = 1,
-                MaxValue = 80,
-                SpawnIntervalMs = 750,
-                FallDurationMs = 5200,
-                MinTarget = 6,
-                MaxTarget = 12,
-                MinTime = 15,
-                MaxTime = 25,
-                MinCombo = 5,
-                MaxCombo = 9,
-                MinSurvivalHits = 6,
-                MaxSurvivalHits = 10,
-                MinSurvivalSeconds = 16,
-                MaxSurvivalSeconds = 26
-            }
-        };
-    }
-
-    private enum NumberRainTaskMode
-    {
-        Standard,
-        Combo,
-        Survival,
-        ChainGreater,
-        ChainDivisible,
-        Switch
-    }
-
-    private sealed class NumberRainObjectiveDefinition
-    {
-        public string Title { get; }
-        public int Target { get; }
-        public Func<int, bool> Predicate { get; }
-
-        public NumberRainObjectiveDefinition(string title, int target, Func<int, bool> predicate)
-        {
-            Title = title;
-            Target = target;
-            Predicate = predicate;
+            if (SetProperty(ref _y, value))
+                OnPropertyChanged(nameof(Bounds));
         }
     }
 
-    private sealed class NumberRainTask
+    public double Size
     {
-        public string Title { get; init; } = "";
-        public string Detail { get; init; } = "";
-        public List<NumberRainObjectiveDefinition> Objectives { get; init; } = new();
-        public Func<int, bool>? BombPredicate { get; init; }
-        public int TimeLimitSeconds { get; init; }
-        public int ComboTarget { get; init; }
-        public Func<int, bool>? ComboPredicate { get; init; }
-        public int SurvivalSeconds { get; init; }
-        public int MinimumHits { get; init; }
-        public NumberRainTaskMode Mode { get; init; }
-        public SwitchRule? SwitchRule { get; init; }
-    }
-
-    private sealed class SwitchRule
-    {
-        private readonly string _descA;
-        private readonly string _descB;
-        private readonly Func<int, bool> _ruleA;
-        private readonly Func<int, bool> _ruleB;
-        private bool _useA = true;
-
-        public int SwitchSeconds { get; }
-
-        public SwitchRule(string descA, Func<int, bool> ruleA, string descB, Func<int, bool> ruleB, int switchSeconds)
+        get => _size;
+        set
         {
-            _descA = descA;
-            _descB = descB;
-            _ruleA = ruleA;
-            _ruleB = ruleB;
-            SwitchSeconds = switchSeconds;
-        }
-
-        public Func<int, bool> CurrentPredicate => _useA ? _ruleA : _ruleB;
-        public string CurrentDescription => _useA ? _descA : _descB;
-
-        public void Toggle() => _useA = !_useA;
-    }
-
-    public sealed class NumberRainSpawn
-    {
-        public string Id { get; }
-        public int Value { get; }
-        public int FallDurationMs { get; }
-
-        public NumberRainSpawn(string id, int value, int fallDurationMs)
-        {
-            Id = id;
-            Value = value;
-            FallDurationMs = fallDurationMs;
+            if (SetProperty(ref _size, value))
+                OnPropertyChanged(nameof(Bounds));
         }
     }
 
-    private static class NumberRainTaskFactory
+    public Rect Bounds => new(X, Y, Size, Size);
+
+    public FallingNumberViewModel(int value, double x, double y, double size)
     {
-        public static NumberRainTask Create(Random rnd, DifficultySettings settings, string difficulty)
-        {
-            return difficulty switch
-            {
-                "easy" => CreateEasy(rnd, settings),
-                "normal" => CreateNormal(rnd, settings),
-                "hard" => CreateHard(rnd, settings),
-                "master" => CreateMaster(rnd, settings),
-                _ => CreateEasy(rnd, settings)
-            };
-        }
-
-        private static NumberRainTask CreateEasy(Random rnd, DifficultySettings settings)
-        {
-            int n = rnd.Next(settings.MinTarget, settings.MaxTarget + 1);
-            int t = rnd.Next(settings.MinTime, settings.MaxTime + 1);
-            int k = rnd.Next(2, 11);
-            int d = rnd.Next(0, 10);
-            int x = rnd.Next(1, 3);
-            int a = rnd.Next(settings.MinValue, settings.MaxValue - 10);
-            int b = rnd.Next(a + 5, settings.MaxValue + 1);
-            int s = rnd.Next(4, 15);
-            int n1 = rnd.Next(3, 7);
-            int n2 = rnd.Next(3, 7);
-
-            var options = new List<Func<NumberRainTask>>
-            {
-                () => Simple(n, $"Wähle {n} gerade Zahlen", IsEven),
-                () => Simple(n, $"Wähle {n} ungerade Zahlen", IsOdd),
-                () => Simple(n, $"Wähle {n} Vielfache von {k}", value => value % k == 0),
-                () => Simple(n, $"Wähle {n} Zahlen, die auf {d} enden", value => value % 10 == d),
-                () => Simple(n, $"Wähle {n} Zahlen zwischen {a} und {b}", value => value >= a && value <= b),
-                () => Simple(n, $"Wähle {n} Zahlen < {b}", value => value < b),
-                () => Simple(n, $"Wähle {n} Zahlen > {a}", value => value > a),
-                () => Simple(n, $"Wähle {n} zweistellige Zahlen", value => value is >= 10 and <= 99),
-                () => Simple(n, $"Wähle {n} Zahlen mit genau {x} Stellen", value => DigitCount(value) == x),
-                () => Simple(n, $"Wähle {n} Zahlen, die die Ziffer {d} enthalten", value => ContainsDigit(value, d)),
-                () => Simple(n, $"Wähle {n} Zahlen, die die Ziffer {d} NICHT enthalten", value => !ContainsDigit(value, d)),
-                () => Simple(n, $"Wähle {n} Zahlen mit gerader Quersumme", value => DigitSum(value) % 2 == 0),
-                () => Simple(n, $"Wähle {n} Zahlen mit ungerader Quersumme", value => DigitSum(value) % 2 == 1),
-                () => Simple(n, $"Wähle {n} Zahlen mit Quersumme = {s}", value => DigitSum(value) == s),
-                () => Simple(n, $"Wähle {n} Zahlen, die durch 2 ODER 5 teilbar sind", value => value % 2 == 0 || value % 5 == 0),
-                () => Timed(n, t, $"In {t}s: Wähle {n} gerade Zahlen", IsEven),
-                () => Timed(n, t, $"In {t}s: Wähle {n} Vielfache von {k}", value => value % k == 0),
-                () => Timed(n, t, $"In {t}s: Wähle {n} Zahlen, die auf {d} enden", value => value % 10 == d),
-                () => Timed(n, t, $"In {t}s: Wähle {n} Zahlen im Bereich {a}–{b}", value => value >= a && value <= b),
-                () => Avoid(n, $"Wähle {n} Vielfache von {k}, aber klicke NIE auf Zahlen die auf {d} enden",
-                    value => value % k == 0, value => value % 10 == d),
-                () => Avoid(n, $"Wähle {n} Zahlen mit Ziffer {d}, aber meide gerade Zahlen",
-                    value => ContainsDigit(value, d), IsEven),
-                () => Multi(new[]
-                    {
-                        new NumberRainObjectiveDefinition($"Gerade Zahlen", n1, IsEven),
-                        new NumberRainObjectiveDefinition($"Ungerade Zahlen", n2, IsOdd)
-                    },
-                    $"Sammle {n1} gerade und {n2} ungerade Zahlen"),
-                () => Multi(new[]
-                    {
-                        new NumberRainObjectiveDefinition($"Vielfache von {k}", n1, value => value % k == 0),
-                        new NumberRainObjectiveDefinition($"Vielfache von {k + 1}", n2, value => value % (k + 1) == 0)
-                    },
-                    $"Sammle {n1} Vielfache von {k} und {n2} Vielfache von {k + 1}"),
-                () => Multi(new[]
-                    {
-                        new NumberRainObjectiveDefinition($"Bereich {a}-{b}", n1, value => value >= a && value <= b),
-                        new NumberRainObjectiveDefinition($"Ziffer {d}", n2, value => ContainsDigit(value, d))
-                    },
-                    $"Sammle {n1} Zahlen im Bereich {a}–{b} und {n2} Zahlen mit Ziffer {d}")
-            };
-
-            return options[rnd.Next(options.Count)]();
-        }
-
-        private static NumberRainTask CreateNormal(Random rnd, DifficultySettings settings)
-        {
-            int n = rnd.Next(settings.MinTarget, settings.MaxTarget + 2);
-            int t = rnd.Next(settings.MinTime, settings.MaxTime + 2);
-            int k = rnd.Next(2, 11);
-            int j = rnd.Next(2, 11);
-            int d = rnd.Next(0, 10);
-            int s = rnd.Next(6, 25);
-            int a = rnd.Next(settings.MinValue, settings.MaxValue - 30);
-            int b = rnd.Next(a + 10, settings.MaxValue + 1);
-            int c = rnd.Next(settings.MinCombo, settings.MaxCombo + 1);
-            int n1 = rnd.Next(4, 8);
-            int n2 = rnd.Next(4, 8);
-
-            var options = new List<Func<NumberRainTask>>
-            {
-                () => Simple(n, $"Wähle {n} Primzahlen", IsPrime),
-                () => Simple(n, $"Wähle {n} Nicht-Primzahlen", value => value > 1 && !IsPrime(value)),
-                () => Simple(n, $"Wähle {n} Quadratzahlen", IsSquare),
-                () => Simple(n, $"Wähle {n} Zahlen, die durch {k} UND {j} teilbar sind", value => value % k == 0 && value % j == 0),
-                () => Simple(n, $"Wähle {n} Zahlen, die durch {k} teilbar sind, aber NICHT durch {j}", value => value % k == 0 && value % j != 0),
-                () => Simple(n, $"Wähle {n} Palindromzahlen", IsPalindrome),
-                () => Simple(n, $"Wähle {n} Zahlen mit Quersumme prim", value => IsPrime(DigitSum(value))),
-                () => Simple(n, $"Wähle {n} Zahlen mit Quersumme = {s}", value => DigitSum(value) == s),
-                () => Simple(n, $"Wähle {n} Zahlen, die Ziffer {d} enthalten UND gerade sind", value => ContainsDigit(value, d) && IsEven(value)),
-                () => Simple(n, $"Wähle {n} Zahlen, die Ziffer {d} enthalten UND NICHT durch {k} teilbar sind", value => ContainsDigit(value, d) && value % k != 0),
-                () => Simple(n, $"Wähle {n} Zahlen mit mindestens zwei gleichen Ziffern", value => HasDuplicateDigits(value)),
-                () => Simple(n, $"Wähle {n} Zahlen mit allen Ziffern verschieden", value => AllDigitsDistinct(value)),
-                () => Simple(n, $"Wähle {n} Zahlen, die näher an {a} als an {b} sind", value => Math.Abs(value - a) < Math.Abs(value - b)),
-                () => Timed(n, t, $"In {t}s: Wähle {n} Primzahlen", IsPrime),
-                () => Timed(n, t, $"In {t}s: Wähle {n} Quadratzahlen", IsSquare),
-                () => Timed(n, t, $"In {t}s: Wähle {n} Zahlen (durch {k} teilbar, aber nicht durch {j})", value => value % k == 0 && value % j != 0),
-                () => Combo(c, $"Erreiche Combo {c} mit Regel: Vielfache von {k}", value => value % k == 0),
-                () => Combo(c, $"Erreiche Combo {c} mit Regel: Ziffer {d} enthalten", value => ContainsDigit(value, d)),
-                () => Combo(c, $"Erreiche Combo {c} mit Regel: Quersumme gerade", value => DigitSum(value) % 2 == 0),
-                () => Avoid(n, $"Wähle {n} Quadratzahlen, aber meide Zahlen mit Ziffer {d}", IsSquare, value => ContainsDigit(value, d)),
-                () => Avoid(n, $"Wähle {n} Primzahlen, aber klicke NIE auf Vielfache von {k}", IsPrime, value => value % k == 0),
-                () => Multi(new[]
-                    {
-                        new NumberRainObjectiveDefinition("Primzahlen", n1, IsPrime),
-                        new NumberRainObjectiveDefinition($"Vielfache von {k}", n2, value => value % k == 0)
-                    },
-                    $"Sammle {n1} Primzahlen und {n2} Vielfache von {k}"),
-                () => Multi(new[]
-                    {
-                        new NumberRainObjectiveDefinition("Palindromzahlen", n1, IsPalindrome),
-                        new NumberRainObjectiveDefinition($"Quersumme {s}", n2, value => DigitSum(value) == s)
-                    },
-                    $"Sammle {n1} Palindromzahlen und {n2} Zahlen mit Quersumme {s}"),
-                () => TimedMulti(n1, n2, t,
-                    $"In {t}s: Sammle {n1} Quadratzahlen und {n2} ungerade Vielfache von {k}",
-                    IsSquare,
-                    value => value % k == 0 && IsOdd(value))
-            };
-
-            return options[rnd.Next(options.Count)]();
-        }
-
-        private static NumberRainTask CreateHard(Random rnd, DifficultySettings settings)
-        {
-            int n = rnd.Next(settings.MinTarget + 2, settings.MaxTarget + 4);
-            int t = rnd.Next(settings.MinTime + 2, settings.MaxTime + 4);
-            int k = rnd.Next(2, 13);
-            int d = rnd.Next(0, 10);
-            int e = (d + rnd.Next(1, 9)) % 10;
-            int m = rnd.Next(3, 12);
-            int r = rnd.Next(0, m);
-            int a = rnd.Next(settings.MinValue, settings.MaxValue - 40);
-            int s = rnd.Next(10, 30);
-            int n1 = rnd.Next(5, 9);
-            int n2 = rnd.Next(5, 9);
-            int survivalT = rnd.Next(settings.MinSurvivalSeconds, settings.MaxSurvivalSeconds + 1);
-            int survivalHits = rnd.Next(settings.MinSurvivalHits, settings.MaxSurvivalHits + 1);
-            int survivalMod = rnd.Next(3, 11);
-            int survivalRest = rnd.Next(0, survivalMod);
-
-            var options = new List<Func<NumberRainTask>>
-            {
-                () => Simple(n, $"Wähle {n} Zahlen mit Rest {r} bei Division durch {m}", value => value % m == r),
-                () => Simple(n, $"Wähle {n} Zahlen: Prim UND > {a}", value => IsPrime(value) && value > a),
-                () => Simple(n, $"Wähle {n} Zahlen: Prim UND enthält Ziffer {d}", value => IsPrime(value) && ContainsDigit(value, d)),
-                () => Simple(n, $"Wähle {n} Zahlen: Quadratzahl ODER Prim", value => IsSquare(value) || IsPrime(value)),
-                () => Simple(n, $"Wähle {n} Zahlen: (Vielfache von {k}) UND (Quersumme prim)", value => value % k == 0 && IsPrime(DigitSum(value))),
-                () => Simple(n, $"Wähle {n} Fibonacci-Zahlen", IsFibonacci),
-                () => Simple(n, $"Wähle {n} Potenzen von 2", IsPowerOfTwo),
-                () => Simple(n, $"Wähle {n} Zahlen mit streng steigenden Ziffern", HasStrictlyIncreasingDigits),
-                () => Simple(n, $"Wähle {n} Zahlen mit streng fallenden Ziffern", HasStrictlyDecreasingDigits),
-                () => Simple(n, $"Wähle {n} Zahlen: enthält {d}, aber enthält NICHT {e}", value => ContainsDigit(value, d) && !ContainsDigit(value, e)),
-                () => Simple(n, $"Wähle {n} Zahlen: durch {k} teilbar, aber Quersumme ungerade", value => value % k == 0 && DigitSum(value) % 2 == 1),
-                () => Simple(n, $"Wähle {n} Zahlen: Palindrom UND durch {k} teilbar", value => IsPalindrome(value) && value % k == 0),
-                () => Timed(n, t, $"In {t}s: Wähle {n} Zahlen mit mod {m} = {r}", value => value % m == r),
-                () => Timed(n, t, $"In {t}s: Wähle {n} Zahlen (Prim UND > {a})", value => IsPrime(value) && value > a),
-                () => Timed(n, t, $"In {t}s: Wähle {n} Zahlen (Quersumme prim UND enthält {d})", value => IsPrime(DigitSum(value)) && ContainsDigit(value, d)),
-                () => Avoid(n, $"Wähle {n} Zahlen (mod {m}={r}), aber meide Quadratzahlen", value => value % m == r, IsSquare),
-                () => Avoid(n, $"Wähle {n} Zahlen (Vielfache von {k}), aber meide Palindrome", value => value % k == 0, IsPalindrome),
-                () => Multi(new[]
-                    {
-                        new NumberRainObjectiveDefinition($"mod {m}={r}", n1, value => value % m == r),
-                        new NumberRainObjectiveDefinition($"Quersumme {s}", n2, value => DigitSum(value) == s)
-                    },
-                    $"Sammle {n1} Zahlen (mod {m}={r}) und {n2} Zahlen (Quersumme = {s})"),
-                () => Multi(new[]
-                    {
-                        new NumberRainObjectiveDefinition("Potenzen von 2", n1, IsPowerOfTwo),
-                        new NumberRainObjectiveDefinition("Primzahlen", n2, IsPrime)
-                    },
-                    $"Sammle {n1} Potenzen von 2 und {n2} Primzahlen"),
-                () => TimedMulti(n1, n2, t,
-                    $"In {t}s: Sammle {n1} Fibonacci und {n2} Zahlen mit Ziffer {d}",
-                    IsFibonacci,
-                    value => ContainsDigit(value, d)),
-                () => Survival(
-                    survivalT,
-                    survivalHits,
-                    $"Überlebe {survivalT}s und mache mindestens {survivalHits} Treffer",
-                    value => value % m == r,
-                    $"Regel: mod {m} = {r}"),
-                () => Survival(
-                    survivalT,
-                    survivalHits,
-                    $"Überlebe {survivalT}s mit max. {LivesMax} Fehlklicks",
-                    value => IsPrime(value) || value % survivalMod == survivalRest,
-                    $"Regel: Prim ODER mod {survivalMod} = {survivalRest}")
-            };
-
-            return options[rnd.Next(options.Count)]();
-        }
-
-        private static NumberRainTask CreateMaster(Random rnd, DifficultySettings settings)
-        {
-            int n = rnd.Next(settings.MinTarget + 2, settings.MaxTarget + 5);
-            int t = rnd.Next(settings.MinTime + 4, settings.MaxTime + 6);
-            int k = rnd.Next(2, 13);
-            int d = rnd.Next(0, 10);
-            int e = (d + rnd.Next(1, 9)) % 10;
-            int m = rnd.Next(3, 14);
-            int r = rnd.Next(0, m);
-            int s = rnd.Next(12, 35);
-            int n1 = rnd.Next(5, 9);
-            int n2 = rnd.Next(5, 9);
-            int n3 = rnd.Next(4, 8);
-
-            var options = new List<Func<NumberRainTask>>
-            {
-                () => Simple(n, $"Wähle {n} Semiprime (Produkt aus genau 2 Primzahlen)", IsSemiprime),
-                () => Simple(n, $"Wähle {n} squarefree Zahlen", IsSquareFree),
-                () => Simple(n, $"Wähle {n} Zahlen: (mod {m}={r}) UND (Quersumme prim)", value => value % m == r && IsPrime(DigitSum(value))),
-                () => Simple(n, $"Wähle {n} Zahlen: (Prim) UND (Quersumme = {s})", value => IsPrime(value) && DigitSum(value) == s),
-                () => Simple(n, $"Wähle {n} Zahlen: (contains {d}) UND (mod {m}={r}) UND (ungerade)", value => ContainsDigit(value, d) && value % m == r && IsOdd(value)),
-                () => Simple(n, $"Wähle {n} Zahlen: (Harshad) UND (nicht durch 10 teilbar)", value => IsHarshad(value) && value % 10 != 0),
-                () => Simple(n, $"Wähle {n} Zahlen: (pronic n(n+1))", IsPronic),
-                () => Simple(n, $"Wähle {n} Zahlen: (Automorph)", IsAutomorphic),
-                () => Simple(n, $"Wähle {n} Zahlen: (Palindrom) UND (nicht prim)", value => IsPalindrome(value) && !IsPrime(value)),
-                () => Simple(n, $"Wähle {n} Zahlen: (Quadratzahl) UND (enthält {d})", value => IsSquare(value) && ContainsDigit(value, d)),
-                () => Timed(n, t, $"In {t}s: Sammle {n} (Semiprime)", IsSemiprime),
-                () => Timed(n, t, $"In {t}s: Sammle {n} (squarefree)", IsSquareFree),
-                () => Timed(n, t, $"In {t}s: Sammle {n} (mod {m}={r} UND Quersumme prim)", value => value % m == r && IsPrime(DigitSum(value))),
-                () => Avoid(n, $"Wähle {n} Treffer (Regel R), aber klicke NIE auf Zahlen mit Eigenschaft X",
-                    value => value % m == r, IsPrime),
-                () => Avoid(n, $"Wähle {n} Treffer (Regel R), aber jede Zahl mit Ziffer {d} ist Bombe",
-                    value => value % k == 0, value => ContainsDigit(value, d)),
-                () => Avoid(n, $"Wähle {n} Treffer (Regel R), aber jede Quadratzahl ist Bombe",
-                    value => IsPrime(value), IsSquare),
-                () => Multi(new[]
-                    {
-                        new NumberRainObjectiveDefinition("Semiprime", n1, IsSemiprime),
-                        new NumberRainObjectiveDefinition($"mod {m}={r}", n2, value => value % m == r),
-                        new NumberRainObjectiveDefinition($"Quersumme {s}", n3, value => DigitSum(value) == s)
-                    },
-                    $"Sammle {n1} (Semiprime) + {n2} (mod {m}={r}) + {n3} (Quersumme = {s})"),
-                () => TimedMulti(n1, n2, t,
-                    $"In {t}s: {n1} (Prim) + {n2} (Potenzen von 2)",
-                    IsPrime,
-                    IsPowerOfTwo),
-                () => Multi(new[]
-                    {
-                        new NumberRainObjectiveDefinition("squarefree", n1, IsSquareFree),
-                        new NumberRainObjectiveDefinition($"enthält {d} aber nicht {e}", n2, value => ContainsDigit(value, d) && !ContainsDigit(value, e))
-                    },
-                    $"Sammle {n1} (squarefree) und {n2} (enthält {d} aber nicht {e})"),
-                () => Chain(n, true, $"Kettenregel: Wähle {n} Zahlen, die > der letzten Wahl sind"),
-                () => Chain(n, false, $"Kettenregel: Wähle {n} Zahlen, die durch die letzte Wahl teilbar sind"),
-                () => Switch(n, $"Wechselregel: Alle 10 Sekunden ändert sich die Regel",
-                    new SwitchRule($"Regel A: Vielfache von {k}", value => value % k == 0,
-                                    $"Regel B: Ziffer {d} enthalten", value => ContainsDigit(value, d), 10))
-            };
-
-            return options[rnd.Next(options.Count)]();
-        }
-
-        private static NumberRainTask Simple(int n, string title, Func<int, bool> predicate)
-        {
-            return new NumberRainTask
-            {
-                Title = title,
-                Objectives = new List<NumberRainObjectiveDefinition>
-                {
-                    new NumberRainObjectiveDefinition("Ziel", n, predicate)
-                },
-                Mode = NumberRainTaskMode.Standard
-            };
-        }
-
-        private static NumberRainTask Timed(int n, int t, string title, Func<int, bool> predicate)
-        {
-            return new NumberRainTask
-            {
-                Title = title,
-                Objectives = new List<NumberRainObjectiveDefinition>
-                {
-                    new NumberRainObjectiveDefinition("Ziel", n, predicate)
-                },
-                TimeLimitSeconds = t,
-                Mode = NumberRainTaskMode.Standard
-            };
-        }
-
-        private static NumberRainTask Avoid(int n, string title, Func<int, bool> predicate, Func<int, bool> bomb)
-        {
-            return new NumberRainTask
-            {
-                Title = title,
-                Objectives = new List<NumberRainObjectiveDefinition>
-                {
-                    new NumberRainObjectiveDefinition("Ziel", n, predicate)
-                },
-                BombPredicate = bomb,
-                Mode = NumberRainTaskMode.Standard
-            };
-        }
-
-        private static NumberRainTask Multi(IEnumerable<NumberRainObjectiveDefinition> objectives, string title)
-        {
-            return new NumberRainTask
-            {
-                Title = title,
-                Objectives = objectives.ToList(),
-                Mode = NumberRainTaskMode.Standard
-            };
-        }
-
-        private static NumberRainTask TimedMulti(int n1, int n2, int t, string title, Func<int, bool> predicate1, Func<int, bool> predicate2)
-        {
-            return new NumberRainTask
-            {
-                Title = title,
-                Objectives = new List<NumberRainObjectiveDefinition>
-                {
-                    new NumberRainObjectiveDefinition("Ziel A", n1, predicate1),
-                    new NumberRainObjectiveDefinition("Ziel B", n2, predicate2)
-                },
-                TimeLimitSeconds = t,
-                Mode = NumberRainTaskMode.Standard
-            };
-        }
-
-        private static NumberRainTask Combo(int comboTarget, string title, Func<int, bool> predicate)
-        {
-            return new NumberRainTask
-            {
-                Title = title,
-                ComboTarget = comboTarget,
-                ComboPredicate = predicate,
-                Mode = NumberRainTaskMode.Combo
-            };
-        }
-
-        private static NumberRainTask Survival(int seconds, int minHits, string title, Func<int, bool> predicate, string detail)
-        {
-            return new NumberRainTask
-            {
-                Title = title,
-                Detail = detail,
-                SurvivalSeconds = seconds,
-                MinimumHits = minHits,
-                Objectives = new List<NumberRainObjectiveDefinition>
-                {
-                    new NumberRainObjectiveDefinition("Treffer", minHits, predicate)
-                },
-                Mode = NumberRainTaskMode.Survival
-            };
-        }
-
-        private static NumberRainTask Chain(int n, bool greater, string title)
-        {
-            return new NumberRainTask
-            {
-                Title = title,
-                Detail = "Letzte Wahl: –",
-                Objectives = new List<NumberRainObjectiveDefinition>
-                {
-                    new NumberRainObjectiveDefinition("Ziel", n, _ => true)
-                },
-                Mode = greater ? NumberRainTaskMode.ChainGreater : NumberRainTaskMode.ChainDivisible
-            };
-        }
-
-        private static NumberRainTask Switch(int n, string title, SwitchRule rule)
-        {
-            return new NumberRainTask
-            {
-                Title = title,
-                Detail = rule.CurrentDescription,
-                Objectives = new List<NumberRainObjectiveDefinition>
-                {
-                    new NumberRainObjectiveDefinition("Ziel", n, _ => true)
-                },
-                Mode = NumberRainTaskMode.Switch,
-                SwitchRule = rule
-            };
-        }
-
-        private static bool IsEven(int value) => value % 2 == 0;
-        private static bool IsOdd(int value) => value % 2 != 0;
-
-        private static bool IsPrime(int value)
-        {
-            if (value <= 1) return false;
-            if (value <= 3) return true;
-            if (value % 2 == 0 || value % 3 == 0) return false;
-            int limit = (int)Math.Sqrt(value);
-            for (int i = 5; i <= limit; i += 6)
-            {
-                if (value % i == 0 || value % (i + 2) == 0)
-                    return false;
-            }
-            return true;
-        }
-
-        private static bool IsSquare(int value)
-        {
-            if (value < 0) return false;
-            int root = (int)Math.Sqrt(value);
-            return root * root == value;
-        }
-
-        private static bool IsPalindrome(int value)
-        {
-            string s = Math.Abs(value).ToString();
-            return s.SequenceEqual(s.Reverse());
-        }
-
-        private static bool ContainsDigit(int value, int digit)
-        {
-            string s = Math.Abs(value).ToString();
-            return s.Contains(digit.ToString());
-        }
-
-        private static int DigitSum(int value)
-        {
-            int sum = 0;
-            int n = Math.Abs(value);
-            while (n > 0)
-            {
-                sum += n % 10;
-                n /= 10;
-            }
-            return sum;
-        }
-
-        private static int DigitCount(int value)
-        {
-            int n = Math.Abs(value);
-            if (n == 0) return 1;
-            int count = 0;
-            while (n > 0)
-            {
-                count++;
-                n /= 10;
-            }
-            return count;
-        }
-
-        private static bool HasDuplicateDigits(int value)
-        {
-            string s = Math.Abs(value).ToString();
-            return s.Length != s.Distinct().Count();
-        }
-
-        private static bool AllDigitsDistinct(int value)
-        {
-            string s = Math.Abs(value).ToString();
-            return s.Length == s.Distinct().Count();
-        }
-
-        private static bool IsFibonacci(int value)
-        {
-            if (value < 0) return false;
-            int a = 0;
-            int b = 1;
-            while (a < value)
-            {
-                int next = a + b;
-                a = b;
-                b = next;
-            }
-            return value == a;
-        }
-
-        private static bool IsPowerOfTwo(int value)
-        {
-            if (value <= 0) return false;
-            return (value & (value - 1)) == 0;
-        }
-
-        private static bool HasStrictlyIncreasingDigits(int value)
-        {
-            string s = Math.Abs(value).ToString();
-            for (int i = 1; i < s.Length; i++)
-            {
-                if (s[i] <= s[i - 1]) return false;
-            }
-            return s.Length > 1;
-        }
-
-        private static bool HasStrictlyDecreasingDigits(int value)
-        {
-            string s = Math.Abs(value).ToString();
-            for (int i = 1; i < s.Length; i++)
-            {
-                if (s[i] >= s[i - 1]) return false;
-            }
-            return s.Length > 1;
-        }
-
-        private static bool IsSemiprime(int value)
-        {
-            if (value < 4) return false;
-            int count = 0;
-            int n = value;
-            for (int p = 2; p * p <= n; p++)
-            {
-                while (n % p == 0)
-                {
-                    n /= p;
-                    count++;
-                    if (count > 2) return false;
-                }
-            }
-            if (n > 1) count++;
-            return count == 2;
-        }
-
-        private static bool IsSquareFree(int value)
-        {
-            int n = Math.Abs(value);
-            if (n == 0) return false;
-            for (int p = 2; p * p <= n; p++)
-            {
-                int p2 = p * p;
-                if (n % p2 == 0) return false;
-            }
-            return true;
-        }
-
-        private static bool IsHarshad(int value)
-        {
-            int sum = DigitSum(value);
-            return sum != 0 && value % sum == 0;
-        }
-
-        private static bool IsPronic(int value)
-        {
-            if (value < 0) return false;
-            int n = (int)Math.Floor(Math.Sqrt(value));
-            return n * (n + 1) == value || (n - 1) * n == value;
-        }
-
-        private static bool IsAutomorphic(int value)
-        {
-            if (value < 0) return false;
-            long square = (long)value * value;
-            string s = value.ToString();
-            return square.ToString().EndsWith(s, StringComparison.Ordinal);
-        }
+        Value = value;
+        _x = x;
+        _y = y;
+        _size = size;
     }
 }

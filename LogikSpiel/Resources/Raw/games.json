@@ -58,15 +58,15 @@
     {
         "id": "number_rain",
         "title": "Zahlenregen",
-        "description": "Wähle schnell die passenden Zahlen aus dem Regen",
-        "image": "applogo.png",
+        "description": "Reagiere schnell und sammle die richtigen Zahlen",
+        "image": "rain.png",
         "route": "NumberRainPage",
-        "levelCount": 10000,
+        "levelCount": 9999,
         "difficulties": [ "easy", "normal", "hard", "master" ],
         "rules": [
-            "Oben steht deine Aufgabe, pro Schwierigkeit gibt es viele Varianten",
-            "Tippe passende Zahlen an, falsche Klicks kosten Leben",
-            "Verpasste Zielzahlen kosten Leben – du hast 3 Leben"
+            "Tippe auf die Zahlen, die zur Mission passen",
+            "Falsche Auswahl oder ein verpasstes Ziel kostet ein Leben",
+            "Du hast 3 Leben – je schneller und genauer, desto besser"
         ]
     }
 ]

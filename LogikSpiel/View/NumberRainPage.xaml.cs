@@ -1,137 +1,47 @@
-#nullable enable
 using LogikSpiel.ViewModel;
-using Microsoft.Maui.ApplicationModel;
-using Microsoft.Maui.Graphics;
-using MauiControls = Microsoft.Maui.Controls;
-using Microsoft.Maui;
-using Microsoft.Maui.Layouts; 
+
 namespace LogikSpiel.View;
 
-public partial class NumberRainPage : MauiControls.ContentPage, MauiControls.IQueryAttributable
+public partial class NumberRainPage : ContentPage, IQueryAttributable
 {
-    private readonly Dictionary<string, MauiControls.View> _views = new();
-    private readonly Random _random = new();
     private bool _isLoaded;
-    private double _canvasWidth;
-    private double _canvasHeight;
 
     public NumberRainPage(NumberRainPageViewModel vm)
     {
         InitializeComponent();
         BindingContext = vm;
 
-        RainCanvas.SizeChanged += (_, __) =>
+        // WICHTIG: Arena-Gr��e f�r Spawn/Bounds
+        RainArena.SizeChanged += (_, _) =>
         {
-            _canvasWidth = RainCanvas.Width;
-            _canvasHeight = RainCanvas.Height;
+            if (BindingContext is NumberRainPageViewModel viewModel)
+                viewModel.UpdateArenaSize(RainArena.Width, RainArena.Height);
         };
+    }
 
-        vm.Spawned += OnSpawned;
-        vm.ClearRequested += ClearRain;
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+
+        if (!_isLoaded && BindingContext is NumberRainPageViewModel vm)
+        {
+            await vm.LoadAsync("number_rain", "normal", 1);
+            _isLoaded = true;
+        }
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
-        if (_isLoaded || BindingContext is not NumberRainPageViewModel vm) return;
+        if (BindingContext is not NumberRainPageViewModel vm) return;
         _isLoaded = true;
 
-        string diff = query.TryGetValue("difficulty", out var d) ? d?.ToString() ?? "easy" : "easy";
-        int level = query.TryGetValue("level", out var l) && int.TryParse(l?.ToString(), out var lv) ? lv : 1;
+        var gameId = query.TryGetValue("gameId", out var idObj) ? idObj?.ToString() ?? "number_rain" : "number_rain";
+        var difficulty = query.TryGetValue("difficulty", out var diffObj) ? diffObj?.ToString() ?? "normal" : "normal";
 
-        MainThread.BeginInvokeOnMainThread(async () =>
-        {
-            await Task.Delay(100);
-            await vm.LoadAsync("number_rain", diff, level);
-        });
-    }
+        int level = 1;
+        if (query.TryGetValue("level", out var lvObj))
+            int.TryParse(lvObj?.ToString(), out level);
 
-    protected override void OnDisappearing()
-    {
-        base.OnDisappearing();
-        if (BindingContext is NumberRainPageViewModel vm)
-            vm.Stop();
-        ClearRain();
-    }
-
-    private void OnSpawned(NumberRainPageViewModel.NumberRainSpawn spawn)
-    {
-        MainThread.BeginInvokeOnMainThread(() =>
-        {
-            var button = BuildNumberButton(spawn);
-            _views[spawn.Id] = button;
-            RainCanvas.Children.Add(button);
-
-            _ = AnimateFallAsync(spawn, button);
-        });
-    }
-
-    private MauiControls.Button BuildNumberButton(NumberRainPageViewModel.NumberRainSpawn spawn)
-    {
-        var button = new MauiControls.Button
-        {
-            Text = spawn.Value.ToString(),
-            BackgroundColor = Color.FromArgb("#1E88E5"),
-            TextColor = Colors.White,
-            FontAttributes = MauiControls.FontAttributes.Bold,
-            FontSize = 16,
-            CornerRadius = 16,
-            HeightRequest = 42,
-            WidthRequest = 68,
-            Padding = new Thickness(0)
-        };
-
-        double maxX = Math.Max(0, _canvasWidth - 70);
-        double x = _random.NextDouble() * maxX;
-
-        MauiControls.AbsoluteLayout.SetLayoutBounds(button, new Rect(x, -50, 68, 42));
-        MauiControls.AbsoluteLayout.SetLayoutFlags(button, AbsoluteLayoutFlags.None);
-
-        button.Clicked += async (_, __) => await HandleSelectionAsync(spawn.Id);
-
-        return button;
-    }
-
-    private async Task AnimateFallAsync(NumberRainPageViewModel.NumberRainSpawn spawn, MauiControls.View view)
-    {
-        double endY = _canvasHeight + 60;
-        await view.TranslateToAsync(0, endY, (uint)spawn.FallDurationMs, Easing.Linear);
-
-        if (_views.ContainsKey(spawn.Id))
-        {
-            if (BindingContext is NumberRainPageViewModel vm)
-                await vm.HandleMissAsync(spawn.Id);
-
-            RemoveView(spawn.Id);
-        }
-    }
-
-    private async Task HandleSelectionAsync(string id)
-    {
-        if (BindingContext is not NumberRainPageViewModel vm) return;
-
-        await vm.SelectNumberAsync(id);
-        RemoveView(id);
-    }
-
-    private void RemoveView(string id)
-    {
-        if (!_views.TryGetValue(id, out var view)) return;
-
-        view.CancelAnimations();
-        RainCanvas.Children.Remove(view);
-        _views.Remove(id);
-    }
-
-    private void ClearRain()
-    {
-        MainThread.BeginInvokeOnMainThread(() =>
-        {
-            foreach (var view in _views.Values)
-            {
-                view.CancelAnimations();
-                RainCanvas.Children.Remove(view);
-            }
-            _views.Clear();
-        });
+        Dispatcher.Dispatch(async () => await vm.LoadAsync(gameId, difficulty, level));
     }
 }

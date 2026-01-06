@@ -1,5 +1,7 @@
 ﻿#nullable enable
+using LogikSpiel.Services;
 using LogikSpiel.ViewModel;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Graphics;
@@ -98,7 +100,18 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable
         {
             await Task.Delay(100);
             try { await vm.LoadAsync("math_cross", diff, level); }
-            catch (Exception ex) { await DisplayAlertAsync("Fehler", ex.Message, "OK"); }
+            catch (Exception ex)
+            {
+                var dialogService = Application.Current?.Handler?.MauiContext?.Services?.GetService<IDialogService>();
+                if (dialogService is not null)
+                {
+                    await dialogService.AlertAsync("Fehler", ex.Message, "OK");
+                }
+                else
+                {
+                    await DisplayAlertAsync("Fehler", ex.Message, "OK");
+                }
+            }
         });
     }
 }

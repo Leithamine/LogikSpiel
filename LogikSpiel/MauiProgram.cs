@@ -1,5 +1,6 @@
 ﻿using LogikSpiel.Services;
 using LogikSpiel.Services.MathHangman;
+using LogikSpiel.Services.NumberRain;
 using LogikSpiel.View;
 using LogikSpiel.ViewModel;
 using SkiaSharp.Views.Maui.Controls.Hosting;
@@ -29,6 +30,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<PascalTriangleGeneratorService>();
         builder.Services.AddSingleton<MathCrossGeneratorService>();
         builder.Services.AddSingleton<IMathHangmanService, MathHangmanService>();
+        builder.Services.AddSingleton<NumberRainQuestGeneratorService>();
 
         // ViewModels
         builder.Services.AddTransient<MainPageViewModel>();
