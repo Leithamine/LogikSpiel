@@ -1,8 +1,10 @@
 ﻿#nullable enable
+using System.Collections.Generic;
 using System.Globalization;
 using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
+using LogikSpiel.View;
 using Microsoft.Maui.Graphics;
 
 namespace LogikSpiel.ViewModel;
@@ -418,8 +420,23 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
 
     private async Task ConfirmBackAsync()
     {
-        bool leave = await _dialog.ConfirmAsync("Zurück", "Möchtest du das Rätsel verlassen?");
-        if (!leave) return;
-        await _nav.GoBackAsync();
+        bool retry = await _dialog.ConfirmAsync(
+            "Zurück",
+            "Level neu starten oder zur Karte?",
+            "Wiederholen",
+            "Zurück");
+
+        if (retry)
+        {
+            await StartNewRoundAsync();
+            return;
+        }
+
+        var parameters = new Dictionary<string, object>
+        {
+            ["gameId"] = GameId
+        };
+
+        await _nav.GoToAsync(nameof(GameMapPage), parameters);
     }
 }
