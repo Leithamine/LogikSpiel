@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using LogikSpiel.Services;
+using LogikSpiel.Services.Localization;
 using LogikSpiel.View;
 using LogikSpiel.ViewModel;
 
@@ -12,6 +13,7 @@ public partial class App : Application
 
     public App(IServiceProvider services)
     {
+        LocalizationService.ApplySavedCulture();
         InitializeComponent();
         _services = services;
         _userService = services.GetRequiredService<IUserProfileService>();
