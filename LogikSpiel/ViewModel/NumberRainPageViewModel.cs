@@ -679,6 +679,9 @@ public sealed class NumberRainPageViewModel : ObservableObject
     {
         if (_quest is null) return false;
 
+        if (_quest.Mode == NumberRainQuestMode.Avoid)
+            return false;
+
         bool isAvoid = _quest.AvoidPredicate?.Invoke(value, _lastSelection) ?? false;
         if (isAvoid) return false;
 
