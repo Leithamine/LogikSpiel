@@ -40,7 +40,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
     private bool _ending; // verhindert mehrfachen Dialog / mehrfaches EndRound
     private bool _endRoundScheduled;
     private bool _timedResolutionPending;
-    private string? _lastQuestSignature;
+    private bool _questPrepared;
 
     public ObservableCollection<FallingNumberViewModel> ActiveNumbers { get; } = new();
 
@@ -139,6 +139,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
     public AsyncCommand BackCommand { get; }
     public AsyncCommand StartCommand { get; }
     public AsyncCommand CancelCommand { get; }
+    public AsyncCommand ExplainCommand { get; }
     public AsyncCommand<FallingNumberViewModel> NumberTapCommand { get; }
 
     public NumberRainPageViewModel(
@@ -160,6 +161,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
         BackCommand = new AsyncCommand(ConfirmBackAsync);
         StartCommand = new AsyncCommand(StartAsync);
         CancelCommand = new AsyncCommand(CancelAsync);
+        ExplainCommand = new AsyncCommand(ExplainQuestAsync);
         NumberTapCommand = new AsyncCommand<FallingNumberViewModel>(HandleNumberTapAsync);
     }
 
@@ -187,7 +189,8 @@ public sealed class NumberRainPageViewModel : ObservableObject
         if (IsRunning) return Task.CompletedTask;
 
         _settings = _generator.GetSettings(DifficultyKey, LevelNumber);
-        //PrepareQuest();
+        if (!_questPrepared)
+            PrepareQuest();
         StartTimers();
 
         return Task.CompletedTask;
@@ -198,8 +201,15 @@ public sealed class NumberRainPageViewModel : ObservableObject
         StopTimers();
         ActiveNumbers.Clear();
         IsRunning = false;
-        StatusText = "Gestoppt.";
+        PrepareQuest();
         return Task.CompletedTask;
+    }
+
+    private Task ExplainQuestAsync()
+    {
+        var message = BuildQuestExplanation();
+        return MainThread.InvokeOnMainThreadAsync(async () =>
+            await _dialog.AlertAsync("Erklärung", message));
     }
 
     private void PrepareQuest()
@@ -207,10 +217,11 @@ public sealed class NumberRainPageViewModel : ObservableObject
         _ending = false;
         _endRoundScheduled = false;
         _timedResolutionPending = false;
+        _questPrepared = true;
 
         _settings ??= _generator.GetSettings(DifficultyKey, LevelNumber);
         int seed = StableHash($"{GameId}:{DifficultyKey}:{LevelNumber}");
-        _quest = GenerateQuestWithVariation(seed);
+        _quest = _generator.GenerateQuest(DifficultyKey, LevelNumber, seed);
 
         QuestText = _quest.Description;
         QuestModeLabel = QuestModeToLabel(_quest.Mode);
@@ -290,8 +301,8 @@ public sealed class NumberRainPageViewModel : ObservableObject
 
         int value = PickSpawnValue();
 
-        // Individuelle Geschwindigkeit (80% bis 120% der Basisgeschwindigkeit)
-        double speedVariation = 0.8 + (Random.Shared.NextDouble() * 0.4);
+        // Individuelle Geschwindigkeit (70% bis 100% der Basisgeschwindigkeit)
+        double speedVariation = 0.7 + (Random.Shared.NextDouble() * 0.3);
         double individualSpeed = _settings.FallSpeed * speedVariation;
 
         double size = 56;
@@ -316,7 +327,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
             {
                 toRemove.Add(number);
                 // Nur wenn das Spiel wirklich aktiv läuft und die Arena bereit ist
-                if (IsTarget(number.Value))
+                if (ShouldCountMissOnFallNumber(number.Value))
                     ApplyMiss();
             }
         }
@@ -538,10 +549,8 @@ public sealed class NumberRainPageViewModel : ObservableObject
             await MainThread.InvokeOnMainThreadAsync(async () =>
                 await _dialog.AlertAsync("Super! 🎉", $"+{reward} Coins"));
 
-            LevelNumber++;
-            _settings = _generator.GetSettings(DifficultyKey, LevelNumber);
-            PrepareQuest();
-            StartTimers();
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+                await NavigateToGameMapAsync());
             return;
         }
 
@@ -561,13 +570,8 @@ public sealed class NumberRainPageViewModel : ObservableObject
         }
 
         // ✅ Zur Karte zurück
-        var parameters = new Dictionary<string, object>
-        {
-            ["gameId"] = GameId ?? "number_rain"
-        };
-
         await MainThread.InvokeOnMainThreadAsync(async () =>
-            await _nav.GoToAsync(nameof(GameMapPage), parameters));
+            await NavigateToGameMapAsync());
     }
 
     private void UpdateProgressText()
@@ -636,6 +640,37 @@ public sealed class NumberRainPageViewModel : ObservableObject
         HasActiveRule = false;
     }
 
+    private string BuildQuestExplanation()
+    {
+        if (_quest is null)
+            return "Keine Aufgabe geladen.";
+
+        var lines = new List<string>
+        {
+            _quest.Description
+        };
+
+        if (_quest.Goals.Count > 0)
+        {
+            var goals = _quest.Goals.Select(g => $"{g.Label} ({g.TargetCount})");
+            lines.Add($"Ziel: {string.Join(" / ", goals)}");
+        }
+
+        if (_quest.Mode == NumberRainQuestMode.Avoid && !string.IsNullOrWhiteSpace(_quest.AvoidLabel))
+            lines.Add($"Vermeide: {_quest.AvoidLabel}.");
+
+        if (_quest.Rules.Count > 0)
+        {
+            var rules = string.Join(", ", _quest.Rules.Select(r => r.Label));
+            lines.Add($"Mathematische Regel: {rules}");
+        }
+
+        if (_quest.TimeLimitSeconds > 0)
+            lines.Add($"Zeitlimit: {_quest.TimeLimitSeconds}s.");
+
+        return string.Join(Environment.NewLine, lines);
+    }
+
     private NumberRainRule? CurrentSwitchRule()
     {
         if (_quest is null || _quest.Mode != NumberRainQuestMode.Switch || _quest.Rules.Count < 2)
@@ -656,12 +691,30 @@ public sealed class NumberRainPageViewModel : ObservableObject
 
         if (!leave) return;
 
-        var parameters = new Dictionary<string, object>
+        await NavigateToGameMapAsync();
+    }
+
+    private Task NavigateToGameMapAsync()
+    {
+        var navigationParameters = new Dictionary<string, object>
         {
             ["gameId"] = GameId ?? "number_rain"
         };
 
-        await _nav.GoToAsync(nameof(GameMapPage), parameters);
+        return _nav.GoToAsync(nameof(GameMapPage), navigationParameters);
+    }
+
+    private bool ShouldCountMissOnFallNumber(int value)
+    {
+        if (_quest is null) return false;
+
+        if (_quest.Mode == NumberRainQuestMode.Avoid)
+            return false;
+
+        bool isAvoid = _quest.AvoidPredicate?.Invoke(value, _lastSelection) ?? false;
+        if (isAvoid) return false;
+
+        return IsTarget(value);
     }
 
     private static int StableHash(string s)
@@ -676,25 +729,6 @@ public sealed class NumberRainPageViewModel : ObservableObject
             }
             return Math.Abs(h);
         }
-    }
-
-    private NumberRainQuest GenerateQuestWithVariation(int seed)
-    {
-        const int maxAttempts = 5;
-        for (int attempt = 0; attempt < maxAttempts; attempt++)
-        {
-            var quest = _generator.GenerateQuest(DifficultyKey, LevelNumber, seed + attempt);
-            var signature = $"{quest.Mode}:{quest.Description}";
-            if (!string.Equals(signature, _lastQuestSignature, StringComparison.Ordinal))
-            {
-                _lastQuestSignature = signature;
-                return quest;
-            }
-        }
-
-        var fallback = _generator.GenerateQuest(DifficultyKey, LevelNumber, seed + maxAttempts);
-        _lastQuestSignature = $"{fallback.Mode}:{fallback.Description}";
-        return fallback;
     }
 
     private int PickSpawnValue()
