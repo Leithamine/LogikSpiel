@@ -441,13 +441,13 @@ public sealed class NumberRainPageViewModel : ObservableObject
         // Survival Miss-Limit
         if (_quest?.Mode == NumberRainQuestMode.Survival && _quest.MaxMisses > 0 && _misses > _quest.MaxMisses)
         {
-            _ = EndRoundAsync(false);
+            _ = MainThread.InvokeOnMainThreadAsync(async () => await EndRoundAsync(false));
             return;
         }
 
         // Game Over
         if (Lives <= 0)
-            _ = EndRoundAsync(false);
+            _ = MainThread.InvokeOnMainThreadAsync(async () => await EndRoundAsync(false));
     }
 
     private int TotalHits() => _goalProgress.Sum();
