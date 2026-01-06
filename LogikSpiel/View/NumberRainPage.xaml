@@ -9,14 +9,18 @@
              Shell.NavBarIsVisible="False"
              BackgroundImageSource="gamebg.png">
 
-    <Grid RowDefinitions="Auto,Auto,*,Auto"
-          Padding="{OnIdiom Phone=8, Desktop=12}"
-          RowSpacing="{OnIdiom Phone=8, Desktop=12}">
+    <Grid RowDefinitions="{OnIdiom Phone='Auto,Auto,*,Auto', Desktop='Auto,*,Auto'}"
+          ColumnDefinitions="{OnIdiom Phone='*', Desktop='360,*'}"
+          Padding="{OnIdiom Phone=10, Desktop=18}"
+          RowSpacing="{OnIdiom Phone=10, Desktop=14}"
+          ColumnSpacing="{OnIdiom Phone=0, Desktop=14}">
 
         <Border Grid.Row="0"
+                Grid.Column="0"
+                Grid.ColumnSpan="2"
                 Style="{StaticResource GlassCard}"
                 Padding="{OnIdiom Phone=8, Desktop=12}">
-            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{OnIdiom Phone=8, Desktop=12}">
                 <Button Grid.Column="0"
                         Text="Zurück"
                         Style="{StaticResource BtnIcon}"
@@ -26,15 +30,15 @@
                         Command="{Binding BackCommand}" />
 
                 <VerticalStackLayout Grid.Column="1"
-                                     Spacing="0"
+                                     Spacing="2"
                                      HorizontalOptions="Center"
                                      VerticalOptions="Center">
                     <Label Text="🌧️ Zahlenregen"
-                           Style="{StaticResource H3}"
+                           Style="{StaticResource H2}"
                            HorizontalOptions="Center" />
                     <Label Text="{Binding LevelNumber, StringFormat='Level {0}'}"
                            TextColor="{StaticResource C_TextMuted}"
-                           FontSize="14"
+                           FontSize="{OnIdiom Phone=12, Desktop=14}"
                            HorizontalOptions="Center"
                            FontAttributes="Bold"/>
                 </VerticalStackLayout>
@@ -60,12 +64,20 @@
             </Grid>
         </Border>
 
-        <Border Grid.Row="1"
+        <Border Grid.Row="{OnIdiom Phone=1, Desktop=1}"
+                Grid.Column="{OnIdiom Phone=0, Desktop=0}"
                 Style="{StaticResource GlassCard}"
                 Padding="{OnIdiom Phone=10, Desktop=12}">
-            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
-                <Label Text="🧩 Mission"
-                       Style="{StaticResource H3}" />
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="{OnIdiom Phone=8, Desktop=10}">
+                <HorizontalStackLayout Spacing="8">
+                    <Label Text="🧩 Mission"
+                           Style="{StaticResource H3}" />
+                    <Border Style="{StaticResource Chip}" Padding="10,4">
+                        <Label Text="{Binding QuestModeLabel}"
+                               Style="{StaticResource Caption}"
+                               FontAttributes="Bold" />
+                    </Border>
+                </HorizontalStackLayout>
 
                 <Label Grid.Row="1"
                        Text="{Binding QuestText}"
@@ -78,62 +90,94 @@
                        IsVisible="{Binding HasActiveRule}" />
 
                 <HorizontalStackLayout Grid.Row="3" Spacing="10">
-                    <Label Text="{Binding ProgressText}"
-                           Style="{StaticResource Body}" />
-                    <Label Text="{Binding TimeRemaining, StringFormat='⏱ {0}s'}"
-                           Style="{StaticResource Body}"
-                           TextColor="{StaticResource C_TextMuted}"
-                           IsVisible="{Binding ShowTimer}" />
+                    <Border Style="{StaticResource Chip}" Padding="10,4">
+                        <Label Text="{Binding ProgressText}"
+                               Style="{StaticResource Caption}"
+                               FontAttributes="Bold" />
+                    </Border>
+                    <Border Style="{StaticResource Chip}" Padding="10,4"
+                            IsVisible="{Binding ShowTimer}">
+                        <Label Text="{Binding TimeRemaining, StringFormat='⏱ {0}s'}"
+                               Style="{StaticResource Caption}"
+                               FontAttributes="Bold" />
+                    </Border>
                 </HorizontalStackLayout>
 
-                <HorizontalStackLayout Grid.Row="4" Spacing="12">
-                    <Button Text="Starten"
+                <Grid Grid.Row="4"
+                      ColumnDefinitions="{OnIdiom Phone='*,*', Desktop='Auto,Auto,*'}"
+                      ColumnSpacing="10"
+                      RowDefinitions="{OnIdiom Phone='Auto,Auto', Desktop='Auto'}"
+                      RowSpacing="8">
+                    <Button Grid.Column="0"
+                            Text="Starten"
                             Style="{StaticResource BtnPrimary}"
                             Command="{Binding StartCommand}"
                             IsEnabled="{Binding CanStart}" />
-                    <Button Text="Abbrechen"
+                    <Button Grid.Column="{OnIdiom Phone=1, Desktop=1}"
+                            Grid.Row="{OnIdiom Phone=0, Desktop=0}"
+                            Text="Abbrechen"
                             Style="{StaticResource BtnSecondary}"
                             Command="{Binding CancelCommand}"
                             IsEnabled="{Binding IsRunning}" />
-                    <Label Text="{Binding StatusText}"
+                    <Label Grid.Column="{OnIdiom Phone=0, Desktop=2}"
+                           Grid.Row="{OnIdiom Phone=1, Desktop=0}"
+                           Text="{Binding StatusText}"
                            VerticalOptions="Center"
                            TextColor="{StaticResource C_TextMuted}"
                            FontSize="12" />
-                </HorizontalStackLayout>
+                </Grid>
             </Grid>
         </Border>
 
-        <Border Grid.Row="2"
+        <Border Grid.Row="{OnIdiom Phone=2, Desktop=1}"
+                Grid.Column="{OnIdiom Phone=0, Desktop=1}"
                 Style="{StaticResource GlowCard}"
                 Padding="0">
-            <AbsoluteLayout x:Name="RainArena"
-                            BindableLayout.ItemsSource="{Binding ActiveNumbers}">
-                <BindableLayout.ItemTemplate>
-                    <DataTemplate x:DataType="vm:FallingNumberViewModel">
-                        <Border StrokeThickness="0"
-                                StrokeShape="RoundRectangle 12"
-                                BackgroundColor="{StaticResource C_Accent}"
-                                WidthRequest="56"
-                                HeightRequest="56"
-                                AbsoluteLayout.LayoutBounds="{Binding Bounds}"
-                                AbsoluteLayout.LayoutFlags="None">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding BindingContext.NumberTapCommand, Source={x:Reference ThisPage}}"
-                                                      CommandParameter="{Binding .}" />
-                            </Border.GestureRecognizers>
-                            <Label Text="{Binding Value}"
-                                   HorizontalOptions="Center"
-                                   VerticalOptions="Center"
-                                   TextColor="{StaticResource C_TextDark}"
-                                   FontAttributes="Bold"
-                                   FontSize="18" />
-                        </Border>
-                    </DataTemplate>
-                </BindableLayout.ItemTemplate>
-            </AbsoluteLayout>
+            <Grid>
+                <Grid.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                        <GradientStop Color="#1F2A44" Offset="0.0" />
+                        <GradientStop Color="#2D1C3F" Offset="1.0" />
+                    </LinearGradientBrush>
+                </Grid.Background>
+                <AbsoluteLayout x:Name="RainArena"
+                                BindableLayout.ItemsSource="{Binding ActiveNumbers}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:FallingNumberViewModel">
+                            <Border StrokeThickness="1"
+                                    Stroke="#66FFFFFF"
+                                    StrokeShape="RoundRectangle 14"
+                                    WidthRequest="{OnIdiom Phone=48, Desktop=58}"
+                                    HeightRequest="{OnIdiom Phone=48, Desktop=58}"
+                                    AbsoluteLayout.LayoutBounds="{Binding Bounds}"
+                                    AbsoluteLayout.LayoutFlags="None"
+                                    Shadow="{StaticResource ShadowSmall}">
+                                <Border.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="{StaticResource C_Accent}" Offset="0.0" />
+                                        <GradientStop Color="{StaticResource C_Accent2}" Offset="1.0" />
+                                    </LinearGradientBrush>
+                                </Border.Background>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding BindingContext.NumberTapCommand, Source={x:Reference ThisPage}}"
+                                                          CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                                <Label Text="{Binding Value}"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"
+                                       TextColor="{StaticResource C_TextDark}"
+                                       FontAttributes="Bold"
+                                       FontSize="{OnIdiom Phone=16, Desktop=20}" />
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </AbsoluteLayout>
+            </Grid>
         </Border>
 
-        <Border Grid.Row="3"
+        <Border Grid.Row="{OnIdiom Phone=3, Desktop=2}"
+                Grid.Column="0"
+                Grid.ColumnSpan="2"
                 Style="{StaticResource GlassCard}"
                 Padding="{OnIdiom Phone=8, Desktop=10}">
             <Label Text="Tippe die richtigen Zahlen an, bevor sie unten verschwinden." 
