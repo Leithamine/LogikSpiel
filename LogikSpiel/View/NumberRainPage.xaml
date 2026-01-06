@@ -157,40 +157,27 @@
 
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="vm:FallingNumberViewModel">
-                            <!-- Touch-Fläche -->
-                            <ContentView WidthRequest="{OnIdiom Phone=48, Desktop=58}"
-                                         HeightRequest="{OnIdiom Phone=48, Desktop=58}"
-                                         AbsoluteLayout.LayoutBounds="{Binding Bounds}"
-                                         AbsoluteLayout.LayoutFlags="None"
-                                         BackgroundColor="Transparent"
-                                         InputTransparent="False">
-                                <ContentView.GestureRecognizers>
-                                    <TapGestureRecognizer
-                                        Command="{Binding Source={x:Reference RootPage}, Path=BindingContext.NumberTapCommand}"
-                                        CommandParameter="{Binding .}" />
-                                </ContentView.GestureRecognizers>
-                                <Border StrokeThickness="1"
-                                        Stroke="#66FFFFFF"
-                                        StrokeShape="RoundRectangle 14"
-                                        Shadow="{StaticResource ShadowSmall}"
-                                        InputTransparent="False"
-                                        IsEnabled="True">
-                                    <Border.Background>
-                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                            <GradientStop Color="{StaticResource C_Accent}" Offset="0.0" />
-                                            <GradientStop Color="{StaticResource C_Accent2}" Offset="1.0" />
-                                        </LinearGradientBrush>
-                                    </Border.Background>
-
-                                    <Label Text="{Binding Value}"
-                                           HorizontalOptions="Center"
-                                           VerticalOptions="Center"
-                                           TextColor="{StaticResource C_TextDark}"
-                                           FontAttributes="Bold"
-                                           FontSize="{OnIdiom Phone=16, Desktop=20}"
-                                           InputTransparent="True" />
-                                </Border>
-                            </ContentView>
+                            <Button WidthRequest="{OnIdiom Phone=48, Desktop=58}"
+                                    HeightRequest="{OnIdiom Phone=48, Desktop=58}"
+                                    AbsoluteLayout.LayoutBounds="{Binding Bounds}"
+                                    AbsoluteLayout.LayoutFlags="None"
+                                    Command="{Binding Source={x:Reference RootPage}, Path=BindingContext.NumberTapCommand}"
+                                    CommandParameter="{Binding .}"
+                                    Text="{Binding Value}"
+                                    FontAttributes="Bold"
+                                    FontSize="{OnIdiom Phone=16, Desktop=20}"
+                                    TextColor="{StaticResource C_TextDark}"
+                                    CornerRadius="14"
+                                    BorderColor="#66FFFFFF"
+                                    BorderWidth="1"
+                                    Padding="0">
+                                <Button.Background>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                        <GradientStop Color="{StaticResource C_Accent}" Offset="0.0" />
+                                        <GradientStop Color="{StaticResource C_Accent2}" Offset="1.0" />
+                                    </LinearGradientBrush>
+                                </Button.Background>
+                            </Button>
                         </DataTemplate>
                     </BindableLayout.ItemTemplate>
                 </AbsoluteLayout>
