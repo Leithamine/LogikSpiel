@@ -1,11 +1,11 @@
-﻿using LogikSpiel.View;
+﻿// LogikSpiel/Services/MauiDialogService.cs
+using LogikSpiel.View;
 using Microsoft.Maui.ApplicationModel;
 
 namespace LogikSpiel.Services;
 
 public sealed class MauiDialogService : IDialogService
 {
-    // Hilfsproperty, um die aktuelle Seite zu finden
     private Page? CurrentPage => Shell.Current?.CurrentPage
                                  ?? Application.Current?.Windows?.FirstOrDefault()?.Page;
 
@@ -14,7 +14,6 @@ public sealed class MauiDialogService : IDialogService
         await ShowDialogAsync(title, message, ok, cancel: null);
     }
 
-    // NEU: Implementierung für ConfirmAsync
     public async Task<bool> ConfirmAsync(string title, string message, string accept = "Ja", string cancel = "Nein")
     {
         var result = await ShowDialogAsync(title, message, accept, cancel);
@@ -25,13 +24,7 @@ public sealed class MauiDialogService : IDialogService
     {
         var p = CurrentPage;
         if (p is null) return null;
-
-#pragma warning disable CS0618
-        var result = await p.DisplayActionSheetAsync(title, cancel, null, options);
-#pragma warning restore CS0618
-
-        if (string.Equals(result, cancel, StringComparison.OrdinalIgnoreCase)) return null;
-        return result;
+        return await p.DisplayActionSheetAsync(title, cancel, null, options);
     }
 
     private async Task<bool?> ShowDialogAsync(string title, string message, string accept, string? cancel)
@@ -39,11 +32,12 @@ public sealed class MauiDialogService : IDialogService
         var p = CurrentPage;
         if (p is null) return null;
 
-        var dialog = new DialogPage(title, message, accept, cancel);
-
-        await MainThread.InvokeOnMainThreadAsync(async () =>
-            await p.Navigation.PushModalAsync(dialog));
-
-        return await dialog.ResultAsync();
+        // Gesamten Dialog-Prozess auf dem MainThread sicherstellen
+        return await MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            var dialog = new DialogPage(title, message, accept, cancel);
+            await p.Navigation.PushModalAsync(dialog);
+            return await dialog.ResultAsync();
+        });
     }
 }
