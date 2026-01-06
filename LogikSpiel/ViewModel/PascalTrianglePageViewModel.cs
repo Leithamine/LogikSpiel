@@ -361,9 +361,12 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
                 ? LocalizationService.GetString("Pascal_OptimalWordMax")
                 : LocalizationService.GetString("Pascal_OptimalWordMin");
             await _dialog.AlertAsync(
-                "Nicht optimal ❌",
-                $"Deine Summe: {UserSum.ToString("0.##", de)}\n" +
-                $"Beste {goalText} Summe: {target.ToString("0.##", de)}");
+                LocalizationService.GetString("Pascal_NotOptimalTitle"),
+                LocalizationService.Format(
+                    "Pascal_NotOptimalMessageFormat",
+                    UserSum.ToString("0.##", culture),
+                    goalText,
+                    target.ToString("0.##", culture)));
             return;
         }
 

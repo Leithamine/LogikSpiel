@@ -118,6 +118,7 @@
 	<ItemGroup>
 		<EmbeddedResource Update="Resources\Strings\AppResources.resx">
 			<Generator>PublicResXFileCodeGenerator</Generator>
+			<PublicClass>true</PublicClass>
 			<CustomToolNamespace>LogikSpiel.Resources.Strings</CustomToolNamespace>
 		</EmbeddedResource>
 		<EmbeddedResource Update="Resources\Strings\AppResources.de.resx" />
