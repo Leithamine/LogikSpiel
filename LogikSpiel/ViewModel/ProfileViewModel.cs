@@ -1,4 +1,5 @@
-﻿using LogikSpiel.Core;
+﻿using System.Linq;
+using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
 using LogikSpiel.Services.Localization;
@@ -7,6 +8,8 @@ namespace LogikSpiel.ViewModel;
 
 public class ProfileViewModel : ObservableObject
 {
+    public sealed record LanguageOption(string Code, string DisplayName);
+
     private readonly IUserProfileService _userService;
     private readonly IDialogService _dialog;
     private readonly INavigationService _nav;
@@ -36,6 +39,32 @@ public class ProfileViewModel : ObservableObject
     {
         get => _isSoundEnabled;
         set { if (SetProperty(ref _isSoundEnabled, value)) SaveSettings(); }
+    }
+
+    private readonly IReadOnlyList<LanguageOption> _languages =
+    [
+        new("de", "Deutsch"),
+        new("en", "English"),
+        new("es", "Español"),
+        new("fr", "Français"),
+        new("it", "Italiano"),
+        new("pt", "Português"),
+        new("ar", "العربية")
+    ];
+
+    public IReadOnlyList<LanguageOption> Languages => _languages;
+
+    private LanguageOption? _selectedLanguage;
+    public LanguageOption? SelectedLanguage
+    {
+        get => _selectedLanguage;
+        set
+        {
+            if (!SetProperty(ref _selectedLanguage, value) || value is null)
+                return;
+
+            ApplyLanguage(value);
+        }
     }
 
     // --- Commands ---
@@ -80,6 +109,20 @@ public class ProfileViewModel : ObservableObject
             OnPropertyChanged(nameof(Id));
             OnPropertyChanged(nameof(Coins));
         }
+
+        var currentLanguage = LocalizationService.GetCurrentCultureCode();
+        var matchingLanguage = _languages.FirstOrDefault(language => language.Code == currentLanguage)
+                               ?? _languages.FirstOrDefault(language => language.Code == "en");
+        if (matchingLanguage is not null)
+            SelectedLanguage = matchingLanguage;
+    }
+
+    private void ApplyLanguage(LanguageOption language)
+    {
+        if (language.Code == LocalizationService.GetCurrentCultureCode())
+            return;
+
+        LocalizationService.SetCulture(language.Code);
     }
 
     private async void SaveSettings()
