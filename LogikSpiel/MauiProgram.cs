@@ -1,5 +1,6 @@
 ﻿using LogikSpiel.Services;
 using LogikSpiel.Services.MathHangman;
+using LogikSpiel.Services.NumberRain;
 using LogikSpiel.View;
 using LogikSpiel.ViewModel;
 using SkiaSharp.Views.Maui.Controls.Hosting;
@@ -29,6 +30,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<PascalTriangleGeneratorService>();
         builder.Services.AddSingleton<MathCrossGeneratorService>();
         builder.Services.AddSingleton<IMathHangmanService, MathHangmanService>();
+        builder.Services.AddSingleton<NumberRainQuestGeneratorService>();
 
         // ViewModels
         builder.Services.AddTransient<MainPageViewModel>();
@@ -41,6 +43,7 @@ public static class MauiProgram
         builder.Services.AddTransient<PascalTrianglePageViewModel>();
         builder.Services.AddTransient<MathCrossPageViewModel>();
         builder.Services.AddTransient<MathHangmanPageViewModel>();
+        builder.Services.AddTransient<NumberRainPageViewModel>();
 
         // Pages (✅ ALLE Pages registrieren, die Shell/DI bauen soll)
         builder.Services.AddTransient<MainPage>();
@@ -54,6 +57,7 @@ public static class MauiProgram
         builder.Services.AddTransient<PascalTrianglePage>();
         builder.Services.AddTransient<MathCrossPage>();
         builder.Services.AddTransient<MathHangmanPage>();
+        builder.Services.AddTransient<NumberRainPage>();
 
         // Shell
         builder.Services.AddSingleton<AppShell>();
