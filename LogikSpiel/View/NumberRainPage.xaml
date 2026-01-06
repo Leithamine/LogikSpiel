@@ -125,9 +125,7 @@
                                    TextColor="{StaticResource C_TextDark}"
                                    FontAttributes="Bold"
                                    FontSize="18" />
-                            <AbsoluteLayout.LayoutBounds>
-                                {Binding Bounds}
-                            </AbsoluteLayout.LayoutBounds>
+                            <AbsoluteLayout.LayoutBounds="{Binding Bounds}" />
                             <AbsoluteLayout.LayoutFlags>None</AbsoluteLayout.LayoutFlags>
                         </Border>
                     </DataTemplate>
