@@ -40,6 +40,9 @@ public sealed class NumberRainPageViewModel : ObservableObject
     private string _questText = "Bereit? Tippe auf Starten!";
     public string QuestText { get => _questText; private set => SetProperty(ref _questText, value); }
 
+    private string _questModeLabel = "Modus";
+    public string QuestModeLabel { get => _questModeLabel; private set => SetProperty(ref _questModeLabel, value); }
+
     private string _progressText = string.Empty;
     public string ProgressText { get => _progressText; private set => SetProperty(ref _progressText, value); }
 
@@ -169,6 +172,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
         int seed = StableHash($"{GameId}:{DifficultyKey}:{LevelNumber}");
         _quest = _generator.GenerateQuest(DifficultyKey, LevelNumber, seed);
         QuestText = _quest.Description;
+        QuestModeLabel = QuestModeToLabel(_quest.Mode);
         _goalProgress = _quest.Goals.Select(_ => 0).ToArray();
         _lastSelection = null;
         _combo = 0;
@@ -181,6 +185,22 @@ public sealed class NumberRainPageViewModel : ObservableObject
         StatusText = "Bereit für den Start.";
         UpdateProgressText();
         UpdateActiveRule();
+    }
+
+    private static string QuestModeToLabel(NumberRainQuestMode mode)
+    {
+        return mode switch
+        {
+            NumberRainQuestMode.Count => "Zählen",
+            NumberRainQuestMode.Timed => "Zeit",
+            NumberRainQuestMode.Avoid => "Vermeiden",
+            NumberRainQuestMode.Multi => "Multi",
+            NumberRainQuestMode.Combo => "Combo",
+            NumberRainQuestMode.Survival => "Survival",
+            NumberRainQuestMode.Dynamic => "Dynamisch",
+            NumberRainQuestMode.Switch => "Wechsel",
+            _ => "Modus"
+        };
     }
 
     private void StartTimers()
