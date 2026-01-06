@@ -110,9 +110,6 @@
                                     StrokeThickness="0"
                                     Padding="12">
                                 <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
-                                    <Label Text="🔥" FontSize="24" HorizontalOptions="Center"/>
-                                    <Label Text="3" FontSize="20" FontAttributes="Bold"
-                                           TextColor="{StaticResource C_Accent2}" HorizontalOptions="Center"/>
                                     <Label Text="{resx:Translate Key=Profile_StatsStreak}" FontSize="10"
                                            TextColor="{StaticResource C_TextMuted}" HorizontalOptions="Center"/>
                                 </VerticalStackLayout>

@@ -74,6 +74,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Compile Update="Resources\Strings\AppResources.Designer.cs">
+	    <DesignTime>True</DesignTime>
+	    <AutoGen>True</AutoGen>
+	    <DependentUpon>AppResources.resx</DependentUpon>
+	  </Compile>
+	</ItemGroup>
+
+	<ItemGroup>
 		<MauiXaml Update="Resources\Styles\ConverterResources.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
@@ -120,6 +128,7 @@
 			<Generator>PublicResXFileCodeGenerator</Generator>
 			<PublicClass>true</PublicClass>
 			<CustomToolNamespace>LogikSpiel.Resources.Strings</CustomToolNamespace>
+			<LastGenOutput>AppResources.Designer.cs</LastGenOutput>
 		</EmbeddedResource>
 		<EmbeddedResource Update="Resources\Strings\AppResources.de.resx" />
 		<EmbeddedResource Update="Resources\Strings\AppResources.en.resx" />
