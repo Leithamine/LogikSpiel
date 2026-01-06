@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
+             xmlns:resx="clr-namespace:LogikSpiel.Resources.Strings"
              xmlns:model="clr-namespace:LogikSpiel.Model"
              xmlns:skia="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
              x:Class="LogikSpiel.View.PuzzlePage"
@@ -14,7 +15,7 @@
         <!-- HEADER -->
         <Border Grid.Row="0" Style="{StaticResource GlassCard}" Padding="12">
             <Grid ColumnDefinitions="Auto,*,Auto">
-                <Button Grid.Column="0" Text="Zurück" Style="{StaticResource BtnIcon}"
+                <Button Grid.Column="0" Text="{resx:Translate Key=Common_Back}" Style="{StaticResource BtnIcon}"
                         Command="{Binding BackCommand}" IsEnabled="{Binding IsNotBusy}"/>
 
                 <Label Grid.Column="1" Text="{Binding Title}" Style="{StaticResource H3}"
@@ -33,7 +34,7 @@
         <Border Grid.Row="1" Style="{StaticResource SolidCard}">
             <VerticalStackLayout Spacing="16">
 
-                <Label Text="🔐 GIB DEN CODE EIN"
+                <Label Text="{resx:Translate Key=Puzzle_EnterCode}"
                        Style="{StaticResource Caption}"
                        CharacterSpacing="3"
                        HorizontalOptions="Center"/>
@@ -68,12 +69,12 @@
                 </HorizontalStackLayout>
 
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                    <Button Grid.Column="0" Text="💡 Tipp (10)"
+                    <Button Grid.Column="0" Text="{resx:Translate Key=Puzzle_HintButton}"
                             Style="{StaticResource BtnPrimary}"
                             Command="{Binding HintCommand}"
                             IsEnabled="{Binding IsNotBusy}"/>
 
-                    <Button Grid.Column="1" Text="🔓 Öffnen"
+                    <Button Grid.Column="1" Text="{resx:Translate Key=Puzzle_OpenButton}"
                             Style="{StaticResource BtnAccent}"
                             Command="{Binding CheckCommand}"
                             IsEnabled="{Binding IsNotBusy}"/>
@@ -89,7 +90,7 @@
                     <HorizontalStackLayout Spacing="10" Margin="0,0,0,12">
                         <BoxView WidthRequest="4" HeightRequest="24"
                                  Color="{StaticResource C_Primary}" CornerRadius="2"/>
-                        <Label Text="HINWEISE" Style="{StaticResource H3}"/>
+                        <Label Text="{resx:Translate Key=Puzzle_HintsTitle}" Style="{StaticResource H3}"/>
                     </HorizontalStackLayout>
                 </CollectionView.Header>
 
@@ -146,7 +147,7 @@
             <Grid IsVisible="{Binding IsBusy}" BackgroundColor="#66000000">
                 <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="12">
                     <ActivityIndicator IsRunning="True" Color="{StaticResource C_Primary}"/>
-                    <Label Text="Erzeuge Rätsel..." Style="{StaticResource Body}"/>
+                    <Label Text="{resx:Translate Key=Puzzle_Generating}" Style="{StaticResource Body}"/>
                 </VerticalStackLayout>
             </Grid>
         </Grid>
@@ -170,7 +171,7 @@
                     HorizontalOptions="Center"
                     Padding="40">
                 <VerticalStackLayout Spacing="20" HorizontalOptions="Center">
-                    <Label Text="🎉 GELÖST!"
+                    <Label Text="{resx:Translate Key=Puzzle_Solved}"
                            Style="{StaticResource H1}"
                            TextColor="{StaticResource C_Primary}"
                            HorizontalOptions="Center"/>

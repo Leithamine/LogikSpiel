@@ -1,6 +1,7 @@
 ﻿using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
+using LogikSpiel.Services.Localization;
 
 namespace LogikSpiel.ViewModel;
 
@@ -54,7 +55,9 @@ public class ProfileViewModel : ObservableObject
         // Statistik Button (Platzhalter)
         ShowStatsCommand = new AsyncCommand(async () =>
         {
-            await _dialog.AlertAsync("Statistik", "Hier kommen bald deine Spiel-Statistiken hin!");
+            await _dialog.AlertAsync(
+                LocalizationService.GetString("Profile_StatsDialogTitle"),
+                LocalizationService.GetString("Profile_StatsDialogMessage"));
         });
     }
 

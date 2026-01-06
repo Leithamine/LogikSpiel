@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
+             xmlns:resx="clr-namespace:LogikSpiel.Resources.Strings"
              x:Class="LogikSpiel.View.MathHangmanPage"
              x:DataType="vm:MathHangmanPageViewModel"
              x:Name="ThisPage"
@@ -21,7 +22,7 @@
                 Margin="0">
             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
                 <Button Grid.Column="0"
-                        Text="Zurück"
+                        Text="{resx:Translate Key=Common_Back}"
                         Style="{StaticResource BtnIcon}"
                         WidthRequest="{OnIdiom Phone=76, Desktop=88}"
                         HeightRequest="{OnIdiom Phone=40, Desktop=48}"
@@ -32,11 +33,11 @@
                                      Spacing="0"
                                      HorizontalOptions="Center"
                                      VerticalOptions="Center">
-                    <Label Text="🎯 Mathe-Hangman"
+                    <Label Text="{resx:Translate Key=MathHangman_Title}"
                            Style="{StaticResource H3}"
                            HorizontalOptions="Center" />
 
-                    <Label Text="{Binding LevelNumber, StringFormat='Level {0}'}"
+                    <Label Text="{Binding LevelNumber, StringFormat={x:Static resx:AppResources.Common_LevelFormat}}"
                            TextColor="{StaticResource C_TextMuted}"
                            FontSize="14"
                            HorizontalOptions="Center" 
@@ -93,7 +94,7 @@
                   RowSpacing="{OnIdiom Phone=6, Desktop=10}">
 
                 <Label Grid.Row="0"
-                       Text="✨ Eigenschaften der Zahl"
+                       Text="{resx:Translate Key=MathHangman_PropertiesTitle}"
                        Style="{StaticResource H3}" />
 
                 <!-- Bereich + Quersumme -->
@@ -155,7 +156,7 @@
                                            FontSize="{OnIdiom Phone=16, Desktop=17}" />
 
                                     <Label Grid.Row="2"
-                                           Text="{Binding Examples, StringFormat='Beispiele: {0}'}"
+                                           Text="{Binding Examples, StringFormat={x:Static resx:AppResources.MathHangman_ExamplesFormat}}"
                                            TextColor="{StaticResource C_TextMuted}"
                                            FontSize="{OnIdiom Phone=16, Desktop=17}"
                                            IsVisible="{Binding ShowExamples}" />
@@ -172,7 +173,7 @@
                       RowSpacing="6">
 
                     <Label Grid.Row="0"
-                           Text="💡 Hinweise"
+                           Text="{resx:Translate Key=MathHangman_HintsTitle}"
                            Style="{StaticResource H3}" />
 
                     <CollectionView Grid.Row="1"
@@ -217,7 +218,7 @@
                         BackgroundColor="{StaticResource C_BgLight}"
                         Padding="4">
                     <Entry Text="{Binding GuessText}"
-                           Placeholder="Zahl eingeben..."
+                           Placeholder="{resx:Translate Key=MathHangman_GuessPlaceholder}"
                            Keyboard="Numeric"
                            BackgroundColor="Transparent"
                            TextColor="{StaticResource C_TextPrimary}"

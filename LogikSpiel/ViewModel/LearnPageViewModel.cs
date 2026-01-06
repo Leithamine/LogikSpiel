@@ -1,6 +1,7 @@
 ﻿using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
+using LogikSpiel.Services.Localization;
 
 namespace LogikSpiel.ViewModel;
 
@@ -28,7 +29,7 @@ public sealed class LearnPageViewModel : ObservableObject
         }
     }
 
-    public string Title => Game?.Title ?? "Regeln";
+    public string Title => Game?.Title ?? LocalizationService.GetString("Learn_TitleDefault");
     public IReadOnlyList<string> Rules => Game?.Rules ?? new List<string>();
 
     public AsyncCommand BackCommand { get; }

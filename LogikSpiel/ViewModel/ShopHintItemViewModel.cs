@@ -1,6 +1,7 @@
 // LogikSpiel/ViewModel/ShopHintItemViewModel.cs
 #nullable enable
 using LogikSpiel.Core;
+using LogikSpiel.Services.Localization;
 
 namespace LogikSpiel.ViewModel;
 
@@ -36,5 +37,7 @@ public sealed class ShopHintItemViewModel : ObservableObject
 
     public bool CanPurchase => !IsPurchased;
 
-    public string PurchaseLabel => IsPurchased ? "Gekauft" : $"{Price} 💰";
+    public string PurchaseLabel => IsPurchased
+        ? LocalizationService.GetString("Common_Purchased")
+        : LocalizationService.Format("Common_PriceCoinsFormat", Price);
 }

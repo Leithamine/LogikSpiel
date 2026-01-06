@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
+             xmlns:resx="clr-namespace:LogikSpiel.Resources.Strings"
              x:Class="LogikSpiel.View.OnboardingPage"
              x:DataType="vm:OnboardingViewModel"
              NavigationPage.HasNavigationBar="False"
@@ -14,10 +15,10 @@
             <VerticalStackLayout Spacing="24" MaximumWidthRequest="420" HorizontalOptions="Center">
 
                 <VerticalStackLayout Spacing="8">
-                    <Label Text="👋 Willkommen!"
+                    <Label Text="{resx:Translate Key=Onboarding_Title}"
                            Style="{StaticResource H1}"
                            HorizontalOptions="Center"/>
-                    <Label Text="Erstelle dein Profil und starte die Reise!"
+                    <Label Text="{resx:Translate Key=Onboarding_Subtitle}"
                            Style="{StaticResource Body}"
                            HorizontalOptions="Center"
                            HorizontalTextAlignment="Center"/>
@@ -52,7 +53,7 @@
                                        HorizontalOptions="Center" VerticalOptions="Center"/>
                             </Border>
                             <Entry Grid.Column="1"
-                                   Placeholder="Dein Name"
+                                   Placeholder="{resx:Translate Key=Onboarding_NamePlaceholder}"
                                    Text="{Binding Name}"
                                    TextColor="{StaticResource C_TextPrimary}"
                                    PlaceholderColor="{StaticResource C_TextMuted}"
@@ -74,7 +75,7 @@
                                        HorizontalOptions="Center" VerticalOptions="Center"/>
                             </Border>
                             <Entry Grid.Column="1"
-                                   Placeholder="Dein Alter (5-99)"
+                                   Placeholder="{resx:Translate Key=Onboarding_AgePlaceholder}"
                                    Text="{Binding AgeText}"
                                    Keyboard="Numeric"
                                    TextColor="{StaticResource C_TextPrimary}"
@@ -91,7 +92,7 @@
         </ScrollView>
 
         <Button Grid.Row="1"
-                Text="🚀 Los geht's!"
+                Text="{resx:Translate Key=Onboarding_Start}"
                 Command="{Binding CompleteOnboardingCommand}"
                 IsEnabled="{Binding IsValid}"
                 HeightRequest="60"

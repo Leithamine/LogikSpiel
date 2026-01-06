@@ -1,6 +1,7 @@
 ﻿using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
+using LogikSpiel.Services.Localization;
 
 namespace LogikSpiel.ViewModel;
 
@@ -20,7 +21,9 @@ public sealed class GameHostPageViewModel : ObservableObject
     private GameDefinition? _game;
     public GameDefinition? Game { get => _game; private set { if (!SetProperty(ref _game, value)) return; OnPropertyChanged(nameof(Title)); } }
 
-    public string Title => Game is null ? "Puzzle" : $"{Game.Title} – {Name(DifficultyKey)} – Level {LevelNumber}";
+    public string Title => Game is null
+        ? LocalizationService.GetString("GameHost_TitleDefault")
+        : LocalizationService.Format("GameHost_TitleFormat", Game.Title, Name(DifficultyKey), LevelNumber);
 
     public AsyncCommand BackCommand { get; }
     public AsyncCommand RulesCommand { get; }
@@ -75,24 +78,15 @@ public sealed class GameHostPageViewModel : ObservableObject
         OnPropertyChanged(nameof(Title));
     }
 
-    private static string Name(string key) => key switch
-    {
-        "easy" => "Einfach",
-        "normal" => "Normal",
-        "hard" => "Schwer",
-        "complex" => "Kompliziert",
-        "master" => "Master",
-        "god" => "Gott",
-        _ => key
-    };
+    private static string Name(string key) => LocalizationService.GetDifficultyLabel(key);
 
     private async Task ConfirmBackAsync()
     {
         bool leave = await _dialog.ConfirmAsync(
-            "Zurück",
-            "Möchtest du das Rätsel verlassen?",
-            "Ja",
-            "Nein");
+            LocalizationService.GetString("Common_Back"),
+            LocalizationService.GetString("Common_LeavePuzzlePrompt"),
+            LocalizationService.GetString("Common_Yes"),
+            LocalizationService.GetString("Common_No"));
         if (!leave) return;
         await _nav.GoBackAsync();
     }
