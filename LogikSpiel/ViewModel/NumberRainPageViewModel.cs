@@ -139,6 +139,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
     public AsyncCommand BackCommand { get; }
     public AsyncCommand StartCommand { get; }
     public AsyncCommand CancelCommand { get; }
+    public AsyncCommand ExplainCommand { get; }
     public AsyncCommand<FallingNumberViewModel> NumberTapCommand { get; }
 
     public NumberRainPageViewModel(
@@ -160,6 +161,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
         BackCommand = new AsyncCommand(ConfirmBackAsync);
         StartCommand = new AsyncCommand(StartAsync);
         CancelCommand = new AsyncCommand(CancelAsync);
+        ExplainCommand = new AsyncCommand(ExplainQuestAsync);
         NumberTapCommand = new AsyncCommand<FallingNumberViewModel>(HandleNumberTapAsync);
     }
 
@@ -201,6 +203,13 @@ public sealed class NumberRainPageViewModel : ObservableObject
         IsRunning = false;
         PrepareQuest();
         return Task.CompletedTask;
+    }
+
+    private Task ExplainQuestAsync()
+    {
+        var message = BuildQuestExplanation();
+        return MainThread.InvokeOnMainThreadAsync(async () =>
+            await _dialog.AlertAsync("Erklärung", message));
     }
 
     private void PrepareQuest()
@@ -640,6 +649,37 @@ public sealed class NumberRainPageViewModel : ObservableObject
 
         ActiveRuleText = string.Empty;
         HasActiveRule = false;
+    }
+
+    private string BuildQuestExplanation()
+    {
+        if (_quest is null)
+            return "Keine Aufgabe geladen.";
+
+        var lines = new List<string>
+        {
+            _quest.Description
+        };
+
+        if (_quest.Goals.Count > 0)
+        {
+            var goals = _quest.Goals.Select(g => $"{g.Label} ({g.TargetCount})");
+            lines.Add($"Ziel: {string.Join(" / ", goals)}");
+        }
+
+        if (_quest.Mode == NumberRainQuestMode.Avoid && !string.IsNullOrWhiteSpace(_quest.AvoidLabel))
+            lines.Add($"Vermeide: {_quest.AvoidLabel}.");
+
+        if (_quest.Rules.Count > 0)
+        {
+            var rules = string.Join(", ", _quest.Rules.Select(r => r.Label));
+            lines.Add($"Mathematische Regel: {rules}");
+        }
+
+        if (_quest.TimeLimitSeconds > 0)
+            lines.Add($"Zeitlimit: {_quest.TimeLimitSeconds}s.");
+
+        return string.Join(Environment.NewLine, lines);
     }
 
     private NumberRainRule? CurrentSwitchRule()
