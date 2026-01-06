@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
+             xmlns:resx="clr-namespace:LogikSpiel.Resources.Strings"
              x:Class="LogikSpiel.View.LearnPage"
              x:DataType="vm:LearnPageViewModel"
              NavigationPage.HasNavigationBar="False"
@@ -12,7 +13,7 @@
 
         <Border Style="{StaticResource GlassCard}" Padding="12">
             <Grid ColumnDefinitions="Auto,*,Auto">
-                <Button Grid.Column="0" Text="←" Style="{StaticResource BtnIcon}"
+                <Button Grid.Column="0" Text="{resx:Translate Key=Common_BackArrow}" Style="{StaticResource BtnIcon}"
                         Command="{Binding BackCommand}"/>
 
                 <Label Grid.Column="1" Text="{Binding Title}" Style="{StaticResource H3}"
@@ -33,7 +34,7 @@
 
                     <HorizontalStackLayout Spacing="10">
                         <Label Text="📚" FontSize="24"/>
-                        <Label Text="Spielregeln" Style="{StaticResource H2}"/>
+                        <Label Text="{resx:Translate Key=Learn_RulesTitle}" Style="{StaticResource H2}"/>
                     </HorizontalStackLayout>
 
                     <BoxView HeightRequest="1" Color="{StaticResource C_Divider}"/>

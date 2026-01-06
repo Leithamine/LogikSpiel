@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
+             xmlns:resx="clr-namespace:LogikSpiel.Resources.Strings"
              x:Class="LogikSpiel.View.ProfilePage"
              x:DataType="vm:ProfileViewModel"
              NavigationPage.HasNavigationBar="False"
@@ -22,7 +23,7 @@
                         Command="{Binding BackCommand}"/>
 
                 <Label Grid.Column="1"
-                       Text="Mein Profil"
+                       Text="{resx:Translate Key=Profile_Title}"
                        Style="{StaticResource H2}"
                        HorizontalOptions="Center"
                        VerticalOptions="Center"/>
@@ -59,12 +60,12 @@
                                     StrokeShape="RoundRectangle 8"
                                     StrokeThickness="0"
                                     Padding="8,4">
-                                <Label Text="{Binding Age, StringFormat='🎂 {0} Jahre'}"
+                                <Label Text="{Binding Age, StringFormat={x:Static resx:AppResources.Profile_AgeFormat}}"
                                        FontSize="12"
                                        TextColor="{StaticResource C_TextSecondary}"/>
                             </Border>
 
-                            <Label Text="{Binding Id, StringFormat='ID: {0}'}"
+                            <Label Text="{Binding Id, StringFormat={x:Static resx:AppResources.Profile_IdFormat}}"
                                    FontSize="10"
                                    TextColor="{StaticResource C_TextMuted}"/>
                         </VerticalStackLayout>
@@ -74,7 +75,7 @@
 
                 <Border Style="{StaticResource GlassCard}">
                     <VerticalStackLayout Spacing="12">
-                        <Label Text="📊 Statistiken" Style="{StaticResource H3}"/>
+                        <Label Text="{resx:Translate Key=Profile_StatsTitle}" Style="{StaticResource H3}"/>
 
                         <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
 
@@ -86,7 +87,7 @@
                                     <Label Text="🎮" FontSize="24" HorizontalOptions="Center"/>
                                     <Label Text="42" FontSize="20" FontAttributes="Bold"
                                            TextColor="{StaticResource C_TextPrimary}" HorizontalOptions="Center"/>
-                                    <Label Text="Gespielt" FontSize="10"
+                                    <Label Text="{resx:Translate Key=Profile_StatsPlayed}" FontSize="10"
                                            TextColor="{StaticResource C_TextMuted}" HorizontalOptions="Center"/>
                                 </VerticalStackLayout>
                             </Border>
@@ -99,7 +100,7 @@
                                     <Label Text="✅" FontSize="24" HorizontalOptions="Center"/>
                                     <Label Text="38" FontSize="20" FontAttributes="Bold"
                                            TextColor="{StaticResource C_Success}" HorizontalOptions="Center"/>
-                                    <Label Text="Gelöst" FontSize="10"
+                                    <Label Text="{resx:Translate Key=Profile_StatsSolved}" FontSize="10"
                                            TextColor="{StaticResource C_TextMuted}" HorizontalOptions="Center"/>
                                 </VerticalStackLayout>
                             </Border>
@@ -112,14 +113,14 @@
                                     <Label Text="🔥" FontSize="24" HorizontalOptions="Center"/>
                                     <Label Text="3" FontSize="20" FontAttributes="Bold"
                                            TextColor="{StaticResource C_Accent2}" HorizontalOptions="Center"/>
-                                    <Label Text="Streak" FontSize="10"
+                                    <Label Text="{resx:Translate Key=Profile_StatsStreak}" FontSize="10"
                                            TextColor="{StaticResource C_TextMuted}" HorizontalOptions="Center"/>
                                 </VerticalStackLayout>
                             </Border>
 
                         </Grid>
 
-                        <Button Text="Alle Statistiken →"
+                        <Button Text="{resx:Translate Key=Profile_StatsAll}"
                                 Style="{StaticResource BtnGhost}"
                                 Command="{Binding ShowStatsCommand}"/>
                     </VerticalStackLayout>
@@ -127,7 +128,7 @@
 
                 <Border Style="{StaticResource GlassCard}">
                     <VerticalStackLayout Spacing="16">
-                        <Label Text="⚙️ Einstellungen" Style="{StaticResource H3}"/>
+                        <Label Text="{resx:Translate Key=Profile_SettingsTitle}" Style="{StaticResource H3}"/>
 
                         <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
                             <Border BackgroundColor="{StaticResource C_GlassSoft}"
@@ -138,8 +139,8 @@
                                        HorizontalOptions="Center" VerticalOptions="Center"/>
                             </Border>
                             <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
-                                <Label Text="Musik" TextColor="{StaticResource C_TextPrimary}" FontAttributes="Bold"/>
-                                <Label Text="Hintergrundmusik" FontSize="11" TextColor="{StaticResource C_TextMuted}"/>
+                                <Label Text="{resx:Translate Key=Profile_MusicTitle}" TextColor="{StaticResource C_TextPrimary}" FontAttributes="Bold"/>
+                                <Label Text="{resx:Translate Key=Profile_MusicSubtitle}" FontSize="11" TextColor="{StaticResource C_TextMuted}"/>
                             </VerticalStackLayout>
                             <Switch Grid.Column="2"
                                     IsToggled="{Binding IsMusicEnabled}"
@@ -157,8 +158,8 @@
                                        HorizontalOptions="Center" VerticalOptions="Center"/>
                             </Border>
                             <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
-                                <Label Text="Soundeffekte" TextColor="{StaticResource C_TextPrimary}" FontAttributes="Bold"/>
-                                <Label Text="Spielsounds" FontSize="11" TextColor="{StaticResource C_TextMuted}"/>
+                                <Label Text="{resx:Translate Key=Profile_SoundTitle}" TextColor="{StaticResource C_TextPrimary}" FontAttributes="Bold"/>
+                                <Label Text="{resx:Translate Key=Profile_SoundSubtitle}" FontSize="11" TextColor="{StaticResource C_TextMuted}"/>
                             </VerticalStackLayout>
                             <Switch Grid.Column="2"
                                     IsToggled="{Binding IsSoundEnabled}"
@@ -168,7 +169,7 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <Label Text="Version 1.0.0 • Made with ❤️"
+                <Label Text="{resx:Translate Key=Profile_Version}"
                        HorizontalOptions="Center"
                        TextColor="{StaticResource C_TextMuted}"
                        FontSize="11"

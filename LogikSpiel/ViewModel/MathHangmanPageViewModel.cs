@@ -7,6 +7,7 @@ using LogikSpiel.Model;
 using LogikSpiel.Model.MathHangman;
 using LogikSpiel.Services;
 using LogikSpiel.Services.MathHangman;
+using LogikSpiel.Services.Localization;
 using LogikSpiel.View;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Storage;
@@ -58,7 +59,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         }
     }
 
-    public string DifficultyText => $"Bereich: {RangeMin:N0} – {RangeMax:N0}";
+    public string DifficultyText => LocalizationService.Format("MathHangman_DifficultyRangeFormat", RangeMin, RangeMax);
 
     private string _quersummeText = "";
     public string QuersummeText { get => _quersummeText; private set => SetProperty(ref _quersummeText, value); }
@@ -114,10 +115,18 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         ShopItems.Clear();
 
         // Neue Hinweise (alle 10 Coins)
-        ShopItems.Add(new ShopHintItemViewModel("lastDigit", "🔚 Letzte Ziffer", "Welche Einerziffer?", 10));
-        ShopItems.Add(new ShopHintItemViewModel("firstDigit", "🔝 Erste Ziffer", "Welche führende Ziffer?", 10));
-        ShopItems.Add(new ShopHintItemViewModel("distinctCount", "🎲 Anzahl verschiedener Ziffern", "Wie viele verschiedene Ziffern?", 10));
-        ShopItems.Add(new ShopHintItemViewModel("hasDouble", "♻️ Doppelte Ziffer?", "Gibt es doppelte Ziffern?", 10));
+        ShopItems.Add(new ShopHintItemViewModel("lastDigit",
+            LocalizationService.GetString("MathHangman_ShopLastDigitTitle"),
+            LocalizationService.GetString("MathHangman_ShopLastDigitDesc"), 10));
+        ShopItems.Add(new ShopHintItemViewModel("firstDigit",
+            LocalizationService.GetString("MathHangman_ShopFirstDigitTitle"),
+            LocalizationService.GetString("MathHangman_ShopFirstDigitDesc"), 10));
+        ShopItems.Add(new ShopHintItemViewModel("distinctCount",
+            LocalizationService.GetString("MathHangman_ShopDistinctCountTitle"),
+            LocalizationService.GetString("MathHangman_ShopDistinctCountDesc"), 10));
+        ShopItems.Add(new ShopHintItemViewModel("hasDouble",
+            LocalizationService.GetString("MathHangman_ShopHasDoubleTitle"),
+            LocalizationService.GetString("MathHangman_ShopHasDoubleDesc"), 10));
     }
 
     public async Task LoadAsync(string gameId, string difficultyKey, int level)
@@ -165,7 +174,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
         RangeMax = maxRange;
 
         int digitSum = _secret.ToString().Sum(c => c - '0');
-        QuersummeText = $"Quersumme: {digitSum}";
+        QuersummeText = LocalizationService.Format("MathHangman_DigitSumFormat", digitSum);
 
         var props = _hangmanService.GetAllTrueProperties(_secret);
         foreach (var p in props)
@@ -180,7 +189,9 @@ public sealed class MathHangmanPageViewModel : ObservableObject
 
         if (!int.TryParse(GuessText?.Trim(), out var g))
         {
-            await _dialog.AlertAsync("Eingabe", "Bitte eine Zahl eingeben.");
+            await _dialog.AlertAsync(
+                LocalizationService.GetString("MathHangman_InputTitle"),
+                LocalizationService.GetString("MathHangman_InputMessage"));
             return;
         }
 
@@ -197,7 +208,9 @@ public sealed class MathHangmanPageViewModel : ObservableObject
             int completedLevel = LevelNumber;
             await _progressStore.MarkLevelCompleteAsync(GameId, DifficultyKey, completedLevel);
             Preferences.Remove(GetSecretKey());
-            await _dialog.AlertAsync("Gewonnen! 🎉", $"Richtig! Die Zahl war {_secret}\n+50 Coins");
+            await _dialog.AlertAsync(
+                LocalizationService.GetString("MathHangman_WinTitle"),
+                LocalizationService.Format("MathHangman_WinMessageFormat", _secret));
             LevelNumber = completedLevel + 1;
             await StartRoundAsync();
         }
@@ -209,10 +222,10 @@ public sealed class MathHangmanPageViewModel : ObservableObject
             {
                 IsFinished = true;
                 bool retry = await _dialog.ConfirmAsync(
-                    "Verloren 😢",
-                    $"Die Zahl war: {_secret}",
-                    "Wiederholen",
-                    "Zurück");
+                    LocalizationService.GetString("MathHangman_LoseTitle"),
+                    LocalizationService.Format("MathHangman_LoseMessageFormat", _secret),
+                    LocalizationService.GetString("Common_Retry"),
+                    LocalizationService.GetString("Common_Back"));
 
                 if (retry)
                 {
@@ -236,13 +249,17 @@ public sealed class MathHangmanPageViewModel : ObservableObject
 
         if (Coins < 10)
         {
-            await _dialog.AlertAsync("Nicht genug Coins", "Ein Hinweis kostet 10 Coins.");
+            await _dialog.AlertAsync(
+                LocalizationService.GetString("Common_NotEnoughCoinsTitle"),
+                LocalizationService.GetString("MathHangman_NotEnoughCoinsMessage"));
             return;
         }
 
         if (ShopItems.All(item => item.IsPurchased))
         {
-            await _dialog.AlertAsync("Hinweise", "Alle Hinweise wurden bereits gekauft.");
+            await _dialog.AlertAsync(
+                LocalizationService.GetString("MathHangman_HintsTitleDialog"),
+                LocalizationService.GetString("MathHangman_HintsPurchasedMessage"));
             return;
         }
 
@@ -250,12 +267,14 @@ public sealed class MathHangmanPageViewModel : ObservableObject
             .Where(item => item.CanPurchase)
             .ToList();
         var optionMap = optionItems.ToDictionary(
-            item => $"{item.Title} ({item.Price} 💰)",
+            item => $"{item.Title} ({LocalizationService.Format("Common_PriceCoinsFormat", item.Price)})",
             item => item);
         var options = optionMap.Keys.ToArray();
-        var choice = await Shell.Current.DisplayActionSheetAsync("💡 Hinweis kaufen", "Abbrechen", null, options);
+        var choice = await Shell.Current.DisplayActionSheetAsync(
+            LocalizationService.GetString("MathHangman_BuyHintSheetTitle"),
+            LocalizationService.GetString("Common_Cancel"), null, options);
 
-        if (string.IsNullOrEmpty(choice) || choice == "Abbrechen") return;
+        if (string.IsNullOrEmpty(choice) || choice == LocalizationService.GetString("Common_Cancel")) return;
 
         if (!optionMap.TryGetValue(choice, out var selectedItem))
             return;
@@ -274,13 +293,13 @@ public sealed class MathHangmanPageViewModel : ObservableObject
 
         string hintText = selectedItem.Id switch
         {
-            "lastDigit" => $"🔚 Die letzte Ziffer ist {s[^1]}.",
-            "firstDigit" => $"🔝 Die erste Ziffer ist {s[0]}.",
-            "distinctCount" => $"🎲 Die Zahl hat {s.Distinct().Count()} verschiedene Ziffern.",
+            "lastDigit" => LocalizationService.Format("MathHangman_HintLastDigitFormat", s[^1]),
+            "firstDigit" => LocalizationService.Format("MathHangman_HintFirstDigitFormat", s[0]),
+            "distinctCount" => LocalizationService.Format("MathHangman_HintDistinctCountFormat", s.Distinct().Count()),
             "hasDouble" => s.Length != s.Distinct().Count()
-                                ? "♻️ Es gibt mindestens eine doppelte Ziffer."
-                                : "♻️ Alle Ziffern sind verschieden.",
-            _ => "💡 Hinweis nicht verfügbar."
+                                ? LocalizationService.GetString("MathHangman_HintHasDoubleTrue")
+                                : LocalizationService.GetString("MathHangman_HintHasDoubleFalse"),
+            _ => LocalizationService.GetString("MathHangman_HintNotAvailable")
         };
 
         selectedItem.IsPurchased = true;
@@ -295,17 +314,17 @@ public sealed class MathHangmanPageViewModel : ObservableObject
     {
         if (property == null) return;
 
-        string message = $"{property.KidDescription}\nBeispiele: {property.Examples}";
+        string message = LocalizationService.Format("MathHangman_PropertyDetailsFormat", property.KidDescription, property.Examples);
         await _dialog.AlertAsync(property.Key, message);
     }
 
     private async Task ConfirmBackAsync()
     {
         bool leave = await _dialog.ConfirmAsync(
-            "Zurück",
-            "Möchtest du das Rätsel verlassen?",
-            "Ja",
-            "Nein");
+            LocalizationService.GetString("Common_Back"),
+            LocalizationService.GetString("Common_LeavePuzzlePrompt"),
+            LocalizationService.GetString("Common_Yes"),
+            LocalizationService.GetString("Common_No"));
 
         if (!leave) return;
 

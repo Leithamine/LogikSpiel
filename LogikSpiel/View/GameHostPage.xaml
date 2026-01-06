@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
+             xmlns:resx="clr-namespace:LogikSpiel.Resources.Strings"
              xmlns:skia="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
              x:Class="LogikSpiel.View.GameHostPage"
              x:DataType="vm:GameHostPageViewModel"
@@ -16,7 +17,7 @@
              ═══════════════════════════════════════════════════════════════ -->
         <Border Style="{StaticResource GlassCard}" Padding="12">
             <Grid ColumnDefinitions="Auto,*,Auto">
-                <Button Grid.Column="0" Text="Zurück" Style="{StaticResource BtnIcon}"
+                <Button Grid.Column="0" Text="{resx:Translate Key=Common_Back}" Style="{StaticResource BtnIcon}"
                         Command="{Binding BackCommand}"/>
 
                 <Label Grid.Column="1" Text="{Binding Title}" Style="{StaticResource H3}"
@@ -61,8 +62,8 @@
                 <!-- Info Card -->
                 <Border Style="{StaticResource SolidCard}" Padding="20">
                     <VerticalStackLayout Spacing="12">
-                        <Label Text="🎮 Spielinfo" Style="{StaticResource H3}"/>
-                        <Label Text="Hier kommt später deine echte Rätsel-UI rein. 'Lösen' markiert das Level als geschafft und lädt automatisch das nächste."
+                        <Label Text="{resx:Translate Key=GameHost_InfoTitle}" Style="{StaticResource H3}"/>
+                        <Label Text="{resx:Translate Key=GameHost_InfoBody}"
                                Style="{StaticResource Body}"
                                LineBreakMode="WordWrap"/>
                     </VerticalStackLayout>
@@ -70,11 +71,11 @@
 
                 <!-- Action Buttons -->
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
-                    <Button Grid.Column="0" Text="📖 Regeln"
+                    <Button Grid.Column="0" Text="{resx:Translate Key=GameHost_RulesButton}"
                             Style="{StaticResource BtnSecondary}"
                             Command="{Binding RulesCommand}"/>
 
-                    <Button Grid.Column="1" Text="✅ Lösen"
+                    <Button Grid.Column="1" Text="{resx:Translate Key=GameHost_SolveButton}"
                             Style="{StaticResource BtnSuccess}"
                             Command="{Binding SolveCommand}"/>
                 </Grid>

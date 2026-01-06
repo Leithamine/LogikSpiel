@@ -4,6 +4,7 @@ using System.Globalization;
 using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
+using LogikSpiel.Services.Localization;
 using LogikSpiel.View;
 using Microsoft.Maui.Graphics;
 
@@ -38,7 +39,7 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
         }
     }
 
-    public string Title => $"Pascal Pfad – {DiffName(DifficultyKey)} (Lv {LevelNumber})";
+    public string Title => LocalizationService.Format("Pascal_TitleFormat", DiffName(DifficultyKey), LevelNumber);
 
     private PascalTriangleGame? _game;
     public PascalTriangleGame? Game
@@ -73,7 +74,9 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
         }
     }
 
-    public string GoalChipText => Goal == "max" ? "AUFGABE: MAX" : "AUFGABE: MIN";
+    public string GoalChipText => Goal == "max"
+        ? LocalizationService.GetString("Pascal_GoalMax")
+        : LocalizationService.GetString("Pascal_GoalMin");
 
     public Color GoalChipColor => Goal == "max"
         ? Color.FromArgb("#2ECC71")
@@ -133,13 +136,15 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
         {
             if (Coins < 15)
             {
-                await _dialog.AlertAsync("Nicht genug Coins", "Du brauchst 15 Coins für einen Tipp!");
+                await _dialog.AlertAsync(
+                    LocalizationService.GetString("Common_NotEnoughCoinsTitle"),
+                    LocalizationService.Format("Pascal_NotEnoughCoinsMessage", 15));
                 return;
             }
 
             bool buy = await _dialog.ConfirmAsync(
-                "Tipp kaufen?",
-                "Die ersten 2 Schritte des Lösungspfads anzeigen für 15 Coins?");
+                LocalizationService.GetString("Pascal_BuyHintTitle"),
+                LocalizationService.Format("Pascal_BuyHintMessage", 15));
 
             if (!buy) return;
 
@@ -330,16 +335,16 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
         if (_selectedPath[0].row != 0)
         {
             await _dialog.AlertAsync(
-                "Pfad unvollständig",
-                "Dein Pfad muss oben bei der Spitze (Zeile 0) beginnen.");
+                LocalizationService.GetString("Pascal_PathIncompleteTitle"),
+                LocalizationService.GetString("Pascal_PathStartMessage"));
             return;
         }
 
         if (_selectedPath[^1].row != lastRow)
         {
             await _dialog.AlertAsync(
-                "Pfad unvollständig",
-                $"Dein Pfad muss unten bei der Basis (Zeile {lastRow}) enden.");
+                LocalizationService.GetString("Pascal_PathIncompleteTitle"),
+                LocalizationService.Format("Pascal_PathEndMessageFormat", lastRow));
             return;
         }
 
@@ -348,15 +353,20 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
 
         ShowSolutionOverlay = true;
 
-        var de = CultureInfo.GetCultureInfo("de-DE");
+        var culture = CultureInfo.CurrentCulture;
 
         if (!isOptimal)
         {
-            string goalText = Goal == "max" ? "maximale" : "minimale";
+            string goalText = Goal == "max"
+                ? LocalizationService.GetString("Pascal_OptimalWordMax")
+                : LocalizationService.GetString("Pascal_OptimalWordMin");
             await _dialog.AlertAsync(
-                "Nicht optimal ❌",
-                $"Deine Summe: {UserSum.ToString("0.##", de)}\n" +
-                $"Beste {goalText} Summe: {target.ToString("0.##", de)}");
+                LocalizationService.GetString("Pascal_NotOptimalTitle"),
+                LocalizationService.Format(
+                    "Pascal_NotOptimalMessageFormat",
+                    UserSum.ToString("0.##", culture),
+                    goalText,
+                    target.ToString("0.##", culture)));
             return;
         }
 
@@ -391,14 +401,7 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
             _ => 10
         };
 
-    private static string DiffName(string key) => key.ToLowerInvariant() switch
-    {
-        "easy" => "Einfach",
-        "normal" => "Normal",
-        "hard" => "Schwer",
-        "master" => "Master",
-        _ => key
-    };
+    private static string DiffName(string key) => LocalizationService.GetDifficultyLabel(key);
 
     private static int StableHash(string s)
     {
@@ -421,10 +424,10 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
     private async Task ConfirmBackAsync()
     {
         bool leave = await _dialog.ConfirmAsync(
-            "Zurück",
-            "Möchtest du das Rätsel verlassen?",
-            "Ja",
-            "Nein");
+            LocalizationService.GetString("Common_Back"),
+            LocalizationService.GetString("Common_LeavePuzzlePrompt"),
+            LocalizationService.GetString("Common_Yes"),
+            LocalizationService.GetString("Common_No"));
 
         if (!leave) return;
 

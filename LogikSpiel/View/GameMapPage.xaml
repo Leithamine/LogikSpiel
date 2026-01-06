@@ -2,6 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
+             xmlns:resx="clr-namespace:LogikSpiel.Resources.Strings"
              xmlns:skia="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
              x:Class="LogikSpiel.View.GameMapPage"
              x:DataType="vm:GameMapPageViewModel"
@@ -20,7 +21,7 @@
             <Grid ColumnDefinitions="Auto,*,Auto">
 
                 <Button Grid.Column="0"
-                        Text="Zurück"
+                        Text="{resx:Translate Key=Common_Back}"
                         Style="{StaticResource BtnIcon}"
                         WidthRequest="88"
                         HeightRequest="48"
@@ -240,32 +241,32 @@
                     Padding="24">
                 <VerticalStackLayout Spacing="20">
 
-                    <Label Text="🎮 Schwierigkeit"
+                    <Label Text="{resx:Translate Key=GameMap_DifficultyTitle}"
                            Style="{StaticResource H2}"
                            HorizontalOptions="Center"/>
 
                     <FlexLayout Wrap="Wrap"
                                 JustifyContent="Center"
                                 Direction="Row">
-                        <Button Text="🌱 Einfach"
+                        <Button Text="{resx:Translate Key=GameMap_DifficultyEasy}"
                                 Style="{StaticResource BtnSuccess}"
                                 Margin="6"
                                 WidthRequest="140"
                                 Command="{Binding ChangeDifficultyCommand}"
                                 CommandParameter="easy"/>
-                        <Button Text="⭐ Normal"
+                        <Button Text="{resx:Translate Key=GameMap_DifficultyNormal}"
                                 Style="{StaticResource BtnPrimary}"
                                 Margin="6"
                                 WidthRequest="140"
                                 Command="{Binding ChangeDifficultyCommand}"
                                 CommandParameter="normal"/>
-                        <Button Text="🔥 Schwer"
+                        <Button Text="{resx:Translate Key=GameMap_DifficultyHard}"
                                 Style="{StaticResource BtnAccent}"
                                 Margin="6"
                                 WidthRequest="140"
                                 Command="{Binding ChangeDifficultyCommand}"
                                 CommandParameter="hard"/>
-                        <Button Text="👑 Master"
+                        <Button Text="{resx:Translate Key=GameMap_DifficultyMaster}"
                                 Style="{StaticResource BtnSecondary}"
                                 Margin="6"
                                 WidthRequest="140"
@@ -273,7 +274,7 @@
                                 CommandParameter="master"/>
                     </FlexLayout>
 
-                    <Button Text="Abbrechen"
+                    <Button Text="{resx:Translate Key=Common_Cancel}"
                             Style="{StaticResource BtnGhost}"
                             Command="{Binding ToggleSettingsCommand}"/>
 

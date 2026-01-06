@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using LogikSpiel.Model;
+using LogikSpiel.Services.Localization;
 
 namespace LogikSpiel.Services;
 
@@ -647,7 +648,7 @@ public class LockRiddleGeneratorService
             Code = string.Join(" ", slots),
             WellPlaced = 0,
             WrongPlaced = 0,
-            Description = "Keine Zahl ist korrekt",
+            Description = LocalizationService.GetString("LockRiddle_NoDigitCorrect"),
             Icon = "❌"
         };
     }
@@ -828,12 +829,12 @@ public class LockRiddleGeneratorService
 
         string desc = (well, wrong) switch
         {
-            (0, 0) => "Keine Zahl ist korrekt",
-            (1, 0) => "Eine Zahl ist korrekt und richtig platziert",
-            (0, 1) => "Eine Zahl ist korrekt, aber falsch platziert",
-            ( > 0, 0) => $"In diesem Tipp sind {well} {Plural(well, "Zahl", "Zahlen")} korrekt und richtig platziert",
-            (0, > 0) => $"In diesem Tipp sind {wrong} {Plural(wrong, "Zahl", "Zahlen")} korrekt, aber falsch platziert",
-            _ => $"In diesem Tipp sind {well + wrong} {Plural(well + wrong, "Zahl", "Zahlen")} korrekt: {well} richtig platziert, {wrong} falsch platziert"
+            (0, 0) => LocalizationService.GetString("LockRiddle_NoDigitCorrect"),
+            (1, 0) => LocalizationService.GetString("LockRiddle_OneCorrectWellPlaced"),
+            (0, 1) => LocalizationService.GetString("LockRiddle_OneCorrectWrongPlaced"),
+            ( > 0, 0) => LocalizationService.Format("LockRiddle_HintWellPlacedFormat", well, Plural(well, LocalizationService.GetString("LockRiddle_NumberSingular"), LocalizationService.GetString("LockRiddle_NumberPlural"))),
+            (0, > 0) => LocalizationService.Format("LockRiddle_HintWrongPlacedFormat", wrong, Plural(wrong, LocalizationService.GetString("LockRiddle_NumberSingular"), LocalizationService.GetString("LockRiddle_NumberPlural"))),
+            _ => LocalizationService.Format("LockRiddle_HintMixedFormat", well + wrong, Plural(well + wrong, LocalizationService.GetString("LockRiddle_NumberSingular"), LocalizationService.GetString("LockRiddle_NumberPlural")), well, wrong)
         };
 
         string icon = (well, wrong) switch

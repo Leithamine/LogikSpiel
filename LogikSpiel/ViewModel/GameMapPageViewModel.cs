@@ -3,6 +3,7 @@ using System.Linq;
 using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
+using LogikSpiel.Services.Localization;
 using Microsoft.Maui.Graphics;
 
 namespace LogikSpiel.ViewModel;
@@ -34,7 +35,7 @@ public sealed class GameMapPageViewModel : ObservableObject
         }
     }
 
-    public string Title => Game?.Title ?? "Karte";
+    public string Title => Game?.Title ?? LocalizationService.GetString("GameMap_TitleDefault");
 
     private bool _isSettingsOpen;
     public bool IsSettingsOpen { get => _isSettingsOpen; set => SetProperty(ref _isSettingsOpen, value); }
@@ -54,14 +55,7 @@ public sealed class GameMapPageViewModel : ObservableObject
         }
     }
 
-    public string DifficultyLabel => DifficultyKey switch
-    {
-        "easy" => "Einfach",
-        "normal" => "Normal",
-        "hard" => "Schwer",
-        "master" => "Master",
-        _ => DifficultyKey
-    };
+    public string DifficultyLabel => LocalizationService.GetDifficultyLabel(DifficultyKey);
 
     private double _mapHeight = 900;
     public double MapHeight { get => _mapHeight; private set => SetProperty(ref _mapHeight, value); }

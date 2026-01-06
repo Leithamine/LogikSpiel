@@ -9,6 +9,7 @@ using LogikSpiel.Core;
 using LogikSpiel.Model.NumberRain;
 using LogikSpiel.Services;
 using LogikSpiel.Services.NumberRain;
+using LogikSpiel.Services.Localization;
 using LogikSpiel.View;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
@@ -47,10 +48,10 @@ public sealed class NumberRainPageViewModel : ObservableObject
     private int _coins;
     public int Coins { get => _coins; private set => SetProperty(ref _coins, value); }
 
-    private string _questText = "Bereit? Tippe auf Starten!";
+    private string _questText = LocalizationService.GetString("NumberRain_QuestReady");
     public string QuestText { get => _questText; private set => SetProperty(ref _questText, value); }
 
-    private string _questModeLabel = "Modus";
+    private string _questModeLabel = LocalizationService.GetString("NumberRain_ModeLabel");
     public string QuestModeLabel { get => _questModeLabel; private set => SetProperty(ref _questModeLabel, value); }
 
     private string _progressText = string.Empty;
@@ -115,14 +116,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
         }
     }
 
-    public string DifficultyLabel => DifficultyKey switch
-    {
-        "easy" => "Einfach",
-        "normal" => "Normal",
-        "hard" => "Schwer",
-        "master" => "Master",
-        _ => DifficultyKey
-    };
+    public string DifficultyLabel => LocalizationService.GetDifficultyLabel(DifficultyKey);
 
     private int _levelNumber = 1;
     public int LevelNumber
@@ -209,7 +203,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
     {
         var message = BuildQuestExplanation();
         return MainThread.InvokeOnMainThreadAsync(async () =>
-            await _dialog.AlertAsync("Erklärung", message));
+            await _dialog.AlertAsync(LocalizationService.GetString("NumberRain_ExplainTitle"), message));
     }
 
     private void PrepareQuest()
@@ -238,22 +232,22 @@ public sealed class NumberRainPageViewModel : ObservableObject
         ActiveRuleText = string.Empty;
         HasActiveRule = false;
 
-        StatusText = "Bereit für den Start.";
+        StatusText = LocalizationService.GetString("NumberRain_StatusReady");
         UpdateProgressText();
         UpdateActiveRule();
     }
 
     private static string QuestModeToLabel(NumberRainQuestMode mode) => mode switch
     {
-        NumberRainQuestMode.Count => "Zählen",
-        NumberRainQuestMode.Timed => "Zeit",
-        NumberRainQuestMode.Avoid => "Vermeiden",
-        NumberRainQuestMode.Multi => "Multi",
-        NumberRainQuestMode.Combo => "Combo",
-        NumberRainQuestMode.Survival => "Survival",
-        NumberRainQuestMode.Dynamic => "Dynamisch",
-        NumberRainQuestMode.Switch => "Wechsel",
-        _ => "Modus"
+        NumberRainQuestMode.Count => LocalizationService.GetString("NumberRain_Mode_Count"),
+        NumberRainQuestMode.Timed => LocalizationService.GetString("NumberRain_Mode_Timed"),
+        NumberRainQuestMode.Avoid => LocalizationService.GetString("NumberRain_Mode_Avoid"),
+        NumberRainQuestMode.Multi => LocalizationService.GetString("NumberRain_Mode_Multi"),
+        NumberRainQuestMode.Combo => LocalizationService.GetString("NumberRain_Mode_Combo"),
+        NumberRainQuestMode.Survival => LocalizationService.GetString("NumberRain_Mode_Survival"),
+        NumberRainQuestMode.Dynamic => LocalizationService.GetString("NumberRain_Mode_Dynamic"),
+        NumberRainQuestMode.Switch => LocalizationService.GetString("NumberRain_Mode_Switch"),
+        _ => LocalizationService.GetString("NumberRain_ModeLabel")
     };
 
     private void StartTimers()
@@ -261,7 +255,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
         if (_settings is null || _quest is null) return;
 
         IsRunning = true;
-        StatusText = "Zahlenregen läuft!";
+        StatusText = LocalizationService.GetString("NumberRain_StatusRunning");
 
         StopTimers();
 
@@ -558,7 +552,9 @@ public sealed class NumberRainPageViewModel : ObservableObject
                 await _progressStore.MarkLevelCompleteAsync(GameId!, DifficultyKey, LevelNumber);
 
             await MainThread.InvokeOnMainThreadAsync(async () =>
-                await _dialog.AlertAsync("Super! 🎉", $"+{reward} Coins"));
+                await _dialog.AlertAsync(
+                    LocalizationService.GetString("NumberRain_RewardTitle"),
+                    LocalizationService.Format("Common_CoinsRewardFormat", reward)));
 
             await MainThread.InvokeOnMainThreadAsync(async () =>
                 await NavigateToGameMapAsync());
@@ -568,10 +564,10 @@ public sealed class NumberRainPageViewModel : ObservableObject
         // ✅ GameOver-Dialog: Wiederholen / Abbrechen
         bool retry = await MainThread.InvokeOnMainThreadAsync(async () =>
             await _dialog.ConfirmAsync(
-                "Spiel vorbei",
-                "Du hast alle Leben verloren.",
-                "Wiederholen",
-                "Zurück"));
+                LocalizationService.GetString("NumberRain_GameOverTitle"),
+                LocalizationService.GetString("NumberRain_GameOverMessage"),
+                LocalizationService.GetString("Common_Retry"),
+                LocalizationService.GetString("Common_Back")));
 
         if (retry)
         {
@@ -595,15 +591,15 @@ public sealed class NumberRainPageViewModel : ObservableObject
 
         if (_quest.Mode == NumberRainQuestMode.Combo)
         {
-            ProgressText = $"Combo: {_combo}/{_quest.ComboTarget}";
+            ProgressText = LocalizationService.Format("NumberRain_ComboProgressFormat", _combo, _quest.ComboTarget);
             return;
         }
 
         if (_quest.Mode == NumberRainQuestMode.Survival)
         {
             ProgressText = _quest.MinHits > 0
-                ? $"Treffer: {TotalHits()}/{_quest.MinHits} • Fehler: {_misses}/{_quest.MaxMisses}"
-                : $"Fehler: {_misses}/{_quest.MaxMisses}";
+                ? LocalizationService.Format("NumberRain_HitsMissesFormat", TotalHits(), _quest.MinHits, _misses, _quest.MaxMisses)
+                : LocalizationService.Format("NumberRain_MissesFormat", _misses, _quest.MaxMisses);
             return;
         }
 
@@ -635,14 +631,16 @@ public sealed class NumberRainPageViewModel : ObservableObject
         if (_quest.Mode == NumberRainQuestMode.Switch)
         {
             var rule = CurrentSwitchRule();
-            ActiveRuleText = rule is null ? string.Empty : $"Aktive Regel: {rule.Label}";
+            ActiveRuleText = rule is null
+                ? string.Empty
+                : LocalizationService.Format("NumberRain_ActiveRuleFormat", rule.Label);
             HasActiveRule = !string.IsNullOrWhiteSpace(ActiveRuleText);
             return;
         }
 
         if (_quest.Mode == NumberRainQuestMode.Dynamic && _quest.Rules.Count > 0)
         {
-            ActiveRuleText = $"Regel: {_quest.Rules[0].Label}";
+            ActiveRuleText = LocalizationService.Format("NumberRain_RuleFormat", _quest.Rules[0].Label);
             HasActiveRule = true;
             return;
         }
@@ -654,7 +652,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
     private string BuildQuestExplanation()
     {
         if (_quest is null)
-            return "Keine Aufgabe geladen.";
+            return LocalizationService.GetString("NumberRain_NoQuestLoaded");
 
         var lines = new List<string>
         {
@@ -664,20 +662,20 @@ public sealed class NumberRainPageViewModel : ObservableObject
         if (_quest.Goals.Count > 0)
         {
             var goals = _quest.Goals.Select(g => $"{g.Label} ({g.TargetCount})");
-            lines.Add($"Ziel: {string.Join(" / ", goals)}");
+            lines.Add(LocalizationService.Format("NumberRain_GoalsFormat", string.Join(" / ", goals)));
         }
 
         if (_quest.Mode == NumberRainQuestMode.Avoid && !string.IsNullOrWhiteSpace(_quest.AvoidLabel))
-            lines.Add($"Vermeide: {_quest.AvoidLabel}.");
+            lines.Add(LocalizationService.Format("NumberRain_AvoidFormat", _quest.AvoidLabel));
 
         if (_quest.Rules.Count > 0)
         {
             var rules = string.Join(", ", _quest.Rules.Select(r => r.Label));
-            lines.Add($"Mathematische Regel: {rules}");
+            lines.Add(LocalizationService.Format("NumberRain_RulesFormat", rules));
         }
 
         if (_quest.TimeLimitSeconds > 0)
-            lines.Add($"Zeitlimit: {_quest.TimeLimitSeconds}s.");
+            lines.Add(LocalizationService.Format("NumberRain_TimeLimitFormat", _quest.TimeLimitSeconds));
 
         return string.Join(Environment.NewLine, lines);
     }
@@ -695,10 +693,10 @@ public sealed class NumberRainPageViewModel : ObservableObject
     private async Task ConfirmBackAsync()
     {
         bool leave = await _dialog.ConfirmAsync(
-            "Zurück",
-            "Möchtest du das Spiel verlassen?",
-            "Ja",
-            "Nein");
+            LocalizationService.GetString("Common_Back"),
+            LocalizationService.GetString("NumberRain_LeavePrompt"),
+            LocalizationService.GetString("Common_Yes"),
+            LocalizationService.GetString("Common_No"));
 
         if (!leave) return;
 

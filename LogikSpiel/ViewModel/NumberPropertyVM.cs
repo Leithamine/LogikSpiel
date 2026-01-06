@@ -1,4 +1,5 @@
 ﻿using System;
+using LogikSpiel.Services.Localization;
 
 namespace LogikSpiel.ViewModel;
 
@@ -10,7 +11,7 @@ public sealed class NumberPropertyVM
     public bool HasExamples => !string.IsNullOrWhiteSpace(Examples);
     public bool ShowExamples => HasExamples && !string.Equals(Key, "Quersumme", StringComparison.OrdinalIgnoreCase);
 
-    public string TitleLine => $"Diese Zahl ist {Key}.";
+    public string TitleLine => LocalizationService.Format("NumberProperty_TitleFormat", Key);
 
     public NumberPropertyVM(string key, string kidDescription, string examples)
     {

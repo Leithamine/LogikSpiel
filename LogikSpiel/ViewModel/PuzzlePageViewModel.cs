@@ -4,6 +4,7 @@ using System.Linq;
 using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
+using LogikSpiel.Services.Localization;
 using LogikSpiel.View;
 
 namespace LogikSpiel.ViewModel;
@@ -72,7 +73,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
     private int _genToken = 0;
 
-    public string Title => $"Code-Knacker – {DiffName(DifficultyKey)}";
+    public string Title => LocalizationService.Format("Puzzle_TitleFormat", DiffName(DifficultyKey));
 
     public bool ShowSolutionForDebug => true;
     public string SecretSolution => _secretSolution;
@@ -110,12 +111,16 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
             if (Coins >= 10)
             {
-                bool buy = await _dialog.ConfirmAsync("Tipp kaufen?", "Eine Zahl aufdecken für 10 Coins?");
+                bool buy = await _dialog.ConfirmAsync(
+                    LocalizationService.GetString("Puzzle_BuyHintTitle"),
+                    LocalizationService.Format("Puzzle_BuyHintMessage", 10));
                 if (buy) RevealOneDigit();
             }
             else
             {
-                await _dialog.AlertAsync("Nicht genug Coins", "Du brauchst 10 Coins!");
+                await _dialog.AlertAsync(
+                    LocalizationService.GetString("Common_NotEnoughCoinsTitle"),
+                    LocalizationService.Format("Common_NeedCoinsFormat", 10));
             }
         });
     }
@@ -144,10 +149,10 @@ public sealed class PuzzlePageViewModel : ObservableObject
     private async Task ConfirmBackAsync()
     {
         bool leave = await _dialog.ConfirmAsync(
-            "Zurück",
-            "Möchtest du das Rätsel verlassen?",
-            "Ja",
-            "Nein");
+            LocalizationService.GetString("Common_Back"),
+            LocalizationService.GetString("Common_LeavePuzzlePrompt"),
+            LocalizationService.GetString("Common_Yes"),
+            LocalizationService.GetString("Common_No"));
 
         if (!leave) return;
 
@@ -224,13 +229,17 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
         if (_secretSolution.Length == 0)
         {
-            await _dialog.AlertAsync("Fehler", "Kein Rätsel geladen.");
+            await _dialog.AlertAsync(
+                LocalizationService.GetString("Puzzle_ErrorTitle"),
+                LocalizationService.GetString("Puzzle_NoPuzzleMessage"));
             return;
         }
 
         if (InputDigits.Any(d => string.IsNullOrWhiteSpace(d.Digit)))
         {
-            await _dialog.AlertAsync("Unvollständig", "Bitte fülle alle Felder aus.");
+            await _dialog.AlertAsync(
+                LocalizationService.GetString("Puzzle_IncompleteTitle"),
+                LocalizationService.GetString("Puzzle_IncompleteMessage"));
             return;
         }
 
@@ -238,20 +247,25 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
         if (input.Length != _secretSolution.Length)
         {
-            await _dialog.AlertAsync("Unvollständig", "Bitte fülle alle Felder aus.");
+            await _dialog.AlertAsync(
+                LocalizationService.GetString("Puzzle_IncompleteTitle"),
+                LocalizationService.GetString("Puzzle_IncompleteMessage"));
             return;
         }
 
         if (input.Distinct().Count() != input.Length)
         {
-            await _dialog.AlertAsync("Ungültig", "Jede Zahl darf nur einmal vorkommen.");
+            await _dialog.AlertAsync(
+                LocalizationService.GetString("Puzzle_InvalidTitle"),
+                LocalizationService.GetString("Puzzle_InvalidMessage"));
             return;
         }
 
         if (input != _secretSolution)
         {
-            await _dialog.AlertAsync("Falsch ❌",
-                $"Code stimmt nicht.\n\nDein Code: {input}\nLösung (Debug): {_secretSolution}");
+            await _dialog.AlertAsync(
+                LocalizationService.GetString("Puzzle_WrongTitle"),
+                LocalizationService.Format("Puzzle_WrongMessageFormat", input, _secretSolution));
             return;
         }
 
@@ -282,7 +296,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
         MainThread.BeginInvokeOnMainThread(() =>
         {
             LockImageSource = "openedlock.png";
-            RewardText = reward > 0 ? $"Du erhältst {reward} Coins 💰" : "";
+            RewardText = reward > 0 ? LocalizationService.Format("Puzzle_RewardFormat", reward) : "";
             IsCelebrating = true;
         });
 
@@ -342,12 +356,5 @@ public sealed class PuzzlePageViewModel : ObservableObject
             _ => 8
         };
 
-    private static string DiffName(string key) => key.ToLowerInvariant() switch
-    {
-        "easy" => "Einfach",
-        "normal" => "Normal",
-        "hard" => "Schwer",
-        "master" => "Master",
-        _ => key
-    };
+    private static string DiffName(string key) => LocalizationService.GetDifficultyLabel(key);
 }
