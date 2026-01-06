@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Reflection;
 using Microsoft.Maui.Controls.Xaml;
-
 namespace LogikSpiel.Resources.Strings;
 
 [ContentProperty(nameof(Key))]
