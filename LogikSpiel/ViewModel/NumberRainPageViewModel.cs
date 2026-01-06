@@ -1,14 +1,17 @@
 #nullable enable
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Xml.Linq;
 using LogikSpiel.Core;
 using LogikSpiel.Model.NumberRain;
 using LogikSpiel.Services;
 using LogikSpiel.Services.NumberRain;
 using LogikSpiel.View;
+using Microsoft.Maui.Controls;
 using Microsoft.Maui.Dispatching;
-using Microsoft.Maui.Graphics;
 
 namespace LogikSpiel.ViewModel;
 
@@ -32,6 +35,8 @@ public sealed class NumberRainPageViewModel : ObservableObject
     private int _combo;
     private int _misses;
     private int[] _goalProgress = Array.Empty<int>();
+
+    private bool _ending; // verhindert mehrfachen Dialog / mehrfaches EndRound
 
     public ObservableCollection<FallingNumberViewModel> ActiveNumbers { get; } = new();
 
@@ -57,17 +62,41 @@ public sealed class NumberRainPageViewModel : ObservableObject
     public bool HasActiveRule { get => _hasActiveRule; private set => SetProperty(ref _hasActiveRule, value); }
 
     private int _lives = 3;
-    public int Lives { get => _lives; private set { if (SetProperty(ref _lives, value)) OnPropertyChanged(nameof(LivesDisplay)); } }
+    public int Lives
+    {
+        get => _lives;
+        private set
+        {
+            if (SetProperty(ref _lives, value))
+                OnPropertyChanged(nameof(LivesDisplay));
+        }
+    }
 
     public string LivesDisplay => new string('❤', Math.Max(0, Lives));
 
     private bool _isRunning;
-    public bool IsRunning { get => _isRunning; private set { if (SetProperty(ref _isRunning, value)) { OnPropertyChanged(nameof(CanStart)); } } }
+    public bool IsRunning
+    {
+        get => _isRunning;
+        private set
+        {
+            if (SetProperty(ref _isRunning, value))
+                OnPropertyChanged(nameof(CanStart));
+        }
+    }
 
     public bool CanStart => !IsRunning;
 
     private int _timeRemaining;
-    public int TimeRemaining { get => _timeRemaining; private set { if (SetProperty(ref _timeRemaining, value)) OnPropertyChanged(nameof(ShowTimer)); } }
+    public int TimeRemaining
+    {
+        get => _timeRemaining;
+        private set
+        {
+            if (SetProperty(ref _timeRemaining, value))
+                OnPropertyChanged(nameof(ShowTimer));
+        }
+    }
 
     public bool ShowTimer => _quest is not null && _quest.TimeLimitSeconds > 0;
 
@@ -95,10 +124,8 @@ public sealed class NumberRainPageViewModel : ObservableObject
     public int LevelNumber
     {
         get => _levelNumber;
-        private set { if (SetProperty(ref _levelNumber, value)) OnPropertyChanged(nameof(Title)); }
+        private set => SetProperty(ref _levelNumber, value);
     }
-
-    public string Title => $"Zahlenregen · {DifficultyLabel}";
 
     public string? GameId { get; private set; }
 
@@ -122,7 +149,9 @@ public sealed class NumberRainPageViewModel : ObservableObject
         _userService = userService;
         _progressStore = progressStore;
         _generator = generator;
-        _dispatcher = Application.Current?.Dispatcher ?? throw new InvalidOperationException("Dispatcher not available");
+
+        _dispatcher = Application.Current?.Dispatcher
+                      ?? throw new InvalidOperationException("Dispatcher not available");
 
         BackCommand = new AsyncCommand(ConfirmBackAsync);
         StartCommand = new AsyncCommand(StartAsync);
@@ -149,13 +178,15 @@ public sealed class NumberRainPageViewModel : ObservableObject
         _arenaHeight = height;
     }
 
-    private async Task StartAsync()
+    private Task StartAsync()
     {
-        if (IsRunning) return;
+        if (IsRunning) return Task.CompletedTask;
+
         _settings = _generator.GetSettings(DifficultyKey);
         PrepareQuest();
         StartTimers();
-        await Task.CompletedTask;
+
+        return Task.CompletedTask;
     }
 
     private Task CancelAsync()
@@ -169,40 +200,44 @@ public sealed class NumberRainPageViewModel : ObservableObject
 
     private void PrepareQuest()
     {
+        _ending = false;
+
         _settings ??= _generator.GetSettings(DifficultyKey);
         int seed = StableHash($"{GameId}:{DifficultyKey}:{LevelNumber}");
         _quest = _generator.GenerateQuest(DifficultyKey, LevelNumber, seed);
+
         QuestText = _quest.Description;
         QuestModeLabel = QuestModeToLabel(_quest.Mode);
+
         _goalProgress = _quest.Goals.Select(_ => 0).ToArray();
         _lastSelection = null;
         _combo = 0;
         _misses = 0;
         _elapsedSeconds = 0;
+
         Lives = 3;
         TimeRemaining = _quest.TimeLimitSeconds;
+
         ActiveRuleText = string.Empty;
         HasActiveRule = false;
+
         StatusText = "Bereit für den Start.";
         UpdateProgressText();
         UpdateActiveRule();
     }
 
-    private static string QuestModeToLabel(NumberRainQuestMode mode)
+    private static string QuestModeToLabel(NumberRainQuestMode mode) => mode switch
     {
-        return mode switch
-        {
-            NumberRainQuestMode.Count => "Zählen",
-            NumberRainQuestMode.Timed => "Zeit",
-            NumberRainQuestMode.Avoid => "Vermeiden",
-            NumberRainQuestMode.Multi => "Multi",
-            NumberRainQuestMode.Combo => "Combo",
-            NumberRainQuestMode.Survival => "Survival",
-            NumberRainQuestMode.Dynamic => "Dynamisch",
-            NumberRainQuestMode.Switch => "Wechsel",
-            _ => "Modus"
-        };
-    }
+        NumberRainQuestMode.Count => "Zählen",
+        NumberRainQuestMode.Timed => "Zeit",
+        NumberRainQuestMode.Avoid => "Vermeiden",
+        NumberRainQuestMode.Multi => "Multi",
+        NumberRainQuestMode.Combo => "Combo",
+        NumberRainQuestMode.Survival => "Survival",
+        NumberRainQuestMode.Dynamic => "Dynamisch",
+        NumberRainQuestMode.Switch => "Wechsel",
+        _ => "Modus"
+    };
 
     private void StartTimers()
     {
@@ -211,15 +246,16 @@ public sealed class NumberRainPageViewModel : ObservableObject
         IsRunning = true;
         StatusText = "Zahlenregen läuft!";
 
-        _spawnTimer?.Stop();
+        StopTimers();
+
         _spawnTimer = _dispatcher.CreateTimer();
         _spawnTimer.Interval = TimeSpan.FromMilliseconds(_settings.SpawnIntervalMs);
         _spawnTimer.Tick += (_, _) => SpawnNumber();
         _spawnTimer.Start();
 
+        // Sofort-Spawn
         SpawnNumber();
 
-        _updateTimer?.Stop();
         _updateTimer = _dispatcher.CreateTimer();
         _updateTimer.Interval = TimeSpan.FromMilliseconds(33);
         _updateTimer.Tick += (_, _) => UpdateNumbers(0.033);
@@ -227,7 +263,6 @@ public sealed class NumberRainPageViewModel : ObservableObject
 
         if (_quest.TimeLimitSeconds > 0 || _quest.Mode == NumberRainQuestMode.Switch)
         {
-            _secondTimer?.Stop();
             _secondTimer = _dispatcher.CreateTimer();
             _secondTimer.Interval = TimeSpan.FromSeconds(1);
             _secondTimer.Tick += (_, _) => TickSecond();
@@ -248,8 +283,10 @@ public sealed class NumberRainPageViewModel : ObservableObject
         if (_arenaWidth <= 0 || _arenaHeight <= 0) return;
 
         int value = Random.Shared.Next(_settings.MinValue, _settings.MaxValue + 1);
+
         double size = 56;
         double x = Random.Shared.NextDouble() * Math.Max(0, _arenaWidth - size);
+
         var vm = new FallingNumberViewModel(value, x, -size, size);
         ActiveNumbers.Add(vm);
     }
@@ -264,6 +301,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
         foreach (var number in ActiveNumbers)
         {
             number.Y += speed * deltaSeconds;
+
             if (number.Y > _arenaHeight)
             {
                 toRemove.Add(number);
@@ -281,27 +319,29 @@ public sealed class NumberRainPageViewModel : ObservableObject
         if (!IsRunning || _quest is null) return;
 
         _elapsedSeconds += 1;
+
         if (_quest.TimeLimitSeconds > 0)
             TimeRemaining = Math.Max(0, TimeRemaining - 1);
 
         UpdateActiveRule();
 
         if (TimeRemaining <= 0 && _quest.TimeLimitSeconds > 0)
-        {
             _ = ResolveTimedOutcomeAsync();
-        }
     }
 
     private async Task ResolveTimedOutcomeAsync()
     {
         if (_quest is null) return;
+
         StopTimers();
         IsRunning = false;
 
         bool success = _quest.Mode switch
         {
             NumberRainQuestMode.Timed => AreGoalsComplete(),
-            NumberRainQuestMode.Survival => _quest.MinHits == 0 ? _misses <= _quest.MaxMisses : TotalHits() >= _quest.MinHits,
+            NumberRainQuestMode.Survival => _quest.MinHits == 0
+                ? _misses <= _quest.MaxMisses
+                : TotalHits() >= _quest.MinHits,
             _ => AreGoalsComplete()
         };
 
@@ -313,18 +353,13 @@ public sealed class NumberRainPageViewModel : ObservableObject
         if (number is null || _quest is null || !IsRunning) return;
 
         ActiveNumbers.Remove(number);
+
         int? previousLast = _lastSelection;
+
         bool isAvoid = _quest.AvoidPredicate?.Invoke(number.Value, previousLast) ?? false;
         bool isTarget = IsTarget(number.Value);
 
-        if (isAvoid)
-        {
-            ApplyMiss();
-            UpdateProgressText();
-            return;
-        }
-
-        if (!isTarget)
+        if (isAvoid || !isTarget)
         {
             ApplyMiss();
             UpdateProgressText();
@@ -353,6 +388,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
             {
                 var goal = _quest.Goals[i];
                 if (_goalProgress[i] >= goal.TargetCount) continue;
+
                 if (goal.Predicate(number.Value, previousLast))
                 {
                     _goalProgress[i]++;
@@ -382,33 +418,35 @@ public sealed class NumberRainPageViewModel : ObservableObject
         }
 
         var rulePredicate = _quest.Rules.FirstOrDefault()?.Predicate;
+
         if (_quest.Mode == NumberRainQuestMode.Dynamic && rulePredicate is not null)
             return rulePredicate(value, _lastSelection);
 
         if (_quest.Goals.Count > 0)
-        {
             return _quest.Goals.Any(g => g.Predicate(value, _lastSelection));
-        }
 
         return rulePredicate?.Invoke(value, _lastSelection) ?? false;
     }
 
     private void ApplyMiss()
     {
+        if (_ending) return;
+
         _misses++;
         _combo = 0;
 
         Lives = Math.Max(0, Lives - 1);
+
+        // Survival Miss-Limit
         if (_quest?.Mode == NumberRainQuestMode.Survival && _quest.MaxMisses > 0 && _misses > _quest.MaxMisses)
         {
             _ = EndRoundAsync(false);
             return;
         }
 
+        // Game Over
         if (Lives <= 0)
-        {
             _ = EndRoundAsync(false);
-        }
     }
 
     private int TotalHits() => _goalProgress.Sum();
@@ -416,6 +454,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
     private bool AreGoalsComplete()
     {
         if (_quest is null) return false;
+
         if (_quest.Mode == NumberRainQuestMode.Combo)
             return _combo >= _quest.ComboTarget;
 
@@ -429,6 +468,9 @@ public sealed class NumberRainPageViewModel : ObservableObject
 
     private async Task EndRoundAsync(bool success)
     {
+        if (_ending) return;
+        _ending = true;
+
         StopTimers();
         IsRunning = false;
         ActiveNumbers.Clear();
@@ -456,29 +498,33 @@ public sealed class NumberRainPageViewModel : ObservableObject
                 await _progressStore.MarkLevelCompleteAsync(GameId!, DifficultyKey, LevelNumber);
 
             await _dialog.AlertAsync("Super! 🎉", $"+{reward} Coins");
+
             LevelNumber++;
             PrepareQuest();
+            return;
         }
-        else
+
+        // ✅ GameOver-Dialog: Wiederholen / Abbrechen
+        bool retry = await _dialog.ConfirmAsync(
+            "Spiel vorbei",
+            "Du hast alle Leben verloren.",
+            "Wiederholen",
+            "Abbrechen");
+
+        if (retry)
         {
-            bool retry = await _dialog.ConfirmAsync(
-                "Spiel vorbei",
-                "Du hast alle Leben verloren.",
-                "Wiederholen",
-                "Abbrechen");
-
-            if (retry)
-            {
-                PrepareQuest();
-                return;
-            }
-
-            var parameters = new Dictionary<string, object>
-            {
-                ["gameId"] = GameId ?? "number_rain"
-            };
-            await _nav.GoToAsync(nameof(GameMapPage), parameters);
+            PrepareQuest();
+            StartTimers(); // sofort neu starten
+            return;
         }
+
+        // ✅ Zur Karte zurück
+        var parameters = new Dictionary<string, object>
+        {
+            ["gameId"] = GameId ?? "number_rain"
+        };
+
+        await _nav.GoToAsync(nameof(GameMapPage), parameters);
     }
 
     private void UpdateProgressText()
@@ -497,10 +543,9 @@ public sealed class NumberRainPageViewModel : ObservableObject
 
         if (_quest.Mode == NumberRainQuestMode.Survival)
         {
-            if (_quest.MinHits > 0)
-                ProgressText = $"Treffer: {TotalHits()}/{_quest.MinHits} • Fehler: {_misses}/{_quest.MaxMisses}";
-            else
-                ProgressText = $"Fehler: {_misses}/{_quest.MaxMisses}";
+            ProgressText = _quest.MinHits > 0
+                ? $"Treffer: {TotalHits()}/{_quest.MinHits} • Fehler: {_misses}/{_quest.MaxMisses}"
+                : $"Fehler: {_misses}/{_quest.MaxMisses}";
             return;
         }
 
@@ -516,6 +561,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
             var g = _quest.Goals[i];
             parts.Add($"{g.Label}: {_goalProgress[i]}/{g.TargetCount}");
         }
+
         ProgressText = string.Join(" • ", parts);
     }
 
@@ -578,7 +624,6 @@ public sealed class NumberRainPageViewModel : ObservableObject
         }
     }
 }
-
 public sealed class FallingNumberViewModel : ObservableObject
 {
     private double _x;

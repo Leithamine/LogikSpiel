@@ -1,5 +1,5 @@
 using LogikSpiel.ViewModel;
-using Microsoft.Maui.Controls;
+
 namespace LogikSpiel.View;
 
 public partial class NumberRainPage : ContentPage, IQueryAttributable
@@ -11,12 +11,11 @@ public partial class NumberRainPage : ContentPage, IQueryAttributable
         InitializeComponent();
         BindingContext = vm;
 
+        // WICHTIG: Arena-Größe für Spawn/Bounds
         RainArena.SizeChanged += (_, _) =>
         {
             if (BindingContext is NumberRainPageViewModel viewModel)
-            {
                 viewModel.UpdateArenaSize(RainArena.Width, RainArena.Height);
-            }
         };
     }
 

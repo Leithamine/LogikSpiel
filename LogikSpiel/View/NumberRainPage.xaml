@@ -4,7 +4,6 @@
              xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
              x:Class="LogikSpiel.View.NumberRainPage"
              x:DataType="vm:NumberRainPageViewModel"
-             x:Name="ThisPage"
              NavigationPage.HasNavigationBar="False"
              Shell.NavBarIsVisible="False"
              BackgroundImageSource="gamebg.png">
@@ -15,6 +14,7 @@
           RowSpacing="{OnIdiom Phone=10, Desktop=14}"
           ColumnSpacing="{OnIdiom Phone=0, Desktop=14}">
 
+        <!-- HEADER -->
         <Border Grid.Row="0"
                 Grid.Column="0"
                 Grid.ColumnSpan="2"
@@ -64,6 +64,7 @@
             </Grid>
         </Border>
 
+        <!-- MISSION -->
         <Border Grid.Row="{OnIdiom Phone=1, Desktop=1}"
                 Grid.Column="{OnIdiom Phone=0, Desktop=0}"
                 Style="{StaticResource GlassCard}"
@@ -95,6 +96,7 @@
                                Style="{StaticResource Caption}"
                                FontAttributes="Bold" />
                     </Border>
+
                     <Border Style="{StaticResource Chip}" Padding="10,4"
                             IsVisible="{Binding ShowTimer}">
                         <Label Text="{Binding TimeRemaining, StringFormat='⏱ {0}s'}"
@@ -113,12 +115,14 @@
                             Style="{StaticResource BtnPrimary}"
                             Command="{Binding StartCommand}"
                             IsEnabled="{Binding CanStart}" />
+
                     <Button Grid.Column="{OnIdiom Phone=1, Desktop=1}"
                             Grid.Row="{OnIdiom Phone=0, Desktop=0}"
                             Text="Abbrechen"
                             Style="{StaticResource BtnSecondary}"
                             Command="{Binding CancelCommand}"
                             IsEnabled="{Binding IsRunning}" />
+
                     <Label Grid.Column="{OnIdiom Phone=0, Desktop=2}"
                            Grid.Row="{OnIdiom Phone=1, Desktop=0}"
                            Text="{Binding StatusText}"
@@ -129,6 +133,7 @@
             </Grid>
         </Border>
 
+        <!-- ARENA -->
         <Border Grid.Row="{OnIdiom Phone=2, Desktop=1}"
                 Grid.Column="{OnIdiom Phone=0, Desktop=1}"
                 Style="{StaticResource GlowCard}"
@@ -140,35 +145,51 @@
                         <GradientStop Color="#2D1C3F" Offset="1.0" />
                     </LinearGradientBrush>
                 </Grid.Background>
+
+                <!-- WICHTIG für Android: HitTest/Touches -->
                 <AbsoluteLayout x:Name="RainArena"
+                                IsClippedToBounds="True"
+                                InputTransparent="False"
+                                CascadeInputTransparent="False"
+                                BackgroundColor="Transparent"
                                 BindableLayout.ItemsSource="{Binding ActiveNumbers}">
+
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="vm:FallingNumberViewModel">
+                            <!-- Touch-Fläche -->
                             <ContentView WidthRequest="{OnIdiom Phone=48, Desktop=58}"
                                          HeightRequest="{OnIdiom Phone=48, Desktop=58}"
                                          AbsoluteLayout.LayoutBounds="{Binding Bounds}"
                                          AbsoluteLayout.LayoutFlags="None"
-                                         BackgroundColor="Transparent">
+                                         BackgroundColor="Transparent"
+                                         InputTransparent="False">
+
                                 <ContentView.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding BindingContext.NumberTapCommand, Source={x:Reference ThisPage}}"
-                                                          CommandParameter="{Binding .}" />
+                                    <!-- FIX: RelativeSource statt x:Reference (Android-sicher) -->
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.NumberTapCommand}"
+                                        CommandParameter="{Binding .}" />
                                 </ContentView.GestureRecognizers>
+
                                 <Border StrokeThickness="1"
                                         Stroke="#66FFFFFF"
                                         StrokeShape="RoundRectangle 14"
-                                        Shadow="{StaticResource ShadowSmall}">
+                                        Shadow="{StaticResource ShadowSmall}"
+                                        InputTransparent="False">
                                     <Border.Background>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                                             <GradientStop Color="{StaticResource C_Accent}" Offset="0.0" />
                                             <GradientStop Color="{StaticResource C_Accent2}" Offset="1.0" />
                                         </LinearGradientBrush>
                                     </Border.Background>
+
                                     <Label Text="{Binding Value}"
                                            HorizontalOptions="Center"
                                            VerticalOptions="Center"
                                            TextColor="{StaticResource C_TextDark}"
                                            FontAttributes="Bold"
-                                           FontSize="{OnIdiom Phone=16, Desktop=20}" />
+                                           FontSize="{OnIdiom Phone=16, Desktop=20}"
+                                           InputTransparent="True" />
                                 </Border>
                             </ContentView>
                         </DataTemplate>
@@ -177,13 +198,15 @@
             </Grid>
         </Border>
 
+        <!-- FOOTER -->
         <Border Grid.Row="{OnIdiom Phone=3, Desktop=2}"
                 Grid.Column="0"
                 Grid.ColumnSpan="2"
                 Style="{StaticResource GlassCard}"
                 Padding="{OnIdiom Phone=8, Desktop=10}">
-            <Label Text="Tippe die richtigen Zahlen an, bevor sie unten verschwinden." 
+            <Label Text="Tippe die richtigen Zahlen an, bevor sie unten verschwinden."
                    Style="{StaticResource Body}" />
         </Border>
+
     </Grid>
 </ContentPage>
