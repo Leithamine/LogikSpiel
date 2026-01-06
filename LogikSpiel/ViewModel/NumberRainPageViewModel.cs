@@ -172,7 +172,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
         var profile = await _userService.GetUserAsync();
         Coins = profile?.Coins ?? 0;
 
-        _settings = _generator.GetSettings(DifficultyKey);
+        _settings = _generator.GetSettings(DifficultyKey, LevelNumber);
         PrepareQuest();
     }
 
@@ -186,7 +186,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
     {
         if (IsRunning) return Task.CompletedTask;
 
-        _settings = _generator.GetSettings(DifficultyKey);
+        _settings = _generator.GetSettings(DifficultyKey, LevelNumber);
         //PrepareQuest();
         StartTimers();
 
@@ -208,7 +208,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
         _endRoundScheduled = false;
         _timedResolutionPending = false;
 
-        _settings ??= _generator.GetSettings(DifficultyKey);
+        _settings ??= _generator.GetSettings(DifficultyKey, LevelNumber);
         int seed = StableHash($"{GameId}:{DifficultyKey}:{LevelNumber}");
         _quest = GenerateQuestWithVariation(seed);
 
@@ -539,7 +539,9 @@ public sealed class NumberRainPageViewModel : ObservableObject
                 await _dialog.AlertAsync("Super! 🎉", $"+{reward} Coins"));
 
             LevelNumber++;
+            _settings = _generator.GetSettings(DifficultyKey, LevelNumber);
             PrepareQuest();
+            StartTimers();
             return;
         }
 
@@ -731,7 +733,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
 
         int rangeCount = max - min + 1;
         double ratio = targets.Count / (double)rangeCount;
-        double targetChance = Math.Clamp(0.25 + (0.5 - ratio), 0.2, 0.75);
+        double targetChance = Math.Clamp(0.35 + (0.8 - ratio), 0.35, 0.9);
 
         if (Random.Shared.NextDouble() < targetChance)
             return targets[Random.Shared.Next(targets.Count)];

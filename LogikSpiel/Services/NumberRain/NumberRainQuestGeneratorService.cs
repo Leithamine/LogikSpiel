@@ -8,19 +8,25 @@ namespace LogikSpiel.Services.NumberRain;
 
 public sealed class NumberRainQuestGeneratorService
 {
-    public NumberRainDifficultySettings GetSettings(string difficultyKey)
-        => difficultyKey.ToLowerInvariant() switch
+    public NumberRainDifficultySettings GetSettings(string difficultyKey, int level)
+    {
+        int safeLevel = Math.Max(1, level);
+        return difficultyKey.ToLowerInvariant() switch
         {
-            "easy" => new NumberRainDifficultySettings(1, 999, 850, 130, 12, 18, 20, 90, 5, 8),
-            "normal" => new NumberRainDifficultySettings(1, 999, 750, 160, 18, 25, 20, 90, 7, 10),
-            "hard" => new NumberRainDifficultySettings(1, 999, 650, 190, 22, 35, 20, 90, 10, 15),
-            "master" => new NumberRainDifficultySettings(1, 999, 550, 230, 30, 50, 20, 90, 12, 20),
-            _ => new NumberRainDifficultySettings(1, 999, 800, 145, 15, 20, 20, 90, 6, 9)
+            "easy" => BuildSettings(1, 50, 6, safeLevel, 900, 90, 12, 18, 20, 90, 5, 8),
+            "normal" => BuildSettings(1, 80, 8, safeLevel, 820, 115, 18, 25, 20, 90, 7, 10),
+            "hard" => BuildSettings(1, 140, 12, safeLevel, 740, 140, 22, 35, 20, 90, 10, 15),
+            "master" => BuildSettings(1, 220, 18, safeLevel, 660, 165, 30, 50, 20, 90, 12, 20),
+            _ => BuildSettings(1, 70, 7, safeLevel, 860, 105, 15, 20, 20, 90, 6, 9)
         };
+    }
+
+    public NumberRainDifficultySettings GetSettings(string difficultyKey)
+        => GetSettings(difficultyKey, 1);
 
     public NumberRainQuest GenerateQuest(string difficultyKey, int level, int seed)
     {
-        var settings = GetSettings(difficultyKey);
+        var settings = GetSettings(difficultyKey, level);
         var rnd = new Random(seed);
         var pool = difficultyKey.ToLowerInvariant() switch
         {
@@ -35,6 +41,25 @@ public sealed class NumberRainQuestGeneratorService
             throw new InvalidOperationException("Keine Missionen verfügbar.");
 
         return pool[rnd.Next(pool.Count)](rnd);
+    }
+
+    private static NumberRainDifficultySettings BuildSettings(
+        int minValue,
+        int baseMax,
+        int maxStep,
+        int level,
+        int spawnIntervalMs,
+        double fallSpeed,
+        int minTarget,
+        int maxTarget,
+        int minTimeSeconds,
+        int maxTimeSeconds,
+        int minCombo,
+        int maxCombo)
+    {
+        int maxValue = Math.Clamp(baseMax + (level - 1) * maxStep, minValue + 10, 999);
+        return new NumberRainDifficultySettings(minValue, maxValue, spawnIntervalMs, fallSpeed,
+            minTarget, maxTarget, minTimeSeconds, maxTimeSeconds, minCombo, maxCombo);
     }
 
     private static List<Func<Random, NumberRainQuest>> BuildEasyPool(NumberRainDifficultySettings settings, int level)
