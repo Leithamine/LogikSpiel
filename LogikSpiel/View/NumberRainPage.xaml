@@ -144,31 +144,33 @@
                                 BindableLayout.ItemsSource="{Binding ActiveNumbers}">
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="vm:FallingNumberViewModel">
-                            <Border StrokeThickness="1"
-                                    Stroke="#66FFFFFF"
-                                    StrokeShape="RoundRectangle 14"
-                                    WidthRequest="{OnIdiom Phone=48, Desktop=58}"
-                                    HeightRequest="{OnIdiom Phone=48, Desktop=58}"
-                                    AbsoluteLayout.LayoutBounds="{Binding Bounds}"
-                                    AbsoluteLayout.LayoutFlags="None"
-                                    Shadow="{StaticResource ShadowSmall}">
-                                <Border.Background>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                                        <GradientStop Color="{StaticResource C_Accent}" Offset="0.0" />
-                                        <GradientStop Color="{StaticResource C_Accent2}" Offset="1.0" />
-                                    </LinearGradientBrush>
-                                </Border.Background>
-                                <Border.GestureRecognizers>
+                            <ContentView WidthRequest="{OnIdiom Phone=48, Desktop=58}"
+                                         HeightRequest="{OnIdiom Phone=48, Desktop=58}"
+                                         AbsoluteLayout.LayoutBounds="{Binding Bounds}"
+                                         AbsoluteLayout.LayoutFlags="None"
+                                         BackgroundColor="Transparent">
+                                <ContentView.GestureRecognizers>
                                     <TapGestureRecognizer Command="{Binding BindingContext.NumberTapCommand, Source={x:Reference ThisPage}}"
                                                           CommandParameter="{Binding .}" />
-                                </Border.GestureRecognizers>
-                                <Label Text="{Binding Value}"
-                                       HorizontalOptions="Center"
-                                       VerticalOptions="Center"
-                                       TextColor="{StaticResource C_TextDark}"
-                                       FontAttributes="Bold"
-                                       FontSize="{OnIdiom Phone=16, Desktop=20}" />
-                            </Border>
+                                </ContentView.GestureRecognizers>
+                                <Border StrokeThickness="1"
+                                        Stroke="#66FFFFFF"
+                                        StrokeShape="RoundRectangle 14"
+                                        Shadow="{StaticResource ShadowSmall}">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Color="{StaticResource C_Accent}" Offset="0.0" />
+                                            <GradientStop Color="{StaticResource C_Accent2}" Offset="1.0" />
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                    <Label Text="{Binding Value}"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center"
+                                           TextColor="{StaticResource C_TextDark}"
+                                           FontAttributes="Bold"
+                                           FontSize="{OnIdiom Phone=16, Desktop=20}" />
+                                </Border>
+                            </ContentView>
                         </DataTemplate>
                     </BindableLayout.ItemTemplate>
                 </AbsoluteLayout>
