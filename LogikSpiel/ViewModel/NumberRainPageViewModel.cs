@@ -38,6 +38,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
     private int[] _goalProgress = Array.Empty<int>();
 
     private bool _ending; // verhindert mehrfachen Dialog / mehrfaches EndRound
+    private bool _endRoundScheduled;
 
     public ObservableCollection<FallingNumberViewModel> ActiveNumbers { get; } = new();
 
@@ -441,13 +442,13 @@ public sealed class NumberRainPageViewModel : ObservableObject
         // Survival Miss-Limit
         if (_quest?.Mode == NumberRainQuestMode.Survival && _quest.MaxMisses > 0 && _misses > _quest.MaxMisses)
         {
-            _ = MainThread.InvokeOnMainThreadAsync(async () => await EndRoundAsync(false));
+            ScheduleEndRound(false);
             return;
         }
 
         // Game Over
         if (Lives <= 0)
-            _ = MainThread.InvokeOnMainThreadAsync(async () => await EndRoundAsync(false));
+            ScheduleEndRound(false);
     }
 
     private int TotalHits() => _goalProgress.Sum();
@@ -467,10 +468,26 @@ public sealed class NumberRainPageViewModel : ObservableObject
         return true;
     }
 
-    private async Task EndRoundAsync(bool success)
+    private void ScheduleEndRound(bool success)
     {
-        if (_ending) return;
+        if (_ending || _endRoundScheduled) return;
+        _endRoundScheduled = true;
+        _dispatcher.Dispatch(async () =>
+        {
+            await EndRoundAsync(success);
+            _endRoundScheduled = false;
+        });
+    }
+
+    private Task EndRoundAsync(bool success)
+    {
+        if (_ending) return Task.CompletedTask;
         _ending = true;
+        return EndRoundInternalAsync(success);
+    }
+
+    private async Task EndRoundInternalAsync(bool success)
+    {
 
         StopTimers();
         IsRunning = false;
@@ -609,9 +626,20 @@ public sealed class NumberRainPageViewModel : ObservableObject
 
     private async Task ConfirmBackAsync()
     {
-        bool leave = await _dialog.ConfirmAsync("Zurück", "Möchtest du das Spiel verlassen?");
+        bool leave = await _dialog.ConfirmAsync(
+            "Zurück",
+            "Möchtest du das Spiel verlassen?",
+            "Ja",
+            "Nein");
+
         if (!leave) return;
-        await _nav.GoBackAsync();
+
+        var parameters = new Dictionary<string, object>
+        {
+            ["gameId"] = GameId ?? "number_rain"
+        };
+
+        await _nav.GoToAsync(nameof(GameMapPage), parameters);
     }
 
     private static int StableHash(string s)
