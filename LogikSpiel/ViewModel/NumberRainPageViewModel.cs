@@ -6,6 +6,7 @@ using LogikSpiel.Core;
 using LogikSpiel.Model.NumberRain;
 using LogikSpiel.Services;
 using LogikSpiel.Services.NumberRain;
+using LogikSpiel.View;
 using Microsoft.Maui.Dispatching;
 using Microsoft.Maui.Graphics;
 
@@ -39,6 +40,9 @@ public sealed class NumberRainPageViewModel : ObservableObject
 
     private string _questText = "Bereit? Tippe auf Starten!";
     public string QuestText { get => _questText; private set => SetProperty(ref _questText, value); }
+
+    private string _questModeLabel = "Modus";
+    public string QuestModeLabel { get => _questModeLabel; private set => SetProperty(ref _questModeLabel, value); }
 
     private string _progressText = string.Empty;
     public string ProgressText { get => _progressText; private set => SetProperty(ref _progressText, value); }
@@ -169,6 +173,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
         int seed = StableHash($"{GameId}:{DifficultyKey}:{LevelNumber}");
         _quest = _generator.GenerateQuest(DifficultyKey, LevelNumber, seed);
         QuestText = _quest.Description;
+        QuestModeLabel = QuestModeToLabel(_quest.Mode);
         _goalProgress = _quest.Goals.Select(_ => 0).ToArray();
         _lastSelection = null;
         _combo = 0;
@@ -183,6 +188,22 @@ public sealed class NumberRainPageViewModel : ObservableObject
         UpdateActiveRule();
     }
 
+    private static string QuestModeToLabel(NumberRainQuestMode mode)
+    {
+        return mode switch
+        {
+            NumberRainQuestMode.Count => "Zählen",
+            NumberRainQuestMode.Timed => "Zeit",
+            NumberRainQuestMode.Avoid => "Vermeiden",
+            NumberRainQuestMode.Multi => "Multi",
+            NumberRainQuestMode.Combo => "Combo",
+            NumberRainQuestMode.Survival => "Survival",
+            NumberRainQuestMode.Dynamic => "Dynamisch",
+            NumberRainQuestMode.Switch => "Wechsel",
+            _ => "Modus"
+        };
+    }
+
     private void StartTimers()
     {
         if (_settings is null || _quest is null) return;
@@ -195,6 +216,8 @@ public sealed class NumberRainPageViewModel : ObservableObject
         _spawnTimer.Interval = TimeSpan.FromMilliseconds(_settings.SpawnIntervalMs);
         _spawnTimer.Tick += (_, _) => SpawnNumber();
         _spawnTimer.Start();
+
+        SpawnNumber();
 
         _updateTimer?.Stop();
         _updateTimer = _dispatcher.CreateTimer();
@@ -438,8 +461,23 @@ public sealed class NumberRainPageViewModel : ObservableObject
         }
         else
         {
-            await _dialog.AlertAsync("Oops", "Du hast alle Leben verloren.");
-            PrepareQuest();
+            bool retry = await _dialog.ConfirmAsync(
+                "Spiel vorbei",
+                "Du hast alle Leben verloren.",
+                "Wiederholen",
+                "Abbrechen");
+
+            if (retry)
+            {
+                PrepareQuest();
+                return;
+            }
+
+            var parameters = new Dictionary<string, object>
+            {
+                ["gameId"] = GameId ?? "number_rain"
+            };
+            await _nav.GoToAsync(nameof(GameMapPage), parameters);
         }
     }
 
