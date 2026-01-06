@@ -11,7 +11,7 @@ public partial class NumberRainPage : ContentPage, IQueryAttributable
         InitializeComponent();
         BindingContext = vm;
 
-        SizeChanged += (_, _) =>
+        RainArena.SizeChanged += (_, _) =>
         {
             if (BindingContext is NumberRainPageViewModel viewModel)
             {
