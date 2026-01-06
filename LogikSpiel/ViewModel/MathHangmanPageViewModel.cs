@@ -208,7 +208,24 @@ public sealed class MathHangmanPageViewModel : ObservableObject
             if (Lives <= 0)
             {
                 IsFinished = true;
-                await _dialog.AlertAsync("Verloren 😢", $"Die Zahl war: {_secret}");
+                bool retry = await _dialog.ConfirmAsync(
+                    "Verloren 😢",
+                    $"Die Zahl war: {_secret}",
+                    "Wiederholen",
+                    "Zurück");
+
+                if (retry)
+                {
+                    await StartRoundAsync();
+                    return;
+                }
+
+                var parameters = new Dictionary<string, object>
+                {
+                    ["gameId"] = GameId
+                };
+
+                await _nav.GoToAsync(nameof(GameMapPage), parameters);
             }
         }
     }
@@ -284,17 +301,13 @@ public sealed class MathHangmanPageViewModel : ObservableObject
 
     private async Task ConfirmBackAsync()
     {
-        bool retry = await _dialog.ConfirmAsync(
+        bool leave = await _dialog.ConfirmAsync(
             "Zurück",
-            "Level neu starten oder zur Karte?",
-            "Wiederholen",
-            "Zurück");
+            "Möchtest du das Rätsel verlassen?",
+            "Ja",
+            "Nein");
 
-        if (retry)
-        {
-            await StartRoundAsync();
-            return;
-        }
+        if (!leave) return;
 
         var parameters = new Dictionary<string, object>
         {

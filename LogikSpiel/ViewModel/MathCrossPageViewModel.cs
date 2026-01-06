@@ -452,17 +452,13 @@ public sealed class MathCrossPageViewModel : ObservableObject
 
     private async Task ConfirmBackAsync()
     {
-        bool retry = await _dialog.ConfirmAsync(
+        bool leave = await _dialog.ConfirmAsync(
             "Zurück",
-            "Level neu starten oder zur Karte?",
-            "Wiederholen",
-            "Zurück");
+            "Möchtest du das Rätsel verlassen?",
+            "Ja",
+            "Nein");
 
-        if (retry)
-        {
-            await StartNewRoundAsync();
-            return;
-        }
+        if (!leave) return;
 
         var parameters = new Dictionary<string, object>
         {

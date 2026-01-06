@@ -626,20 +626,13 @@ public sealed class NumberRainPageViewModel : ObservableObject
 
     private async Task ConfirmBackAsync()
     {
-        bool retry = await _dialog.ConfirmAsync(
+        bool leave = await _dialog.ConfirmAsync(
             "Zurück",
-            "Level neu starten oder zur Karte?",
-            "Wiederholen",
-            "Zurück");
+            "Möchtest du das Spiel verlassen?",
+            "Ja",
+            "Nein");
 
-        if (retry)
-        {
-            StopTimers();
-            ActiveNumbers.Clear();
-            PrepareQuest();
-            StartTimers();
-            return;
-        }
+        if (!leave) return;
 
         var parameters = new Dictionary<string, object>
         {
