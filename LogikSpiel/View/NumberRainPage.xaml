@@ -114,7 +114,9 @@
                                 StrokeShape="RoundRectangle 12"
                                 BackgroundColor="{StaticResource C_Accent}"
                                 WidthRequest="56"
-                                HeightRequest="56">
+                                HeightRequest="56"
+                                AbsoluteLayout.LayoutBounds="{Binding Bounds}"
+                                AbsoluteLayout.LayoutFlags="None">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding BindingContext.NumberTapCommand, Source={x:Reference ThisPage}}"
                                                       CommandParameter="{Binding .}" />
@@ -125,8 +127,6 @@
                                    TextColor="{StaticResource C_TextDark}"
                                    FontAttributes="Bold"
                                    FontSize="18" />
-                            <AbsoluteLayout.LayoutBounds="{Binding Bounds}" />
-                            <AbsoluteLayout.LayoutFlags>None</AbsoluteLayout.LayoutFlags>
                         </Border>
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
