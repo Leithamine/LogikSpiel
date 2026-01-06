@@ -164,18 +164,17 @@
                                          BackgroundColor="Transparent"
                                          InputTransparent="False">
 
-                                <ContentView.GestureRecognizers>
-                                    <!-- FIX: RelativeSource statt x:Reference (Android-sicher) -->
-                                    <TapGestureRecognizer
-                                        Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.NumberTapCommand}"
-                                        CommandParameter="{Binding .}" />
-                                </ContentView.GestureRecognizers>
-
                                 <Border StrokeThickness="1"
                                         Stroke="#66FFFFFF"
                                         StrokeShape="RoundRectangle 14"
                                         Shadow="{StaticResource ShadowSmall}"
-                                        InputTransparent="False">
+                                        InputTransparent="False"
+                                        IsEnabled="True">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                                            Command="{Binding Source={x:Reference RainArena}, Path=BindingContext.NumberTapCommand}"
+                                            CommandParameter="{Binding .}" />
+                                    </Border.GestureRecognizers>
                                     <Border.Background>
                                         <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                                             <GradientStop Color="{StaticResource C_Accent}" Offset="0.0" />
