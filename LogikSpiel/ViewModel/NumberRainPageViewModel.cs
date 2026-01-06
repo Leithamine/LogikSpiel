@@ -10,6 +10,7 @@ using LogikSpiel.Model.NumberRain;
 using LogikSpiel.Services;
 using LogikSpiel.Services.NumberRain;
 using LogikSpiel.View;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Dispatching;
 
@@ -497,7 +498,8 @@ public sealed class NumberRainPageViewModel : ObservableObject
             if (!string.IsNullOrWhiteSpace(GameId))
                 await _progressStore.MarkLevelCompleteAsync(GameId!, DifficultyKey, LevelNumber);
 
-            await _dialog.AlertAsync("Super! 🎉", $"+{reward} Coins");
+            await MainThread.InvokeOnMainThreadAsync(async () =>
+                await _dialog.AlertAsync("Super! 🎉", $"+{reward} Coins"));
 
             LevelNumber++;
             PrepareQuest();
@@ -505,11 +507,12 @@ public sealed class NumberRainPageViewModel : ObservableObject
         }
 
         // ✅ GameOver-Dialog: Wiederholen / Abbrechen
-        bool retry = await _dialog.ConfirmAsync(
-            "Spiel vorbei",
-            "Du hast alle Leben verloren.",
-            "Wiederholen",
-            "Abbrechen");
+        bool retry = await MainThread.InvokeOnMainThreadAsync(async () =>
+            await _dialog.ConfirmAsync(
+                "Spiel vorbei",
+                "Du hast alle Leben verloren.",
+                "Wiederholen",
+                "Zurück"));
 
         if (retry)
         {
@@ -524,7 +527,8 @@ public sealed class NumberRainPageViewModel : ObservableObject
             ["gameId"] = GameId ?? "number_rain"
         };
 
-        await _nav.GoToAsync(nameof(GameMapPage), parameters);
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+            await _nav.GoToAsync(nameof(GameMapPage), parameters));
     }
 
     private void UpdateProgressText()
