@@ -133,7 +133,7 @@
         "id": "complete_sequence",
         "title": "Complete the Sequence",
         "description": "Find the missing number in a sequence",
-        "image": "applogo.png",
+        "image": "sequence.png",
         "route": "CompleteSequencePage",
         "levelCount": 9999,
         "difficulties": [
