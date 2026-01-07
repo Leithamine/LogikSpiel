@@ -97,6 +97,15 @@ namespace LogikSpiel.Resources.Strings {
         }
         
         /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Error ähnelt.
+        /// </summary>
+        public static string Common_ErrorTitle {
+            get {
+                return ResourceManager.GetString("Common_ErrorTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Sucht eine lokalisierte Zeichenfolge, die Do you want to leave the puzzle? ähnelt.
         /// </summary>
         public static string Common_LeavePuzzlePrompt {
@@ -138,6 +147,15 @@ namespace LogikSpiel.Resources.Strings {
         public static string Common_NotEnoughCoinsTitle {
             get {
                 return ResourceManager.GetString("Common_NotEnoughCoinsTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die OK ähnelt.
+        /// </summary>
+        public static string Common_Ok {
+            get {
+                return ResourceManager.GetString("Common_Ok", resourceCulture);
             }
         }
         
@@ -228,6 +246,231 @@ namespace LogikSpiel.Resources.Strings {
         public static string Difficulty_Normal {
             get {
                 return ResourceManager.GetString("Difficulty_Normal", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Crack the code with logical hints ähnelt.
+        /// </summary>
+        public static string Game_Codebreaker_Description {
+            get {
+                return ResourceManager.GetString("Game_Codebreaker_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Find the correct code to open the lock ähnelt.
+        /// </summary>
+        public static string Game_Codebreaker_Rule1 {
+            get {
+                return ResourceManager.GetString("Game_Codebreaker_Rule1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Each hint shows whether a digit appears in the code and whether it is in the right position ähnelt.
+        /// </summary>
+        public static string Game_Codebreaker_Rule2 {
+            get {
+                return ResourceManager.GetString("Game_Codebreaker_Rule2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die You win when all digits are correctly placed ähnelt.
+        /// </summary>
+        public static string Game_Codebreaker_Rule3 {
+            get {
+                return ResourceManager.GetString("Game_Codebreaker_Rule3", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Code Breaker (Math) ähnelt.
+        /// </summary>
+        public static string Game_Codebreaker_Title {
+            get {
+                return ResourceManager.GetString("Game_Codebreaker_Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Solve the math crossword with equations ähnelt.
+        /// </summary>
+        public static string Game_MathCross_Description {
+            get {
+                return ResourceManager.GetString("Game_MathCross_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Fill the grid with numbers and operators (+ − × ÷) so each row and column forms a valid equation ähnelt.
+        /// </summary>
+        public static string Game_MathCross_Rule1 {
+            get {
+                return ResourceManager.GetString("Game_MathCross_Rule1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die You may not change the prefilled cells ähnelt.
+        /// </summary>
+        public static string Game_MathCross_Rule2 {
+            get {
+                return ResourceManager.GetString("Game_MathCross_Rule2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die You win when all equations are correct ähnelt.
+        /// </summary>
+        public static string Game_MathCross_Rule3 {
+            get {
+                return ResourceManager.GetString("Game_MathCross_Rule3", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Math Cross ähnelt.
+        /// </summary>
+        public static string Game_MathCross_Title {
+            get {
+                return ResourceManager.GetString("Game_MathCross_Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Guess the number using its mathematical properties ähnelt.
+        /// </summary>
+        public static string Game_MathHangman_Description {
+            get {
+                return ResourceManager.GetString("Game_MathHangman_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Guess the secret number ähnelt.
+        /// </summary>
+        public static string Game_MathHangman_Rule1 {
+            get {
+                return ResourceManager.GetString("Game_MathHangman_Rule1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Hints show properties of the number ähnelt.
+        /// </summary>
+        public static string Game_MathHangman_Rule2 {
+            get {
+                return ResourceManager.GetString("Game_MathHangman_Rule2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die After 6 wrong attempts, the game is over ähnelt.
+        /// </summary>
+        public static string Game_MathHangman_Rule3 {
+            get {
+                return ResourceManager.GetString("Game_MathHangman_Rule3", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Math Hangman ähnelt.
+        /// </summary>
+        public static string Game_MathHangman_Title {
+            get {
+                return ResourceManager.GetString("Game_MathHangman_Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die React quickly and collect the right numbers ähnelt.
+        /// </summary>
+        public static string Game_NumberRain_Description {
+            get {
+                return ResourceManager.GetString("Game_NumberRain_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Tap the numbers that match the mission ähnelt.
+        /// </summary>
+        public static string Game_NumberRain_Rule1 {
+            get {
+                return ResourceManager.GetString("Game_NumberRain_Rule1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die A wrong selection or a missed target costs a life ähnelt.
+        /// </summary>
+        public static string Game_NumberRain_Rule2 {
+            get {
+                return ResourceManager.GetString("Game_NumberRain_Rule2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die You have 3 lives — the faster and more accurate, the better ähnelt.
+        /// </summary>
+        public static string Game_NumberRain_Rule3 {
+            get {
+                return ResourceManager.GetString("Game_NumberRain_Rule3", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Number Rain ähnelt.
+        /// </summary>
+        public static string Game_NumberRain_Title {
+            get {
+                return ResourceManager.GetString("Game_NumberRain_Title", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Find the optimal path through the triangle ähnelt.
+        /// </summary>
+        public static string Game_PascalTriangle_Description {
+            get {
+                return ResourceManager.GetString("Game_PascalTriangle_Description", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Choose a connected path from top to bottom ähnelt.
+        /// </summary>
+        public static string Game_PascalTriangle_Rule1 {
+            get {
+                return ResourceManager.GetString("Game_PascalTriangle_Rule1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die You may only choose one of the two adjacent cells per row ähnelt.
+        /// </summary>
+        public static string Game_PascalTriangle_Rule2 {
+            get {
+                return ResourceManager.GetString("Game_PascalTriangle_Rule2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die The goal is the minimum or maximum sum depending on the task ähnelt.
+        /// </summary>
+        public static string Game_PascalTriangle_Rule3 {
+            get {
+                return ResourceManager.GetString("Game_PascalTriangle_Rule3", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Pascal Path ähnelt.
+        /// </summary>
+        public static string Game_PascalTriangle_Title {
+            get {
+                return ResourceManager.GetString("Game_PascalTriangle_Title", resourceCulture);
             }
         }
         
@@ -1773,6 +2016,546 @@ namespace LogikSpiel.Resources.Strings {
         }
         
         /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die all digits different ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelAllDigitsDifferent {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelAllDigitsDifferent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die at least two equal digits ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelAtLeastTwoEqualDigits {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelAtLeastTwoEqualDigits", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die automorphic numbers ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelAutomorphic {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelAutomorphic", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die digit {0} ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelBombDigitFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelBombDigitFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die closer to {0} ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelCloserToFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelCloserToFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die contains {0} and digit sum prime ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelContainsDigitAndDigitSumPrimeFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelContainsDigitAndDigitSumPrimeFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die contains {0} and is even ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelContainsDigitAndEvenFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelContainsDigitAndEvenFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die contains {0} and not divisible by {1} ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelContainsDigitAndNotDivisibleFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelContainsDigitAndNotDivisibleFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die contains {0} ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelContainsDigitFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelContainsDigitFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die contains {0}, mod {1}={2}, odd ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelContainsDigitModuloOddFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelContainsDigitModuloOddFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die contains {0} but not {1} ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelContainsDigitNotFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelContainsDigitNotFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die {0}-digit numbers ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelDigitCountFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelDigitCountFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die strictly decreasing digits ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelDigitsDecreasing {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelDigitsDecreasing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die strictly increasing digits ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelDigitsIncreasing {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelDigitsIncreasing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die digit sum {0} ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelDigitSumEqualsFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelDigitSumEqualsFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die digit sum even ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelDigitSumEven {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelDigitSumEven", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die digit sum odd ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelDigitSumOdd {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelDigitSumOdd", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die digit sum prime ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelDigitSumPrime {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelDigitSumPrime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die divisible by 2 or 5 ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelDivisibleBy2Or5 {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelDivisibleBy2Or5", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die divisible by {0} and {1} ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelDivisibleByBothFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelDivisibleByBothFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die divisible by {0} with odd digit sum ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelDivisibleByButDigitSumOddFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelDivisibleByButDigitSumOddFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die divisible by last pick ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelDivisibleByLastPick {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelDivisibleByLastPick", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die divisible by {0} but not {1} ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelDivisibleByNotFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelDivisibleByNotFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die ending in {0} ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelEndsWithDigitFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelEndsWithDigitFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die even numbers ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelEvenNumbers {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelEvenNumbers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Fibonacci numbers ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelFibonacci {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelFibonacci", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die &gt; {0} ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelGreaterThanFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelGreaterThanFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die greater than last pick ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelGreaterThanLastPick {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelGreaterThanLastPick", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Harshad not divisible by 10 ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelHarshadWithoutTen {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelHarshadWithoutTen", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die hits ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelHits {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelHits", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die &lt; {0} ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelLessThanFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelLessThanFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die mod {0}={1} with prime digit sum ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelModuloDigitSumPrimeFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelModuloDigitSumPrimeFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die mod {0} = {1} ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelModuloFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelModuloFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die multiples of {0} with prime digit sum ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelMultiplesAndDigitSumPrimeFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelMultiplesAndDigitSumPrimeFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die multiples of {0} ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelMultiplesOfFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelMultiplesOfFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die non-prime numbers ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelNonPrimes {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelNonPrimes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die without {0} ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelNotContainsDigitFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelNotContainsDigitFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die odd multiples of {0} ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelOddMultiplesOfFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelOddMultiplesOfFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die odd numbers ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelOddNumbers {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelOddNumbers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die palindrome numbers ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelPalindrome {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelPalindrome", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die palindrome and divisible by {0} ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelPalindromeDivisibleByFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelPalindromeDivisibleByFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die palindrome, not prime ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelPalindromeNotPrime {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelPalindromeNotPrime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die powers of 2 ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelPowersOfTwo {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelPowersOfTwo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die primes with {0} ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelPrimeContainsDigitFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelPrimeContainsDigitFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die prime with digit sum {0} ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelPrimeDigitSumFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelPrimeDigitSumFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die primes &gt; {0} ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelPrimeGreaterThanFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelPrimeGreaterThanFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die prime numbers ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelPrimes {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelPrimes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die pronic numbers ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelPronic {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelPronic", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die range {0}-{1} ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelRangeFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelRangeFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die hard rule ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelRuleHeavy {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelRuleHeavy", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die prime or mod 3 ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelRulePrimeOrMod3 {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelRulePrimeOrMod3", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Rule R ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelRuleR {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelRuleR", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die R1: even ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelRuleR1Even {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelRuleR1Even", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die R2: prime ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelRuleR2Prime {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelRuleR2Prime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die semiprime numbers ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelSemiPrime {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelSemiPrime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die square containing {0} ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelSquareContainsDigitFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelSquareContainsDigitFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die squarefree numbers ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelSquareFree {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelSquareFree", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die square or prime ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelSquareOrPrime {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelSquareOrPrime", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die square numbers ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelSquares {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelSquares", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die two-digit numbers ähnelt.
+        /// </summary>
+        public static string NumberRain_LabelTwoDigitNumbers {
+            get {
+                return ResourceManager.GetString("NumberRain_LabelTwoDigitNumbers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Sucht eine lokalisierte Zeichenfolge, die Do you want to leave the game? ähnelt.
         /// </summary>
         public static string NumberRain_LeavePrompt {
@@ -1886,6 +2669,114 @@ namespace LogikSpiel.Resources.Strings {
         public static string NumberRain_NoQuestLoaded {
             get {
                 return ResourceManager.GetString("NumberRain_NoQuestLoaded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die {0}, but avoid {1} ähnelt.
+        /// </summary>
+        public static string NumberRain_Quest_AvoidFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_Quest_AvoidFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Chain rule: Select {0} numbers divisible by the last pick ähnelt.
+        /// </summary>
+        public static string NumberRain_Quest_ChainDivisibleFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_Quest_ChainDivisibleFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Chain rule: Select {0} numbers greater than the last pick ähnelt.
+        /// </summary>
+        public static string NumberRain_Quest_ChainGreaterFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_Quest_ChainGreaterFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Collect {0} {1} ähnelt.
+        /// </summary>
+        public static string NumberRain_Quest_CollectCountFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_Quest_CollectCountFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Collect {0} {1} and {2} {3} ähnelt.
+        /// </summary>
+        public static string NumberRain_Quest_CollectDualFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_Quest_CollectDualFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Collect {0} {1}, {2} {3}, and {4} {5} ähnelt.
+        /// </summary>
+        public static string NumberRain_Quest_CollectTripleFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_Quest_CollectTripleFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Reach combo {0} with rule: {1} ähnelt.
+        /// </summary>
+        public static string NumberRain_Quest_ComboFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_Quest_ComboFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Select {0} {1} ähnelt.
+        /// </summary>
+        public static string NumberRain_Quest_SelectCountFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_Quest_SelectCountFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Survive {0}s and score at least {1} hits ähnelt.
+        /// </summary>
+        public static string NumberRain_Quest_SurviveHitsFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_Quest_SurviveHitsFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Survive {0}s with max {1} mistakes (rule: {2}) ähnelt.
+        /// </summary>
+        public static string NumberRain_Quest_SurviveMaxMissesFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_Quest_SurviveMaxMissesFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die Switch rule: every {0}s the rule changes between {1} and {2} ähnelt.
+        /// </summary>
+        public static string NumberRain_Quest_SwitchRuleFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_Quest_SwitchRuleFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Sucht eine lokalisierte Zeichenfolge, die In {0}s: {1} ähnelt.
+        /// </summary>
+        public static string NumberRain_Quest_TimedFormat {
+            get {
+                return ResourceManager.GetString("NumberRain_Quest_TimedFormat", resourceCulture);
             }
         }
         
