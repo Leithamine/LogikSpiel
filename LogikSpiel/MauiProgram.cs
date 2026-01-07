@@ -31,6 +31,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<MathCrossGeneratorService>();
         builder.Services.AddSingleton<IMathHangmanService, MathHangmanService>();
         builder.Services.AddSingleton<NumberRainQuestGeneratorService>();
+        builder.Services.AddSingleton<CompleteSequenceGeneratorService>();
 
         // ViewModels
         builder.Services.AddTransient<MainPageViewModel>();
@@ -44,6 +45,7 @@ public static class MauiProgram
         builder.Services.AddTransient<MathCrossPageViewModel>();
         builder.Services.AddTransient<MathHangmanPageViewModel>();
         builder.Services.AddTransient<NumberRainPageViewModel>();
+        builder.Services.AddTransient<CompleteSequencePageViewModel>();
 
         // Pages (✅ ALLE Pages registrieren, die Shell/DI bauen soll)
         builder.Services.AddTransient<MainPage>();
@@ -58,6 +60,7 @@ public static class MauiProgram
         builder.Services.AddTransient<MathCrossPage>();
         builder.Services.AddTransient<MathHangmanPage>();
         builder.Services.AddTransient<NumberRainPage>();
+        builder.Services.AddTransient<CompleteSequencePage>();
 
         // Shell
         builder.Services.AddSingleton<AppShell>();
