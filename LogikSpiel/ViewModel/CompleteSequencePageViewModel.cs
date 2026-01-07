@@ -1,5 +1,6 @@
 #nullable enable
 using System.Collections.ObjectModel;
+using System.Linq;
 using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
@@ -67,6 +68,7 @@ public sealed class CompleteSequencePageViewModel : ObservableObject
 
     public AsyncCommand BackCommand { get; }
     public AsyncCommand<int> SelectOptionCommand { get; }
+    public AsyncCommand HintCommand { get; }
 
     public CompleteSequencePageViewModel(
         IGameProgressStore progressStore,
@@ -83,6 +85,7 @@ public sealed class CompleteSequencePageViewModel : ObservableObject
 
         BackCommand = new AsyncCommand(ConfirmBackAsync);
         SelectOptionCommand = new AsyncCommand<int>(SelectOptionAsync);
+        HintCommand = new AsyncCommand(ShowHintAsync);
     }
 
     public async Task LoadAsync(string gameId, string difficulty, int level)
@@ -182,6 +185,17 @@ public sealed class CompleteSequencePageViewModel : ObservableObject
         IsBusy = false;
     }
 
+    private async Task ShowHintAsync()
+    {
+        if (_puzzle == null || IsBusy) return;
+
+        string hint = BuildHintMessage(_puzzle.Sequence);
+        await _dialog.AlertAsync(
+            LocalizationService.GetString("Sequence_HintTitle"),
+            hint,
+            LocalizationService.GetString("Common_Ok"));
+    }
+
     private static int RewardForDifficulty(string difficultyKey) => difficultyKey switch
     {
         "easy" => 10,
@@ -192,6 +206,35 @@ public sealed class CompleteSequencePageViewModel : ObservableObject
     };
 
     private static string DiffName(string key) => LocalizationService.GetDifficultyLabel(key);
+
+    private static string BuildHintMessage(IReadOnlyList<int> sequence)
+    {
+        if (sequence.Count < 3)
+            return LocalizationService.GetString("Sequence_Hint_Fallback");
+
+        if (IsArithmetic(sequence))
+            return LocalizationService.GetString("Sequence_Hint_Arithmetic");
+
+        if (IsGeometric(sequence))
+            return LocalizationService.GetString("Sequence_Hint_Geometric");
+
+        if (IsSquareSequence(sequence))
+            return LocalizationService.GetString("Sequence_Hint_Squares");
+
+        if (IsTriangularSequence(sequence))
+            return LocalizationService.GetString("Sequence_Hint_Triangular");
+
+        if (IsPentagonalSequence(sequence))
+            return LocalizationService.GetString("Sequence_Hint_Pentagonal");
+
+        if (IsAlternatingDifference(sequence))
+            return LocalizationService.GetString("Sequence_Hint_Alternating");
+
+        if (HasRepeatingDifferences(sequence, 3))
+            return LocalizationService.GetString("Sequence_Hint_RepeatingDiff");
+
+        return LocalizationService.GetString("Sequence_Hint_Fallback");
+    }
 
     private async Task ConfirmBackAsync()
     {
@@ -218,5 +261,137 @@ public sealed class CompleteSequencePageViewModel : ObservableObject
             }
             return (int)Math.Abs((long)hash);
         }
+    }
+
+    private static bool IsArithmetic(IReadOnlyList<int> sequence)
+    {
+        int diff = sequence[1] - sequence[0];
+        for (int i = 2; i < sequence.Count; i++)
+        {
+            if (sequence[i] - sequence[i - 1] != diff)
+                return false;
+        }
+        return true;
+    }
+
+    private static bool IsGeometric(IReadOnlyList<int> sequence)
+    {
+        if (sequence[0] == 0) return false;
+        if (sequence[1] % sequence[0] != 0) return false;
+
+        int ratio = sequence[1] / sequence[0];
+        if (ratio <= 1) return false;
+
+        for (int i = 2; i < sequence.Count; i++)
+        {
+            if (sequence[i - 1] * ratio != sequence[i])
+                return false;
+        }
+        return true;
+    }
+
+    private static bool IsSquareSequence(IReadOnlyList<int> sequence)
+    {
+        if (!TrySquareIndex(sequence[0], out int start)) return false;
+        for (int i = 1; i < sequence.Count; i++)
+        {
+            if (!TrySquareIndex(sequence[i], out int n) || n != start + i)
+                return false;
+        }
+        return true;
+    }
+
+    private static bool IsTriangularSequence(IReadOnlyList<int> sequence)
+    {
+        if (!TryTriangularIndex(sequence[0], out int start)) return false;
+        for (int i = 1; i < sequence.Count; i++)
+        {
+            if (!TryTriangularIndex(sequence[i], out int n) || n != start + i)
+                return false;
+        }
+        return true;
+    }
+
+    private static bool IsPentagonalSequence(IReadOnlyList<int> sequence)
+    {
+        if (!TryPentagonalIndex(sequence[0], out int start)) return false;
+        for (int i = 1; i < sequence.Count; i++)
+        {
+            if (!TryPentagonalIndex(sequence[i], out int n) || n != start + i)
+                return false;
+        }
+        return true;
+    }
+
+    private static bool IsAlternatingDifference(IReadOnlyList<int> sequence)
+    {
+        if (sequence.Count < 4) return false;
+        int diffA = sequence[1] - sequence[0];
+        int diffB = sequence[2] - sequence[1];
+        if (diffA == diffB) return false;
+
+        for (int i = 2; i < sequence.Count; i++)
+        {
+            int diff = sequence[i] - sequence[i - 1];
+            int expected = ((i - 1) % 2 == 0) ? diffA : diffB;
+            if (diff != expected)
+                return false;
+        }
+        return true;
+    }
+
+    private static bool HasRepeatingDifferences(IReadOnlyList<int> sequence, int period)
+    {
+        if (sequence.Count < period + 2) return false;
+
+        var diffs = new int[sequence.Count - 1];
+        for (int i = 1; i < sequence.Count; i++)
+            diffs[i - 1] = sequence[i] - sequence[i - 1];
+
+        for (int i = period; i < diffs.Length; i++)
+        {
+            if (diffs[i] != diffs[i % period])
+                return false;
+        }
+
+        return diffs.Distinct().Count() > 1;
+    }
+
+    private static bool TrySquareIndex(int value, out int n)
+    {
+        int root = (int)Math.Sqrt(value);
+        if (root * root == value)
+        {
+            n = root;
+            return true;
+        }
+        n = 0;
+        return false;
+    }
+
+    private static bool TryTriangularIndex(int value, out int n)
+    {
+        long test = 8L * value + 1;
+        long root = (long)Math.Sqrt(test);
+        if (root * root == test && (root - 1) % 2 == 0)
+        {
+            n = (int)((root - 1) / 2);
+            return n > 0;
+        }
+        n = 0;
+        return false;
+    }
+
+    private static bool TryPentagonalIndex(int value, out int n)
+    {
+        long test = 24L * value + 1;
+        long root = (long)Math.Sqrt(test);
+        if (root * root == test && (1 + root) % 6 == 0)
+        {
+            n = (int)((1 + root) / 6);
+            return n > 0;
+        }
+        n = 0;
+        return false;
     }
 }

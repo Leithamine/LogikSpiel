@@ -5,6 +5,7 @@ namespace LogikSpiel.Services;
 
 public sealed class CompleteSequenceGeneratorService
 {
+    private const int MinValue = 1;
     public CompleteSequencePuzzle Generate(string difficultyKey, int seed)
     {
         var rnd = new Random(seed);
@@ -12,11 +13,11 @@ public sealed class CompleteSequenceGeneratorService
 
         var (minLen, maxLen, maxValue) = difficultyKey switch
         {
-            "easy" => (6, 7, 200),
-            "normal" => (6, 8, 800),
-            "hard" => (7, 9, 2000),
-            "master" => (8, 10, 5000),
-            _ => (6, 7, 200)
+            "easy" => (6, 7, 1000),
+            "normal" => (6, 8, 1000),
+            "hard" => (7, 9, 1000),
+            "master" => (8, 10, 1000),
+            _ => (6, 7, 1000)
         };
 
         int length = rnd.Next(minLen, maxLen + 1);
@@ -29,7 +30,7 @@ public sealed class CompleteSequenceGeneratorService
 
             int missingIndex = rnd.Next(1, sequence.Count - 1);
             int correct = sequence[missingIndex];
-            var options = BuildOptions(rnd, sequence, missingIndex, correct);
+            var options = BuildOptions(rnd, sequence, missingIndex, correct, maxValue);
 
             return new CompleteSequencePuzzle
             {
@@ -49,7 +50,7 @@ public sealed class CompleteSequenceGeneratorService
             Sequence = fallback,
             MissingIndex = fallbackMissing,
             CorrectAnswer = fallbackCorrect,
-            Options = BuildOptions(rnd, fallback, fallbackMissing, fallbackCorrect)
+            Options = BuildOptions(rnd, fallback, fallbackMissing, fallbackCorrect, maxValue)
         };
     }
 
@@ -61,11 +62,12 @@ public sealed class CompleteSequenceGeneratorService
             // =========================
             "easy" => rnd.Next(100) switch
             {
-                < 35 => GenerateArithmetic,              // E1
-                < 55 => GenerateGeometric,               // E2
-                < 75 => GeneratePeriodicPattern,         // E4
-                < 90 => GenerateMultiplicationTable,     // E6
-                _ => GenerateGrowingStep              // E7
+                < 30 => GenerateArithmetic,              // E1
+                < 50 => GenerateGeometric,               // E2
+                < 65 => GeneratePeriodicPattern,         // E4
+                < 80 => GenerateMultiplicationTable,     // E6
+                < 90 => GenerateGrowingStep,             // E7
+                _ => GenerateRepeatingDifferencePattern  // E8 ✅ neu
             },
 
             // =========================
@@ -78,12 +80,13 @@ public sealed class CompleteSequenceGeneratorService
                 < 18 => GenerateGeometric,               // E2
                 < 28 => GenerateAlternating,             // E3
                 < 40 => GenerateSquaresShifted,          // N1
-                < 52 => GenerateTriangularShifted,       // N3
-                < 62 => GenerateCubesShifted,            // N2  ✅ neu
-                < 72 => GenerateAlternatingMulAdd,       // N5
-                < 84 => GenerateInterleaveTwoArithmetic, // N6
-                < 92 => GenerateGeometricWithOffset,     // N8
-                _ => GeneratePrimeRun                 // N7  ✅ neu (selten)
+                < 50 => GenerateTriangularShifted,       // N3
+                < 60 => GenerateCubesShifted,            // N2
+                < 70 => GenerateAlternatingMulAdd,       // N5
+                < 80 => GenerateInterleaveTwoArithmetic, // N6
+                < 88 => GenerateGeometricWithOffset,     // N8
+                < 94 => GeneratePentagonalShifted,       // N9 ✅ neu
+                _ => GeneratePrimeRun                 // N7 (selten)
             },
 
             // =========================
@@ -96,10 +99,11 @@ public sealed class CompleteSequenceGeneratorService
                 < 28 => GenerateArithmeticDifferences,   // S2 ✅ neu
                 < 42 => GenerateAffineRecurrence,        // S3
                 < 55 => GenerateWeightedRecurrence2,     // S4 ✅ neu
-                < 70 => GenerateInterleaveGeometricArithmetic, // S5
-                < 82 => GeneratePowersOfTwoAltOffset,    // S6
-                < 92 => GenerateDigitSumStep,            // S7
-                < 98 => GeneratePronic,                  // S8
+                < 68 => GenerateInterleaveGeometricArithmetic, // S5
+                < 78 => GeneratePowersOfTwoAltOffset,    // S6
+                < 88 => GenerateDigitSumStep,            // S7
+                < 94 => GeneratePronic,                  // S8
+                < 98 => GeneratePentagonalShifted,       // N9
                 _ => GenerateFibonacci                // N4 (sehr selten)
             },
 
@@ -125,7 +129,7 @@ public sealed class CompleteSequenceGeneratorService
 
 
     // =======================
-    // NORMAL (fehlend): N2, N7
+    // NORMAL (fehlend): N2, N7, N9
     // =======================
 
     private static List<int>? GenerateCubesShifted(Random rnd, int length, int maxValue)
@@ -141,7 +145,7 @@ public sealed class CompleteSequenceGeneratorService
             {
                 int n = i + t;
                 long v = (long)n * n * n;
-                if (v < 0 || v > maxValue) { ok = false; break; }
+                if (!IsInRange(v, maxValue)) { ok = false; break; }
                 values.Add((int)v);
             }
 
@@ -165,12 +169,34 @@ public sealed class CompleteSequenceGeneratorService
             {
                 int p = NthPrime(t + i); // 1-based nth prime
                 long v = (long)p + c;
-                if (v < 0 || v > maxValue) { ok = false; break; }
+                if (!IsInRange(v, maxValue)) { ok = false; break; }
                 values.Add((int)v);
             }
 
             // Guardrail: avoid too trivial / too small too often
             if (ok && values.Distinct().Count() >= Math.Min(5, length)) return values;
+        }
+        return null;
+    }
+
+    private static List<int>? GeneratePentagonalShifted(Random rnd, int length, int maxValue)
+    {
+        // N9: x_n = pentagonal(n+t)
+        for (int attempt = 0; attempt < 25; attempt++)
+        {
+            int t = rnd.Next(1, 9); // 1..8
+            var values = new List<int>(length);
+            bool ok = true;
+
+            for (int i = 0; i < length; i++)
+            {
+                int n = i + t;
+                long value = (long)n * (3L * n - 1) / 2;
+                if (!IsInRange(value, maxValue)) { ok = false; break; }
+                values.Add((int)value);
+            }
+
+            if (ok) return values;
         }
         return null;
     }
@@ -186,7 +212,7 @@ public sealed class CompleteSequenceGeneratorService
         // x_{n+1} = x_n + (p + n*q)
         for (int attempt = 0; attempt < 35; attempt++)
         {
-            int x0 = rnd.Next(0, 41);     // 0..40
+            int x0 = rnd.Next(1, 41);     // 1..40
             int p = rnd.Next(-8, 16);     // -8..15
             int q = rnd.Next(1, 7);       // 1..6
 
@@ -197,7 +223,7 @@ public sealed class CompleteSequenceGeneratorService
             {
                 int diff = p + n * q;
                 long next = (long)values[^1] + diff;
-                if (next < 0 || next > maxValue) { ok = false; break; }
+                if (!IsInRange(next, maxValue)) { ok = false; break; }
                 values.Add((int)next);
             }
 
@@ -226,7 +252,7 @@ public sealed class CompleteSequenceGeneratorService
             while (values.Count < length)
             {
                 long next = (long)p * values[^1] + (long)q * values[^2];
-                if (next < 0 || next > maxValue) { ok = false; break; }
+                if (!IsInRange(next, maxValue)) { ok = false; break; }
                 values.Add((int)next);
             }
 
@@ -262,7 +288,7 @@ public sealed class CompleteSequenceGeneratorService
             while (values.Count < length)
             {
                 long next = (long)p * values[^1] + (long)q * values[^2] + (long)r * values[^3];
-                if (next < 0 || next > maxValue) { ok = false; break; }
+                if (!IsInRange(next, maxValue)) { ok = false; break; }
                 values.Add((int)next);
             }
 
@@ -277,7 +303,7 @@ public sealed class CompleteSequenceGeneratorService
         // Δ0,Δ1 chosen; Δn = Δn-1 + Δn-2; x_{n+1}=x_n + Δn
         for (int attempt = 0; attempt < 45; attempt++)
         {
-            int x0 = rnd.Next(0, 41);  // 0..40
+            int x0 = rnd.Next(1, 41);  // 1..40
             int d0 = rnd.Next(1, 9);   // 1..8
             int d1 = rnd.Next(1, 13);  // 1..12
 
@@ -300,7 +326,7 @@ public sealed class CompleteSequenceGeneratorService
             for (int i = 0; i < length - 1; i++)
             {
                 long next = (long)values[^1] + diffs[i];
-                if (next < 0 || next > maxValue) { ok = false; break; }
+                if (!IsInRange(next, maxValue)) { ok = false; break; }
                 values.Add((int)next);
             }
 
@@ -314,7 +340,7 @@ public sealed class CompleteSequenceGeneratorService
         // M6: composition (sparsam): square(triangle(n+t)) OR triangle(square(n+t))
         for (int attempt = 0; attempt < 40; attempt++)
         {
-            int t = rnd.Next(0, 5);           // 0..4 (small because growth is huge)
+            int t = rnd.Next(1, 5);           // 1..4 (small because growth is huge)
             bool squareOfTriangle = rnd.Next(2) == 0;
 
             var values = new List<int>(length);
@@ -336,7 +362,7 @@ public sealed class CompleteSequenceGeneratorService
                     v = TriangleLong(sq); // triangle(square(n))
                 }
 
-                if (v < 0 || v > maxValue) { ok = false; break; }
+                if (!IsInRange(v, maxValue)) { ok = false; break; }
                 values.Add((int)v);
             }
 
@@ -362,7 +388,7 @@ public sealed class CompleteSequenceGeneratorService
                 long sq = (long)n * n;
                 long v = (long)p + sq;
 
-                if (v < 0 || v > maxValue) { ok = false; break; }
+                if (!IsInRange(v, maxValue)) { ok = false; break; }
                 values.Add((int)v);
             }
 
@@ -420,7 +446,7 @@ public sealed class CompleteSequenceGeneratorService
     {
         for (int attempt = 0; attempt < 15; attempt++)
         {
-            int a = rnd.Next(0, 60);
+            int a = rnd.Next(1, 61);
             int d = rnd.Next(-12, 13);
             if (d == 0) continue;
 
@@ -429,7 +455,7 @@ public sealed class CompleteSequenceGeneratorService
             for (int i = 0; i < length; i++)
             {
                 int value = a + i * d;
-                if (value < 0 || value > maxValue) { ok = false; break; }
+                if (!IsInRange(value, maxValue)) { ok = false; break; }
                 values.Add(value);
             }
             if (ok) return values;
@@ -449,7 +475,7 @@ public sealed class CompleteSequenceGeneratorService
             for (int i = 0; i < length; i++)
             {
                 double value = a * Math.Pow(r, i);
-                if (value > maxValue) { ok = false; break; }
+                if (!IsInRange(value, maxValue)) { ok = false; break; }
                 values.Add((int)value);
             }
             if (ok) return values;
@@ -461,7 +487,7 @@ public sealed class CompleteSequenceGeneratorService
     {
         for (int attempt = 0; attempt < 20; attempt++)
         {
-            int start = rnd.Next(0, 50);
+            int start = rnd.Next(1, 51);
             int p = rnd.Next(-10, 11);
             int q = rnd.Next(-10, 11);
             if (p == 0 || q == 0 || p == q) continue;
@@ -472,7 +498,7 @@ public sealed class CompleteSequenceGeneratorService
             {
                 int step = i % 2 == 1 ? p : q;
                 int next = values[i - 1] + step;
-                if (next < 0 || next > maxValue) { ok = false; break; }
+                if (!IsInRange(next, maxValue)) { ok = false; break; }
                 values.Add(next);
             }
             if (ok) return values;
@@ -486,14 +512,14 @@ public sealed class CompleteSequenceGeneratorService
         {
             int a = rnd.Next(1, 4);
             int b = rnd.Next(-6, 7);
-            int c = rnd.Next(0, 40);
+            int c = rnd.Next(1, 41);
 
             var values = new List<int>(length);
             bool ok = true;
             for (int i = 0; i < length; i++)
             {
                 int value = (a * i * i) + (b * i) + c;
-                if (value < 0 || value > maxValue) { ok = false; break; }
+                if (!IsInRange(value, maxValue)) { ok = false; break; }
                 values.Add(value);
             }
             if (ok) return values;
@@ -513,7 +539,7 @@ public sealed class CompleteSequenceGeneratorService
             while (values.Count < length)
             {
                 int next = values[^1] + values[^2];
-                if (next > maxValue) { ok = false; break; }
+                if (!IsInRange(next, maxValue)) { ok = false; break; }
                 values.Add(next);
             }
             if (ok) return values;
@@ -521,7 +547,7 @@ public sealed class CompleteSequenceGeneratorService
         return null;
     }
 
-    private static IReadOnlyList<int> BuildOptions(Random rnd, List<int> sequence, int missingIndex, int correct)
+    private static IReadOnlyList<int> BuildOptions(Random rnd, List<int> sequence, int missingIndex, int correct, int maxValue)
     {
         var options = new HashSet<int> { correct };
         var candidates = new List<int>();
@@ -546,7 +572,7 @@ public sealed class CompleteSequenceGeneratorService
                 candidate = correct + rnd.Next(-10, 11);
             }
 
-            if (candidate < 0) continue;
+            if (!IsInRange(candidate, maxValue)) continue;
             options.Add(candidate);
         }
 
@@ -568,7 +594,7 @@ public sealed class CompleteSequenceGeneratorService
                 int guard = 0;
                 do
                 {
-                    v = rnd.Next(0, Math.Min(41, maxValue + 1));
+                    v = rnd.Next(MinValue, Math.Min(41, maxValue + 1));
                     guard++;
                     if (guard > 200) break;
                 }
@@ -580,7 +606,7 @@ public sealed class CompleteSequenceGeneratorService
             for (int i = 0; i < length; i++)
             {
                 int value = pattern[i % t];
-                if (value < 0 || value > maxValue) { values = null; break; }
+                if (!IsInRange(value, maxValue)) { values = null; break; }
                 values.Add(value);
             }
 
@@ -600,7 +626,7 @@ public sealed class CompleteSequenceGeneratorService
             for (int i = 0; i < length; i++)
             {
                 int value = k * (i + 1);
-                if (value < 0 || value > maxValue) { ok = false; break; }
+                if (!IsInRange(value, maxValue)) { ok = false; break; }
                 values.Add(value);
             }
 
@@ -614,7 +640,7 @@ public sealed class CompleteSequenceGeneratorService
         // Δ grows: +s*1, +s*2, +s*3, ...
         for (int attempt = 0; attempt < 25; attempt++)
         {
-            int x0 = rnd.Next(0, 31);
+            int x0 = rnd.Next(1, 31);
             int s = rnd.Next(1, 4); // 1..3
             var values = new List<int>(length) { x0 };
             bool ok = true;
@@ -623,8 +649,40 @@ public sealed class CompleteSequenceGeneratorService
             {
                 int step = s * n; // n=1 => s, n=2 => 2s, ...
                 int next = values[^1] + step;
-                if (next < 0 || next > maxValue) { ok = false; break; }
+                if (!IsInRange(next, maxValue)) { ok = false; break; }
                 values.Add(next);
+            }
+
+            if (ok) return values;
+        }
+        return null;
+    }
+
+    private static List<int>? GenerateRepeatingDifferencePattern(Random rnd, int length, int maxValue)
+    {
+        // E8: repeating pattern of differences (length 3)
+        for (int attempt = 0; attempt < 30; attempt++)
+        {
+            int start = rnd.Next(1, 31);
+            var diffs = new[]
+            {
+                rnd.Next(-6, 7),
+                rnd.Next(-6, 7),
+                rnd.Next(-6, 7)
+            };
+
+            if (diffs.All(d => d == 0)) continue;
+            if (diffs.Distinct().Count() == 1 && rnd.Next(100) < 80) continue;
+
+            var values = new List<int>(length) { start };
+            bool ok = true;
+
+            for (int i = 1; i < length; i++)
+            {
+                int diff = diffs[(i - 1) % diffs.Length];
+                long next = (long)values[^1] + diff;
+                if (!IsInRange(next, maxValue)) { ok = false; break; }
+                values.Add((int)next);
             }
 
             if (ok) return values;
@@ -643,7 +701,7 @@ public sealed class CompleteSequenceGeneratorService
             {
                 int n = i + t;
                 long value = (long)n * n;
-                if (value < 0 || value > maxValue) { ok = false; break; }
+                if (!IsInRange(value, maxValue)) { ok = false; break; }
                 values.Add((int)value);
             }
 
@@ -656,7 +714,7 @@ public sealed class CompleteSequenceGeneratorService
     {
         for (int attempt = 0; attempt < 25; attempt++)
         {
-            int t = rnd.Next(0, 9); // 0..8
+            int t = rnd.Next(1, 9); // 1..8
             int c = rnd.Next(100) < 35 ? rnd.Next(-5, 6) : 0; // optional small offset
             var values = new List<int>(length);
             bool ok = true;
@@ -666,7 +724,7 @@ public sealed class CompleteSequenceGeneratorService
                 int n = i + t;
                 long tri = (long)n * (n + 1) / 2;
                 long value = tri + c;
-                if (value < 0 || value > maxValue) { ok = false; break; }
+                if (!IsInRange(value, maxValue)) { ok = false; break; }
                 values.Add((int)value);
             }
 
@@ -692,7 +750,7 @@ public sealed class CompleteSequenceGeneratorService
             {
                 bool isMul = firstIsMul ? (i % 2 == 1) : (i % 2 == 0);
                 long next = isMul ? (long)values[^1] * p : (long)values[^1] + q;
-                if (next < 0 || next > maxValue) { ok = false; break; }
+                if (!IsInRange(next, maxValue)) { ok = false; break; }
                 values.Add((int)next);
             }
 
@@ -707,8 +765,8 @@ public sealed class CompleteSequenceGeneratorService
         // k = index/2
         for (int attempt = 0; attempt < 30; attempt++)
         {
-            int a = rnd.Next(0, 51);
-            int b = rnd.Next(0, 51);
+            int a = rnd.Next(1, 51);
+            int b = rnd.Next(1, 51);
             int d1 = rnd.Next(-10, 11);
             int d2 = rnd.Next(-10, 11);
             if (d1 == 0 || d2 == 0) continue;
@@ -726,7 +784,7 @@ public sealed class CompleteSequenceGeneratorService
                     ? (long)a + k * d1
                     : (long)b + k * d2;
 
-                if (value < 0 || value > maxValue) { ok = false; break; }
+                if (!IsInRange(value, maxValue)) { ok = false; break; }
                 values.Add((int)value);
             }
 
@@ -749,7 +807,7 @@ public sealed class CompleteSequenceGeneratorService
             int c = rnd.Next(-10, 11);       // -10..10
 
             long value = a + c;
-            if (value < 0 || value > maxValue) continue;
+            if (!IsInRange(value, maxValue)) continue;
 
             var values = new List<int>(length);
             bool ok = true;
@@ -758,7 +816,7 @@ public sealed class CompleteSequenceGeneratorService
             for (int i = 0; i < length; i++)
             {
                 long v = cur + c;
-                if (v < 0 || v > maxValue) { ok = false; break; }
+                if (!IsInRange(v, maxValue)) { ok = false; break; }
                 values.Add((int)v);
 
                 cur *= r;
@@ -785,7 +843,7 @@ public sealed class CompleteSequenceGeneratorService
             for (int i = 1; i < length; i++)
             {
                 long next = (long)p * values[^1] + q;
-                if (next < 0 || next > maxValue) { ok = false; break; }
+                if (!IsInRange(next, maxValue)) { ok = false; break; }
                 values.Add((int)next);
             }
 
@@ -804,7 +862,7 @@ public sealed class CompleteSequenceGeneratorService
             int aGeo = rnd.Next(1, 11);
             int r = rnd.Next(2, 4); // 2..3
 
-            int aLin = rnd.Next(0, 41);
+            int aLin = rnd.Next(1, 41);
             int d = rnd.Next(-10, 11);
             if (d == 0) continue;
 
@@ -831,7 +889,7 @@ public sealed class CompleteSequenceGeneratorService
                     v = (long)aLin + k * d;
                 }
 
-                if (v < 0 || v > maxValue) { ok = false; break; }
+                if (!IsInRange(v, maxValue)) { ok = false; break; }
                 values.Add((int)v);
             }
 
@@ -863,7 +921,7 @@ public sealed class CompleteSequenceGeneratorService
                 long offset = (n % 2 == 1) ? u : v;
                 long value = pow2 + offset;
 
-                if (value < 0 || value > maxValue) { ok = false; break; }
+                if (!IsInRange(value, maxValue)) { ok = false; break; }
                 values.Add((int)value);
             }
 
@@ -885,7 +943,7 @@ public sealed class CompleteSequenceGeneratorService
             {
                 int s = SumDigits(values[^1]);
                 int next = values[^1] + s;
-                if (next < 0 || next > maxValue) { ok = false; break; }
+                if (!IsInRange(next, maxValue)) { ok = false; break; }
                 values.Add(next);
             }
 
@@ -909,7 +967,7 @@ public sealed class CompleteSequenceGeneratorService
             {
                 long n = i + t;
                 long value = n * (n + 1);
-                if (value < 0 || value > maxValue) { ok = false; break; }
+                if (!IsInRange(value, maxValue)) { ok = false; break; }
                 values.Add((int)value);
             }
 
@@ -937,7 +995,7 @@ public sealed class CompleteSequenceGeneratorService
             int a = rnd.Next(1, 3);     // 1..2
             int b = rnd.Next(-6, 7);    // -6..6
             int c = rnd.Next(-15, 16);  // -15..15
-            int d = rnd.Next(0, 61);    // 0..60
+            int d = rnd.Next(1, 61);    // 1..60
 
             var values = new List<int>(length);
             bool ok = true;
@@ -946,7 +1004,7 @@ public sealed class CompleteSequenceGeneratorService
             {
                 long nn = n;
                 long value = a * nn * nn * nn + b * nn * nn + c * nn + d;
-                if (value < 0 || value > maxValue) { ok = false; break; }
+                if (!IsInRange(value, maxValue)) { ok = false; break; }
                 values.Add((int)value);
             }
 
@@ -988,7 +1046,7 @@ public sealed class CompleteSequenceGeneratorService
                     _ => cur - r
                 };
 
-                if (next < 0 || next > maxValue) { ok = false; break; }
+                if (!IsInRange(next, maxValue)) { ok = false; break; }
                 values.Add((int)next);
             }
 
@@ -1003,14 +1061,14 @@ public sealed class CompleteSequenceGeneratorService
         // A: arithmetic, B: geometric, C: growing-step (quadratic-ish)
         for (int attempt = 0; attempt < 45; attempt++)
         {
-            int aA = rnd.Next(0, 51);
+            int aA = rnd.Next(1, 51);
             int dA = rnd.Next(-10, 11);
             if (dA == 0) continue;
 
             int aB = rnd.Next(1, 8);
             int rB = rnd.Next(2, 4); // 2..3
 
-            int x0C = rnd.Next(0, 21);
+            int x0C = rnd.Next(1, 21);
             int sC = rnd.Next(1, 4); // 1..3
 
             long curGeo = aB;
@@ -1041,7 +1099,7 @@ public sealed class CompleteSequenceGeneratorService
                     v = cVal;
                 }
 
-                if (v < 0 || v > maxValue) { ok = false; break; }
+                if (!IsInRange(v, maxValue)) { ok = false; break; }
                 values.Add((int)v);
             }
 
@@ -1049,5 +1107,8 @@ public sealed class CompleteSequenceGeneratorService
         }
         return null;
     }
+
+    private static bool IsInRange(long value, int maxValue)
+        => value >= MinValue && value <= maxValue;
 
 }
