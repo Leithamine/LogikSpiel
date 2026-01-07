@@ -1,3 +1,4 @@
+using System;
 using System.Globalization;
 using LogikSpiel.Resources.Strings;
 using Microsoft.Maui.Storage;
@@ -6,6 +7,7 @@ namespace LogikSpiel.Services.Localization;
 
 public static class LocalizationService
 {
+    public static event EventHandler? CultureChanged;
     private const string LanguagePreferenceKey = "APP_LANGUAGE";
 
     public static void ApplySavedCulture()
@@ -34,6 +36,8 @@ public static class LocalizationService
 
         if (savePreference)
             Preferences.Set(LanguagePreferenceKey, cultureName);
+
+        CultureChanged?.Invoke(null, EventArgs.Empty);
     }
 
     public static string GetString(string key)

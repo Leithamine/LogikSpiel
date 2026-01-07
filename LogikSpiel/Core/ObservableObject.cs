@@ -1,11 +1,24 @@
-﻿using System.ComponentModel;
+using System;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using LogikSpiel.Services.Localization;
 
 namespace LogikSpiel.Core;
 
 public abstract class ObservableObject : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    protected ObservableObject()
+    {
+        LocalizationService.CultureChanged += HandleCultureChanged;
+    }
+
+    private void HandleCultureChanged(object? sender, EventArgs e)
+        => OnCultureChanged();
+
+    protected virtual void OnCultureChanged()
+        => OnPropertyChanged(string.Empty);
 
     protected void OnPropertyChanged([CallerMemberName] string? name = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
