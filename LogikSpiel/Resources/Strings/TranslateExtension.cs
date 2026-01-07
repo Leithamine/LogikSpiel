@@ -13,6 +13,10 @@ public sealed class TranslateExtension : IMarkupExtension
         if (string.IsNullOrWhiteSpace(Key))
             return string.Empty;
 
-        return new Binding($"[{Key}]", source: LocalizationResourceManager.Instance, Mode = BindingMode.OneWay);
+        return new Binding($"[{Key}]")
+        {
+            Source = LocalizationResourceManager.Instance,
+            Mode = BindingMode.OneWay
+        };
     }
 }
