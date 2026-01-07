@@ -326,9 +326,8 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
         if (_selectedPath.Count != Game.Rows)
         {
             await _dialog.AlertAsync(
-                "Pfad unvollständig",
-                $"Dein Pfad hat {_selectedPath.Count} Zellen, aber das Dreieck hat {Game.Rows} Zeilen.\n" +
-                "Der Pfad muss von der Spitze bis zur Basis gehen.");
+                LocalizationService.GetString("Pascal_PathIncompleteTitle"),
+                LocalizationService.Format("Pascal_PathIncompleteMessageFormat", _selectedPath.Count, Game.Rows));
             return;
         }
 
@@ -382,8 +381,8 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
         await _progressStore.MarkLevelCompleteAsync(GameId, DifficultyKey, LevelNumber);
 
         await _dialog.AlertAsync(
-            "Perfekt! 🎉",
-            $"Du hast den optimalen Pfad gefunden!\n+{reward} Coins");
+            LocalizationService.GetString("Pascal_PerfectTitle"),
+            LocalizationService.Format("Pascal_PerfectMessageFormat", reward));
 
         await Task.Delay(500);
 

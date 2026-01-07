@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Windows.Input;
 using LogikSpiel.Services;
+using LogikSpiel.Services.Localization;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 
@@ -92,7 +93,10 @@ public sealed class AsyncCommand<T> : ICommand
                     var dialogService = Application.Current?.Handler?.MauiContext?.Services?.GetService<IDialogService>();
                     if (dialogService is not null)
                     {
-                        await dialogService.AlertAsync("Fehler", ex.ToString(), "OK");
+                        await dialogService.AlertAsync(
+                        LocalizationService.GetString("Common_ErrorTitle"),
+                        ex.ToString(),
+                        LocalizationService.GetString("Common_Ok"));
                     }
                 });
             }

@@ -1,5 +1,6 @@
 ﻿// LogikSpiel/Services/MauiDialogService.cs
 using LogikSpiel.View;
+using LogikSpiel.Services.Localization;
 using Microsoft.Maui.ApplicationModel;
 
 namespace LogikSpiel.Services;
@@ -9,14 +10,17 @@ public sealed class MauiDialogService : IDialogService
     private Page? CurrentPage => Shell.Current?.CurrentPage
                                  ?? Application.Current?.Windows?.FirstOrDefault()?.Page;
 
-    public async Task AlertAsync(string title, string message, string ok = "OK")
+    public async Task AlertAsync(string title, string message, string? ok = null)
     {
-        await ShowDialogAsync(title, message, ok, cancel: null);
+        var okLabel = string.IsNullOrWhiteSpace(ok) ? LocalizationService.GetString("Common_Ok") : ok;
+        await ShowDialogAsync(title, message, okLabel, cancel: null);
     }
 
-    public async Task<bool> ConfirmAsync(string title, string message, string accept = "Ja", string cancel = "Nein")
+    public async Task<bool> ConfirmAsync(string title, string message, string? accept = null, string? cancel = null)
     {
-        var result = await ShowDialogAsync(title, message, accept, cancel);
+        var acceptLabel = string.IsNullOrWhiteSpace(accept) ? LocalizationService.GetString("Common_Yes") : accept;
+        var cancelLabel = string.IsNullOrWhiteSpace(cancel) ? LocalizationService.GetString("Common_No") : cancel;
+        var result = await ShowDialogAsync(title, message, acceptLabel, cancelLabel);
         return result ?? false;
     }
 
