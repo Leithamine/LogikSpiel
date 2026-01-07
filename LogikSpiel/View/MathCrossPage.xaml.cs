@@ -1,5 +1,6 @@
 ﻿#nullable enable
 using LogikSpiel.Services;
+using LogikSpiel.Services.Localization;
 using LogikSpiel.ViewModel;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
@@ -102,14 +103,16 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable
             try { await vm.LoadAsync("math_cross", diff, level); }
             catch (Exception ex)
             {
+                var errorTitle = LocalizationService.GetString("MathCross_ErrorTitle");
+                var okLabel = LocalizationService.GetString("Common_Ok");
                 var dialogService = Application.Current?.Handler?.MauiContext?.Services?.GetService<IDialogService>();
                 if (dialogService is not null)
                 {
-                    await dialogService.AlertAsync("Fehler", ex.Message, "OK");
+                    await dialogService.AlertAsync(errorTitle, ex.Message, okLabel);
                 }
                 else
                 {
-                    await DisplayAlertAsync("Fehler", ex.Message, "OK");
+                    await DisplayAlertAsync(errorTitle, ex.Message, okLabel);
                 }
             }
         });
