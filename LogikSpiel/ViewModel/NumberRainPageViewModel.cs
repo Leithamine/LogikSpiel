@@ -159,6 +159,16 @@ public sealed class NumberRainPageViewModel : ObservableObject
         NumberTapCommand = new AsyncCommand<FallingNumberViewModel>(HandleNumberTapAsync);
     }
 
+    protected override void OnCultureChanged()
+    {
+        base.OnCultureChanged();
+        QuestModeLabel = LocalizationService.GetString("NumberRain_ModeLabel");
+        OnPropertyChanged(nameof(DifficultyLabel));
+
+        if (!IsRunning)
+            PrepareQuest();
+    }
+
     public async Task LoadAsync(string gameId, string difficulty, int level)
     {
         GameId = string.IsNullOrWhiteSpace(gameId) ? "number_rain" : gameId;
