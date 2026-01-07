@@ -1,4 +1,4 @@
-﻿[
+[
     {
         "id": "codebreaker",
         "title": "Code-Knacker (Mathe)",
@@ -6,11 +6,23 @@
         "image": "lockriddle.png",
         "route": "PuzzlePage",
         "levelCount": 50,
-        "difficulties": [ "easy", "normal", "hard", "master" ],
+        "difficulties": [
+            "easy",
+            "normal",
+            "hard",
+            "master"
+        ],
         "rules": [
             "Finde den richtigen Code, um das Schloss zu öffnen",
             "Jeder Hinweis zeigt dir, ob eine Zahl im Code vorkommt und ob sie an der richtigen Position steht",
             "Gewonnen hast du, wenn alle Ziffern richtig platziert sind"
+        ],
+        "titleKey": "Game_Codebreaker_Title",
+        "descriptionKey": "Game_Codebreaker_Description",
+        "ruleKeys": [
+            "Game_Codebreaker_Rule1",
+            "Game_Codebreaker_Rule2",
+            "Game_Codebreaker_Rule3"
         ]
     },
     {
@@ -20,11 +32,23 @@
         "image": "cross.png",
         "route": "MathCrossPage",
         "levelCount": 50,
-        "difficulties": [ "easy", "normal", "hard", "master" ],
+        "difficulties": [
+            "easy",
+            "normal",
+            "hard",
+            "master"
+        ],
         "rules": [
             "Fülle das Gitter mit Zahlen und Rechenoperatoren (+ − × ÷), sodass jede Zeile und Spalte eine gültige Gleichung ergibt",
             "Du darfst vorgegebene Felder nicht ändern",
             "Gewonnen ist das Level, wenn alle Gleichungen stimmen"
+        ],
+        "titleKey": "Game_MathCross_Title",
+        "descriptionKey": "Game_MathCross_Description",
+        "ruleKeys": [
+            "Game_MathCross_Rule1",
+            "Game_MathCross_Rule2",
+            "Game_MathCross_Rule3"
         ]
     },
     {
@@ -34,11 +58,23 @@
         "image": "pascal.png",
         "route": "PascalTrianglePage",
         "levelCount": 50,
-        "difficulties": [ "easy", "normal", "hard", "master" ],
+        "difficulties": [
+            "easy",
+            "normal",
+            "hard",
+            "master"
+        ],
         "rules": [
             "Wähle einen zusammenhängenden Pfad von oben nach unten",
             "Du darfst pro Reihe nur eine der beiden benachbarten Zellen wählen",
             "Ziel ist die minimale oder maximale Summe gemäß Aufgabe"
+        ],
+        "titleKey": "Game_PascalTriangle_Title",
+        "descriptionKey": "Game_PascalTriangle_Description",
+        "ruleKeys": [
+            "Game_PascalTriangle_Rule1",
+            "Game_PascalTriangle_Rule2",
+            "Game_PascalTriangle_Rule3"
         ]
     },
     {
@@ -48,11 +84,23 @@
         "image": "hangman.png",
         "route": "MathHangmanPage",
         "levelCount": 50,
-        "difficulties": [ "easy", "normal", "hard", "master" ],
+        "difficulties": [
+            "easy",
+            "normal",
+            "hard",
+            "master"
+        ],
         "rules": [
             "Errate die geheime Zahl",
             "Die Hinweise zeigen Eigenschaften der Zahl",
             "Nach 6 falschen Versuchen ist das Spiel vorbei"
+        ],
+        "titleKey": "Game_MathHangman_Title",
+        "descriptionKey": "Game_MathHangman_Description",
+        "ruleKeys": [
+            "Game_MathHangman_Rule1",
+            "Game_MathHangman_Rule2",
+            "Game_MathHangman_Rule3"
         ]
     },
     {
@@ -62,11 +110,23 @@
         "image": "rain.png",
         "route": "NumberRainPage",
         "levelCount": 9999,
-        "difficulties": [ "easy", "normal", "hard", "master" ],
+        "difficulties": [
+            "easy",
+            "normal",
+            "hard",
+            "master"
+        ],
         "rules": [
             "Tippe auf die Zahlen, die zur Mission passen",
             "Falsche Auswahl oder ein verpasstes Ziel kostet ein Leben",
             "Du hast 3 Leben – je schneller und genauer, desto besser"
+        ],
+        "titleKey": "Game_NumberRain_Title",
+        "descriptionKey": "Game_NumberRain_Description",
+        "ruleKeys": [
+            "Game_NumberRain_Rule1",
+            "Game_NumberRain_Rule2",
+            "Game_NumberRain_Rule3"
         ]
     }
 ]
