@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
+             xmlns:resx="clr-namespace:LogikSpiel.Resources.Strings"
+             xmlns:model="clr-namespace:LogikSpiel.Model"
+             x:Class="LogikSpiel.View.CompleteSequencePage"
+             x:DataType="vm:CompleteSequencePageViewModel"
+             x:Name="RootPage"
+             NavigationPage.HasNavigationBar="False"
+             Shell.NavBarIsVisible="False"
+             BackgroundImageSource="gamebg.png">
+
+    <Grid RowDefinitions="Auto,Auto,*" Padding="16" RowSpacing="16">
+
+        <!-- HEADER -->
+        <Border Grid.Row="0" Style="{StaticResource GlassCard}" Padding="12">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                <Button Grid.Column="0"
+                        Text="{resx:Translate Key=Common_Back}"
+                        Style="{StaticResource BtnIcon}"
+                        Command="{Binding BackCommand}"
+                        IsEnabled="{Binding IsNotBusy}"/>
+
+                <VerticalStackLayout Grid.Column="1" Spacing="4" HorizontalOptions="Center">
+                    <Label Text="{Binding Title}" Style="{StaticResource H3}" HorizontalOptions="Center"/>
+                    <Label Text="{Binding LivesText}" Style="{StaticResource Caption}" HorizontalOptions="Center"/>
+                </VerticalStackLayout>
+
+                <Border Grid.Column="2" Style="{StaticResource CoinBadge}">
+                    <HorizontalStackLayout Spacing="6">
+                        <Label Text="💰" FontSize="14"/>
+                        <Label Text="{Binding Coins}" TextColor="{StaticResource C_TextPrimary}" FontAttributes="Bold"/>
+                    </HorizontalStackLayout>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- PUZZLE -->
+        <Border Grid.Row="1" Style="{StaticResource SolidCard}" Padding="16">
+            <VerticalStackLayout Spacing="16">
+                <Label Text="{resx:Translate Key=Sequence_Prompt}"
+                       Style="{StaticResource Caption}"
+                       HorizontalOptions="Center"/>
+
+                <HorizontalStackLayout Spacing="10"
+                                       HorizontalOptions="Center"
+                                       BindableLayout.ItemsSource="{Binding SequenceCells}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="model:SequenceCell">
+                            <Border WidthRequest="54" HeightRequest="54"
+                                    StrokeShape="RoundRectangle 12"
+                                    BackgroundColor="{StaticResource C_SurfaceStrong}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsMissing}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{StaticResource C_Primary}"/>
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Label Text="{Binding Text}"
+                                       FontSize="20"
+                                       FontAttributes="Bold"
+                                       TextColor="{StaticResource C_TextPrimary}"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center"/>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- OPTIONS -->
+        <Border Grid.Row="2" Style="{StaticResource SolidCard}" Padding="16">
+            <CollectionView ItemsSource="{Binding Options}">
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical" Span="2"/>
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="x:Int32">
+                        <Button Text="{Binding .}"
+                                Command="{Binding Source={x:Reference RootPage}, Path=BindingContext.SelectOptionCommand}"
+                                CommandParameter="{Binding .}"
+                                Style="{StaticResource BtnPrimary}"
+                                Margin="6"/>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </Border>
+
+        <!-- Loading -->
+        <Grid Grid.RowSpan="3" IsVisible="{Binding IsBusy}" BackgroundColor="#66000000">
+            <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="12">
+                <ActivityIndicator IsRunning="True" Color="{StaticResource C_Primary}"/>
+                <Label Text="{resx:Translate Key=MathCross_Generating}" Style="{StaticResource Body}"/>
+            </VerticalStackLayout>
+        </Grid>
+    </Grid>
+</ContentPage>

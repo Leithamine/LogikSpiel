@@ -128,5 +128,31 @@
             "Game_NumberRain_Rule2",
             "Game_NumberRain_Rule3"
         ]
+    },
+    {
+        "id": "complete_sequence",
+        "title": "Complete the Sequence",
+        "description": "Find the missing number in a sequence",
+        "image": "applogo.png",
+        "route": "CompleteSequencePage",
+        "levelCount": 9999,
+        "difficulties": [
+            "easy",
+            "normal",
+            "hard",
+            "master"
+        ],
+        "rules": [
+            "Find the missing number in the sequence",
+            "Only one option is correct",
+            "You have three lives per level"
+        ],
+        "titleKey": "Game_Sequence_Title",
+        "descriptionKey": "Game_Sequence_Description",
+        "ruleKeys": [
+            "Game_Sequence_Rule1",
+            "Game_Sequence_Rule2",
+            "Game_Sequence_Rule3"
+        ]
     }
 ]

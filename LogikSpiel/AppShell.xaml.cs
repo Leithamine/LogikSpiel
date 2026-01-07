@@ -34,6 +34,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(nameof(MathCrossPage), typeof(MathCrossPage));
         Routing.RegisterRoute(nameof(MathHangmanPage), typeof(MathHangmanPage));
         Routing.RegisterRoute(nameof(NumberRainPage), typeof(NumberRainPage));
+        Routing.RegisterRoute(nameof(CompleteSequencePage), typeof(CompleteSequencePage));
         Routing.RegisterRoute(nameof(OnboardingPage), typeof(OnboardingPage));
     }
 }
