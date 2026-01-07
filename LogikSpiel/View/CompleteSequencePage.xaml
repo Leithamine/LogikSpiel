@@ -43,6 +43,12 @@
                        Style="{StaticResource Caption}"
                        HorizontalOptions="Center"/>
 
+                <Button Text="{resx:Translate Key=Sequence_HintButton}"
+                        Command="{Binding HintCommand}"
+                        Style="{StaticResource BtnSecondary}"
+                        HorizontalOptions="Center"
+                        IsEnabled="{Binding IsNotBusy}"/>
+
                 <HorizontalStackLayout Spacing="10"
                                        HorizontalOptions="Center"
                                        BindableLayout.ItemsSource="{Binding SequenceCells}">
