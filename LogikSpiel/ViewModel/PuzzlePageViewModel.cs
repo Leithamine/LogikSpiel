@@ -125,6 +125,12 @@ public sealed class PuzzlePageViewModel : ObservableObject
         });
     }
 
+    protected override void OnCultureChanged()
+    {
+        base.OnCultureChanged();
+        RefreshHintDescriptions();
+    }
+
     public async Task LoadAsync(string gameId, string difficulty, int level)
     {
         GameId = string.IsNullOrWhiteSpace(gameId) ? "riddle_lock" : gameId;
@@ -211,7 +217,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
             Hints.Clear();
             foreach (var h in game.Hints.Select(h => NormalizeHint(h, _secretSolution.Length)))
-                Hints.Add(h);
+                Hints.Add(LocalizeHint(h));
 
             InputDigits.Clear();
             for (int i = 0; i < _secretSolution.Length; i++)
@@ -221,6 +227,43 @@ public sealed class PuzzlePageViewModel : ObservableObject
         });
 
         System.Diagnostics.Debug.WriteLine($"[LockRiddle] diff={DifficultyKey}, level={LevelNumber}, secret={_secretSolution}, hints={game.Hints.Count}");
+    }
+
+    private void RefreshHintDescriptions()
+    {
+        if (Hints.Count == 0) return;
+        var updated = Hints.Select(LocalizeHint).ToList();
+        Hints.Clear();
+        foreach (var hint in updated)
+            Hints.Add(hint);
+    }
+
+    private static LockHint LocalizeHint(LockHint hint)
+    {
+        string Plural(int n, string singular, string plural) => n == 1 ? singular : plural;
+
+        var singular = LocalizationService.GetString("LockRiddle_NumberSingular");
+        var plural = LocalizationService.GetString("LockRiddle_NumberPlural");
+
+        string desc = (hint.WellPlaced, hint.WrongPlaced) switch
+        {
+            (0, 0) => LocalizationService.GetString("LockRiddle_NoDigitCorrect"),
+            (1, 0) => LocalizationService.GetString("LockRiddle_OneCorrectWellPlaced"),
+            (0, 1) => LocalizationService.GetString("LockRiddle_OneCorrectWrongPlaced"),
+            (> 0, 0) => LocalizationService.Format("LockRiddle_HintWellPlacedFormat", hint.WellPlaced, Plural(hint.WellPlaced, singular, plural)),
+            (0, > 0) => LocalizationService.Format("LockRiddle_HintWrongPlacedFormat", hint.WrongPlaced, Plural(hint.WrongPlaced, singular, plural)),
+            _ => LocalizationService.Format("LockRiddle_HintMixedFormat", hint.WellPlaced + hint.WrongPlaced, Plural(hint.WellPlaced + hint.WrongPlaced, singular, plural), hint.WellPlaced, hint.WrongPlaced)
+        };
+
+        return new LockHint
+        {
+            Slots = hint.Slots.ToList(),
+            Code = hint.Code,
+            WellPlaced = hint.WellPlaced,
+            WrongPlaced = hint.WrongPlaced,
+            Icon = hint.Icon,
+            Description = desc
+        };
     }
 
     private async Task CheckSolutionAsync()

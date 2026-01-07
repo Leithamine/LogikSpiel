@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using LogikSpiel.Model.NumberRain;
+using LogikSpiel.Services.Localization;
 
 namespace LogikSpiel.Services.NumberRain;
 
@@ -68,28 +69,28 @@ public sealed class NumberRainQuestGeneratorService
         {
             rnd => {
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} gerade Zahlen", "Gerade", (v, _) => NumberRainRuleLibrary.IsEven(v), n);
+                return CreateCountQuest(SelectCount(n, LabelEvenNumbers()), LabelEvenNumbers(), (v, _) => NumberRainRuleLibrary.IsEven(v), n);
             },
 
             rnd => {
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} ungerade Zahlen", "Ungerade", (v, _) => NumberRainRuleLibrary.IsOdd(v), n);
+                return CreateCountQuest(SelectCount(n, LabelOddNumbers()), LabelOddNumbers(), (v, _) => NumberRainRuleLibrary.IsOdd(v), n);
             },
 
             rnd =>
             {
                 int k = rnd.Next(2, 11);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Vielfache von {k}", $"Vielfache von {k}",
-                    (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k), n);
+                var label = LabelMultiplesOf(k);
+                return CreateCountQuest(SelectCount(n, label), label, (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k), n);
             },
 
             rnd =>
             {
                 int d = rnd.Next(0, 10);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen, die auf {d} enden", $"Endet auf {d}",
-                    (v, _) => NumberRainRuleLibrary.EndsWithDigit(v, d), n);
+                var label = LabelEndsWithDigit(d);
+                return CreateCountQuest(SelectCount(n, label), label, (v, _) => NumberRainRuleLibrary.EndsWithDigit(v, d), n);
             },
 
             rnd =>
@@ -97,92 +98,93 @@ public sealed class NumberRainQuestGeneratorService
                 int a = rnd.Next(settings.MinValue, settings.MaxValue - 5);
                 int b = rnd.Next(a + 3, Math.Min(a + 20, settings.MaxValue));
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen zwischen {a} und {b}", $"Bereich {a}-{b}",
-                    (v, _) => NumberRainRuleLibrary.IsBetween(v, a, b), n);
+                var label = LabelRange(a, b);
+                return CreateCountQuest(SelectCount(n, label), label, (v, _) => NumberRainRuleLibrary.IsBetween(v, a, b), n);
             },
 
             rnd =>
             {
                 int b = rnd.Next(settings.MinValue + 5, settings.MaxValue);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen < {b}", $"< {b}",
-                    (v, _) => v < b, n);
+                var label = LabelLessThan(b);
+                return CreateCountQuest(SelectCount(n, label), label, (v, _) => v < b, n);
             },
 
             rnd =>
             {
                 int a = rnd.Next(settings.MinValue, settings.MaxValue - 5);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen > {a}", $"> {a}",
-                    (v, _) => v > a, n);
+                var label = LabelGreaterThan(a);
+                return CreateCountQuest(SelectCount(n, label), label, (v, _) => v > a, n);
             },
 
             rnd =>
             {
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} zweistellige Zahlen", "Zweistellig",
-                    (v, _) => NumberRainRuleLibrary.HasDigitCount(v, 2), n);
+                var label = LabelTwoDigitNumbers();
+                return CreateCountQuest(SelectCount(n, label), label, (v, _) => NumberRainRuleLibrary.HasDigitCount(v, 2), n);
             },
 
             rnd =>
             {
                 int digits = rnd.Next(1, 4);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen mit genau {digits} Stellen", $"{digits} Stellen",
-                    (v, _) => NumberRainRuleLibrary.HasDigitCount(v, digits), n);
+                var label = LabelDigitCount(digits);
+                return CreateCountQuest(SelectCount(n, label), label, (v, _) => NumberRainRuleLibrary.HasDigitCount(v, digits), n);
             },
 
             rnd =>
             {
                 int d = rnd.Next(0, 10);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen, die die Ziffer {d} enthalten", $"Enthält {d}",
-                    (v, _) => NumberRainRuleLibrary.ContainsDigit(v, d), n);
+                var label = LabelContainsDigit(d);
+                return CreateCountQuest(SelectCount(n, label), label, (v, _) => NumberRainRuleLibrary.ContainsDigit(v, d), n);
             },
 
             rnd =>
             {
                 int d = rnd.Next(0, 10);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen, die die Ziffer {d} NICHT enthalten", $"Ohne {d}",
-                    (v, _) => !NumberRainRuleLibrary.ContainsDigit(v, d), n);
+                var label = LabelNotContainsDigit(d);
+                return CreateCountQuest(SelectCount(n, label), label, (v, _) => !NumberRainRuleLibrary.ContainsDigit(v, d), n);
             },
 
             rnd =>
             {
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen mit gerader Quersumme", "Quersumme gerade",
-                    (v, _) => NumberRainRuleLibrary.SumDigits(v) % 2 == 0, n);
+                var label = LabelDigitSumEven();
+                return CreateCountQuest(SelectCount(n, label), label, (v, _) => NumberRainRuleLibrary.SumDigits(v) % 2 == 0, n);
             },
 
             rnd =>
             {
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen mit ungerader Quersumme", "Quersumme ungerade",
-                    (v, _) => NumberRainRuleLibrary.SumDigits(v) % 2 != 0, n);
+                var label = LabelDigitSumOdd();
+                return CreateCountQuest(SelectCount(n, label), label, (v, _) => NumberRainRuleLibrary.SumDigits(v) % 2 != 0, n);
             },
 
             rnd =>
             {
                 int s = rnd.Next(3, 12);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen mit Quersumme = {s}", $"Quersumme {s}",
-                    (v, _) => NumberRainRuleLibrary.SumDigits(v) == s, n);
+                var label = LabelDigitSumEquals(s);
+                return CreateCountQuest(SelectCount(n, label), label, (v, _) => NumberRainRuleLibrary.SumDigits(v) == s, n);
             },
 
             rnd =>
             {
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen, die durch 2 ODER 5 teilbar sind", "2 oder 5",
-                    (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, 2) || NumberRainRuleLibrary.IsMultipleOf(v, 5), n);
+                var label = LabelDivisibleBy2Or5();
+                return CreateCountQuest(SelectCount(n, label), label, (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, 2) || NumberRainRuleLibrary.IsMultipleOf(v, 5), n);
             },
 
             rnd =>
             {
                 int t = TimeLimit(rnd, settings);
                 int n = Target(rnd, settings, level);
-                return CreateTimedQuest($"In {t}s: Wähle {n} gerade Zahlen", t,
-                    new NumberRainGoal("Gerade", (v, _) => NumberRainRuleLibrary.IsEven(v), n));
+                var label = LabelEvenNumbers();
+                return CreateTimedQuest(Timed(t, SelectCount(n, label)), t,
+                    new NumberRainGoal(label, (v, _) => NumberRainRuleLibrary.IsEven(v), n));
             },
 
             rnd =>
@@ -190,8 +192,9 @@ public sealed class NumberRainQuestGeneratorService
                 int t = TimeLimit(rnd, settings);
                 int k = rnd.Next(2, 11);
                 int n = Target(rnd, settings, level);
-                return CreateTimedQuest($"In {t}s: Wähle {n} Vielfache von {k}", t,
-                    new NumberRainGoal($"Vielfache von {k}", (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k), n));
+                var label = LabelMultiplesOf(k);
+                return CreateTimedQuest(Timed(t, SelectCount(n, label)), t,
+                    new NumberRainGoal(label, (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k), n));
             },
 
             rnd =>
@@ -199,8 +202,9 @@ public sealed class NumberRainQuestGeneratorService
                 int t = TimeLimit(rnd, settings);
                 int d = rnd.Next(0, 10);
                 int n = Target(rnd, settings, level);
-                return CreateTimedQuest($"In {t}s: Wähle {n} Zahlen, die auf {d} enden", t,
-                    new NumberRainGoal($"Endet auf {d}", (v, _) => NumberRainRuleLibrary.EndsWithDigit(v, d), n));
+                var label = LabelEndsWithDigit(d);
+                return CreateTimedQuest(Timed(t, SelectCount(n, label)), t,
+                    new NumberRainGoal(label, (v, _) => NumberRainRuleLibrary.EndsWithDigit(v, d), n));
             },
 
             rnd =>
@@ -209,8 +213,9 @@ public sealed class NumberRainQuestGeneratorService
                 int a = rnd.Next(settings.MinValue, settings.MaxValue - 8);
                 int b = rnd.Next(a + 3, Math.Min(a + 20, settings.MaxValue));
                 int n = Target(rnd, settings, level);
-                return CreateTimedQuest($"In {t}s: Wähle {n} Zahlen im Bereich {a}–{b}", t,
-                    new NumberRainGoal($"{a}-{b}", (v, _) => NumberRainRuleLibrary.IsBetween(v, a, b), n));
+                var label = LabelRange(a, b);
+                return CreateTimedQuest(Timed(t, SelectCount(n, label)), t,
+                    new NumberRainGoal(label, (v, _) => NumberRainRuleLibrary.IsBetween(v, a, b), n));
             },
 
             rnd =>
@@ -218,27 +223,33 @@ public sealed class NumberRainQuestGeneratorService
                 int k = rnd.Next(2, 11);
                 int d = rnd.Next(0, 10);
                 int n = Target(rnd, settings, level);
-                return CreateAvoidQuest($"Wähle {n} Vielfache von {k}, aber klicke NIE auf Zahlen die auf {d} enden",
-                    new NumberRainGoal($"Vielfache von {k}", (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k), n),
-                    (v, _) => NumberRainRuleLibrary.EndsWithDigit(v, d), $"Endet auf {d}");
+                var label = LabelMultiplesOf(k);
+                var avoidLabel = LabelEndsWithDigit(d);
+                return CreateAvoidQuest(Avoid(SelectCount(n, label), avoidLabel),
+                    new NumberRainGoal(label, (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k), n),
+                    (v, _) => NumberRainRuleLibrary.EndsWithDigit(v, d), avoidLabel);
             },
 
             rnd =>
             {
                 int d = rnd.Next(0, 10);
                 int n = Target(rnd, settings, level);
-                return CreateAvoidQuest($"Wähle {n} Zahlen mit Ziffer {d}, aber meide gerade Zahlen",
-                    new NumberRainGoal($"Enthält {d}", (v, _) => NumberRainRuleLibrary.ContainsDigit(v, d), n),
-                    (v, _) => NumberRainRuleLibrary.IsEven(v), "Gerade");
+                var label = LabelContainsDigit(d);
+                var avoidLabel = LabelEvenNumbers();
+                return CreateAvoidQuest(Avoid(SelectCount(n, label), avoidLabel),
+                    new NumberRainGoal(label, (v, _) => NumberRainRuleLibrary.ContainsDigit(v, d), n),
+                    (v, _) => NumberRainRuleLibrary.IsEven(v), avoidLabel);
             },
 
             rnd =>
             {
                 int n1 = Target(rnd, settings, level);
                 int n2 = Target(rnd, settings, level);
-                return CreateMultiQuest($"Sammle {n1} gerade und {n2} ungerade Zahlen",
-                    new NumberRainGoal("Gerade", (v, _) => NumberRainRuleLibrary.IsEven(v), n1),
-                    new NumberRainGoal("Ungerade", (v, _) => NumberRainRuleLibrary.IsOdd(v), n2));
+                var labelEven = LabelEvenNumbers();
+                var labelOdd = LabelOddNumbers();
+                return CreateMultiQuest(CollectDual(n1, labelEven, n2, labelOdd),
+                    new NumberRainGoal(labelEven, (v, _) => NumberRainRuleLibrary.IsEven(v), n1),
+                    new NumberRainGoal(labelOdd, (v, _) => NumberRainRuleLibrary.IsOdd(v), n2));
             },
 
             rnd =>
@@ -247,9 +258,11 @@ public sealed class NumberRainQuestGeneratorService
                 int k2 = rnd.Next(3, 10);
                 int n1 = Target(rnd, settings, level);
                 int n2 = Target(rnd, settings, level);
-                return CreateMultiQuest($"Sammle {n1} Vielfache von {k1} und {n2} Vielfache von {k2}",
-                    new NumberRainGoal($"Vielfache von {k1}", (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k1), n1),
-                    new NumberRainGoal($"Vielfache von {k2}", (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k2), n2));
+                var label1 = LabelMultiplesOf(k1);
+                var label2 = LabelMultiplesOf(k2);
+                return CreateMultiQuest(CollectDual(n1, label1, n2, label2),
+                    new NumberRainGoal(label1, (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k1), n1),
+                    new NumberRainGoal(label2, (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k2), n2));
             },
 
             rnd =>
@@ -259,9 +272,11 @@ public sealed class NumberRainQuestGeneratorService
                 int d = rnd.Next(0, 10);
                 int n1 = Target(rnd, settings, level);
                 int n2 = Target(rnd, settings, level);
-                return CreateMultiQuest($"Sammle {n1} Zahlen im Bereich {a}–{b} und {n2} Zahlen mit Ziffer {d}",
-                    new NumberRainGoal($"{a}-{b}", (v, _) => NumberRainRuleLibrary.IsBetween(v, a, b), n1),
-                    new NumberRainGoal($"Enthält {d}", (v, _) => NumberRainRuleLibrary.ContainsDigit(v, d), n2));
+                var label1 = LabelRange(a, b);
+                var label2 = LabelContainsDigit(d);
+                return CreateMultiQuest(CollectDual(n1, label1, n2, label2),
+                    new NumberRainGoal(label1, (v, _) => NumberRainRuleLibrary.IsBetween(v, a, b), n1),
+                    new NumberRainGoal(label2, (v, _) => NumberRainRuleLibrary.ContainsDigit(v, d), n2));
             }
         };
     }
@@ -270,21 +285,37 @@ public sealed class NumberRainQuestGeneratorService
     {
         return new List<Func<Random, NumberRainQuest>>
         {
-            rnd => CreateCountQuest($"Wähle {Target(rnd, settings, level)} Primzahlen", "Primzahlen",
-                (v, _) => NumberRainRuleLibrary.IsPrime(v), Target(rnd, settings, level)),
+            rnd =>
+            {
+                int n = Target(rnd, settings, level);
+                var label = LabelPrimes();
+                return CreateCountQuest(SelectCount(n, label), label,
+                    (v, _) => NumberRainRuleLibrary.IsPrime(v), n);
+            },
 
-            rnd => CreateCountQuest($"Wähle {Target(rnd, settings, level)} Nicht-Primzahlen", "Nicht-Primzahlen",
-                (v, _) => NumberRainRuleLibrary.IsComposite(v), Target(rnd, settings, level)),
+            rnd =>
+            {
+                int n = Target(rnd, settings, level);
+                var label = LabelNonPrimes();
+                return CreateCountQuest(SelectCount(n, label), label,
+                    (v, _) => NumberRainRuleLibrary.IsComposite(v), n);
+            },
 
-            rnd => CreateCountQuest($"Wähle {Target(rnd, settings, level)} Quadratzahlen", "Quadratzahlen",
-                (v, _) => NumberRainRuleLibrary.IsSquare(v), Target(rnd, settings, level)),
+            rnd =>
+            {
+                int n = Target(rnd, settings, level);
+                var label = LabelSquares();
+                return CreateCountQuest(SelectCount(n, label), label,
+                    (v, _) => NumberRainRuleLibrary.IsSquare(v), n);
+            },
 
             rnd =>
             {
                 int k = rnd.Next(2, 9);
                 int j = rnd.Next(3, 11);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen, die durch {k} UND {j} teilbar sind", $"{k} & {j}",
+                var label = LabelDivisibleByBoth(k, j);
+                return CreateCountQuest(SelectCount(n, label), label,
                     (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k) && NumberRainRuleLibrary.IsMultipleOf(v, j), n);
             },
 
@@ -293,21 +324,33 @@ public sealed class NumberRainQuestGeneratorService
                 int k = rnd.Next(2, 9);
                 int j = rnd.Next(3, 11);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen, die durch {k} teilbar sind, aber NICHT durch {j}", $"{k} nicht {j}",
+                var label = LabelDivisibleByNot(k, j);
+                return CreateCountQuest(SelectCount(n, label), label,
                     (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k) && !NumberRainRuleLibrary.IsMultipleOf(v, j), n);
             },
 
-            rnd => CreateCountQuest($"Wähle {Target(rnd, settings, level)} Palindromzahlen", "Palindrom",
-                (v, _) => NumberRainRuleLibrary.IsPalindrome(v), Target(rnd, settings, level)),
+            rnd =>
+            {
+                int n = Target(rnd, settings, level);
+                var label = LabelPalindrome();
+                return CreateCountQuest(SelectCount(n, label), label,
+                    (v, _) => NumberRainRuleLibrary.IsPalindrome(v), n);
+            },
 
-            rnd => CreateCountQuest($"Wähle {Target(rnd, settings, level)} Zahlen mit Quersumme prim", "Quersumme prim",
-                (v, _) => NumberRainRuleLibrary.IsSumDigitsPrime(v), Target(rnd, settings, level)),
+            rnd =>
+            {
+                int n = Target(rnd, settings, level);
+                var label = LabelDigitSumPrime();
+                return CreateCountQuest(SelectCount(n, label), label,
+                    (v, _) => NumberRainRuleLibrary.IsSumDigitsPrime(v), n);
+            },
 
             rnd =>
             {
                 int s = rnd.Next(10, 20);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen mit Quersumme = {s}", $"Quersumme {s}",
+                var label = LabelDigitSumEquals(s);
+                return CreateCountQuest(SelectCount(n, label), label,
                     (v, _) => NumberRainRuleLibrary.SumDigits(v) == s, n);
             },
 
@@ -315,7 +358,8 @@ public sealed class NumberRainQuestGeneratorService
             {
                 int d = rnd.Next(0, 10);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen, die Ziffer {d} enthalten UND gerade sind", $"{d} & gerade",
+                var label = LabelContainsDigitAndEven(d);
+                return CreateCountQuest(SelectCount(n, label), label,
                     (v, _) => NumberRainRuleLibrary.ContainsDigit(v, d) && NumberRainRuleLibrary.IsEven(v), n);
             },
 
@@ -324,22 +368,34 @@ public sealed class NumberRainQuestGeneratorService
                 int d = rnd.Next(0, 10);
                 int k = rnd.Next(2, 9);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen, die Ziffer {d} enthalten UND NICHT durch {k} teilbar sind", $"{d} & nicht {k}",
+                var label = LabelContainsDigitAndNotDivisible(d, k);
+                return CreateCountQuest(SelectCount(n, label), label,
                     (v, _) => NumberRainRuleLibrary.ContainsDigit(v, d) && !NumberRainRuleLibrary.IsMultipleOf(v, k), n);
             },
 
-            rnd => CreateCountQuest($"Wähle {Target(rnd, settings, level)} Zahlen mit mindestens zwei gleichen Ziffern", "mind. zwei gleich",
-                (v, _) => NumberRainRuleLibrary.HasAtLeastTwoEqualDigits(v), Target(rnd, settings, level)),
+            rnd =>
+            {
+                int n = Target(rnd, settings, level);
+                var label = LabelAtLeastTwoEqualDigits();
+                return CreateCountQuest(SelectCount(n, label), label,
+                    (v, _) => NumberRainRuleLibrary.HasAtLeastTwoEqualDigits(v), n);
+            },
 
-            rnd => CreateCountQuest($"Wähle {Target(rnd, settings, level)} Zahlen mit allen Ziffern verschieden", "alle verschieden",
-                (v, _) => NumberRainRuleLibrary.HasAllDigitsDifferent(v), Target(rnd, settings, level)),
+            rnd =>
+            {
+                int n = Target(rnd, settings, level);
+                var label = LabelAllDigitsDifferent();
+                return CreateCountQuest(SelectCount(n, label), label,
+                    (v, _) => NumberRainRuleLibrary.HasAllDigitsDifferent(v), n);
+            },
 
             rnd =>
             {
                 int a = rnd.Next(settings.MinValue, settings.MaxValue - 10);
                 int b = rnd.Next(a + 5, Math.Min(a + 25, settings.MaxValue));
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen, die näher an {a} als an {b} sind", $"näher an {a}",
+                var label = LabelCloserTo(a);
+                return CreateCountQuest(SelectCount(n, label), label,
                     (v, _) => NumberRainRuleLibrary.IsCloserTo(v, a, b), n);
             },
 
@@ -347,16 +403,18 @@ public sealed class NumberRainQuestGeneratorService
             {
                 int t = TimeLimit(rnd, settings);
                 int n = Target(rnd, settings, level);
-                return CreateTimedQuest($"In {t}s: Wähle {n} Primzahlen", t,
-                    new NumberRainGoal("Primzahlen", (v, _) => NumberRainRuleLibrary.IsPrime(v), n));
+                var label = LabelPrimes();
+                return CreateTimedQuest(Timed(t, SelectCount(n, label)), t,
+                    new NumberRainGoal(label, (v, _) => NumberRainRuleLibrary.IsPrime(v), n));
             },
 
             rnd =>
             {
                 int t = TimeLimit(rnd, settings);
                 int n = Target(rnd, settings, level);
-                return CreateTimedQuest($"In {t}s: Wähle {n} Quadratzahlen", t,
-                    new NumberRainGoal("Quadratzahlen", (v, _) => NumberRainRuleLibrary.IsSquare(v), n));
+                var label = LabelSquares();
+                return CreateTimedQuest(Timed(t, SelectCount(n, label)), t,
+                    new NumberRainGoal(label, (v, _) => NumberRainRuleLibrary.IsSquare(v), n));
             },
 
             rnd =>
@@ -365,49 +423,57 @@ public sealed class NumberRainQuestGeneratorService
                 int k = rnd.Next(2, 9);
                 int j = rnd.Next(3, 11);
                 int n = Target(rnd, settings, level);
-                return CreateTimedQuest($"In {t}s: Wähle {n} Zahlen (durch {k} teilbar, aber nicht durch {j})", t,
-                    new NumberRainGoal($"{k} nicht {j}", (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k) && !NumberRainRuleLibrary.IsMultipleOf(v, j), n));
+                var label = LabelDivisibleByNot(k, j);
+                return CreateTimedQuest(Timed(t, SelectCount(n, label)), t,
+                    new NumberRainGoal(label, (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k) && !NumberRainRuleLibrary.IsMultipleOf(v, j), n));
             },
 
             rnd =>
             {
                 int c = ComboTarget(rnd, settings);
                 int k = rnd.Next(2, 11);
-                return CreateComboQuest($"Erreiche Combo {c} mit Regel: Vielfache von {k}", c,
-                    new NumberRainRule($"Vielfache von {k}", (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k)));
+                var label = LabelMultiplesOf(k);
+                return CreateComboQuest(Combo(c, label), c,
+                    new NumberRainRule(label, (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k)));
             },
 
             rnd =>
             {
                 int c = ComboTarget(rnd, settings);
                 int d = rnd.Next(0, 10);
-                return CreateComboQuest($"Erreiche Combo {c} mit Regel: Ziffer {d} enthalten", c,
-                    new NumberRainRule($"Enthält {d}", (v, _) => NumberRainRuleLibrary.ContainsDigit(v, d)));
+                var label = LabelContainsDigit(d);
+                return CreateComboQuest(Combo(c, label), c,
+                    new NumberRainRule(label, (v, _) => NumberRainRuleLibrary.ContainsDigit(v, d)));
             },
 
             rnd =>
             {
                 int c = ComboTarget(rnd, settings);
-                return CreateComboQuest($"Erreiche Combo {c} mit Regel: Quersumme gerade", c,
-                    new NumberRainRule("Quersumme gerade", (v, _) => NumberRainRuleLibrary.SumDigits(v) % 2 == 0));
+                var label = LabelDigitSumEven();
+                return CreateComboQuest(Combo(c, label), c,
+                    new NumberRainRule(label, (v, _) => NumberRainRuleLibrary.SumDigits(v) % 2 == 0));
             },
 
             rnd =>
             {
                 int d = rnd.Next(0, 10);
                 int n = Target(rnd, settings, level);
-                return CreateAvoidQuest($"Wähle {n} Quadratzahlen, aber meide Zahlen mit Ziffer {d}",
-                    new NumberRainGoal("Quadratzahlen", (v, _) => NumberRainRuleLibrary.IsSquare(v), n),
-                    (v, _) => NumberRainRuleLibrary.ContainsDigit(v, d), $"Ziffer {d}");
+                var label = LabelSquares();
+                var avoidLabel = LabelContainsDigit(d);
+                return CreateAvoidQuest(Avoid(SelectCount(n, label), avoidLabel),
+                    new NumberRainGoal(label, (v, _) => NumberRainRuleLibrary.IsSquare(v), n),
+                    (v, _) => NumberRainRuleLibrary.ContainsDigit(v, d), avoidLabel);
             },
 
             rnd =>
             {
                 int k = rnd.Next(2, 11);
                 int n = Target(rnd, settings, level);
-                return CreateAvoidQuest($"Wähle {n} Primzahlen, aber klicke NIE auf Vielfache von {k}",
-                    new NumberRainGoal("Primzahlen", (v, _) => NumberRainRuleLibrary.IsPrime(v), n),
-                    (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k), $"Vielfache von {k}");
+                var label = LabelPrimes();
+                var avoidLabel = LabelMultiplesOf(k);
+                return CreateAvoidQuest(Avoid(SelectCount(n, label), avoidLabel),
+                    new NumberRainGoal(label, (v, _) => NumberRainRuleLibrary.IsPrime(v), n),
+                    (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k), avoidLabel);
             },
 
             rnd =>
@@ -415,9 +481,11 @@ public sealed class NumberRainQuestGeneratorService
                 int k = rnd.Next(2, 11);
                 int n1 = Target(rnd, settings, level);
                 int n2 = Target(rnd, settings, level);
-                return CreateMultiQuest($"Sammle {n1} Primzahlen und {n2} Vielfache von {k}",
-                    new NumberRainGoal("Primzahlen", (v, _) => NumberRainRuleLibrary.IsPrime(v), n1),
-                    new NumberRainGoal($"Vielfache von {k}", (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k), n2));
+                var label1 = LabelPrimes();
+                var label2 = LabelMultiplesOf(k);
+                return CreateMultiQuest(CollectDual(n1, label1, n2, label2),
+                    new NumberRainGoal(label1, (v, _) => NumberRainRuleLibrary.IsPrime(v), n1),
+                    new NumberRainGoal(label2, (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k), n2));
             },
 
             rnd =>
@@ -425,9 +493,11 @@ public sealed class NumberRainQuestGeneratorService
                 int s = rnd.Next(8, 20);
                 int n1 = Target(rnd, settings, level);
                 int n2 = Target(rnd, settings, level);
-                return CreateMultiQuest($"Sammle {n1} Palindromzahlen und {n2} Zahlen mit Quersumme {s}",
-                    new NumberRainGoal("Palindrom", (v, _) => NumberRainRuleLibrary.IsPalindrome(v), n1),
-                    new NumberRainGoal($"Quersumme {s}", (v, _) => NumberRainRuleLibrary.SumDigits(v) == s, n2));
+                var label1 = LabelPalindrome();
+                var label2 = LabelDigitSumEquals(s);
+                return CreateMultiQuest(CollectDual(n1, label1, n2, label2),
+                    new NumberRainGoal(label1, (v, _) => NumberRainRuleLibrary.IsPalindrome(v), n1),
+                    new NumberRainGoal(label2, (v, _) => NumberRainRuleLibrary.SumDigits(v) == s, n2));
             },
 
             rnd =>
@@ -436,9 +506,11 @@ public sealed class NumberRainQuestGeneratorService
                 int k = rnd.Next(3, 10);
                 int n1 = Target(rnd, settings, level);
                 int n2 = Target(rnd, settings, level);
-                return CreateTimedQuest($"In {t}s: Sammle {n1} Quadratzahlen und {n2} ungerade Vielfache von {k}", t,
-                    new NumberRainGoal("Quadratzahlen", (v, _) => NumberRainRuleLibrary.IsSquare(v), n1),
-                    new NumberRainGoal($"Ungerade von {k}", (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k) && NumberRainRuleLibrary.IsOdd(v), n2));
+                var label1 = LabelSquares();
+                var label2 = LabelOddMultiplesOf(k);
+                return CreateTimedQuest(Timed(t, CollectDual(n1, label1, n2, label2)), t,
+                    new NumberRainGoal(label1, (v, _) => NumberRainRuleLibrary.IsSquare(v), n1),
+                    new NumberRainGoal(label2, (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k) && NumberRainRuleLibrary.IsOdd(v), n2));
             }
         };
     }
@@ -452,7 +524,8 @@ public sealed class NumberRainQuestGeneratorService
                 int m = rnd.Next(3, 12);
                 int r = rnd.Next(0, m);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen mit Rest {r} bei Division durch {m}", $"mod {m} = {r}",
+                var label = LabelModulo(m, r);
+                return CreateCountQuest(SelectCount(n, label), label,
                     (v, _) => v % m == r, n);
             },
 
@@ -460,7 +533,8 @@ public sealed class NumberRainQuestGeneratorService
             {
                 int a = rnd.Next(10, settings.MaxValue / 2);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen: Prim UND > {a}", $"> {a} & prim",
+                var label = LabelPrimeGreaterThan(a);
+                return CreateCountQuest(SelectCount(n, label), label,
                     (v, _) => NumberRainRuleLibrary.IsPrime(v) && v > a, n);
             },
 
@@ -468,14 +542,16 @@ public sealed class NumberRainQuestGeneratorService
             {
                 int d = rnd.Next(0, 10);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen: Prim UND enthält Ziffer {d}", $"Prim mit {d}",
+                var label = LabelPrimeContainsDigit(d);
+                return CreateCountQuest(SelectCount(n, label), label,
                     (v, _) => NumberRainRuleLibrary.IsPrime(v) && NumberRainRuleLibrary.ContainsDigit(v, d), n);
             },
 
             rnd =>
             {
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen: Quadratzahl ODER Prim", "Quadrat oder Prim",
+                var label = LabelSquareOrPrime();
+                return CreateCountQuest(SelectCount(n, label), label,
                     (v, _) => NumberRainRuleLibrary.IsSquare(v) || NumberRainRuleLibrary.IsPrime(v), n);
             },
 
@@ -483,21 +559,42 @@ public sealed class NumberRainQuestGeneratorService
             {
                 int k = rnd.Next(3, 11);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen: (Vielfache von {k}) UND (Quersumme prim)", $"{k} & QS prim",
+                var label = LabelMultiplesAndDigitSumPrime(k);
+                return CreateCountQuest(SelectCount(n, label), label,
                     (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k) && NumberRainRuleLibrary.IsSumDigitsPrime(v), n);
             },
 
-            rnd => CreateCountQuest($"Wähle {Target(rnd, settings, level)} Fibonacci-Zahlen (im erlaubten Range)", "Fibonacci",
-                (v, _) => NumberRainRuleLibrary.IsFibonacci(v), Target(rnd, settings, level)),
+            rnd =>
+            {
+                int n = Target(rnd, settings, level);
+                var label = LabelFibonacci();
+                return CreateCountQuest(SelectCount(n, label), label,
+                    (v, _) => NumberRainRuleLibrary.IsFibonacci(v), n);
+            },
 
-            rnd => CreateCountQuest($"Wähle {Target(rnd, settings, level)} Potenzen von 2", "Potenzen von 2",
-                (v, _) => NumberRainRuleLibrary.IsPowerOfTwo(v), Target(rnd, settings, level)),
+            rnd =>
+            {
+                int n = Target(rnd, settings, level);
+                var label = LabelPowersOfTwo();
+                return CreateCountQuest(SelectCount(n, label), label,
+                    (v, _) => NumberRainRuleLibrary.IsPowerOfTwo(v), n);
+            },
 
-            rnd => CreateCountQuest($"Wähle {Target(rnd, settings, level)} Zahlen mit streng steigenden Ziffern", "Ziffern steigend",
-                (v, _) => NumberRainRuleLibrary.HasStrictlyIncreasingDigits(v), Target(rnd, settings, level)),
+            rnd =>
+            {
+                int n = Target(rnd, settings, level);
+                var label = LabelDigitsIncreasing();
+                return CreateCountQuest(SelectCount(n, label), label,
+                    (v, _) => NumberRainRuleLibrary.HasStrictlyIncreasingDigits(v), n);
+            },
 
-            rnd => CreateCountQuest($"Wähle {Target(rnd, settings, level)} Zahlen mit streng fallenden Ziffern", "Ziffern fallend",
-                (v, _) => NumberRainRuleLibrary.HasStrictlyDecreasingDigits(v), Target(rnd, settings, level)),
+            rnd =>
+            {
+                int n = Target(rnd, settings, level);
+                var label = LabelDigitsDecreasing();
+                return CreateCountQuest(SelectCount(n, label), label,
+                    (v, _) => NumberRainRuleLibrary.HasStrictlyDecreasingDigits(v), n);
+            },
 
             rnd =>
             {
@@ -505,7 +602,8 @@ public sealed class NumberRainQuestGeneratorService
                 int e = rnd.Next(0, 10);
                 while (e == d) e = rnd.Next(0, 10);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen: enthält {d}, aber enthält NICHT {e}", $"{d} ohne {e}",
+                var label = LabelContainsDigitNot(d, e);
+                return CreateCountQuest(SelectCount(n, label), label,
                     (v, _) => NumberRainRuleLibrary.ContainsDigit(v, d) && !NumberRainRuleLibrary.ContainsDigit(v, e), n);
             },
 
@@ -513,7 +611,8 @@ public sealed class NumberRainQuestGeneratorService
             {
                 int k = rnd.Next(3, 11);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen: durch {k} teilbar, aber Quersumme ungerade", $"{k} & QS ungerade",
+                var label = LabelDivisibleByButDigitSumOdd(k);
+                return CreateCountQuest(SelectCount(n, label), label,
                     (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k) && NumberRainRuleLibrary.SumDigits(v) % 2 != 0, n);
             },
 
@@ -521,7 +620,8 @@ public sealed class NumberRainQuestGeneratorService
             {
                 int k = rnd.Next(2, 9);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen: Palindrom UND durch {k} teilbar", $"Palindrom & {k}",
+                var label = LabelPalindromeDivisibleBy(k);
+                return CreateCountQuest(SelectCount(n, label), label,
                     (v, _) => NumberRainRuleLibrary.IsPalindrome(v) && NumberRainRuleLibrary.IsMultipleOf(v, k), n);
             },
 
@@ -531,8 +631,9 @@ public sealed class NumberRainQuestGeneratorService
                 int m = rnd.Next(3, 12);
                 int r = rnd.Next(0, m);
                 int n = Target(rnd, settings, level);
-                return CreateTimedQuest($"In {t}s: Wähle {n} Zahlen mit mod {m} = {r}", t,
-                    new NumberRainGoal($"mod {m}={r}", (v, _) => v % m == r, n));
+                var label = LabelModulo(m, r);
+                return CreateTimedQuest(Timed(t, SelectCount(n, label)), t,
+                    new NumberRainGoal(label, (v, _) => v % m == r, n));
             },
 
             rnd =>
@@ -540,8 +641,9 @@ public sealed class NumberRainQuestGeneratorService
                 int t = TimeLimit(rnd, settings);
                 int a = rnd.Next(10, settings.MaxValue / 2);
                 int n = Target(rnd, settings, level);
-                return CreateTimedQuest($"In {t}s: Wähle {n} Zahlen (Prim UND > {a})", t,
-                    new NumberRainGoal($"> {a} & prim", (v, _) => NumberRainRuleLibrary.IsPrime(v) && v > a, n));
+                var label = LabelPrimeGreaterThan(a);
+                return CreateTimedQuest(Timed(t, SelectCount(n, label)), t,
+                    new NumberRainGoal(label, (v, _) => NumberRainRuleLibrary.IsPrime(v) && v > a, n));
             },
 
             rnd =>
@@ -549,8 +651,9 @@ public sealed class NumberRainQuestGeneratorService
                 int t = TimeLimit(rnd, settings);
                 int d = rnd.Next(0, 10);
                 int n = Target(rnd, settings, level);
-                return CreateTimedQuest($"In {t}s: Wähle {n} Zahlen (Quersumme prim UND enthält {d})", t,
-                    new NumberRainGoal($"QS prim & {d}", (v, _) => NumberRainRuleLibrary.IsSumDigitsPrime(v) && NumberRainRuleLibrary.ContainsDigit(v, d), n));
+                var label = LabelContainsDigitAndDigitSumPrime(d);
+                return CreateTimedQuest(Timed(t, SelectCount(n, label)), t,
+                    new NumberRainGoal(label, (v, _) => NumberRainRuleLibrary.IsSumDigitsPrime(v) && NumberRainRuleLibrary.ContainsDigit(v, d), n));
             },
 
             rnd =>
@@ -558,18 +661,22 @@ public sealed class NumberRainQuestGeneratorService
                 int m = rnd.Next(3, 12);
                 int r = rnd.Next(0, m);
                 int n = Target(rnd, settings, level);
-                return CreateAvoidQuest($"Wähle {n} Zahlen (mod {m}={r}), aber meide Quadratzahlen",
-                    new NumberRainGoal($"mod {m}={r}", (v, _) => v % m == r, n),
-                    (v, _) => NumberRainRuleLibrary.IsSquare(v), "Quadratzahlen");
+                var label = LabelModulo(m, r);
+                var avoidLabel = LabelSquares();
+                return CreateAvoidQuest(Avoid(SelectCount(n, label), avoidLabel),
+                    new NumberRainGoal(label, (v, _) => v % m == r, n),
+                    (v, _) => NumberRainRuleLibrary.IsSquare(v), avoidLabel);
             },
 
             rnd =>
             {
                 int k = rnd.Next(3, 11);
                 int n = Target(rnd, settings, level);
-                return CreateAvoidQuest($"Wähle {n} Zahlen (Vielfache von {k}), aber meide Palindrome",
-                    new NumberRainGoal($"Vielfache von {k}", (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k), n),
-                    (v, _) => NumberRainRuleLibrary.IsPalindrome(v), "Palindrom");
+                var label = LabelMultiplesOf(k);
+                var avoidLabel = LabelPalindrome();
+                return CreateAvoidQuest(Avoid(SelectCount(n, label), avoidLabel),
+                    new NumberRainGoal(label, (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, k), n),
+                    (v, _) => NumberRainRuleLibrary.IsPalindrome(v), avoidLabel);
             },
 
             rnd =>
@@ -579,18 +686,22 @@ public sealed class NumberRainQuestGeneratorService
                 int s = rnd.Next(8, 20);
                 int n1 = Target(rnd, settings, level);
                 int n2 = Target(rnd, settings, level);
-                return CreateMultiQuest($"Sammle {n1} Zahlen (mod {m}={r}) und {n2} Zahlen (Quersumme = {s})",
-                    new NumberRainGoal($"mod {m}={r}", (v, _) => v % m == r, n1),
-                    new NumberRainGoal($"QS {s}", (v, _) => NumberRainRuleLibrary.SumDigits(v) == s, n2));
+                var label1 = LabelModulo(m, r);
+                var label2 = LabelDigitSumEquals(s);
+                return CreateMultiQuest(CollectDual(n1, label1, n2, label2),
+                    new NumberRainGoal(label1, (v, _) => v % m == r, n1),
+                    new NumberRainGoal(label2, (v, _) => NumberRainRuleLibrary.SumDigits(v) == s, n2));
             },
 
             rnd =>
             {
                 int n1 = Target(rnd, settings, level);
                 int n2 = Target(rnd, settings, level);
-                return CreateMultiQuest($"Sammle {n1} Potenzen von 2 und {n2} Primzahlen",
-                    new NumberRainGoal("Potenzen von 2", (v, _) => NumberRainRuleLibrary.IsPowerOfTwo(v), n1),
-                    new NumberRainGoal("Primzahlen", (v, _) => NumberRainRuleLibrary.IsPrime(v), n2));
+                var label1 = LabelPowersOfTwo();
+                var label2 = LabelPrimes();
+                return CreateMultiQuest(CollectDual(n1, label1, n2, label2),
+                    new NumberRainGoal(label1, (v, _) => NumberRainRuleLibrary.IsPowerOfTwo(v), n1),
+                    new NumberRainGoal(label2, (v, _) => NumberRainRuleLibrary.IsPrime(v), n2));
             },
 
             rnd =>
@@ -599,17 +710,20 @@ public sealed class NumberRainQuestGeneratorService
                 int d = rnd.Next(0, 10);
                 int n1 = Target(rnd, settings, level);
                 int n2 = Target(rnd, settings, level);
-                return CreateTimedQuest($"In {t}s: Sammle {n1} Fibonacci und {n2} Zahlen mit Ziffer {d}", t,
-                    new NumberRainGoal("Fibonacci", (v, _) => NumberRainRuleLibrary.IsFibonacci(v), n1),
-                    new NumberRainGoal($"Enthält {d}", (v, _) => NumberRainRuleLibrary.ContainsDigit(v, d), n2));
+                var label1 = LabelFibonacci();
+                var label2 = LabelContainsDigit(d);
+                return CreateTimedQuest(Timed(t, CollectDual(n1, label1, n2, label2)), t,
+                    new NumberRainGoal(label1, (v, _) => NumberRainRuleLibrary.IsFibonacci(v), n1),
+                    new NumberRainGoal(label2, (v, _) => NumberRainRuleLibrary.ContainsDigit(v, d), n2));
             },
 
             rnd =>
             {
                 int t = TimeLimit(rnd, settings) + 5;
                 int n = Target(rnd, settings, level);
-                return CreateSurvivalQuest($"Überlebe {t}s und mache mindestens {n} Treffer", t,
-                    new NumberRainRule("Schwere Regel", (v, _) => NumberRainRuleLibrary.IsSumDigitsPrime(v) && NumberRainRuleLibrary.IsOdd(v)),
+                var ruleLabel = LabelRuleHeavy();
+                return CreateSurvivalQuest(SurviveHits(t, n), t,
+                    new NumberRainRule(ruleLabel, (v, _) => NumberRainRuleLibrary.IsSumDigitsPrime(v) && NumberRainRuleLibrary.IsOdd(v)),
                     n, maxMisses: 5 + level / 8);
             },
 
@@ -617,8 +731,9 @@ public sealed class NumberRainQuestGeneratorService
             {
                 int t = TimeLimit(rnd, settings) + 5;
                 int maxMiss = 3 + level / 10;
-                return CreateSurvivalQuest($"Überlebe {t}s mit max. {maxMiss} Fehlklicks (Regel: mod/prim)", t,
-                    new NumberRainRule("Prim oder mod 3", (v, _) => NumberRainRuleLibrary.IsPrime(v) || v % 3 == 0),
+                var ruleLabel = LabelRulePrimeOrMod3();
+                return CreateSurvivalQuest(SurviveMaxMisses(t, maxMiss, ruleLabel), t,
+                    new NumberRainRule(ruleLabel, (v, _) => NumberRainRuleLibrary.IsPrime(v) || v % 3 == 0),
                     minHits: 0, maxMisses: maxMiss);
             }
         };
@@ -631,14 +746,16 @@ public sealed class NumberRainQuestGeneratorService
             rnd =>
             {
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Semiprime (Produkt aus genau 2 Primzahlen)", "Semiprime",
+                var label = LabelSemiPrime();
+                return CreateCountQuest(SelectCount(n, label), label,
                     (v, _) => NumberRainRuleLibrary.IsSemiPrime(v), n);
             },
 
             rnd =>
             {
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} squarefree Zahlen (kein Primquadrat teilt sie)", "squarefree",
+                var label = LabelSquareFree();
+                return CreateCountQuest(SelectCount(n, label), label,
                     (v, _) => NumberRainRuleLibrary.IsSquareFree(v), n);
             },
 
@@ -647,7 +764,8 @@ public sealed class NumberRainQuestGeneratorService
                 int m = rnd.Next(3, 12);
                 int r = rnd.Next(0, m);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen: (mod {m}={r}) UND (Quersumme prim)", $"mod {m}={r} & QS prim",
+                var label = LabelModuloDigitSumPrime(m, r);
+                return CreateCountQuest(SelectCount(n, label), label,
                     (v, _) => v % m == r && NumberRainRuleLibrary.IsSumDigitsPrime(v), n);
             },
 
@@ -655,7 +773,8 @@ public sealed class NumberRainQuestGeneratorService
             {
                 int s = rnd.Next(10, 25);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen: (Prim) UND (Quersumme = {s})", $"Prim & QS {s}",
+                var label = LabelPrimeDigitSum(s);
+                return CreateCountQuest(SelectCount(n, label), label,
                     (v, _) => NumberRainRuleLibrary.IsPrime(v) && NumberRainRuleLibrary.SumDigits(v) == s, n);
             },
 
@@ -665,31 +784,49 @@ public sealed class NumberRainQuestGeneratorService
                 int r = rnd.Next(0, m);
                 int d = rnd.Next(0, 10);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen: (contains {d}) UND (mod {m}={r}) UND (ungerade)", $"{d} & mod {m}={r} & ungerade",
+                var label = LabelContainsDigitModuloOdd(d, m, r);
+                return CreateCountQuest(SelectCount(n, label), label,
                     (v, _) => NumberRainRuleLibrary.ContainsDigit(v, d) && v % m == r && NumberRainRuleLibrary.IsOdd(v), n);
             },
 
             rnd =>
             {
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen: (Harshad) UND (nicht durch 10 teilbar)", "Harshad ohne 10",
+                var label = LabelHarshadWithoutTen();
+                return CreateCountQuest(SelectCount(n, label), label,
                     (v, _) => NumberRainRuleLibrary.IsHarshad(v) && !NumberRainRuleLibrary.IsMultipleOf(v, 10), n);
             },
 
-            rnd => CreateCountQuest($"Wähle {Target(rnd, settings, level)} Zahlen: (pronic n(n+1))", "pronic",
-                (v, _) => NumberRainRuleLibrary.IsPronic(v), Target(rnd, settings, level)),
+            rnd =>
+            {
+                int n = Target(rnd, settings, level);
+                var label = LabelPronic();
+                return CreateCountQuest(SelectCount(n, label), label,
+                    (v, _) => NumberRainRuleLibrary.IsPronic(v), n);
+            },
 
-            rnd => CreateCountQuest($"Wähle {Target(rnd, settings, level)} Zahlen: (Automorph)", "automorph",
-                (v, _) => NumberRainRuleLibrary.IsAutomorph(v), Target(rnd, settings, level)),
+            rnd =>
+            {
+                int n = Target(rnd, settings, level);
+                var label = LabelAutomorphic();
+                return CreateCountQuest(SelectCount(n, label), label,
+                    (v, _) => NumberRainRuleLibrary.IsAutomorph(v), n);
+            },
 
-            rnd => CreateCountQuest($"Wähle {Target(rnd, settings, level)} Zahlen: (Palindrom) UND (nicht prim)", "Palindrom, nicht prim",
-                (v, _) => NumberRainRuleLibrary.IsPalindrome(v) && !NumberRainRuleLibrary.IsPrime(v), Target(rnd, settings, level)),
+            rnd =>
+            {
+                int n = Target(rnd, settings, level);
+                var label = LabelPalindromeNotPrime();
+                return CreateCountQuest(SelectCount(n, label), label,
+                    (v, _) => NumberRainRuleLibrary.IsPalindrome(v) && !NumberRainRuleLibrary.IsPrime(v), n);
+            },
 
             rnd =>
             {
                 int d = rnd.Next(0, 10);
                 int n = Target(rnd, settings, level);
-                return CreateCountQuest($"Wähle {n} Zahlen: (Quadratzahl) UND (enthält {d})", $"Quadrat mit {d}",
+                var label = LabelSquareContainsDigit(d);
+                return CreateCountQuest(SelectCount(n, label), label,
                     (v, _) => NumberRainRuleLibrary.IsSquare(v) && NumberRainRuleLibrary.ContainsDigit(v, d), n);
             },
 
@@ -697,16 +834,18 @@ public sealed class NumberRainQuestGeneratorService
             {
                 int t = TimeLimit(rnd, settings);
                 int n = Target(rnd, settings, level);
-                return CreateTimedQuest($"In {t}s: Sammle {n} (Semiprime)", t,
-                    new NumberRainGoal("Semiprime", (v, _) => NumberRainRuleLibrary.IsSemiPrime(v), n));
+                var label = LabelSemiPrime();
+                return CreateTimedQuest(Timed(t, CollectCount(n, label)), t,
+                    new NumberRainGoal(label, (v, _) => NumberRainRuleLibrary.IsSemiPrime(v), n));
             },
 
             rnd =>
             {
                 int t = TimeLimit(rnd, settings);
                 int n = Target(rnd, settings, level);
-                return CreateTimedQuest($"In {t}s: Sammle {n} (squarefree)", t,
-                    new NumberRainGoal("squarefree", (v, _) => NumberRainRuleLibrary.IsSquareFree(v), n));
+                var label = LabelSquareFree();
+                return CreateTimedQuest(Timed(t, CollectCount(n, label)), t,
+                    new NumberRainGoal(label, (v, _) => NumberRainRuleLibrary.IsSquareFree(v), n));
             },
 
             rnd =>
@@ -715,33 +854,40 @@ public sealed class NumberRainQuestGeneratorService
                 int m = rnd.Next(3, 12);
                 int r = rnd.Next(0, m);
                 int n = Target(rnd, settings, level);
-                return CreateTimedQuest($"In {t}s: Sammle {n} (mod {m}={r} UND Quersumme prim)", t,
-                    new NumberRainGoal($"mod {m}={r} & QS prim", (v, _) => v % m == r && NumberRainRuleLibrary.IsSumDigitsPrime(v), n));
+                var label = LabelModuloDigitSumPrime(m, r);
+                return CreateTimedQuest(Timed(t, CollectCount(n, label)), t,
+                    new NumberRainGoal(label, (v, _) => v % m == r && NumberRainRuleLibrary.IsSumDigitsPrime(v), n));
             },
 
             rnd =>
             {
                 int n = Target(rnd, settings, level);
-                return CreateAvoidQuest($"Wähle {n} Treffer (Regel R), aber klicke NIE auf Zahlen mit Eigenschaft X (z.B. Prim)",
-                    new NumberRainGoal("Regel R", (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, 3), n),
-                    (v, _) => NumberRainRuleLibrary.IsPrime(v), "Primzahlen");
+                var ruleLabel = LabelRuleR();
+                var avoidLabel = LabelPrimes();
+                return CreateAvoidQuest(Avoid(SelectCount(n, ruleLabel), avoidLabel),
+                    new NumberRainGoal(ruleLabel, (v, _) => NumberRainRuleLibrary.IsMultipleOf(v, 3), n),
+                    (v, _) => NumberRainRuleLibrary.IsPrime(v), avoidLabel);
             },
 
             rnd =>
             {
                 int d = rnd.Next(0, 10);
                 int n = Target(rnd, settings, level);
-                return CreateAvoidQuest($"Wähle {n} Treffer (Regel R), aber jede Zahl mit Ziffer {d} ist Bombe",
-                    new NumberRainGoal("Regel R", (v, _) => NumberRainRuleLibrary.IsOdd(v), n),
-                    (v, _) => NumberRainRuleLibrary.ContainsDigit(v, d), $"Ziffer {d}");
+                var ruleLabel = LabelRuleR();
+                var avoidLabel = LabelBombDigit(d);
+                return CreateAvoidQuest(Avoid(SelectCount(n, ruleLabel), avoidLabel),
+                    new NumberRainGoal(ruleLabel, (v, _) => NumberRainRuleLibrary.IsOdd(v), n),
+                    (v, _) => NumberRainRuleLibrary.ContainsDigit(v, d), avoidLabel);
             },
 
             rnd =>
             {
                 int n = Target(rnd, settings, level);
-                return CreateAvoidQuest($"Wähle {n} Treffer (Regel R), aber jede Quadratzahl ist Bombe",
-                    new NumberRainGoal("Regel R", (v, _) => NumberRainRuleLibrary.IsSumDigitsPrime(v), n),
-                    (v, _) => NumberRainRuleLibrary.IsSquare(v), "Quadratzahlen");
+                var ruleLabel = LabelRuleR();
+                var avoidLabel = LabelSquares();
+                return CreateAvoidQuest(Avoid(SelectCount(n, ruleLabel), avoidLabel),
+                    new NumberRainGoal(ruleLabel, (v, _) => NumberRainRuleLibrary.IsSumDigitsPrime(v), n),
+                    (v, _) => NumberRainRuleLibrary.IsSquare(v), avoidLabel);
             },
 
             rnd =>
@@ -752,10 +898,13 @@ public sealed class NumberRainQuestGeneratorService
                 int n1 = Target(rnd, settings, level);
                 int n2 = Target(rnd, settings, level);
                 int n3 = Target(rnd, settings, level);
-                return CreateMultiQuest($"Sammle {n1} (Semiprime) + {n2} (mod {m}={r}) + {n3} (Quersumme = {s})",
-                    new NumberRainGoal("Semiprime", (v, _) => NumberRainRuleLibrary.IsSemiPrime(v), n1),
-                    new NumberRainGoal($"mod {m}={r}", (v, _) => v % m == r, n2),
-                    new NumberRainGoal($"QS {s}", (v, _) => NumberRainRuleLibrary.SumDigits(v) == s, n3));
+                var label1 = LabelSemiPrime();
+                var label2 = LabelModulo(m, r);
+                var label3 = LabelDigitSumEquals(s);
+                return CreateMultiQuest(CollectTriple(n1, label1, n2, label2, n3, label3),
+                    new NumberRainGoal(label1, (v, _) => NumberRainRuleLibrary.IsSemiPrime(v), n1),
+                    new NumberRainGoal(label2, (v, _) => v % m == r, n2),
+                    new NumberRainGoal(label3, (v, _) => NumberRainRuleLibrary.SumDigits(v) == s, n3));
             },
 
             rnd =>
@@ -763,9 +912,11 @@ public sealed class NumberRainQuestGeneratorService
                 int t = TimeLimit(rnd, settings);
                 int n1 = Target(rnd, settings, level);
                 int n2 = Target(rnd, settings, level);
-                return CreateTimedQuest($"In {t}s: {n1} (Prim) + {n2} (Potenzen von 2)", t,
-                    new NumberRainGoal("Primzahlen", (v, _) => NumberRainRuleLibrary.IsPrime(v), n1),
-                    new NumberRainGoal("Potenzen von 2", (v, _) => NumberRainRuleLibrary.IsPowerOfTwo(v), n2));
+                var label1 = LabelPrimes();
+                var label2 = LabelPowersOfTwo();
+                return CreateTimedQuest(Timed(t, CollectDual(n1, label1, n2, label2)), t,
+                    new NumberRainGoal(label1, (v, _) => NumberRainRuleLibrary.IsPrime(v), n1),
+                    new NumberRainGoal(label2, (v, _) => NumberRainRuleLibrary.IsPowerOfTwo(v), n2));
             },
 
             rnd =>
@@ -775,31 +926,37 @@ public sealed class NumberRainQuestGeneratorService
                 while (e == d) e = rnd.Next(0, 10);
                 int n1 = Target(rnd, settings, level);
                 int n2 = Target(rnd, settings, level);
-                return CreateMultiQuest($"Sammle {n1} (squarefree) und {n2} (enthält {d} aber nicht {e})",
-                    new NumberRainGoal("squarefree", (v, _) => NumberRainRuleLibrary.IsSquareFree(v), n1),
-                    new NumberRainGoal($"{d} ohne {e}", (v, _) => NumberRainRuleLibrary.ContainsDigit(v, d) && !NumberRainRuleLibrary.ContainsDigit(v, e), n2));
+                var label1 = LabelSquareFree();
+                var label2 = LabelContainsDigitNot(d, e);
+                return CreateMultiQuest(CollectDual(n1, label1, n2, label2),
+                    new NumberRainGoal(label1, (v, _) => NumberRainRuleLibrary.IsSquareFree(v), n1),
+                    new NumberRainGoal(label2, (v, _) => NumberRainRuleLibrary.ContainsDigit(v, d) && !NumberRainRuleLibrary.ContainsDigit(v, e), n2));
             },
 
             rnd =>
             {
                 int n = Target(rnd, settings, level);
-                return CreateDynamicQuest($"Kettenregel: „Wähle {n} Zahlen, die > der letzten Wahl sind“", n,
-                    new NumberRainRule("größer als letzte Wahl", (v, last) => last is null || v > last));
+                var ruleLabel = LabelGreaterThanLastPick();
+                return CreateDynamicQuest(ChainGreater(n), n,
+                    new NumberRainRule(ruleLabel, (v, last) => last is null || v > last));
             },
 
             rnd =>
             {
                 int n = Target(rnd, settings, level);
-                return CreateDynamicQuest($"Kettenregel: „Wähle {n} Zahlen, die durch die letzte Wahl teilbar sind“", n,
-                    new NumberRainRule("teilbar durch letzte Wahl", (v, last) => last is null || (last != 0 && v % last == 0)));
+                var ruleLabel = LabelDivisibleByLastPick();
+                return CreateDynamicQuest(ChainDivisible(n), n,
+                    new NumberRainRule(ruleLabel, (v, last) => last is null || (last != 0 && v % last == 0)));
             },
 
             rnd =>
             {
                 int n = Target(rnd, settings, level);
-                return CreateSwitchQuest($"Wechselregel: „Alle 10 Sekunden ändert sich die Regel zwischen R1 und R2“", n, 10,
-                    new NumberRainRule("R1: Gerade", (v, _) => NumberRainRuleLibrary.IsEven(v)),
-                    new NumberRainRule("R2: Prim", (v, _) => NumberRainRuleLibrary.IsPrime(v)));
+                var ruleA = LabelRuleR1Even();
+                var ruleB = LabelRuleR2Prime();
+                return CreateSwitchQuest(SwitchRule(10, ruleA, ruleB), n, 10,
+                    new NumberRainRule(ruleA, (v, _) => NumberRainRuleLibrary.IsEven(v)),
+                    new NumberRainRule(ruleB, (v, _) => NumberRainRuleLibrary.IsPrime(v)));
             }
         };
     }
@@ -893,10 +1050,123 @@ public sealed class NumberRainQuestGeneratorService
         {
             Description = description,
             Mode = NumberRainQuestMode.Switch,
-            Goals = new[] { new NumberRainGoal("Treffer", (v, last) => ruleA.Predicate(v, last) || ruleB.Predicate(v, last), target) },
+            Goals = new[] { new NumberRainGoal(LabelHits(), (v, last) => ruleA.Predicate(v, last) || ruleB.Predicate(v, last), target) },
             Rules = new[] { ruleA, ruleB },
             SwitchIntervalSeconds = intervalSeconds
         };
+
+    private static string SelectCount(int count, string label)
+        => LocalizationService.Format("NumberRain_Quest_SelectCountFormat", count, label);
+
+    private static string CollectCount(int count, string label)
+        => LocalizationService.Format("NumberRain_Quest_CollectCountFormat", count, label);
+
+    private static string CollectDual(int countA, string labelA, int countB, string labelB)
+        => LocalizationService.Format("NumberRain_Quest_CollectDualFormat", countA, labelA, countB, labelB);
+
+    private static string CollectTriple(int countA, string labelA, int countB, string labelB, int countC, string labelC)
+        => LocalizationService.Format("NumberRain_Quest_CollectTripleFormat", countA, labelA, countB, labelB, countC, labelC);
+
+    private static string Timed(int seconds, string text)
+        => LocalizationService.Format("NumberRain_Quest_TimedFormat", seconds, text);
+
+    private static string Avoid(string text, string avoidLabel)
+        => LocalizationService.Format("NumberRain_Quest_AvoidFormat", text, avoidLabel);
+
+    private static string Combo(int target, string ruleLabel)
+        => LocalizationService.Format("NumberRain_Quest_ComboFormat", target, ruleLabel);
+
+    private static string SurviveHits(int seconds, int hits)
+        => LocalizationService.Format("NumberRain_Quest_SurviveHitsFormat", seconds, hits);
+
+    private static string SurviveMaxMisses(int seconds, int misses, string ruleLabel)
+        => LocalizationService.Format("NumberRain_Quest_SurviveMaxMissesFormat", seconds, misses, ruleLabel);
+
+    private static string ChainGreater(int count)
+        => LocalizationService.Format("NumberRain_Quest_ChainGreaterFormat", count);
+
+    private static string ChainDivisible(int count)
+        => LocalizationService.Format("NumberRain_Quest_ChainDivisibleFormat", count);
+
+    private static string SwitchRule(int intervalSeconds, string ruleA, string ruleB)
+        => LocalizationService.Format("NumberRain_Quest_SwitchRuleFormat", intervalSeconds, ruleA, ruleB);
+
+    private static string LabelEvenNumbers() => LocalizationService.GetString("NumberRain_LabelEvenNumbers");
+    private static string LabelOddNumbers() => LocalizationService.GetString("NumberRain_LabelOddNumbers");
+    private static string LabelMultiplesOf(int value) => LocalizationService.Format("NumberRain_LabelMultiplesOfFormat", value);
+    private static string LabelOddMultiplesOf(int value) => LocalizationService.Format("NumberRain_LabelOddMultiplesOfFormat", value);
+    private static string LabelEndsWithDigit(int digit) => LocalizationService.Format("NumberRain_LabelEndsWithDigitFormat", digit);
+    private static string LabelRange(int min, int max) => LocalizationService.Format("NumberRain_LabelRangeFormat", min, max);
+    private static string LabelLessThan(int value) => LocalizationService.Format("NumberRain_LabelLessThanFormat", value);
+    private static string LabelGreaterThan(int value) => LocalizationService.Format("NumberRain_LabelGreaterThanFormat", value);
+    private static string LabelTwoDigitNumbers() => LocalizationService.GetString("NumberRain_LabelTwoDigitNumbers");
+    private static string LabelDigitCount(int digits) => LocalizationService.Format("NumberRain_LabelDigitCountFormat", digits);
+    private static string LabelContainsDigit(int digit) => LocalizationService.Format("NumberRain_LabelContainsDigitFormat", digit);
+    private static string LabelNotContainsDigit(int digit) => LocalizationService.Format("NumberRain_LabelNotContainsDigitFormat", digit);
+    private static string LabelDigitSumEven() => LocalizationService.GetString("NumberRain_LabelDigitSumEven");
+    private static string LabelDigitSumOdd() => LocalizationService.GetString("NumberRain_LabelDigitSumOdd");
+    private static string LabelDigitSumEquals(int sum) => LocalizationService.Format("NumberRain_LabelDigitSumEqualsFormat", sum);
+    private static string LabelDivisibleBy2Or5() => LocalizationService.GetString("NumberRain_LabelDivisibleBy2Or5");
+    private static string LabelPrimes() => LocalizationService.GetString("NumberRain_LabelPrimes");
+    private static string LabelNonPrimes() => LocalizationService.GetString("NumberRain_LabelNonPrimes");
+    private static string LabelSquares() => LocalizationService.GetString("NumberRain_LabelSquares");
+    private static string LabelPalindrome() => LocalizationService.GetString("NumberRain_LabelPalindrome");
+    private static string LabelDigitSumPrime() => LocalizationService.GetString("NumberRain_LabelDigitSumPrime");
+    private static string LabelContainsDigitAndEven(int digit) => LocalizationService.Format("NumberRain_LabelContainsDigitAndEvenFormat", digit);
+    private static string LabelContainsDigitAndNotDivisible(int digit, int divisor)
+        => LocalizationService.Format("NumberRain_LabelContainsDigitAndNotDivisibleFormat", digit, divisor);
+    private static string LabelAtLeastTwoEqualDigits() => LocalizationService.GetString("NumberRain_LabelAtLeastTwoEqualDigits");
+    private static string LabelAllDigitsDifferent() => LocalizationService.GetString("NumberRain_LabelAllDigitsDifferent");
+    private static string LabelCloserTo(int value) => LocalizationService.Format("NumberRain_LabelCloserToFormat", value);
+    private static string LabelDivisibleByBoth(int first, int second)
+        => LocalizationService.Format("NumberRain_LabelDivisibleByBothFormat", first, second);
+    private static string LabelDivisibleByNot(int first, int second)
+        => LocalizationService.Format("NumberRain_LabelDivisibleByNotFormat", first, second);
+    private static string LabelModulo(int modulo, int remainder)
+        => LocalizationService.Format("NumberRain_LabelModuloFormat", modulo, remainder);
+    private static string LabelPrimeGreaterThan(int value)
+        => LocalizationService.Format("NumberRain_LabelPrimeGreaterThanFormat", value);
+    private static string LabelPrimeContainsDigit(int digit)
+        => LocalizationService.Format("NumberRain_LabelPrimeContainsDigitFormat", digit);
+    private static string LabelSquareOrPrime() => LocalizationService.GetString("NumberRain_LabelSquareOrPrime");
+    private static string LabelMultiplesAndDigitSumPrime(int value)
+        => LocalizationService.Format("NumberRain_LabelMultiplesAndDigitSumPrimeFormat", value);
+    private static string LabelFibonacci() => LocalizationService.GetString("NumberRain_LabelFibonacci");
+    private static string LabelPowersOfTwo() => LocalizationService.GetString("NumberRain_LabelPowersOfTwo");
+    private static string LabelDigitsIncreasing() => LocalizationService.GetString("NumberRain_LabelDigitsIncreasing");
+    private static string LabelDigitsDecreasing() => LocalizationService.GetString("NumberRain_LabelDigitsDecreasing");
+    private static string LabelContainsDigitNot(int digit, int otherDigit)
+        => LocalizationService.Format("NumberRain_LabelContainsDigitNotFormat", digit, otherDigit);
+    private static string LabelDivisibleByButDigitSumOdd(int value)
+        => LocalizationService.Format("NumberRain_LabelDivisibleByButDigitSumOddFormat", value);
+    private static string LabelPalindromeDivisibleBy(int value)
+        => LocalizationService.Format("NumberRain_LabelPalindromeDivisibleByFormat", value);
+    private static string LabelContainsDigitAndDigitSumPrime(int digit)
+        => LocalizationService.Format("NumberRain_LabelContainsDigitAndDigitSumPrimeFormat", digit);
+    private static string LabelPrimeDigitSum(int sum)
+        => LocalizationService.Format("NumberRain_LabelPrimeDigitSumFormat", sum);
+    private static string LabelModuloDigitSumPrime(int modulo, int remainder)
+        => LocalizationService.Format("NumberRain_LabelModuloDigitSumPrimeFormat", modulo, remainder);
+    private static string LabelContainsDigitModuloOdd(int digit, int modulo, int remainder)
+        => LocalizationService.Format("NumberRain_LabelContainsDigitModuloOddFormat", digit, modulo, remainder);
+    private static string LabelHarshadWithoutTen() => LocalizationService.GetString("NumberRain_LabelHarshadWithoutTen");
+    private static string LabelPronic() => LocalizationService.GetString("NumberRain_LabelPronic");
+    private static string LabelAutomorphic() => LocalizationService.GetString("NumberRain_LabelAutomorphic");
+    private static string LabelPalindromeNotPrime() => LocalizationService.GetString("NumberRain_LabelPalindromeNotPrime");
+    private static string LabelSquareContainsDigit(int digit)
+        => LocalizationService.Format("NumberRain_LabelSquareContainsDigitFormat", digit);
+    private static string LabelSemiPrime() => LocalizationService.GetString("NumberRain_LabelSemiPrime");
+    private static string LabelSquareFree() => LocalizationService.GetString("NumberRain_LabelSquareFree");
+    private static string LabelHits() => LocalizationService.GetString("NumberRain_LabelHits");
+    private static string LabelRuleR() => LocalizationService.GetString("NumberRain_LabelRuleR");
+    private static string LabelRuleHeavy() => LocalizationService.GetString("NumberRain_LabelRuleHeavy");
+    private static string LabelRulePrimeOrMod3() => LocalizationService.GetString("NumberRain_LabelRulePrimeOrMod3");
+    private static string LabelRuleR1Even() => LocalizationService.GetString("NumberRain_LabelRuleR1Even");
+    private static string LabelRuleR2Prime() => LocalizationService.GetString("NumberRain_LabelRuleR2Prime");
+    private static string LabelGreaterThanLastPick() => LocalizationService.GetString("NumberRain_LabelGreaterThanLastPick");
+    private static string LabelDivisibleByLastPick() => LocalizationService.GetString("NumberRain_LabelDivisibleByLastPick");
+    private static string LabelBombDigit(int digit)
+        => LocalizationService.Format("NumberRain_LabelBombDigitFormat", digit);
 }
 
 public sealed record NumberRainDifficultySettings(
