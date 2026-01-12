@@ -469,19 +469,24 @@ public sealed class CompleteSequenceGeneratorService
         {
             int a = rnd.Next(1, 8);
             int r = rnd.Next(2, 5);
+
             var values = new List<int>(length);
             bool ok = true;
 
+            long cur = a;
             for (int i = 0; i < length; i++)
             {
-                double value = a * Math.Pow(r, i);
-                if (!IsInRange(value, maxValue)) { ok = false; break; }
-                values.Add((int)value);
+                if (!IsInRange(cur, maxValue)) { ok = false; break; }
+                values.Add((int)cur);
+
+                cur *= r;
             }
+
             if (ok) return values;
         }
         return null;
     }
+
 
     private static List<int>? GenerateAlternating(Random rnd, int length, int maxValue)
     {
