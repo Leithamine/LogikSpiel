@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Threading;
 using LogikSpiel.Model;
 using Microsoft.Maui.Storage;
 
@@ -8,6 +9,7 @@ public sealed class RiddleStateStore : IRiddleStateStore
 {
     private const string RiddleKeysIndex = "riddle:keys";
     private const int MaxStoredRiddles = 100;
+    private static readonly SemaphoreSlim _lock = new(1, 1);
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -17,42 +19,57 @@ public sealed class RiddleStateStore : IRiddleStateStore
     private static string Key(string gameId, string difficulty, int level)
         => $"riddle:{gameId}:{difficulty}:{level}";
 
-    public Task<LockRiddleGame?> TryLoadAsync(string gameId, string difficulty, int level)
+    public async Task<LockRiddleGame?> TryLoadAsync(string gameId, string difficulty, int level)
     {
-        var key = Key(gameId, difficulty, level);
-
-        if (!Preferences.ContainsKey(key))
-            return Task.FromResult<LockRiddleGame?>(null);
-
-        var json = Preferences.Get(key, "");
-        if (string.IsNullOrWhiteSpace(json))
-            return Task.FromResult<LockRiddleGame?>(null);
-
+        await _lock.WaitAsync();
         try
         {
-            var game = JsonSerializer.Deserialize<LockRiddleGame>(json, JsonOptions);
-            if (game == null || string.IsNullOrWhiteSpace(game.SecretCode) || game.Hints == null || game.Hints.Count == 0)
+            var key = Key(gameId, difficulty, level);
+
+            if (!Preferences.ContainsKey(key))
+                return null;
+
+            var json = Preferences.Get(key, "");
+            if (string.IsNullOrWhiteSpace(json))
+                return null;
+
+            try
+            {
+                var game = JsonSerializer.Deserialize<LockRiddleGame>(json, JsonOptions);
+                if (game == null || string.IsNullOrWhiteSpace(game.SecretCode) || game.Hints == null || game.Hints.Count == 0)
+                {
+                    Preferences.Remove(key);
+                    return null;
+                }
+
+                return game;
+            }
+            catch
             {
                 Preferences.Remove(key);
-                return Task.FromResult<LockRiddleGame?>(null);
+                return null;
             }
-
-            return Task.FromResult<LockRiddleGame?>(game);
         }
-        catch
+        finally
         {
-            Preferences.Remove(key);
-            return Task.FromResult<LockRiddleGame?>(null);
+            _lock.Release();
         }
     }
 
-    public Task SaveAsync(string gameId, string difficulty, int level, LockRiddleGame game)
+    public async Task SaveAsync(string gameId, string difficulty, int level, LockRiddleGame game)
     {
-        var key = Key(gameId, difficulty, level);
-        var json = JsonSerializer.Serialize(game, JsonOptions);
-        Preferences.Set(key, json);
-        CleanupOldRiddles(key);
-        return Task.CompletedTask;
+        await _lock.WaitAsync();
+        try
+        {
+            var key = Key(gameId, difficulty, level);
+            var json = JsonSerializer.Serialize(game, JsonOptions);
+            Preferences.Set(key, json);
+            CleanupOldRiddles(key);
+        }
+        finally
+        {
+            _lock.Release();
+        }
     }
 
     private void CleanupOldRiddles(string newKey)
@@ -93,17 +110,23 @@ public sealed class RiddleStateStore : IRiddleStateStore
         Preferences.Set(RiddleKeysIndex, string.Join("|", unique));
     }
 
-    public Task ClearAsync(string gameId, string difficulty, int level)
+    public async Task ClearAsync(string gameId, string difficulty, int level)
     {
-        var key = Key(gameId, difficulty, level);
-        Preferences.Remove(key);
-
-        var keys = LoadRiddleKeys();
-        if (keys.RemoveAll(k => string.Equals(k, key, StringComparison.Ordinal)) > 0)
+        await _lock.WaitAsync();
+        try
         {
-            SaveRiddleKeys(keys);
-        }
+            var key = Key(gameId, difficulty, level);
+            Preferences.Remove(key);
 
-        return Task.CompletedTask;
+            var keys = LoadRiddleKeys();
+            if (keys.RemoveAll(k => string.Equals(k, key, StringComparison.Ordinal)) > 0)
+            {
+                SaveRiddleKeys(keys);
+            }
+        }
+        finally
+        {
+            _lock.Release();
+        }
     }
 }
