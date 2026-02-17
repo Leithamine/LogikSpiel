@@ -58,7 +58,7 @@ public sealed class GameHostPageViewModel : ObservableObject
             await _progressStore.SaveAsync(progress); // WICHTIG: Speichern!
 
             // Prüfe ob nächstes Level existiert
-            var maxLevel = Game?.LevelCount ?? 100;
+            var maxLevel = Game?.LevelCount ?? 10000;
             if (LevelNumber >= maxLevel)
             {
                 await _dialog.AlertAsync(

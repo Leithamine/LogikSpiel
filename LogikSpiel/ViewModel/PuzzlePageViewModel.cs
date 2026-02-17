@@ -120,7 +120,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
             {
                 await _dialog.AlertAsync(
                     LocalizationService.GetString("Common_NotEnoughCoinsTitle"),
-                    LocalizationService.Format("Common_NeedCoinsFormat", 10));
+                    LocalizationService.Format("Common_NeedCoinsFormat", 50));
             }
         });
     }
