@@ -107,12 +107,12 @@ public sealed class GameMapPageViewModel : ObservableObject
             await BuildMapAsync();
         });
 
-        // ✅ WICHTIG: je nach Spiel zur richtigen Rätsel-Page navigieren
         OpenLevelCommand = new AsyncCommand<LevelNodeViewModel>(async node =>
         {
             if (node is null || !node.IsUnlocked) return;
+            if (Game is null || string.IsNullOrWhiteSpace(Game.Route)) return;
 
-            await _nav.GoToAsync(nameof(GameHostPage), new Dictionary<string, object>
+            await _nav.GoToAsync(Game.Route, new Dictionary<string, object>
             {
                 ["gameId"] = node.Spec.GameId,
                 ["difficulty"] = node.Spec.DifficultyKey,

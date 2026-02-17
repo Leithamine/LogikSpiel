@@ -22,18 +22,30 @@ public sealed class AsyncCommand : ICommand
         _canExecute = canExecute;
     }
 
+    private bool EvaluateCanExecute()
+    {
+        try
+        {
+            return _canExecute?.Invoke() ?? true;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"CANEXECUTE ERROR: {ex}");
+            return false;
+        }
+    }
+
     public bool CanExecute(object? parameter)
-        => _isExecuting == 0 && (_canExecute?.Invoke() ?? true);
+        => _isExecuting == 0 && EvaluateCanExecute();
 
     public async void Execute(object? parameter)
     {
-        // Atomare Prüfung: Wenn _isExecuting 0 war, setze es auf 1 und gib true zurück
         if (Interlocked.CompareExchange(ref _isExecuting, 1, 0) != 0)
-            return; // Bereits am Ausführen
+            return;
 
-        if (!CanExecute(parameter))
+        if (!EvaluateCanExecute())
         {
-            Interlocked.Exchange(ref _isExecuting, 0); // Zurücksetzen
+            Interlocked.Exchange(ref _isExecuting, 0);
             return;
         }
 
@@ -88,25 +100,38 @@ public sealed class AsyncCommand<T> : ICommand
         _canExecute = canExecute;
     }
 
+    private bool EvaluateCanExecute(T? parameter)
+    {
+        try
+        {
+            return _canExecute?.Invoke(parameter) ?? true;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"CANEXECUTE ERROR: {ex}");
+            return false;
+        }
+    }
+
     public bool CanExecute(object? parameter)
-        => _isExecuting == 0 && (_canExecute?.Invoke((T?)parameter) ?? true);
+        => _isExecuting == 0 && EvaluateCanExecute((T?)parameter);
 
     public async void Execute(object? parameter)
     {
-        // Atomare Prüfung: Wenn _isExecuting 0 war, setze es auf 1 und gib true zurück
         if (Interlocked.CompareExchange(ref _isExecuting, 1, 0) != 0)
-            return; // Bereits am Ausführen
+            return;
 
-        if (!CanExecute(parameter))
+        var typedParameter = (T?)parameter;
+        if (!EvaluateCanExecute(typedParameter))
         {
-            Interlocked.Exchange(ref _isExecuting, 0); // Zurücksetzen
+            Interlocked.Exchange(ref _isExecuting, 0);
             return;
         }
 
         try
         {
             RaiseCanExecuteChanged();
-            await _execute((T?)parameter);
+            await _execute(typedParameter);
         }
         catch (Exception ex)
         {
