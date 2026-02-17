@@ -39,7 +39,7 @@ public sealed class NumberRainQuestGeneratorService
         };
 
         if (pool.Count == 0)
-            throw new InvalidOperationException("Keine Missionen verfügbar.");
+            return CreateCountQuest("Sammle gerade Zahlen", "Gerade Zahlen", (v, _) => v % 2 == 0, 5);
 
         return pool[rnd.Next(pool.Count)](rnd);
     }
@@ -963,9 +963,9 @@ public sealed class NumberRainQuestGeneratorService
 
     private static int Target(Random rnd, NumberRainDifficultySettings settings, int level)
     {
-        int boost = (level - 1) / 2; // Alle 2 Level steigt das Ziel um 1
-        int min = settings.MinTarget + boost;
-        int max = settings.MaxTarget + boost;
+        int boost = Math.Min((level - 1) / 2, 20);
+        int min = Math.Min(settings.MinTarget + boost, settings.MaxTarget);
+        int max = Math.Min(settings.MaxTarget + boost, 100);
         return rnd.Next(min, max + 1);
     }
 

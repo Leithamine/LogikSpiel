@@ -86,8 +86,38 @@ public sealed class MathHangmanService : IMathHangmanService
     private static bool IsArmstrong(int n) { string s = n.ToString(); return s.Sum(c => Math.Pow(c - '0', s.Length)) == n; }
     private static bool IsSemiprime(int n) { int count = 0, temp = n; for (int i = 2; i * i <= temp && count < 2; i++) { while (temp % i == 0) { temp /= i; count++; } } if (temp > 1) count++; return count == 2; }
     private static bool IsAutomorphic(int n) => ((long)n * n).ToString().EndsWith(n.ToString());
-    private static bool IsFactorial(int n) { int f = 1, i = 1; while (f < n) f *= ++i; return f == n; }
-    private static bool IsStrongNumber(int n) { int Fact(int x) => x <= 1 ? 1 : x * Fact(x - 1); return n.ToString().Sum(c => Fact(c - '0')) == n; }
+    private static bool IsFactorial(int n)
+    {
+        if (n < 1) return false;
+
+        int f = 1;
+        int i = 1;
+        while (f < n && i < 20)
+        {
+            i++;
+            f *= i;
+        }
+
+        return f == n;
+    }
+
+    private static bool IsStrongNumber(int n)
+    {
+        int Fact(int x)
+        {
+            int result = 1;
+            for (int i = 2; i <= x; i++) result *= i;
+            return result;
+        }
+
+        return n.ToString().Sum(c => Fact(c - '0')) == n;
+    }
     private static bool IsSophieGermain(int n) => IsPrime(n) && IsPrime(2 * n + 1);
-    private static bool IsMersenne(int n) { if (!IsPrime(n)) return false; double p = Math.Log2(n + 1); return p == (int)p && IsPrime((int)p); }
+    private static bool IsMersenne(int n)
+    {
+        if (!IsPrime(n)) return false;
+        long np1 = (long)n + 1;
+        if (np1 <= 0) return false;
+        return (np1 & (np1 - 1)) == 0;
+    }
 }

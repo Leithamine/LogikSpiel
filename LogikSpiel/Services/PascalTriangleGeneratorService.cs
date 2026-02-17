@@ -92,6 +92,8 @@ public sealed class PascalTriangleGeneratorService
 
     private static (decimal sum, List<(int row, int col)> path) FindMaxPath(List<List<decimal>> tri)
     {
+        if (tri == null || tri.Count == 0) return (0, new List<(int, int)>());
+
         int n = tri.Count;
         var dp = new decimal[n][];
         var parent = new int[n][];
@@ -164,6 +166,8 @@ public sealed class PascalTriangleGeneratorService
 
     private static (decimal sum, List<(int row, int col)> path) FindMinPath(List<List<decimal>> tri)
     {
+        if (tri == null || tri.Count == 0) return (0, new List<(int, int)>());
+
         int n = tri.Count;
         var dp = new decimal[n][];
         var parent = new int[n][];
