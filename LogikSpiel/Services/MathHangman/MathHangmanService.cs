@@ -103,6 +103,8 @@ public sealed class MathHangmanService : IMathHangmanService
 
     private static bool IsStrongNumber(int n)
     {
+        if (n < 0) return false;
+
         int Fact(int x)
         {
             int result = 1;
