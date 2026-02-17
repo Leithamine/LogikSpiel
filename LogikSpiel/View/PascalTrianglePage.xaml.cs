@@ -25,17 +25,21 @@ public partial class PascalTrianglePage : ContentPage, IQueryAttributable
         InitializeComponent();
         BindingContext = vm;
 
-        _redrawHandler = () => MainThread.BeginInvokeOnMainThread(() => BoardCanvas?.InvalidateSurface());
+        _redrawHandler = () =>
+        {
+            if (BoardCanvas != null)
+                MainThread.BeginInvokeOnMainThread(() => BoardCanvas.InvalidateSurface());
+        };
         vm.RequestRedraw += _redrawHandler;
     }
 
-    protected override async void OnAppearing()
+    protected override void OnAppearing()
     {
         base.OnAppearing();
 
         if (!_isLoaded && BindingContext is PascalTrianglePageViewModel vm)
         {
-            await vm.LoadAsync("pascal_triangle", "easy", 1);
+            _ = vm.LoadAsync("pascal_triangle", "easy", 1);
             _isLoaded = true;
         }
 
@@ -68,10 +72,15 @@ public partial class PascalTrianglePage : ContentPage, IQueryAttributable
         var difficulty = query.TryGetValue("difficulty", out var diffObj) ? diffObj?.ToString() ?? "easy" : "easy";
 
         int level = 1;
-        if (query.TryGetValue("level", out var lvObj))
-            int.TryParse(lvObj?.ToString(), out level);
+        if (query.TryGetValue("level", out var lvObj) && int.TryParse(lvObj?.ToString(), out var parsedLevel))
+            level = parsedLevel;
 
-        Dispatcher.Dispatch(async () => await vm.LoadAsync(gameId, difficulty, level));
+        Dispatcher.Dispatch(async () =>
+        {
+            const int maxLevel = 10000;
+            if (level > maxLevel) level = maxLevel;
+            await vm.LoadAsync(gameId, difficulty, level);
+        });
     }
 
     private void BoardCanvas_PaintSurface(object sender, SKPaintSurfaceEventArgs e)

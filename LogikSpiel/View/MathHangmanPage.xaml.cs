@@ -34,13 +34,13 @@ public partial class MathHangmanPage : ContentPage, IQueryAttributable
 
     }
 
-    protected override async void OnAppearing()
+    protected override void OnAppearing()
     {
         base.OnAppearing();
 
         if (!_isLoaded && BindingContext is MathHangmanPageViewModel vm)
         {
-            await vm.LoadAsync("math_hangman", "normal", 1);
+            _ = vm.LoadAsync("math_hangman", "normal", 1);
             _isLoaded = true;
             _hangmanDrawable.WrongCount = vm.WrongCount;
             HangmanView.Invalidate();
@@ -56,11 +56,13 @@ public partial class MathHangmanPage : ContentPage, IQueryAttributable
         var difficulty = query.TryGetValue("difficulty", out var diffObj) ? diffObj?.ToString() ?? "normal" : "normal";
 
         int level = 1;
-        if (query.TryGetValue("level", out var lvObj))
-            int.TryParse(lvObj?.ToString(), out level);
+        if (query.TryGetValue("level", out var lvObj) && int.TryParse(lvObj?.ToString(), out var parsedLevel))
+            level = parsedLevel;
 
         Dispatcher.Dispatch(async () =>
         {
+            const int maxLevel = 10000;
+            if (level > maxLevel) level = maxLevel;
             await vm.LoadAsync(gameId, difficulty, level);
             _hangmanDrawable.WrongCount = vm.WrongCount;
             HangmanView.Invalidate();
