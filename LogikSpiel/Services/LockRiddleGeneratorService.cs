@@ -26,7 +26,7 @@ public class LockRiddleGeneratorService
         if (length == 6)
             rules = rules.Where(r => r.well + r.wrong >= 2).ToList();
 
-        return GenerateWithHardGuarantee(length, minCoveredDigits, targetHints, rules, style, rnd, seed);
+        return GenerateWithHardGuarantee(length, minCoveredDigits, targetHints, rules, style, rnd);
     }
 
     public LockRiddleGame GenerateGame(string difficultyKey)
@@ -146,7 +146,7 @@ public class LockRiddleGeneratorService
     // ═══════════════════════════════════════════════════════════════
 
     private LockRiddleGame GenerateWithHardGuarantee(
-        int length, int minCoveredDigits, int targetHints, List<(int well, int wrong)> rules, DifficultyStyle style, Random rnd, int baseSeed)
+        int length, int minCoveredDigits, int targetHints, List<(int well, int wrong)> rules, DifficultyStyle style, Random rnd)
     {
         length = Math.Clamp(length, 3, 6);
         minCoveredDigits = Math.Clamp(minCoveredDigits, 2, length);
@@ -189,18 +189,18 @@ public class LockRiddleGeneratorService
         if (ultraSafe != null) return ultraSafe;
 
         // Deterministischer Fallback: feste Seed-Reihe statt sofort Exception
-        var fallback = GenerateDeterministicFallback(length, targetHints, rules, baseSeed);
+        var fallback = GenerateDeterministicFallback(length, targetHints, rules);
         if (fallback != null) return fallback;
 
         throw new InvalidOperationException("Konnte kein eindeutiges Lock-Riddle erzeugen.");
     }
 
 
-    private LockRiddleGame? GenerateDeterministicFallback(int length, int targetHints, List<(int well, int wrong)> rules, int baseSeed)
+    private LockRiddleGame? GenerateDeterministicFallback(int length, int targetHints, List<(int well, int wrong)> rules)
     {
         for (int i = 0; i < 256; i++)
         {
-            int seed = StableDeterministicSeed(baseSeed, length, targetHints, rules.Count, i);
+            int seed = HashCode.Combine(length, targetHints, rules.Count, i);
             var rnd = new Random(seed);
             var candidate = GenerateUltraSafe(length, targetHints, rules, rnd);
             if (candidate != null)
@@ -208,21 +208,6 @@ public class LockRiddleGeneratorService
         }
 
         return null;
-    }
-
-
-    private static int StableDeterministicSeed(int baseSeed, int length, int targetHints, int ruleCount, int iteration)
-    {
-        unchecked
-        {
-            int h = 17;
-            h = h * 31 + baseSeed;
-            h = h * 31 + length;
-            h = h * 31 + targetHints;
-            h = h * 31 + ruleCount;
-            h = h * 31 + iteration;
-            return h & 0x7fffffff;
-        }
     }
 
     private static string SignatureOf(LockHint hint)
