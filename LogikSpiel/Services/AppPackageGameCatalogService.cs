@@ -7,6 +7,8 @@ public sealed class AppPackageGameCatalogService : IGameCatalogService
 {
     private readonly string _fileName;
     private IReadOnlyList<GameDefinition>? _cache;
+    private DateTime _cacheTime;
+    private readonly TimeSpan _cacheDuration = TimeSpan.FromMinutes(5);
 
     private static readonly JsonSerializerOptions _opt = new()
     {
@@ -18,15 +20,19 @@ public sealed class AppPackageGameCatalogService : IGameCatalogService
     public AppPackageGameCatalogService(string fileName = "games.json")
         => _fileName = fileName;
 
+    public void InvalidateCache() => _cache = null;
+
     public async Task<IReadOnlyList<GameDefinition>> LoadGamesAsync(CancellationToken ct = default)
     {
-        if (_cache is not null) return _cache;
+        if (_cache is not null && DateTime.Now - _cacheTime < _cacheDuration)
+            return _cache;
 
         await using var s = await FileSystem.OpenAppPackageFileAsync(_fileName);
         var games = await JsonSerializer.DeserializeAsync<List<GameDefinition>>(s, _opt, ct)
                     ?? new List<GameDefinition>();
 
         _cache = games;
+        _cacheTime = DateTime.Now;
         return _cache;
     }
 

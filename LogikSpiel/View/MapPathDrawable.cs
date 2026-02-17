@@ -153,8 +153,14 @@ public sealed class MapPathDrawable : IDrawable
 
     private static PointF GetNodeCenter(LevelNodeViewModel node, RectF dirtyRect)
     {
+        if (dirtyRect.Width <= 0 || dirtyRect.Height <= 0)
+            return new PointF(0, 0);
+
         float availableW = dirtyRect.Width - NodeSize;
         float availableH = dirtyRect.Height - NodeSize;
+
+        if (availableW < 0) availableW = 0;
+        if (availableH < 0) availableH = 0;
 
         float left = availableW * (float)node.Bounds.X;
         float top = availableH * (float)node.Bounds.Y;

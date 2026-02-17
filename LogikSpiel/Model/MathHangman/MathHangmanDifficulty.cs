@@ -28,8 +28,14 @@ public static class MathHangmanDifficulty
         return (min, max);
     }
 
-    // Jeder Sieg bringt 50 Coins
-    public static int RewardCoins(string key) => 50;
+    public static int RewardCoins(string key) => key.ToLowerInvariant() switch
+    {
+        "easy" => 3,
+        "normal" => 5,
+        "hard" => 7,
+        "master" => 10,
+        _ => 5
+    };
 
     // Multiplikator auf 1.0, damit Basispreise (10) unverändert bleiben
     public static double PriceMultiplier(string key) => 1.0;
