@@ -1,6 +1,7 @@
 ﻿using LogikSpiel.Model;
-using LogikSpiel.Services;
 using SQLite;
+
+namespace LogikSpiel.Services;
 
 public sealed class SqliteGameProgressStore : IGameProgressStore
 {
@@ -33,21 +34,35 @@ public sealed class SqliteGameProgressStore : IGameProgressStore
 
     public async Task SaveAsync(GameProgress progress, CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(progress);
+
         await InitAsync();
 
         foreach (var completedKey in progress.Completed)
         {
-            var parts = completedKey.Split(':');
-            if (parts.Length >= 3)
-            {
-                var gameId = parts[0];
-                var diff = parts[1];
-                var levelStr = parts[2].StartsWith("L") ? parts[2].Substring(1) : parts[2];
+            ct.ThrowIfCancellationRequested();
 
-                if (int.TryParse(levelStr, out var level))
-                {
-                    await MarkLevelCompleteAsync(gameId, diff, level);
-                }
+            var parts = completedKey.Split(':', 3, StringSplitOptions.TrimEntries);
+            if (parts.Length != 3)
+            {
+                continue;
+            }
+
+            var gameId = parts[0];
+            var diff = parts[1];
+            var levelToken = parts[2];
+            var levelStr = levelToken.StartsWith("L", StringComparison.OrdinalIgnoreCase)
+                ? levelToken[1..]
+                : levelToken;
+
+            if (string.IsNullOrWhiteSpace(gameId) || string.IsNullOrWhiteSpace(diff))
+            {
+                continue;
+            }
+
+            if (int.TryParse(levelStr, out var level) && level > 0)
+            {
+                await MarkLevelCompleteAsync(gameId, diff, level);
             }
         }
     }
