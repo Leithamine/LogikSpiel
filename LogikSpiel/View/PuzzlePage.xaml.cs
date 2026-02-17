@@ -5,10 +5,9 @@ using LogikSpiel.ViewModel;
 
 namespace LogikSpiel.View;
 
-public partial class PuzzlePage : ContentPage, IQueryAttributable, IDisposable
+public partial class PuzzlePage : ContentPage, IQueryAttributable
 {
     private bool _isLoaded;
-    private bool _disposed;
     private readonly Dictionary<int, Entry> _entryByIndex = new();
     private readonly PuzzlePageViewModel _vm;
 
@@ -120,13 +119,13 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable, IDisposable
         Dispose();
     }
 
-    public void Dispose()
-    {
-        if (_disposed)
-            return;
 
-        _vm.PropertyChanged -= Vm_PropertyChanged;
-        _disposed = true;
+    protected override void OnHandlerChanging(HandlerChangingEventArgs args)
+    {
+        if (args.NewHandler is null)
+            _vm.PropertyChanged -= Vm_PropertyChanged;
+
+        base.OnHandlerChanging(args);
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
