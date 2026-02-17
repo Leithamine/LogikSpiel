@@ -100,8 +100,8 @@ public sealed class MathCrossGeneratorService
 
                 if (CanPlace(grid, solutions, startR, startC, vertical, s.EquationLength, eq, nr, nc))
                 {
-                    Place(grid, solutions, startR, startC, !vertical, eq, s.EquationLength);
-                    placed.Add(new EquationPlacement(startR, startC, !vertical, eq));
+                    Place(grid, solutions, startR, startC, vertical, eq, s.EquationLength);
+                    placed.Add(new EquationPlacement(startR, startC, vertical, eq));
                     tryVertical = !tryVertical;
                     fails = 0;
                     break;
@@ -692,6 +692,7 @@ public sealed class MathCrossGeneratorService
         // Setze Givens
         int toGive = Math.Max(Math.Min(4, editable.Count), (int)(editable.Count * s.GivenPercent));
         toGive = Math.Min(toGive, editable.Count - 2);
+        toGive = Math.Max(toGive, 0);
 
         foreach (var cell in editable.OrderBy(_ => rnd.Next()).Take(toGive))
         {
