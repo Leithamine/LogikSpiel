@@ -1,13 +1,14 @@
 ﻿using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LogikSpiel.ViewModel;
 
 public class OnboardingViewModel : ObservableObject
 {
     private readonly IUserProfileService _userService;
-    private readonly IServiceProvider _serviceProvider; // NEU: Direkt injiziert
+    private readonly IServiceProvider _serviceProvider;
 
     private string _name = "";
     public string Name
@@ -32,7 +33,6 @@ public class OnboardingViewModel : ObservableObject
 
     public AsyncCommand CompleteOnboardingCommand { get; }
 
-    // Konstruktor angepasst: IServiceProvider wird hier empfangen
     public OnboardingViewModel(IUserProfileService userService, IServiceProvider serviceProvider)
     {
         _userService = userService;
@@ -54,15 +54,11 @@ public class OnboardingViewModel : ObservableObject
 
                 await _userService.SaveUserAsync(newUser);
 
-                // --- FIX FÜR MAINPAGE DEPRECATED ---
-                // Statt Application.Current.MainPage = ... nutzen wir das Fenster:
                 if (Application.Current?.Windows.Count > 0)
                 {
-                    // Wir holen das erste (und auf Handy meist einzige) Fenster
                     var window = Application.Current.Windows[0];
-
-                    // Wir setzen die Seite dieses Fensters neu
-                    window.Page = new AppShell(_serviceProvider);
+                    var appShell = _serviceProvider.GetRequiredService<AppShell>();
+                    window.Page = appShell;
                 }
             }
         }, () => IsValid);

@@ -17,10 +17,12 @@ public sealed class MathCrossPageViewModel : ObservableObject
     private readonly INavigationService _nav;
     private readonly IUserProfileService _userService;
     private readonly MathCrossGeneratorService _generator;
+    private readonly IGameCatalogService _catalog;
 
     public event Action? RequestLayoutUpdate;
 
     private UserProfile? _userProfile;
+    private GameDefinition? _gameDefinition;
 
     private int _coins;
     public int Coins { get => _coins; set => SetProperty(ref _coins, value); }
@@ -101,13 +103,15 @@ public sealed class MathCrossPageViewModel : ObservableObject
         IDialogService dialog,
         INavigationService nav,
         IUserProfileService userService,
-        MathCrossGeneratorService generator)
+        MathCrossGeneratorService generator,
+        IGameCatalogService catalog)
     {
         _progressStore = progressStore;
         _dialog = dialog;
         _nav = nav;
         _userService = userService;
         _generator = generator;
+        _catalog = catalog;
 
         BackCommand = new AsyncCommand(ConfirmBackAsync);
 
@@ -216,6 +220,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
             GameId = string.IsNullOrWhiteSpace(gameId) ? "math_cross" : gameId;
             DifficultyKey = string.IsNullOrWhiteSpace(difficulty) ? "easy" : difficulty;
             LevelNumber = Math.Max(1, level);
+            _gameDefinition = await _catalog.GetGameAsync(GameId);
 
             OnPropertyChanged(nameof(Title));
             OnPropertyChanged(nameof(DifficultyText));
@@ -411,7 +416,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
             LocalizationService.Format("Common_CoinsRewardFormat", reward));
         await _progressStore.MarkLevelCompleteAsync(GameId, DifficultyKey, LevelNumber);
 
-        const int maxLevel = 10000;
+        int maxLevel = _gameDefinition?.LevelCount ?? 100;
         if (LevelNumber >= maxLevel)
         {
             await _dialog.AlertAsync(

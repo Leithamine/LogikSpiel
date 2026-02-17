@@ -100,8 +100,8 @@ public sealed class MathCrossGeneratorService
 
                 if (CanPlace(grid, solutions, startR, startC, vertical, s.EquationLength, eq, nr, nc))
                 {
-                    Place(grid, solutions, startR, startC, !vertical, eq, s.EquationLength);
-                    placed.Add(new EquationPlacement(startR, startC, !vertical, eq));
+                    Place(grid, solutions, startR, startC, vertical, eq, s.EquationLength);
+                    placed.Add(new EquationPlacement(startR, startC, vertical, eq));
                     tryVertical = !tryVertical;
                     fails = 0;
                     break;
@@ -690,8 +690,9 @@ public sealed class MathCrossGeneratorService
                     editable.Add(game.Grid[r, c]);
 
         // Setze Givens
-        int toGive = (int)(editable.Count * s.GivenPercent);
-        toGive = Math.Max(4, Math.Min(toGive, editable.Count - 4));
+        int toGive = Math.Max(Math.Min(4, editable.Count), (int)(editable.Count * s.GivenPercent));
+        toGive = Math.Min(toGive, editable.Count - 2);
+        toGive = Math.Max(toGive, 0);
 
         foreach (var cell in editable.OrderBy(_ => rnd.Next()).Take(toGive))
         {
@@ -741,6 +742,21 @@ public sealed class MathCrossGeneratorService
             var pick = unsolved[rnd.Next(unsolved.Count)];
             pick.IsGiven = true;
             pick.UserInput = pick.Solution;
+        }
+
+        // Harte Absicherung: falls der iterative Ansatz nicht ausreicht,
+        // alle verbleibenden Zellen freigeben, damit das Rätsel immer lösbar ist.
+        for (int r = 0; r < game.Rows; r++)
+        {
+            for (int c = 0; c < game.Cols; c++)
+            {
+                var cell = game.Grid[r, c];
+                if (cell.Type is CellType.Number or CellType.Operator && !cell.IsGiven)
+                {
+                    cell.IsGiven = true;
+                    cell.UserInput = cell.Solution;
+                }
+            }
         }
     }
 

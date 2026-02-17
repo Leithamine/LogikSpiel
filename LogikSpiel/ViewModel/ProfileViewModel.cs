@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Diagnostics;
+using System.Linq;
 using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
@@ -31,14 +32,14 @@ public class ProfileViewModel : ObservableObject
     public bool IsMusicEnabled
     {
         get => _isMusicEnabled;
-        set { if (SetProperty(ref _isMusicEnabled, value)) SaveSettingsAsync(); }
+        set { if (SetProperty(ref _isMusicEnabled, value)) _ = SaveSettingsAsync(); }
     }
 
     private bool _isSoundEnabled;
     public bool IsSoundEnabled
     {
         get => _isSoundEnabled;
-        set { if (SetProperty(ref _isSoundEnabled, value)) SaveSettingsAsync(); }
+        set { if (SetProperty(ref _isSoundEnabled, value)) _ = SaveSettingsAsync(); }
     }
 
     private readonly IReadOnlyList<LanguageOption> _languages =
@@ -138,12 +139,11 @@ public class ProfileViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Fehler beim Speichern: {ex.Message}");
+            Debug.WriteLine($"Fehler beim Speichern der Profileinstellungen: {ex}");
 
-            // Optional: Zeige Fehler dem User
             await _dialog.AlertAsync(
                 LocalizationService.GetString("Common_ErrorTitle"),
-                LocalizationService.GetString("Profile_SaveErrorMessage"),
+                $"{LocalizationService.GetString("Profile_SaveErrorMessage")}\n{ex.Message}",
                 LocalizationService.GetString("Common_Ok"));
         }
     }

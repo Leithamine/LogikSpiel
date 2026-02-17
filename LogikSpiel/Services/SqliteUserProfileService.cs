@@ -30,7 +30,9 @@ public class SqliteUserProfileService : IUserProfileService
     {
         await InitAsync();
 
-        var existing = await _db!.Table<UserProfile>().FirstOrDefaultAsync();
+        var existing = await _db!.Table<UserProfile>()
+            .Where(x => x.Id == user.Id)
+            .FirstOrDefaultAsync();
 
         bool success;
         if (existing != null)
@@ -40,6 +42,7 @@ public class SqliteUserProfileService : IUserProfileService
             existing.IsMusicEnabled = user.IsMusicEnabled;
             existing.IsSoundEnabled = user.IsSoundEnabled;
             existing.Coins = user.Coins;
+            existing.UsedNumbersRaw = user.UsedNumbersRaw;
             success = await _db.UpdateAsync(existing) > 0;
         }
         else

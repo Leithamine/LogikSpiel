@@ -183,7 +183,10 @@ public class LockRiddleGeneratorService
         }
 
         // Ultima Ratio (immer eindeutig, aber ohne Wiederholungen pro Hint)
-        return GenerateUltraSafe(length, targetHints, rules);
+        var ultraSafe = GenerateUltraSafe(length, targetHints, rules);
+        if (ultraSafe != null) return ultraSafe;
+
+        throw new InvalidOperationException("Konnte kein eindeutiges Lock-Riddle erzeugen.");
     }
 
     private static string SignatureOf(LockHint hint)
@@ -312,7 +315,7 @@ public class LockRiddleGeneratorService
         return null;
     }
 
-    private LockRiddleGame GenerateUltraSafe(int length, int targetHints, List<(int well, int wrong)> rules)
+    private LockRiddleGame? GenerateUltraSafe(int length, int targetHints, List<(int well, int wrong)> rules)
     {
         var (secret, invalid) = GenerateSecret(length);
 
@@ -383,23 +386,20 @@ public class LockRiddleGeneratorService
         }
         if (hints.Count == 0)
         {
-            // Fallback: Einfache Single-Pin Hints
             for (int pos = 0; pos < length && invalid.Count >= (length - 1); pos++)
             {
                 var sp = CreateSinglePinHintUnique(secret, invalid, length, pos);
-                if (sp != null) hints.Add(sp);
+                if (sp != null)
+                {
+                    var (well, wrong) = LockHintScoring.Score(sp.Slots, secret);
+                    if (well == sp.WellPlaced && wrong == sp.WrongPlaced)
+                        hints.Add(sp);
+                }
             }
         }
 
         if (hints.Count == 0)
-        {
-            // Letzter Fallback: Zufällige Hints
-            for (int i = 0; i < targetHints; i++)
-            {
-                var randomHint = CreateHintByRule(secret, invalid, length, 1, 1);
-                if (randomHint != null) hints.Add(randomHint);
-            }
-        }
+            return null;
         return new LockRiddleGame
         {
             SecretCode = string.Concat(secret),
