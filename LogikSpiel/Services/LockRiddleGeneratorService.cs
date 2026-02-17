@@ -363,7 +363,7 @@ public class LockRiddleGeneratorService
         // (0,0) nur wenn möglich ohne Wiederholungen: invalid.Count >= length
         if (invalid.Count >= length)
         {
-            var nothing = CreateHintNothingCorrectUnique(invalid, length);
+            var nothing = CreateHintNothingCorrectUnique(invalid, length, rnd);
             if (nothing != null) TryAddHint(hints, signatures, nothing);
         }
 
@@ -492,7 +492,7 @@ public class LockRiddleGeneratorService
         // Phase 2: (0,0) nur wenn ohne Wiederholungen möglich (invalid.Count >= length)
         if (hints.Count < targetHints && invalid.Count >= length)
         {
-            var nothingHint = CreateHintNothingCorrectUnique(invalid, length);
+            var nothingHint = CreateHintNothingCorrectUnique(invalid, length, rnd);
             if (nothingHint != null)
                 TryAddHint(hints, signatures, nothingHint);
         }
@@ -688,7 +688,7 @@ public class LockRiddleGeneratorService
     /// <summary>
     /// (0,0) Hint ist nur möglich ohne Wiederholungen, wenn invalid.Count >= length.
     /// </summary>
-    private LockHint? CreateHintNothingCorrectUnique(List<int> invalid, int length)
+    private LockHint? CreateHintNothingCorrectUnique(List<int> invalid, int length, Random rnd)
     {
         if (invalid.Count < length) return null;
 
