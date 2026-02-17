@@ -3,7 +3,7 @@ using LogikSpiel.Model;
 
 namespace LogikSpiel.Services;
 
-public sealed class AppPackageGameCatalogService : IGameCatalogService
+public sealed class AppPackageGameCatalogService : IGameCatalogService, IDisposable
 {
     private readonly string _fileName;
     private IReadOnlyList<GameDefinition>? _cache;
@@ -20,7 +20,11 @@ public sealed class AppPackageGameCatalogService : IGameCatalogService
     public AppPackageGameCatalogService(string fileName = "games.json")
         => _fileName = fileName;
 
-    public void InvalidateCache() => _cache = null;
+    public void InvalidateCache()
+    {
+        DisposeCache();
+        _cache = null;
+    }
 
     public async Task<IReadOnlyList<GameDefinition>> LoadGamesAsync(CancellationToken ct = default)
     {
@@ -31,6 +35,7 @@ public sealed class AppPackageGameCatalogService : IGameCatalogService
         var games = await JsonSerializer.DeserializeAsync<List<GameDefinition>>(s, _opt, ct)
                     ?? new List<GameDefinition>();
 
+        DisposeCache();
         _cache = games;
         _cacheTime = DateTime.Now;
         return _cache;
@@ -52,6 +57,22 @@ public sealed class AppPackageGameCatalogService : IGameCatalogService
             levels.Add(new LevelSpec(gameId, difficultyKey, i, baseSeed + i));
         }
         return levels;
+    }
+
+    public void Dispose()
+    {
+        DisposeCache();
+        _cache = null;
+        GC.SuppressFinalize(this);
+    }
+
+    private void DisposeCache()
+    {
+        if (_cache is null)
+            return;
+
+        foreach (var game in _cache)
+            game.Dispose();
     }
 
     private static int StableHash(string s)
