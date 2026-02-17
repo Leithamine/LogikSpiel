@@ -1,7 +1,6 @@
 ﻿using LogikSpiel.Model;
+using LogikSpiel.Services;
 using SQLite;
-
-namespace LogikSpiel.Services;
 
 public sealed class SqliteGameProgressStore : IGameProgressStore
 {
@@ -32,10 +31,25 @@ public sealed class SqliteGameProgressStore : IGameProgressStore
         return progress;
     }
 
-    public Task SaveAsync(GameProgress progress, CancellationToken ct = default)
+    public async Task SaveAsync(GameProgress progress, CancellationToken ct = default)
     {
-        // Wird nicht benötigt, da wir MarkLevelCompleteAsync nutzen.
-        return Task.CompletedTask;
+        await InitAsync();
+
+        foreach (var completedKey in progress.Completed)
+        {
+            var parts = completedKey.Split(':');
+            if (parts.Length >= 3)
+            {
+                var gameId = parts[0];
+                var diff = parts[1];
+                var levelStr = parts[2].StartsWith("L") ? parts[2].Substring(1) : parts[2];
+
+                if (int.TryParse(levelStr, out var level))
+                {
+                    await MarkLevelCompleteAsync(gameId, diff, level);
+                }
+            }
+        }
     }
 
     public async Task MarkLevelCompleteAsync(string gameId, string diff, int level)
@@ -71,4 +85,27 @@ public sealed class SqliteGameProgressStore : IGameProgressStore
         }
     }
 
+    // NEU: Fehlende Methoden hinzufügen
+    public async Task<bool> IsLevelCompleteAsync(string gameId, string diff, int level)
+    {
+        await InitAsync();
+        var existing = await _db!.Table<GameProgressEntity>()
+            .Where(x => x.GameId == gameId && x.Difficulty == diff && x.LevelNumber == level)
+            .FirstOrDefaultAsync();
+        return existing?.IsCompleted ?? false;
+    }
+
+    public async Task<int> GetCompletedCountAsync(string gameId, string diff)
+    {
+        await InitAsync();
+        return await _db!.Table<GameProgressEntity>()
+            .Where(x => x.GameId == gameId && x.Difficulty == diff && x.IsCompleted)
+            .CountAsync();
+    }
+
+    public async Task ClearAllAsync()
+    {
+        await InitAsync();
+        await _db!.DeleteAllAsync<GameProgressEntity>();
+    }
 }

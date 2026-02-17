@@ -161,7 +161,7 @@ public sealed class GameMapPageViewModel : ObservableObject
 
         var progress = await _progressStore.LoadAsync();
 
-        var maxLevel = 10000;
+        var maxLevel = Game?.LevelCount ?? 100;
         int highestCompleted = 0;
 
         for (int level = 1; level <= maxLevel; level++)
@@ -212,7 +212,7 @@ public sealed class GameMapPageViewModel : ObservableObject
 
             node.IsCompleted = progress.IsCompleted(spec);
 
-            node.IsUnlocked = realLevelNum == currentLevelNumber;
+            node.IsUnlocked = realLevelNum <= currentLevelNumber;
 
             node.IsCurrent = (realLevelNum == currentLevelNumber);
 
@@ -222,11 +222,11 @@ public sealed class GameMapPageViewModel : ObservableObject
         CloudBounds = new Rect(0, 0, 1, cloudHeight);
 
         var currentNode = Nodes.FirstOrDefault(n => n.IsCurrent) ?? Nodes.FirstOrDefault();
-        if (currentNode is not null)
+        if (currentNode is not null && RequestScrollToY != null)
         {
             double nodeCenterY = (currentNode.Bounds.Y * totalHeight) + (nodeSize / 2);
             await Task.Delay(350);
-            RequestScrollToY?.Invoke(nodeCenterY);
+            RequestScrollToY.Invoke(nodeCenterY);
         }
     }
 

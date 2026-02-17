@@ -386,17 +386,28 @@ public sealed class PascalTrianglePageViewModel : ObservableObject
 
         await Task.Delay(500);
 
-        LevelNumber++;
+        int nextLevel = LevelNumber + 1;
+        int maxLevel = 10000; // oder aus Config
+        if (nextLevel > maxLevel)
+        {
+            await _dialog.AlertAsync(
+                LocalizationService.GetString("Pascal_CompleteTitle"),
+                LocalizationService.GetString("Pascal_CompleteMessage"),
+                LocalizationService.GetString("Common_Ok"));
+            await _nav.GoToAsync(nameof(GameMapPage), new Dictionary<string, object> { ["gameId"] = GameId });
+            return;
+        }
+        LevelNumber = nextLevel;
         await StartNewRoundAsync();
     }
 
     private static int RewardForDifficulty(string key) =>
         key.ToLowerInvariant() switch
         {
-            "easy" => 8,
-            "normal" => 10,
-            "hard" => 15,
-            "master" => 20,
+            "easy" => 3,
+            "normal" => 5,
+            "hard" => 7,
+            "master" => 10,
             _ => 10
         };
 

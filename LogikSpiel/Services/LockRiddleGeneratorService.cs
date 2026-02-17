@@ -152,7 +152,8 @@ public class LockRiddleGeneratorService
 
         int maxHints = Math.Clamp(targetHints + 5, targetHints, 12);
 
-        for (int attempt = 0; attempt < 700; attempt++)
+        int maxAttempts = 700;
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
             var (secret, invalid) = GenerateSecret(length);
 
@@ -203,8 +204,8 @@ public class LockRiddleGeneratorService
         DifficultyStyle style)
     {
         int attempts = 0;
-
-        while (hints.Count < minHints && hints.Count < maxHints && attempts++ < 200)
+        int maxAttempts = 200;
+        while (hints.Count < minHints && hints.Count < maxHints && attempts++ < maxAttempts)
         {
             var validRules = rules
                 .Where(r => r.well + r.wrong >= 2 && r.well + r.wrong <= length)
@@ -242,6 +243,7 @@ public class LockRiddleGeneratorService
     {
         string secretStr = string.Concat(secret);
 
+        // Max 80 Iterationen, dann aufgeben
         for (int step = 0; step < 80 && hints.Count < maxHints; step++)
         {
             var solver = new ConstraintSolver(length, hints);
@@ -256,7 +258,7 @@ public class LockRiddleGeneratorService
             string alt = sols[1];
             var altDigits = alt.Select(c => c - '0').ToArray();
 
-            // 1) informative Kombi-Hints, die alt ausschließen
+            // 1) informative Kombi-Hints
             bool added = false;
             var preferred = style.PreferredDisambiguationRules
                 .Where(r => r.well + r.wrong >= 2 && r.well + r.wrong <= length)
@@ -285,7 +287,7 @@ public class LockRiddleGeneratorService
 
             if (added) continue;
 
-            // 2) Single-Pin nur wenn erlaubt und möglich (unique)
+            // 2) Single-Pin nur wenn erlaubt
             if (style.AllowSinglePinDisambiguation && invalid.Count >= (length - 1) && hints.Count < maxHints)
             {
                 int diffPos = -1;
@@ -300,10 +302,13 @@ public class LockRiddleGeneratorService
                 continue;
             }
 
-            // Master (length=6) ohne SinglePin: wenn keine Kombi-Hints alt ausschließen -> neues Secret (caller versucht neu)
-            return null;
+            // WICHTIG: Wenn wir hier angekommen sind und step ist hoch, aufgeben
+            // Aber die Schleife läuft sowieso nur bis 79, also einfach:
+            if (step >= 79)
+                return null;
         }
 
+        // Wenn wir hier rausfallen (Schleife zu Ende), haben wir keine Lösung gefunden
         return null;
     }
 
@@ -376,7 +381,25 @@ public class LockRiddleGeneratorService
                 }
             }
         }
+        if (hints.Count == 0)
+        {
+            // Fallback: Einfache Single-Pin Hints
+            for (int pos = 0; pos < length && invalid.Count >= (length - 1); pos++)
+            {
+                var sp = CreateSinglePinHintUnique(secret, invalid, length, pos);
+                if (sp != null) hints.Add(sp);
+            }
+        }
 
+        if (hints.Count == 0)
+        {
+            // Letzter Fallback: Zufällige Hints
+            for (int i = 0; i < targetHints; i++)
+            {
+                var randomHint = CreateHintByRule(secret, invalid, length, 1, 1);
+                if (randomHint != null) hints.Add(randomHint);
+            }
+        }
         return new LockRiddleGame
         {
             SecretCode = string.Concat(secret),

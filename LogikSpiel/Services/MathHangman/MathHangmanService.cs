@@ -26,10 +26,14 @@ public sealed class MathHangmanService : IMathHangmanService
 
     private sealed record PropDef(string Key, string Article, string KidDesc, string Examples, Func<int, bool> Test);
 
-    private static readonly IReadOnlyList<PropDef> PropertyDefs = BuildDefs();
+    // KORRIGIERT: Lazy Loading ohne unnötige Prüfung
+    private static readonly Lazy<IReadOnlyList<PropDef>> _propertyDefs = new(BuildDefs);
+    private static IReadOnlyList<PropDef> PropertyDefs => _propertyDefs.Value;
 
     private static IReadOnlyList<PropDef> BuildDefs()
     {
+        // Die Localization wird in App.xaml.cs initialisiert
+        // Lazy sorgt dafür, dass dies nur einmal aufgerufen wird
         return new List<PropDef>
         {
             Def("Prime", IsPrime),
@@ -66,7 +70,7 @@ public sealed class MathHangmanService : IMathHangmanService
             test);
     }
 
-    // Hilfsmethoden
+    // Hilfsmethoden (unverändert)
     private static bool IsPrime(int n) { if (n < 2) return false; for (int i = 2; i * i <= n; i++) if (n % i == 0) return false; return true; }
     private static int ProperDivisorSum(int n) { int sum = 0; for (int i = 1; i < n; i++) if (n % i == 0) sum += i; return sum; }
     private static bool IsPerfect(int n) => n > 1 && ProperDivisorSum(n) == n;

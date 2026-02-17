@@ -136,7 +136,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
 
         HintCommand = new AsyncCommand(async () =>
         {
-            if (Coins < 10)
+            if (Coins < 50)
             {
                 await _dialog.AlertAsync(
                     LocalizationService.GetString("Common_NotEnoughCoinsTitle"),
@@ -146,7 +146,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
 
             bool buy = await _dialog.ConfirmAsync(
                 LocalizationService.GetString("MathCross_BuyHintTitle"),
-                LocalizationService.Format("MathCross_BuyHintMessage", 10));
+                LocalizationService.Format("MathCross_BuyHintMessage", 50));
             if (!buy) return;
 
             var empty = FlatCells
@@ -168,7 +168,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
 
             if (_userProfile != null)
             {
-                _userProfile.Coins -= 10000;
+                _userProfile.Coins -= 10;
                 Coins = _userProfile.Coins;
                 await _userService.SaveUserAsync(_userProfile);
             }
@@ -397,7 +397,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
             }
         }
 
-        int reward = DifficultyKey switch { "easy" => 5, "normal" => 8, "hard" => 12, "master" => 18, _ => 5 };
+        int reward = DifficultyKey switch { "easy" => 3, "normal" => 5, "hard" => 7, "master" => 10, _ => 5 };
 
         if (_userProfile != null)
         {

@@ -52,18 +52,23 @@ public sealed class GameHostPageViewModel : ObservableObject
         {
             if (Game is null) return;
 
-            //var levels = await _catalog.GetLevelsAsync(GameId, DifficultyKey);
-            //var spec = levels.First(l => l.LevelNumber == LevelNumber);
             var spec = new LevelSpec(GameId, DifficultyKey, LevelNumber, 0);
             var progress = await _progressStore.LoadAsync();
             progress.MarkCompleted(spec);
-            await _progressStore.SaveAsync(progress);
+            await _progressStore.SaveAsync(progress); // WICHTIG: Speichern!
 
-            // automatisch nächstes Level
-            //if (LevelNumber < levels.Count)
-            //    LevelNumber++;
-            //else
-            //    await Shell.Current.DisplayAlertAsync("Fertig!", "Alle Level dieser Schwierigkeit geschafft!", "OK");
+            // Prüfe ob nächstes Level existiert
+            var maxLevel = Game?.LevelCount ?? 100;
+            if (LevelNumber >= maxLevel)
+            {
+                await _dialog.AlertAsync(
+                    LocalizationService.GetString("GameHost_CompleteTitle"),
+                    LocalizationService.GetString("GameHost_CompleteMessage"),
+                    LocalizationService.GetString("Common_Ok"));
+                await _nav.GoBackAsync();
+                return;
+            }
+
             LevelNumber++;
         });
     }
