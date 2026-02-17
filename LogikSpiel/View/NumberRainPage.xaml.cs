@@ -30,6 +30,15 @@ public partial class NumberRainPage : ContentPage, IQueryAttributable
         }
     }
 
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+
+        if (BindingContext is NumberRainPageViewModel vm)
+            vm.Cleanup();
+    }
+
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
         if (BindingContext is not NumberRainPageViewModel vm) return;
