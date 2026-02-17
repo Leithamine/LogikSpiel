@@ -200,7 +200,7 @@ public class LockRiddleGeneratorService
     {
         for (int i = 0; i < 256; i++)
         {
-            int seed = StableDeterministicSeed(length, targetHints, rules.Count, i);
+            int seed = HashCode.Combine(length, targetHints, rules.Count, i);
             var rnd = new Random(seed);
             var candidate = GenerateUltraSafe(length, targetHints, rules, rnd);
             if (candidate != null)
@@ -208,20 +208,6 @@ public class LockRiddleGeneratorService
         }
 
         return null;
-    }
-
-
-    private static int StableDeterministicSeed(int length, int targetHints, int ruleCount, int iteration)
-    {
-        unchecked
-        {
-            int h = 17;
-            h = h * 31 + length;
-            h = h * 31 + targetHints;
-            h = h * 31 + ruleCount;
-            h = h * 31 + iteration;
-            return h & 0x7fffffff;
-        }
     }
 
     private static string SignatureOf(LockHint hint)
