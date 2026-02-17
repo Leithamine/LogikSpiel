@@ -105,7 +105,7 @@ public sealed class CompleteSequencePageViewModel : ObservableObject
     {
         Lives = 3;
 
-        int seed = StableHash($"{GameId}:{DifficultyKey}") + (LevelNumber * 17);
+        int seed = SeedHelper.CalculateSeed(GameId, DifficultyKey, LevelNumber);
         _puzzle = _generator.Generate(DifficultyKey, seed);
 
         SequenceCells.Clear();
@@ -262,22 +262,6 @@ public sealed class CompleteSequencePageViewModel : ObservableObject
             LocalizationService.GetString("Common_No"));
         if (!leave) return;
         await _nav.GoBackAsync();
-    }
-
-    private static int StableHash(string s)
-    {
-        unchecked
-        {
-            const int fnvOffset = (int)2166136261;
-            const int fnvPrime = 16777619;
-            int hash = fnvOffset;
-            foreach (var c in s)
-            {
-                hash ^= c;
-                hash *= fnvPrime;
-            }
-            return (int)Math.Abs((long)hash);
-        }
     }
 
     private static bool IsArithmetic(IReadOnlyList<int> sequence)

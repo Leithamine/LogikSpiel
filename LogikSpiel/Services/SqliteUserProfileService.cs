@@ -1,4 +1,4 @@
-﻿using LogikSpiel.Model;
+using LogikSpiel.Model;
 using SQLite;
 
 namespace LogikSpiel.Services;
@@ -6,17 +6,14 @@ namespace LogikSpiel.Services;
 public class SqliteUserProfileService : IUserProfileService
 {
     private SQLiteAsyncConnection? _db;
-    private const string DbName = "LogikSpiel_v1.db3";
 
-    // 1. Das fehlende Event hinzufügen
     public event Action? UserDataChanged;
 
     private async Task InitAsync()
     {
         if (_db is not null) return;
-        var dbPath = Path.Combine(FileSystem.AppDataDirectory, DbName);
-        _db = new SQLiteAsyncConnection(dbPath);
-        // Sicherstellen, dass die Tabelle existiert
+
+        _db = await SqliteConnectionFactory.GetConnectionAsync();
         await _db.CreateTableAsync<UserProfile>();
     }
 
