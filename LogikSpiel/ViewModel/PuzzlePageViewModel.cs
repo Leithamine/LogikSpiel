@@ -23,7 +23,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
     private int _coins;
     public int Coins { get => _coins; set => SetProperty(ref _coins, value); }
 
-    public string GameId { get; private set; } = "riddle_lock";
+    public string GameId { get; private set; } = "codebreaker";
     public string DifficultyKey { get; private set; } = "normal";
 
     private int _levelNumber = 1;
@@ -133,7 +133,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
     public async Task LoadAsync(string gameId, string difficulty, int level)
     {
-        GameId = string.IsNullOrWhiteSpace(gameId) ? "riddle_lock" : gameId;
+        GameId = string.IsNullOrWhiteSpace(gameId) ? "codebreaker" : gameId;
         DifficultyKey = string.IsNullOrWhiteSpace(difficulty) ? "normal" : difficulty;
         LevelNumber = Math.Max(1, level);
 

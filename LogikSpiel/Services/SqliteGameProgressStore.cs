@@ -1,4 +1,4 @@
-﻿using LogikSpiel.Model;
+using LogikSpiel.Model;
 using SQLite;
 
 namespace LogikSpiel.Services;
@@ -11,8 +11,7 @@ public sealed class SqliteGameProgressStore : IGameProgressStore
     {
         if (_db is not null) return;
 
-        var dbPath = Path.Combine(FileSystem.AppDataDirectory, "LogikSpiel_v1.db3");
-        _db = new SQLiteAsyncConnection(dbPath);
+        _db = await SqliteConnectionFactory.GetConnectionAsync();
         await _db.CreateTableAsync<GameProgressEntity>();
     }
 
@@ -89,18 +88,14 @@ public sealed class SqliteGameProgressStore : IGameProgressStore
             };
             await _db.InsertAsync(entity);
         }
-        else
+        else if (!existing.IsCompleted)
         {
-            if (!existing.IsCompleted)
-            {
-                existing.IsCompleted = true;
-                existing.CompletedAt = DateTime.Now;
-                await _db.UpdateAsync(existing);
-            }
+            existing.IsCompleted = true;
+            existing.CompletedAt = DateTime.Now;
+            await _db.UpdateAsync(existing);
         }
     }
 
-    // NEU: Fehlende Methoden hinzufügen
     public async Task<bool> IsLevelCompleteAsync(string gameId, string diff, int level)
     {
         await InitAsync();
