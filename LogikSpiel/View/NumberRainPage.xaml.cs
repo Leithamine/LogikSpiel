@@ -19,13 +19,13 @@ public partial class NumberRainPage : ContentPage, IQueryAttributable
         };
     }
 
-    protected override async void OnAppearing()
+    protected override void OnAppearing()
     {
         base.OnAppearing();
 
         if (!_isLoaded && BindingContext is NumberRainPageViewModel vm)
         {
-            await vm.LoadAsync("number_rain", "normal", 1);
+            _ = vm.LoadAsync("number_rain", "normal", 1);
             _isLoaded = true;
         }
     }
@@ -39,9 +39,14 @@ public partial class NumberRainPage : ContentPage, IQueryAttributable
         var difficulty = query.TryGetValue("difficulty", out var diffObj) ? diffObj?.ToString() ?? "normal" : "normal";
 
         int level = 1;
-        if (query.TryGetValue("level", out var lvObj))
-            int.TryParse(lvObj?.ToString(), out level);
+        if (query.TryGetValue("level", out var lvObj) && int.TryParse(lvObj?.ToString(), out var parsedLevel))
+            level = parsedLevel;
 
-        Dispatcher.Dispatch(async () => await vm.LoadAsync(gameId, difficulty, level));
+        Dispatcher.Dispatch(async () =>
+        {
+            const int maxLevel = 10000;
+            if (level > maxLevel) level = maxLevel;
+            await vm.LoadAsync(gameId, difficulty, level);
+        });
     }
 }

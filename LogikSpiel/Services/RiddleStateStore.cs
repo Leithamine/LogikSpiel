@@ -6,6 +6,9 @@ namespace LogikSpiel.Services;
 
 public sealed class RiddleStateStore : IRiddleStateStore
 {
+    private const string RiddleKeysIndex = "riddle:keys";
+    private const int MaxStoredRiddles = 100;
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true
@@ -48,13 +51,59 @@ public sealed class RiddleStateStore : IRiddleStateStore
         var key = Key(gameId, difficulty, level);
         var json = JsonSerializer.Serialize(game, JsonOptions);
         Preferences.Set(key, json);
+        CleanupOldRiddles(key);
         return Task.CompletedTask;
+    }
 
+    private void CleanupOldRiddles(string newKey)
+    {
+        var allKeys = LoadRiddleKeys();
+        allKeys.RemoveAll(k => string.Equals(k, newKey, StringComparison.Ordinal));
+        allKeys.Add(newKey);
+
+        if (allKeys.Count > MaxStoredRiddles)
+        {
+            var keysToRemove = allKeys.Take(allKeys.Count - MaxStoredRiddles).ToList();
+            foreach (var key in keysToRemove)
+            {
+                Preferences.Remove(key);
+                allKeys.Remove(key);
+            }
+        }
+
+        SaveRiddleKeys(allKeys);
+    }
+
+    private static List<string> LoadRiddleKeys()
+    {
+        var raw = Preferences.Get(RiddleKeysIndex, string.Empty);
+        if (string.IsNullOrWhiteSpace(raw))
+            return new List<string>();
+
+        return raw
+            .Split('|', StringSplitOptions.RemoveEmptyEntries)
+            .Where(k => k.StartsWith("riddle:", StringComparison.Ordinal))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+    }
+
+    private static void SaveRiddleKeys(List<string> keys)
+    {
+        var unique = keys.Distinct(StringComparer.Ordinal);
+        Preferences.Set(RiddleKeysIndex, string.Join("|", unique));
     }
 
     public Task ClearAsync(string gameId, string difficulty, int level)
     {
-        Preferences.Remove(Key(gameId, difficulty, level));
+        var key = Key(gameId, difficulty, level);
+        Preferences.Remove(key);
+
+        var keys = LoadRiddleKeys();
+        if (keys.RemoveAll(k => string.Equals(k, key, StringComparison.Ordinal)) > 0)
+        {
+            SaveRiddleKeys(keys);
+        }
+
         return Task.CompletedTask;
     }
 }

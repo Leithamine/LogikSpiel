@@ -201,7 +201,7 @@ public sealed class MathHangmanPageViewModel : ObservableObject
             var user = await _userService.GetUserAsync();
             if (user != null)
             {
-                int reward = DifficultyKey switch { "easy" => 3, "normal" => 5, "hard" => 7, "master" => 10, _ => 5 };
+                int reward = MathHangmanDifficulty.RewardCoins(DifficultyKey);
                 user.Coins += reward;
                 user.AddUsedNumber(_secret); 
                 await _userService.SaveUserAsync(user);

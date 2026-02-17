@@ -18,10 +18,10 @@ public partial class LearnPage : ContentPage, IQueryAttributable
             vm.GameId = id;
     }
 
-    protected override async void OnAppearing()
+    protected override void OnAppearing()
     {
         base.OnAppearing();
         if (BindingContext is LearnPageViewModel vm)
-            await vm.LoadAsync();
+            _ = vm.LoadAsync();
     }
 }

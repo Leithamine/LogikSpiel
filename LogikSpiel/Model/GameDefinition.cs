@@ -15,15 +15,22 @@ public sealed class GameDefinition : INotifyPropertyChanged
     private string _title = "";
     private string _description = "";
     private List<string> _rules = new();
+    private readonly EventHandler _cultureChangedHandler;
 
     public GameDefinition()
     {
-        LocalizationService.CultureChanged += (_, _) =>
+        _cultureChangedHandler = (_, _) =>
         {
             OnPropertyChanged(nameof(Title));
             OnPropertyChanged(nameof(Description));
             OnPropertyChanged(nameof(Rules));
         };
+        LocalizationService.CultureChanged += _cultureChangedHandler;
+    }
+
+    ~GameDefinition()
+    {
+        LocalizationService.CultureChanged -= _cultureChangedHandler;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

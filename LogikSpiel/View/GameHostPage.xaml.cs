@@ -17,9 +17,15 @@ public partial class GameHostPage : ContentPage, IQueryAttributable
 
         var gameId = query.TryGetValue("gameId", out var g) ? g as string : null;
         var diff = query.TryGetValue("difficulty", out var d) ? d as string : "normal";
-        var level = query.TryGetValue("level", out var l) && l is int li ? li : 1;
+        int level = 1;
+        if (query.TryGetValue("level", out var l) && int.TryParse(l?.ToString(), out var parsedLevel))
+            level = parsedLevel;
 
         if (!string.IsNullOrWhiteSpace(gameId))
+        {
+            const int maxLevel = 10000;
+            if (level > maxLevel) level = maxLevel;
             _ = vm.LoadAsync(gameId!, diff ?? "normal", level);
+        }
     }
 }

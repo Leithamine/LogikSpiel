@@ -7,11 +7,19 @@ namespace LogikSpiel.Core;
 
 public abstract class ObservableObject : INotifyPropertyChanged
 {
+    private readonly EventHandler _cultureChangedHandler;
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     protected ObservableObject()
     {
-        LocalizationService.CultureChanged += HandleCultureChanged;
+        _cultureChangedHandler = HandleCultureChanged;
+        LocalizationService.CultureChanged += _cultureChangedHandler;
+    }
+
+    ~ObservableObject()
+    {
+        LocalizationService.CultureChanged -= _cultureChangedHandler;
     }
 
     private void HandleCultureChanged(object? sender, EventArgs e)
