@@ -100,7 +100,7 @@ public sealed class MathCrossGeneratorService
 
                 if (CanPlace(grid, solutions, startR, startC, vertical, s.EquationLength, eq, nr, nc))
                 {
-                    Place(grid, solutions, startR, startC, vertical, eq, s.EquationLength);
+                    Place(grid, solutions, startR, startC, !vertical, eq, s.EquationLength);
                     placed.Add(new EquationPlacement(startR, startC, !vertical, eq));
                     tryVertical = !tryVertical;
                     fails = 0;

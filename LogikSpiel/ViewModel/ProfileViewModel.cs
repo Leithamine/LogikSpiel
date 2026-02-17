@@ -31,14 +31,14 @@ public class ProfileViewModel : ObservableObject
     public bool IsMusicEnabled
     {
         get => _isMusicEnabled;
-        set { if (SetProperty(ref _isMusicEnabled, value)) SaveSettingsAsync(); }
+        set { if (SetProperty(ref _isMusicEnabled, value)) _ = SaveSettingsAsync(); }
     }
 
     private bool _isSoundEnabled;
     public bool IsSoundEnabled
     {
         get => _isSoundEnabled;
-        set { if (SetProperty(ref _isSoundEnabled, value)) SaveSettingsAsync(); }
+        set { if (SetProperty(ref _isSoundEnabled, value)) _ = SaveSettingsAsync(); }
     }
 
     private readonly IReadOnlyList<LanguageOption> _languages =

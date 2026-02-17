@@ -12,7 +12,7 @@ public class UserProfile
 
     public string Name { get; set; } = "";
     public int Age { get; set; }
-    public int Coins { get; set; } = 10000000;
+    public int Coins { get; set; } = 100;
 
     public bool IsMusicEnabled { get; set; } = true;
     public bool IsSoundEnabled { get; set; } = true;

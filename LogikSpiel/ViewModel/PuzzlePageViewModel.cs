@@ -113,7 +113,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
             {
                 bool buy = await _dialog.ConfirmAsync(
                     LocalizationService.GetString("Puzzle_BuyHintTitle"),
-                    LocalizationService.Format("Puzzle_BuyHintMessage", 10));
+                    LocalizationService.Format("Puzzle_BuyHintMessage", 50));
                 if (buy) RevealOneDigit();
             }
             else
