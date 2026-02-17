@@ -10,12 +10,13 @@ namespace LogikSpiel.Model;
 /// <summary>
 /// Model für Spiel-Definition aus games.json
 /// </summary>
-public sealed class GameDefinition : INotifyPropertyChanged
+public sealed class GameDefinition : INotifyPropertyChanged, IDisposable
 {
     private string _title = "";
     private string _description = "";
     private List<string> _rules = new();
     private readonly EventHandler _cultureChangedHandler;
+    private bool _disposed;
 
     public GameDefinition()
     {
@@ -28,10 +29,7 @@ public sealed class GameDefinition : INotifyPropertyChanged
         LocalizationService.CultureChanged += _cultureChangedHandler;
     }
 
-    ~GameDefinition()
-    {
-        LocalizationService.CultureChanged -= _cultureChangedHandler;
-    }
+    ~GameDefinition() => Dispose(false);
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -72,4 +70,18 @@ public sealed class GameDefinition : INotifyPropertyChanged
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    private void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+
+        LocalizationService.CultureChanged -= _cultureChangedHandler;
+        _disposed = true;
+    }
 }
