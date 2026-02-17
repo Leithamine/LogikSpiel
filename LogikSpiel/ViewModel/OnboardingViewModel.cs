@@ -1,6 +1,7 @@
 ﻿using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LogikSpiel.ViewModel;
 
@@ -62,7 +63,8 @@ public class OnboardingViewModel : ObservableObject
                     var window = Application.Current.Windows[0];
 
                     // Wir setzen die Seite dieses Fensters neu
-                    window.Page = new AppShell(_serviceProvider);
+                    var appShell = _serviceProvider.GetRequiredService<AppShell>();
+                    window.Page = appShell;
                 }
             }
         }, () => IsValid);
