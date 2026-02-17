@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Diagnostics;
+using System.Linq;
 using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
@@ -138,12 +139,11 @@ public class ProfileViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Fehler beim Speichern: {ex.Message}");
+            Debug.WriteLine($"Fehler beim Speichern der Profileinstellungen: {ex}");
 
-            // Optional: Zeige Fehler dem User
             await _dialog.AlertAsync(
                 LocalizationService.GetString("Common_ErrorTitle"),
-                LocalizationService.GetString("Profile_SaveErrorMessage"),
+                $"{LocalizationService.GetString("Profile_SaveErrorMessage")}\n{ex.Message}",
                 LocalizationService.GetString("Common_Ok"));
         }
     }
