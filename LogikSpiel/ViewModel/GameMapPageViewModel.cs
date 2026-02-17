@@ -4,6 +4,7 @@ using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
 using LogikSpiel.Services.Localization;
+using LogikSpiel.View;
 using Microsoft.Maui.Graphics;
 
 namespace LogikSpiel.ViewModel;
@@ -83,12 +84,12 @@ public sealed class GameMapPageViewModel : ObservableObject
         BackCommand = new AsyncCommand(() => _nav.GoToAsync("//Main"));
 
         OpenProfileCommand = new AsyncCommand(async () =>
-            await _nav.GoToAsync("ProfilePage"));
+            await _nav.GoToAsync(nameof(ProfilePage)));
 
         RulesCommand = new AsyncCommand(async () =>
         {
             if (string.IsNullOrWhiteSpace(GameId)) return;
-            await _nav.GoToAsync("LearnPage", new Dictionary<string, object> { ["gameId"] = GameId! });
+            await _nav.GoToAsync(nameof(LearnPage), new Dictionary<string, object> { ["gameId"] = GameId! });
         });
 
         ToggleSettingsCommand = new AsyncCommand(() =>
@@ -111,25 +112,7 @@ public sealed class GameMapPageViewModel : ObservableObject
         {
             if (node is null || !node.IsUnlocked) return;
 
-            string route = node.Spec.GameId switch
-            {
-                // dein Lock/Code-Spiel
-                "codebreaker" => "PuzzlePage",
-                "riddle_lock" => "PuzzlePage",
-
-                // ✅ neues Spiel
-                "pascal_triangle" => "PascalTrianglePage",
-
-                "math_cross" => "MathCrossPage",
-                "math_hangman" => "MathHangmanPage",
-                "number_rain" => "NumberRainPage",
-                "complete_sequence" => "CompleteSequencePage",
-
-                // Default (bis du weitere Spiele implementierst)
-                _ => "PuzzlePage"
-            };
-
-            await _nav.GoToAsync(route, new Dictionary<string, object>
+            await _nav.GoToAsync(nameof(GameHostPage), new Dictionary<string, object>
             {
                 ["gameId"] = node.Spec.GameId,
                 ["difficulty"] = node.Spec.DifficultyKey,

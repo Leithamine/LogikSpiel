@@ -27,6 +27,12 @@ public class ProfileViewModel : ObservableObject
     private int _age;
     public int Age { get => _age; set => SetProperty(ref _age, value); }
 
+    private int _gamesPlayed;
+    public int GamesPlayed { get => _gamesPlayed; private set => SetProperty(ref _gamesPlayed, value); }
+
+    private int _gamesSolved;
+    public int GamesSolved { get => _gamesSolved; private set => SetProperty(ref _gamesSolved, value); }
+
     // --- Einstellungen ---
     private bool _isMusicEnabled;
     public bool IsMusicEnabled
@@ -105,6 +111,9 @@ public class ProfileViewModel : ObservableObject
 
             _isSoundEnabled = _user.IsSoundEnabled;
             OnPropertyChanged(nameof(IsSoundEnabled));
+
+            GamesPlayed = _user.UsedNumbers.Count;
+            GamesSolved = _user.UsedNumbers.Count;
 
             // Wichtig: UI benachrichtigen, dass sich Coins/ID geändert haben könnten
             OnPropertyChanged(nameof(Id));
