@@ -188,7 +188,26 @@ public class LockRiddleGeneratorService
         var ultraSafe = GenerateUltraSafe(length, targetHints, rules, rnd);
         if (ultraSafe != null) return ultraSafe;
 
+        // Deterministischer Fallback: feste Seed-Reihe statt sofort Exception
+        var fallback = GenerateDeterministicFallback(length, targetHints, rules);
+        if (fallback != null) return fallback;
+
         throw new InvalidOperationException("Konnte kein eindeutiges Lock-Riddle erzeugen.");
+    }
+
+
+    private LockRiddleGame? GenerateDeterministicFallback(int length, int targetHints, List<(int well, int wrong)> rules)
+    {
+        for (int i = 0; i < 256; i++)
+        {
+            int seed = HashCode.Combine(length, targetHints, rules.Count, i);
+            var rnd = new Random(seed);
+            var candidate = GenerateUltraSafe(length, targetHints, rules, rnd);
+            if (candidate != null)
+                return candidate;
+        }
+
+        return null;
     }
 
     private static string SignatureOf(LockHint hint)

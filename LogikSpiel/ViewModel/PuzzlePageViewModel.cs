@@ -239,6 +239,12 @@ public sealed class PuzzlePageViewModel : ObservableObject
             Hints.Add(hint);
     }
 
+    public void Cleanup()
+    {
+        _genToken++;
+        IsBusy = false;
+    }
+
     private static LockHint LocalizeHint(LockHint hint)
     {
         string Plural(int n, string singular, string plural) => n == 1 ? singular : plural;

@@ -116,6 +116,7 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable, IDisposable
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
+        _vm.Cleanup();
         Dispose();
     }
 
