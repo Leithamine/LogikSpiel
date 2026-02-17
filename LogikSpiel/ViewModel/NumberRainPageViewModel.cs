@@ -157,8 +157,18 @@ public sealed class NumberRainPageViewModel : ObservableObject
         CancelCommand = new AsyncCommand(CancelAsync);
         ExplainCommand = new AsyncCommand(ExplainQuestAsync);
         NumberTapCommand = new AsyncCommand<FallingNumberViewModel>(HandleNumberTapAsync);
-    }
 
+    }
+    //public void Cleanup()
+    //{
+    //    StopTimers();
+    //    _spawnTimer?.Dispose();
+    //    _updateTimer?.Dispose();
+    //    _secondTimer?.Dispose();
+    //    _spawnTimer = null;
+    //    _updateTimer = null;
+    //    _secondTimer = null;
+    //}
     protected override void OnCultureChanged()
     {
         base.OnCultureChanged();
@@ -543,10 +553,10 @@ public sealed class NumberRainPageViewModel : ObservableObject
         {
             int reward = DifficultyKey switch
             {
-                "easy" => 5,
-                "normal" => 8,
-                "hard" => 12,
-                "master" => 18,
+                "easy" => 3,
+                "normal" => 5,
+                "hard" => 7,
+                "master" => 10,
                 _ => 5
             };
 
@@ -566,8 +576,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
                     LocalizationService.GetString("NumberRain_RewardTitle"),
                     LocalizationService.Format("Common_CoinsRewardFormat", reward)));
 
-            await MainThread.InvokeOnMainThreadAsync(async () =>
-                await NavigateToGameMapAsync());
+                await NavigateToGameMapAsync();
             return;
         }
 
@@ -709,7 +718,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
             LocalizationService.GetString("Common_No"));
 
         if (!leave) return;
-
+        StopTimers();
         await NavigateToGameMapAsync();
     }
 

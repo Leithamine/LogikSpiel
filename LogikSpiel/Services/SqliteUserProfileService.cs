@@ -32,24 +32,25 @@ public class SqliteUserProfileService : IUserProfileService
 
         var existing = await _db!.Table<UserProfile>().FirstOrDefaultAsync();
 
+        bool success;
         if (existing != null)
         {
-            // Update existierender Felder
             existing.Name = user.Name;
             existing.Age = user.Age;
             existing.IsMusicEnabled = user.IsMusicEnabled;
             existing.IsSoundEnabled = user.IsSoundEnabled;
             existing.Coins = user.Coins;
-            await _db.UpdateAsync(existing);
+            success = await _db.UpdateAsync(existing) > 0;
         }
         else
         {
-            // Neu erstellen
-            await _db.InsertAsync(user);
+            success = await _db.InsertAsync(user) > 0;
         }
 
-        // 2. Das Event auslösen, damit z.B. das ProfilViewModel aktualisiert wird
-        UserDataChanged?.Invoke();
+        if (success)
+        {
+            UserDataChanged?.Invoke();
+        }
     }
 
     public async Task<bool> HasProfileAsync()

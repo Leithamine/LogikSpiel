@@ -109,7 +109,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
         {
             if (!IsNotBusy) return;
 
-            if (Coins >= 10)
+            if (Coins >= 50)
             {
                 bool buy = await _dialog.ConfirmAsync(
                     LocalizationService.GetString("Puzzle_BuyHintTitle"),
@@ -368,7 +368,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
                 if (_userProfile != null)
                 {
-                    _userProfile.Coins -= 10;
+                    _userProfile.Coins -= 50;
                     Coins = _userProfile.Coins;
                     _ = _userService.SaveUserAsync(_userProfile);
                 }
@@ -392,11 +392,11 @@ public sealed class PuzzlePageViewModel : ObservableObject
     private static int RewardForDifficulty(string key) =>
         key.ToLowerInvariant() switch
         {
-            "easy" => 6,
-            "normal" => 8,
-            "hard" => 10,
-            "master" => 12,
-            _ => 8
+            "easy" => 3,
+            "normal" => 5,
+            "hard" => 7,
+            "master" => 10,
+            _ => 5
         };
 
     private static string DiffName(string key) => LocalizationService.GetDifficultyLabel(key);

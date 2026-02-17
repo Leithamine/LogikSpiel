@@ -150,7 +150,18 @@ public sealed class CompleteSequencePageViewModel : ObservableObject
                 LocalizationService.GetString("Sequence_CorrectTitle"),
                 LocalizationService.Format("Sequence_CorrectMessageFormat", _puzzle.CorrectAnswer, reward));
 
-            LevelNumber = completedLevel + 1;
+            int nextLevel = completedLevel + 1;
+            int maxLevel = 10000; // oder aus Config
+            if (nextLevel > maxLevel)
+            {
+                await _dialog.AlertAsync(
+                    LocalizationService.GetString("Sequence_CompleteTitle"),
+                    LocalizationService.GetString("Sequence_CompleteMessage"),
+                    LocalizationService.GetString("Common_Ok"));
+                await _nav.GoBackAsync();
+                return;
+            }
+            LevelNumber = nextLevel;
             await StartNewRoundAsync();
         }
         else
@@ -198,10 +209,10 @@ public sealed class CompleteSequencePageViewModel : ObservableObject
 
     private static int RewardForDifficulty(string difficultyKey) => difficultyKey switch
     {
-        "easy" => 10,
-        "normal" => 20,
-        "hard" => 35,
-        "master" => 60,
+        "easy" => 3,
+        "normal" => 5,
+        "hard" => 7,
+        "master" => 10,
         _ => 10
     };
 

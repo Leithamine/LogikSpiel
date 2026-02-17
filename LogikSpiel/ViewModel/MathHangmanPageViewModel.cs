@@ -201,8 +201,9 @@ public sealed class MathHangmanPageViewModel : ObservableObject
             var user = await _userService.GetUserAsync();
             if (user != null)
             {
-                user.Coins += 50;
-                user.AddUsedNumber(_secret); // Hier wird die neue Methode genutzt
+                int reward = DifficultyKey switch { "easy" => 3, "normal" => 5, "hard" => 7, "master" => 10, _ => 5 };
+                user.Coins += reward;
+                user.AddUsedNumber(_secret); 
                 await _userService.SaveUserAsync(user);
             }
             int completedLevel = LevelNumber;
@@ -211,7 +212,18 @@ public sealed class MathHangmanPageViewModel : ObservableObject
             await _dialog.AlertAsync(
                 LocalizationService.GetString("MathHangman_WinTitle"),
                 LocalizationService.Format("MathHangman_WinMessageFormat", _secret));
-            LevelNumber = completedLevel + 1;
+            int nextLevel = completedLevel + 1;
+            int maxLevel = 10000; // oder aus Config
+            if (nextLevel > maxLevel)
+            {
+                await _dialog.AlertAsync(
+                    LocalizationService.GetString("MathHangman_CompleteTitle"),
+                    LocalizationService.GetString("MathHangman_CompleteMessage"),
+                    LocalizationService.GetString("Common_Ok"));
+                await _nav.GoToAsync(nameof(GameMapPage), new Dictionary<string, object> { ["gameId"] = GameId });
+                return;
+            }
+            LevelNumber = nextLevel;
             await StartRoundAsync();
         }
         else

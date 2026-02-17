@@ -31,14 +31,14 @@ public class ProfileViewModel : ObservableObject
     public bool IsMusicEnabled
     {
         get => _isMusicEnabled;
-        set { if (SetProperty(ref _isMusicEnabled, value)) SaveSettings(); }
+        set { if (SetProperty(ref _isMusicEnabled, value)) SaveSettingsAsync(); }
     }
 
     private bool _isSoundEnabled;
     public bool IsSoundEnabled
     {
         get => _isSoundEnabled;
-        set { if (SetProperty(ref _isSoundEnabled, value)) SaveSettings(); }
+        set { if (SetProperty(ref _isSoundEnabled, value)) SaveSettingsAsync(); }
     }
 
     private readonly IReadOnlyList<LanguageOption> _languages =
@@ -125,12 +125,12 @@ public class ProfileViewModel : ObservableObject
         LocalizationService.SetCulture(language.Code);
     }
 
-    private async void SaveSettings()
+    private async Task SaveSettingsAsync()
     {
         if (_user == null) return;
+
         try
         {
-            // Aktualisiere das User-Objekt mit den aktuellen Werten aus dem ViewModel
             _user.IsMusicEnabled = IsMusicEnabled;
             _user.IsSoundEnabled = IsSoundEnabled;
 
@@ -138,8 +138,13 @@ public class ProfileViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            // Hilft beim Debuggen, falls die DB gesperrt ist oder Spalten fehlen
             System.Diagnostics.Debug.WriteLine($"Fehler beim Speichern: {ex.Message}");
+
+            // Optional: Zeige Fehler dem User
+            await _dialog.AlertAsync(
+                LocalizationService.GetString("Common_ErrorTitle"),
+                LocalizationService.GetString("Profile_SaveErrorMessage"),
+                LocalizationService.GetString("Common_Ok"));
         }
     }
 }

@@ -38,16 +38,21 @@ public partial class App : Application
 
         Task.Run(async () =>
         {
-            await Task.Delay(300);
-
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             bool hasProfile = false;
+
             try
             {
+                await Task.Delay(300, cts.Token);
+
                 hasProfile = await _userService.HasProfileAsync();
+            }
+            catch (OperationCanceledException)
+            {
+                hasProfile = false;
             }
             catch
             {
-                // falls DB/Storage in Release kurz braucht
                 hasProfile = false;
             }
 
@@ -55,12 +60,10 @@ public partial class App : Application
             {
                 if (hasProfile)
                 {
-                    // ✅ Shell über DI holen (wichtig!)
                     window.Page = _services.GetRequiredService<AppShell>();
                 }
                 else
                 {
-                    // ✅ OnboardingPage über DI holen (damit VM injected wird)
                     window.Page = _services.GetRequiredService<OnboardingPage>();
                 }
             });

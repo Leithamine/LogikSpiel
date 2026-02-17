@@ -49,6 +49,7 @@ public sealed class RiddleStateStore : IRiddleStateStore
         var json = JsonSerializer.Serialize(game, JsonOptions);
         Preferences.Set(key, json);
         return Task.CompletedTask;
+
     }
 
     public Task ClearAsync(string gameId, string difficulty, int level)
