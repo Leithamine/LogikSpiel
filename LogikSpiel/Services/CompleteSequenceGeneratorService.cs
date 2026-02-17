@@ -416,17 +416,34 @@ public sealed class CompleteSequenceGeneratorService
 
     private static int NthPrime(int n)
     {
-        // 1-based: n=1 => 2
         if (n <= 1) return 2;
-        int count = 1;
-        int candidate = 1;
 
-        while (count < n)
+        int limit = Math.Max(100, (int)(n * Math.Log(n) * 1.5));
+
+        while (true)
         {
-            candidate += 2; // skip evens
-            if (IsPrime(candidate)) count++;
+            var isPrime = new bool[limit + 1];
+            Array.Fill(isPrime, true);
+            isPrime[0] = false;
+            isPrime[1] = false;
+
+            for (int i = 2; i * i <= limit; i++)
+            {
+                if (!isPrime[i]) continue;
+                for (int j = i * i; j <= limit; j += i)
+                    isPrime[j] = false;
+            }
+
+            int count = 0;
+            for (int i = 2; i <= limit; i++)
+            {
+                if (!isPrime[i]) continue;
+                count++;
+                if (count == n) return i;
+            }
+
+            limit *= 2;
         }
-        return candidate;
     }
 
     private static bool IsPrime(int x)
@@ -555,33 +572,21 @@ public sealed class CompleteSequenceGeneratorService
     private static IReadOnlyList<int> BuildOptions(Random rnd, List<int> sequence, int missingIndex, int correct, int maxValue)
     {
         var options = new HashSet<int> { correct };
-        var candidates = new List<int>();
+        options.Add(correct + rnd.Next(1, 5));
+        options.Add(correct - rnd.Next(1, 5));
+        options.Add(correct + rnd.Next(5, 15));
+        options.Add(correct * 2);
 
-        if (missingIndex > 0) candidates.Add(sequence[missingIndex - 1]);
-        if (missingIndex < sequence.Count - 1) candidates.Add(sequence[missingIndex + 1]);
-
-        candidates.Add(correct + rnd.Next(1, 4));
-        candidates.Add(correct - rnd.Next(1, 4));
+        options.RemoveWhere(x => x < 1 || x > maxValue);
 
         while (options.Count < 4)
         {
-            int candidate;
-            if (candidates.Count > 0)
-            {
-                int idx = rnd.Next(candidates.Count);
-                candidate = candidates[idx];
-                candidates.RemoveAt(idx);
-            }
-            else
-            {
-                candidate = correct + rnd.Next(-10, 11);
-            }
-
-            if (!IsInRange(candidate, maxValue)) continue;
-            options.Add(candidate);
+            int candidate = correct + rnd.Next(-20, 21);
+            if (candidate >= 1 && candidate <= maxValue)
+                options.Add(candidate);
         }
 
-        return options.OrderBy(_ => rnd.Next()).ToList();
+        return options.Take(4).OrderBy(_ => rnd.Next()).ToList();
     }
     private static List<int>? GeneratePeriodicPattern(Random rnd, int length, int maxValue)
     {
