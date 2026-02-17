@@ -203,7 +203,8 @@ public sealed class PuzzlePageViewModel : ObservableObject
             if (saved != null)
                 await _riddleState.ClearAsync(GameId, DifficultyKey, LevelNumber);
 
-            game = await Task.Run(() => _riddleGenerator.GenerateGame(DifficultyKey));
+            int seed = SeedHelper.CalculateSeed(GameId, DifficultyKey, LevelNumber);
+            game = await Task.Run(() => _riddleGenerator.GenerateGame(DifficultyKey, seed));
             await _riddleState.SaveAsync(GameId, DifficultyKey, LevelNumber, game);
         }
 
@@ -236,6 +237,12 @@ public sealed class PuzzlePageViewModel : ObservableObject
         Hints.Clear();
         foreach (var hint in updated)
             Hints.Add(hint);
+    }
+
+    public void Cleanup()
+    {
+        _genToken++;
+        IsBusy = false;
     }
 
     private static LockHint LocalizeHint(LockHint hint)
