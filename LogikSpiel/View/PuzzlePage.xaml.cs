@@ -116,7 +116,6 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
     {
         base.OnDisappearing();
         _vm.Cleanup();
-        Dispose();
     }
 
 

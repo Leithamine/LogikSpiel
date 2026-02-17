@@ -163,10 +163,6 @@ public sealed class NumberRainPageViewModel : ObservableObject
     {
         StopTimers();
 
-        _spawnTimer?.Dispose();
-        _updateTimer?.Dispose();
-        _secondTimer?.Dispose();
-
         _spawnTimer = null;
         _updateTimer = null;
         _secondTimer = null;
