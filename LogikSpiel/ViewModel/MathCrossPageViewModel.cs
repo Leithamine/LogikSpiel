@@ -411,6 +411,17 @@ public sealed class MathCrossPageViewModel : ObservableObject
             LocalizationService.Format("Common_CoinsRewardFormat", reward));
         await _progressStore.MarkLevelCompleteAsync(GameId, DifficultyKey, LevelNumber);
 
+        const int maxLevel = 10000;
+        if (LevelNumber >= maxLevel)
+        {
+            await _dialog.AlertAsync(
+                LocalizationService.GetString("MathCross_CompleteTitle"),
+                LocalizationService.GetString("MathCross_CompleteMessage"),
+                LocalizationService.GetString("Common_Ok"));
+            await _nav.GoToAsync(nameof(GameMapPage), new Dictionary<string, object> { ["gameId"] = GameId });
+            return;
+        }
+
         LevelNumber++;
         await StartNewRoundAsync();
     }

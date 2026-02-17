@@ -1,11 +1,12 @@
 ﻿// LogikSpiel/Model/UserProfile.cs
 using SQLite;
-using System.Text.Json;
 
 namespace LogikSpiel; // Achte darauf, dass der Namespace zu deinem Projekt passt
 
 public class UserProfile
 {
+    private readonly object _lock = new();
+
     [PrimaryKey]
     public string Id { get; set; } = Guid.NewGuid().ToString();
 
@@ -20,7 +21,6 @@ public class UserProfile
     public string UsedNumbersRaw { get; set; } = "";
 
     [Ignore] // Wird nicht in der DB gespeichert, nur im Programm genutzt
-             // ERSETZE die UsedNumbers Property (Zeile 22-30):
     public List<int> UsedNumbers
     {
         get
@@ -30,13 +30,15 @@ public class UserProfile
 
             try
             {
-                return UsedNumbersRaw
-                    .Split(',')
-                    .Where(s => !string.IsNullOrWhiteSpace(s))
-                    .Select(s => int.TryParse(s, out var n) ? n : (int?)null)
-                    .Where(n => n.HasValue)
-                    .Select(n => n!.Value)
-                    .ToList();
+                lock (_lock)
+                {
+                    return UsedNumbersRaw
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(s => int.TryParse(s, out var n) ? n : (int?)null)
+                        .Where(n => n.HasValue)
+                        .Select(n => n!.Value)
+                        .ToList();
+                }
             }
             catch
             {
@@ -48,11 +50,20 @@ public class UserProfile
     // Methode zum Hinzufügen einer Zahl
     public void AddUsedNumber(int number)
     {
-        var list = UsedNumbers;
-        if (!list.Contains(number))
+        lock (_lock)
         {
-            list.Add(number);
-            UsedNumbersRaw = string.Join(",", list);
+            var list = UsedNumbersRaw
+                .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => int.TryParse(s, out var n) ? n : (int?)null)
+                .Where(n => n.HasValue)
+                .Select(n => n!.Value)
+                .ToList();
+
+            if (!list.Contains(number))
+            {
+                list.Add(number);
+                UsedNumbersRaw = string.Join(",", list);
+            }
         }
     }
 
