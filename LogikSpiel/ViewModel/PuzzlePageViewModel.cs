@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
 using LogikSpiel.Services.Localization;
@@ -203,8 +202,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
             if (saved != null)
                 await _riddleState.ClearAsync(GameId, DifficultyKey, LevelNumber);
 
-            int seed = SeedHelper.CalculateSeed(GameId, DifficultyKey, LevelNumber);
-            game = await Task.Run(() => _riddleGenerator.GenerateGame(DifficultyKey, seed));
+            game = await Task.Run(() => _riddleGenerator.GenerateGame(DifficultyKey, LevelNumber));
             await _riddleState.SaveAsync(GameId, DifficultyKey, LevelNumber, game);
         }
 
