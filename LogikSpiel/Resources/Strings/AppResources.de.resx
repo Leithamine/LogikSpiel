@@ -22,13 +22,13 @@
   
   <!-- NEU: Zusätzliche Strings für Puzzle-Navigation -->
   <data name="Common_BackToMap" xml:space="preserve"><value>Zurück zur Karte</value></data>
-  <data name="Puzzle_WrongMessage" xml:space="preserve"><value>Der Code ist falsch. Möchtest du es nochmal versuchen?</value></data>
+  <data name="Puzzle_WrongMessage" xml:space="preserve"><value>Du hast den Code nicht geknackt. Möchtest du es nochmal versuchen?</value></data>
   <data name="Puzzle_AllLevelsCompleteTitle" xml:space="preserve"><value>Alle Level geschafft! 🎉</value></data>
   <data name="Puzzle_AllLevelsCompleteMessage" xml:space="preserve"><value>Du hast alle Level abgeschlossen. Herzlichen Glückwunsch!</value></data>
   
   <!-- NEU: Professor Nachrichten -->
   <data name="Puzzle_Professor_StartMessage" xml:space="preserve"><value>Willkommen! Finde den richtigen Code, um das Schloss zu öffnen. Viel Erfolg!</value></data>
-  <data name="Puzzle_Professor_WrongMessage" xml:space="preserve"><value>Das war leider nicht richtig. Schau dir die Hinweise nochmal genau an!</value></data>
+  <data name="Puzzle_Professor_WrongMessage" xml:space="preserve"><value>Du hast den Code nicht geknackt. Schau dir die Hinweise nochmal genau an!</value></data>
   <data name="Puzzle_Professor_SuccessMessage" xml:space="preserve"><value>Hervorragend! Du hast den Code geknackt!</value></data>
   
   <!-- Weitere bestehende Strings -->

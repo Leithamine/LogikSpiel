@@ -57,7 +57,7 @@
                                    IsVisible="{Binding IsBusy}"
                                    Color="{StaticResource C_Primary}"/>
 
-                <!-- Professor immer sichtbar -->
+                <!-- Professor nur nach falscher Eingabe sichtbar -->
                 <Grid IsVisible="{Binding ShowProfessor}" ColumnDefinitions="80,*" ColumnSpacing="10">
                     <Image Grid.Column="0"
                            Source="{Binding ProfessorImageSource}"
