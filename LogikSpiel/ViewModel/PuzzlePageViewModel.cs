@@ -33,7 +33,14 @@ public sealed class PuzzlePageViewModel : ObservableObject
     public int LevelNumber
     {
         get => _levelNumber;
-        private set { if (SetProperty(ref _levelNumber, value)) OnPropertyChanged(nameof(Title)); }
+        private set
+        {
+            if (SetProperty(ref _levelNumber, value))
+            {
+                OnPropertyChanged(nameof(Title));
+                OnPropertyChanged(nameof(LevelDisplayText));
+            }
+        }
     }
 
     private bool _isBusy;
@@ -77,6 +84,10 @@ public sealed class PuzzlePageViewModel : ObservableObject
     private int _genToken = 0;
 
     public string Title => LocalizationService.Format("Puzzle_TitleFormat", DiffName(DifficultyKey));
+    public string LevelDisplayText => $"Level {LevelNumber}";
+    public bool ShowProfessor => true;
+    public string ProfessorImageSource => "professor.png";
+    public string ProfessorMessage => LocalizationService.GetString("Puzzle_Professor_StartMessage");
 
     public bool ShowSolutionForDebug => true;
     public string SecretSolution => _secretSolution;
@@ -132,6 +143,9 @@ public sealed class PuzzlePageViewModel : ObservableObject
     {
         base.OnCultureChanged();
         RefreshHintDescriptions();
+        OnPropertyChanged(nameof(ProfessorMessage));
+        OnPropertyChanged(nameof(Title));
+        OnPropertyChanged(nameof(LevelDisplayText));
     }
 
     public async Task LoadAsync(string gameId, string difficulty, int level)
@@ -373,7 +387,8 @@ public sealed class PuzzlePageViewModel : ObservableObject
                 LocalizationService.GetString("Puzzle_WrongTitle"),
                 LocalizationService.GetString("Puzzle_WrongMessage"),
                 LocalizationService.GetString("Common_Retry"),
-                LocalizationService.GetString("Common_BackToMap"));
+                LocalizationService.GetString("Common_BackToMap"),
+                ProfessorImageSource);
 
             if (retry)
             {
@@ -466,23 +481,33 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
     private async Task RevealOneDigitAsync()
     {
+        int revealIndex = -1;
+
         for (int i = 0; i < _secretSolution.Length; i++)
         {
             string target = _secretSolution[i].ToString();
-
             if (InputDigits[i].Digit != target)
             {
-                InputDigits[i].Digit = target;
-                InputDigits[i].IsLocked = true;
-
-                if (_userProfile != null)
-                {
-                    _userProfile.Coins -= 50;
-                    Coins = _userProfile.Coins;
-                    await _userService.SaveUserAsync(_userProfile);
-                }
-                return;
+                revealIndex = i;
+                break;
             }
+        }
+
+        if (revealIndex < 0)
+            return;
+
+        await MainThread.InvokeOnMainThreadAsync(() =>
+        {
+            string target = _secretSolution[revealIndex].ToString();
+            InputDigits[revealIndex].Digit = target;
+            InputDigits[revealIndex].IsLocked = true;
+        });
+
+        if (_userProfile != null)
+        {
+            _userProfile.Coins -= 50;
+            Coins = _userProfile.Coins;
+            await _userService.SaveUserAsync(_userProfile);
         }
     }
 

@@ -9,6 +9,13 @@
                 VerticalOptions="Center"
                 WidthRequest="340">
             <VerticalStackLayout Spacing="16">
+                <Image x:Name="AvatarImage"
+                       Source="professor.png"
+                       IsVisible="False"
+                       WidthRequest="90"
+                       HeightRequest="90"
+                       Aspect="AspectFit"
+                       HorizontalOptions="Center"/>
                 <Label x:Name="TitleLabel"
                        Style="{StaticResource H2}"
                        HorizontalTextAlignment="Center"/>
