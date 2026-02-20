@@ -328,9 +328,17 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
         if (input != _secretSolution)
         {
-            await _dialog.AlertAsync(
+            bool retry = await _dialog.ConfirmAsync(
                 LocalizationService.GetString("Puzzle_WrongTitle"),
-                LocalizationService.Format("Puzzle_WrongMessageFormat", input, _secretSolution));
+                LocalizationService.GetString("Common_LeavePuzzlePrompt"),
+                LocalizationService.GetString("Common_Retry"),
+                LocalizationService.GetString("Common_Back"));
+
+            if (retry)
+                await StartNewRoundAsync();
+            else
+                await NavigateToMapAsync();
+
             return;
         }
 
@@ -352,6 +360,18 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
         LevelNumber = completedLevel + 1;
         await StartNewRoundAsync();
+    }
+
+    private async Task NavigateToMapAsync()
+    {
+        var parameters = new Dictionary<string, object>
+        {
+            ["gameId"] = GameId,
+            ["difficulty"] = DifficultyKey,
+            ["level"] = LevelNumber
+        };
+
+        await _nav.GoToAsync(nameof(GameMapPage), parameters);
     }
 
     private async Task PlaySuccessOverlayAsync(int reward)
