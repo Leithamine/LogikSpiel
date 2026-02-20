@@ -9,12 +9,28 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
     private bool _isLoaded;
     private readonly Dictionary<int, Entry> _entryByIndex = new();
     private CancellationTokenSource? _celebrationCts;
+    private PuzzlePageViewModel? _subscribedVm;
 
     public PuzzlePage(PuzzlePageViewModel vm)
     {
         InitializeComponent();
         BindingContext = vm;
+        AttachVm(vm);
+    }
 
+
+    private void AttachVm(PuzzlePageViewModel? vm)
+    {
+        if (ReferenceEquals(_subscribedVm, vm))
+            return;
+
+        if (_subscribedVm != null)
+            _subscribedVm.PropertyChanged -= Vm_PropertyChanged;
+
+        _subscribedVm = vm;
+
+        if (_subscribedVm != null)
+            _subscribedVm.PropertyChanged += Vm_PropertyChanged;
     }
 
     private async void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -56,6 +72,10 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
 
                 await OpenedLockImage.ScaleToAsync(1.0, 120, Easing.CubicInOut);
             }
+        }
+        catch (ObjectDisposedException)
+        {
+            // Seite wurde während Animation freigegeben.
         }
         catch (ObjectDisposedException)
         {
@@ -139,17 +159,13 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         _celebrationCts?.Dispose();
         _celebrationCts = null;
         OpenedLockImage?.CancelAnimations();
+        _entryByIndex.Clear();
     }
 
     protected override void OnBindingContextChanged()
     {
-        if (BindingContext is PuzzlePageViewModel oldVm)
-            oldVm.PropertyChanged -= Vm_PropertyChanged;
-
         base.OnBindingContextChanged();
-
-        if (BindingContext is PuzzlePageViewModel newVm)
-            newVm.PropertyChanged += Vm_PropertyChanged;
+        AttachVm(BindingContext as PuzzlePageViewModel);
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
