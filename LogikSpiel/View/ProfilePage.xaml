@@ -85,7 +85,7 @@
                                     Padding="12">
                                 <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
                                     <Label Text="🎮" FontSize="24" HorizontalOptions="Center"/>
-                                    <Label Text="42" FontSize="20" FontAttributes="Bold"
+                                    <Label Text="{Binding GamesPlayed}" FontSize="20" FontAttributes="Bold"
                                            TextColor="{StaticResource C_TextPrimary}" HorizontalOptions="Center"/>
                                     <Label Text="{resx:Translate Key=Profile_StatsPlayed}" FontSize="10"
                                            TextColor="{StaticResource C_TextMuted}" HorizontalOptions="Center"/>
@@ -98,7 +98,7 @@
                                     Padding="12">
                                 <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
                                     <Label Text="✅" FontSize="24" HorizontalOptions="Center"/>
-                                    <Label Text="38" FontSize="20" FontAttributes="Bold"
+                                    <Label Text="{Binding GamesSolved}" FontSize="20" FontAttributes="Bold"
                                            TextColor="{StaticResource C_Success}" HorizontalOptions="Center"/>
                                     <Label Text="{resx:Translate Key=Profile_StatsSolved}" FontSize="10"
                                            TextColor="{StaticResource C_TextMuted}" HorizontalOptions="Center"/>

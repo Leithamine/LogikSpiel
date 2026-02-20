@@ -2,6 +2,7 @@
 using LogikSpiel.Model;
 using LogikSpiel.Services;
 using LogikSpiel.Services.Localization;
+using LogikSpiel.View;
 
 namespace LogikSpiel.ViewModel;
 
@@ -41,7 +42,7 @@ public sealed class LearnPageViewModel : ObservableObject
         _nav = nav;
         _userService = userService;
         BackCommand = new AsyncCommand(() => _nav.GoBackAsync());
-        OpenProfileCommand = new AsyncCommand(async () => await _nav.GoToAsync("Profile")); // NEU
+        OpenProfileCommand = new AsyncCommand(async () => await _nav.GoToAsync(nameof(ProfilePage))); // NEU
     }
 
     public async Task LoadAsync()

@@ -5,9 +5,10 @@ using LogikSpiel.Services.Localization;
 
 namespace LogikSpiel.Core;
 
-public abstract class ObservableObject : INotifyPropertyChanged
+public abstract class ObservableObject : INotifyPropertyChanged, IDisposable
 {
     private readonly EventHandler _cultureChangedHandler;
+    private bool _disposed;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -17,9 +18,19 @@ public abstract class ObservableObject : INotifyPropertyChanged
         LocalizationService.CultureChanged += _cultureChangedHandler;
     }
 
-    ~ObservableObject()
+    public void Dispose()
     {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed)
+            return;
+
         LocalizationService.CultureChanged -= _cultureChangedHandler;
+        _disposed = true;
     }
 
     private void HandleCultureChanged(object? sender, EventArgs e)

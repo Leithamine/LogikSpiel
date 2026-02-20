@@ -10,16 +10,15 @@ namespace LogikSpiel.Services;
 
 public class LockRiddleGeneratorService
 {
-    private static readonly Random _rnd = Random.Shared;
-
     private sealed record DifficultyStyle(
         bool AllowSinglePinDisambiguation,
         bool AllowSinglePinFill,
         List<(int well, int wrong)> PreferredDisambiguationRules
     );
 
-    public LockRiddleGame GenerateGame(string difficultyKey)
+    public LockRiddleGame GenerateGame(string difficultyKey, int seed)
     {
+        var rnd = new Random(seed);
         var (length, minCoveredDigits, targetHints, rules, style) = GetSettings(difficultyKey);
 
         // Wenn length == 6: niemals Regeln zulassen, die mehr als 4 invalid digits benötigen
@@ -27,8 +26,11 @@ public class LockRiddleGeneratorService
         if (length == 6)
             rules = rules.Where(r => r.well + r.wrong >= 2).ToList();
 
-        return GenerateWithHardGuarantee(length, minCoveredDigits, targetHints, rules, style);
+        return GenerateWithHardGuarantee(length, minCoveredDigits, targetHints, rules, style, rnd, seed);
     }
+
+    public LockRiddleGame GenerateGame(string difficultyKey)
+        => GenerateGame(difficultyKey, Random.Shared.Next());
 
 
     public bool IsGameValid(LockRiddleGame game)
@@ -144,7 +146,7 @@ public class LockRiddleGeneratorService
     // ═══════════════════════════════════════════════════════════════
 
     private LockRiddleGame GenerateWithHardGuarantee(
-        int length, int minCoveredDigits, int targetHints, List<(int well, int wrong)> rules, DifficultyStyle style)
+        int length, int minCoveredDigits, int targetHints, List<(int well, int wrong)> rules, DifficultyStyle style, Random rnd, int baseSeed)
     {
         length = Math.Clamp(length, 3, 6);
         minCoveredDigits = Math.Clamp(minCoveredDigits, 2, length);
@@ -155,16 +157,16 @@ public class LockRiddleGeneratorService
         int maxAttempts = 700;
         for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
-            var (secret, invalid) = GenerateSecret(length);
+            var (secret, invalid) = GenerateSecret(length, rnd);
 
-            var hints = BuildHintsWithCoverageGuarantee(secret, invalid, length, minCoveredDigits, targetHints, rules);
+            var hints = BuildHintsWithCoverageGuarantee(secret, invalid, length, minCoveredDigits, targetHints, rules, rnd);
             if (hints == null || hints.Count < 3) continue;
 
             var signatures = new HashSet<string>(hints.Select(SignatureOf));
 
-            EnsureMinimumHints(secret, invalid, length, hints, signatures, rules, targetHints, maxHints, style);
+            EnsureMinimumHints(secret, invalid, length, hints, signatures, rules, targetHints, maxHints, style, rnd);
 
-            var unique = ForceUniqueness(secret, invalid, length, hints, signatures, maxHints, style);
+            var unique = ForceUniqueness(secret, invalid, length, hints, signatures, maxHints, style, rnd);
             if (unique == null) continue;
 
             var solver = new ConstraintSolver(length, unique);
@@ -176,17 +178,51 @@ public class LockRiddleGeneratorService
                 return new LockRiddleGame
                 {
                     SecretCode = secretStr,
-                    Hints = unique.OrderBy(_ => _rnd.Next()).ToList(),
+                    Hints = unique.OrderBy(_ => rnd.Next()).ToList(),
                     Difficulty = length
                 };
             }
         }
 
         // Ultima Ratio (immer eindeutig, aber ohne Wiederholungen pro Hint)
-        var ultraSafe = GenerateUltraSafe(length, targetHints, rules);
+        var ultraSafe = GenerateUltraSafe(length, targetHints, rules, rnd);
         if (ultraSafe != null) return ultraSafe;
 
+        // Deterministischer Fallback: feste Seed-Reihe statt sofort Exception
+        var fallback = GenerateDeterministicFallback(length, targetHints, rules, baseSeed);
+        if (fallback != null) return fallback;
+
         throw new InvalidOperationException("Konnte kein eindeutiges Lock-Riddle erzeugen.");
+    }
+
+
+    private LockRiddleGame? GenerateDeterministicFallback(int length, int targetHints, List<(int well, int wrong)> rules, int baseSeed)
+    {
+        for (int i = 0; i < 256; i++)
+        {
+            int seed = StableDeterministicSeed(baseSeed, length, targetHints, rules.Count, i);
+            var rnd = new Random(seed);
+            var candidate = GenerateUltraSafe(length, targetHints, rules, rnd);
+            if (candidate != null)
+                return candidate;
+        }
+
+        return null;
+    }
+
+
+    private static int StableDeterministicSeed(int baseSeed, int length, int targetHints, int ruleCount, int iteration)
+    {
+        unchecked
+        {
+            int h = 17;
+            h = h * 31 + baseSeed;
+            h = h * 31 + length;
+            h = h * 31 + targetHints;
+            h = h * 31 + ruleCount;
+            h = h * 31 + iteration;
+            return h & 0x7fffffff;
+        }
     }
 
     private static string SignatureOf(LockHint hint)
@@ -204,7 +240,8 @@ public class LockRiddleGeneratorService
         List<(int well, int wrong)> rules,
         int minHints,
         int maxHints,
-        DifficultyStyle style)
+        DifficultyStyle style,
+        Random rnd)
     {
         int attempts = 0;
         int maxAttempts = 200;
@@ -219,8 +256,8 @@ public class LockRiddleGeneratorService
 
             if (validRules.Count == 0) break;
 
-            var rule = validRules[_rnd.Next(validRules.Count)];
-            var hint = CreateHintByRule(secret, invalid, length, rule.well, rule.wrong);
+            var rule = validRules[rnd.Next(validRules.Count)];
+            var hint = CreateHintByRule(secret, invalid, length, rule.well, rule.wrong, rnd);
             if (hint != null) TryAddHint(hints, signatures, hint);
         }
 
@@ -229,7 +266,7 @@ public class LockRiddleGeneratorService
         {
             for (int pos = 0; hints.Count < minHints && hints.Count < maxHints && pos < length; pos++)
             {
-                var hint = CreateSinglePinHintUnique(secret, invalid, length, pos);
+                var hint = CreateSinglePinHintUnique(secret, invalid, length, pos, rnd);
                 if (hint != null) TryAddHint(hints, signatures, hint);
             }
         }
@@ -242,7 +279,8 @@ public class LockRiddleGeneratorService
         List<LockHint> hints,
         HashSet<string> signatures,
         int maxHints,
-        DifficultyStyle style)
+        DifficultyStyle style,
+        Random rnd)
     {
         string secretStr = string.Concat(secret);
 
@@ -271,8 +309,8 @@ public class LockRiddleGeneratorService
             {
                 if (preferred.Count == 0) break;
 
-                var rule = preferred[_rnd.Next(preferred.Count)];
-                var candidate = CreateHintByRule(secret, invalid, length, rule.well, rule.wrong);
+                var rule = preferred[rnd.Next(preferred.Count)];
+                var candidate = CreateHintByRule(secret, invalid, length, rule.well, rule.wrong, rnd);
                 if (candidate == null) continue;
 
                 var sig = SignatureOf(candidate);
@@ -300,7 +338,7 @@ public class LockRiddleGeneratorService
                 }
                 if (diffPos < 0) return null;
 
-                var disHint = CreateSinglePinHintUnique(secret, invalid, length, diffPos);
+                var disHint = CreateSinglePinHintUnique(secret, invalid, length, diffPos, rnd);
                 if (disHint != null) TryAddHint(hints, signatures, disHint);
                 continue;
             }
@@ -315,9 +353,9 @@ public class LockRiddleGeneratorService
         return null;
     }
 
-    private LockRiddleGame? GenerateUltraSafe(int length, int targetHints, List<(int well, int wrong)> rules)
+    private LockRiddleGame? GenerateUltraSafe(int length, int targetHints, List<(int well, int wrong)> rules, Random rnd)
     {
-        var (secret, invalid) = GenerateSecret(length);
+        var (secret, invalid) = GenerateSecret(length, rnd);
 
         var hints = new List<LockHint>();
         var signatures = new HashSet<string>();
@@ -325,7 +363,7 @@ public class LockRiddleGeneratorService
         // (0,0) nur wenn möglich ohne Wiederholungen: invalid.Count >= length
         if (invalid.Count >= length)
         {
-            var nothing = CreateHintNothingCorrectUnique(invalid, length);
+            var nothing = CreateHintNothingCorrectUnique(invalid, length, rnd);
             if (nothing != null) TryAddHint(hints, signatures, nothing);
         }
 
@@ -337,8 +375,8 @@ public class LockRiddleGeneratorService
             if (valid.Count == 0) valid = rules.Where(r => r.well + r.wrong > 0 && r.well + r.wrong <= length).ToList();
             if (valid.Count == 0) break;
 
-            var rule = valid[_rnd.Next(valid.Count)];
-            var h = CreateHintByRule(secret, invalid, length, rule.well, rule.wrong);
+            var rule = valid[rnd.Next(valid.Count)];
+            var h = CreateHintByRule(secret, invalid, length, rule.well, rule.wrong, rnd);
             if (h != null) TryAddHint(hints, signatures, h);
 
             var solver = new ConstraintSolver(length, hints);
@@ -360,7 +398,7 @@ public class LockRiddleGeneratorService
             {
                 for (int pos = 0; pos < length; pos++)
                 {
-                    var sp = CreateSinglePinHintUnique(secret, invalid, length, pos);
+                    var sp = CreateSinglePinHintUnique(secret, invalid, length, pos, rnd);
                     if (sp != null) TryAddHint(hints, signatures, sp);
                 }
             }
@@ -373,8 +411,8 @@ public class LockRiddleGeneratorService
                 int guard = 0;
                 while (hints.Count < Math.Min(targetHints, 12) && guard++ < 400)
                 {
-                    var r = fallbackRules[_rnd.Next(fallbackRules.Count)];
-                    var h = CreateHintByRule(secret, invalid, length, r.well, r.wrong);
+                    var r = fallbackRules[rnd.Next(fallbackRules.Count)];
+                    var h = CreateHintByRule(secret, invalid, length, r.well, r.wrong, rnd);
                     if (h != null) TryAddHint(hints, signatures, h);
 
                     var solver = new ConstraintSolver(length, hints);
@@ -388,7 +426,7 @@ public class LockRiddleGeneratorService
         {
             for (int pos = 0; pos < length && invalid.Count >= (length - 1); pos++)
             {
-                var sp = CreateSinglePinHintUnique(secret, invalid, length, pos);
+                var sp = CreateSinglePinHintUnique(secret, invalid, length, pos, rnd);
                 if (sp != null)
                 {
                     var (well, wrong) = LockHintScoring.Score(sp.Slots, secret);
@@ -403,7 +441,7 @@ public class LockRiddleGeneratorService
         return new LockRiddleGame
         {
             SecretCode = string.Concat(secret),
-            Hints = hints.OrderBy(_ => _rnd.Next()).ToList(),
+            Hints = hints.OrderBy(_ => rnd.Next()).ToList(),
             Difficulty = length
         };
     }
@@ -418,7 +456,8 @@ public class LockRiddleGeneratorService
         int length,
         int minCoveredDigits,
         int targetHints,
-        List<(int well, int wrong)> rules)
+        List<(int well, int wrong)> rules,
+        Random rnd)
     {
         var hints = new List<LockHint>();
         var signatures = new HashSet<string>();
@@ -430,7 +469,7 @@ public class LockRiddleGeneratorService
             if (coveredDigits.Count >= minCoveredDigits) break;
             if (coveredDigits.Contains(secret[pos])) continue;
 
-            var hint = CreateHintForPositionUnique(secret, invalid, length, pos, alreadyCovered: coveredDigits);
+            var hint = CreateHintForPositionUnique(secret, invalid, length, pos, coveredDigits, rnd);
             if (hint != null && TryAddHint(hints, signatures, hint))
                 UpdateCoverage(hint, coveredDigits, secret);
         }
@@ -441,7 +480,7 @@ public class LockRiddleGeneratorService
             {
                 if (coveredDigits.Count >= minCoveredDigits) break;
 
-                var hint = CreateHintShowingDigitUnique(secret, invalid, length, digit);
+                var hint = CreateHintShowingDigitUnique(secret, invalid, length, digit, rnd);
                 if (hint != null && TryAddHint(hints, signatures, hint))
                     UpdateCoverage(hint, coveredDigits, secret);
             }
@@ -453,7 +492,7 @@ public class LockRiddleGeneratorService
         // Phase 2: (0,0) nur wenn ohne Wiederholungen möglich (invalid.Count >= length)
         if (hints.Count < targetHints && invalid.Count >= length)
         {
-            var nothingHint = CreateHintNothingCorrectUnique(invalid, length);
+            var nothingHint = CreateHintNothingCorrectUnique(invalid, length, rnd);
             if (nothingHint != null)
                 TryAddHint(hints, signatures, nothingHint);
         }
@@ -461,14 +500,14 @@ public class LockRiddleGeneratorService
         // Phase 3: Regeln
         var shuffledRules = rules
             .Where(r => r.well + r.wrong > 0 && r.well + r.wrong <= length)
-            .OrderBy(_ => _rnd.Next())
+            .OrderBy(_ => rnd.Next())
             .ToList();
 
         foreach (var (well, wrong) in shuffledRules)
         {
             if (hints.Count >= targetHints) break;
 
-            var hint = CreateHintByRule(secret, invalid, length, well, wrong);
+            var hint = CreateHintByRule(secret, invalid, length, well, wrong, rnd);
             if (hint != null)
                 TryAddHint(hints, signatures, hint);
         }
@@ -480,8 +519,8 @@ public class LockRiddleGeneratorService
             var validRules = rules.Where(r => r.well + r.wrong > 0 && r.well + r.wrong <= length).ToList();
             if (validRules.Count == 0) break;
 
-            var rule = validRules[_rnd.Next(validRules.Count)];
-            var hint = CreateHintByRule(secret, invalid, length, rule.well, rule.wrong);
+            var rule = validRules[rnd.Next(validRules.Count)];
+            var hint = CreateHintByRule(secret, invalid, length, rule.well, rule.wrong, rnd);
             if (hint != null)
                 TryAddHint(hints, signatures, hint);
         }
@@ -497,7 +536,7 @@ public class LockRiddleGeneratorService
     /// Hint enthält garantiert Secret-Ziffer an targetPos. Bei length=6 wird zusätzlich garantiert,
     /// dass mindestens 2 Secret-Ziffern im Hint vorkommen (sonst bräuchte man 5 invalids -> unmöglich ohne Wiederholung).
     /// </summary>
-    private LockHint? CreateHintForPositionUnique(int[] secret, List<int> invalid, int length, int targetPos, HashSet<int> alreadyCovered)
+    private LockHint? CreateHintForPositionUnique(int[] secret, List<int> invalid, int length, int targetPos, HashSet<int> alreadyCovered, Random rnd)
     {
         for (int attempt = 0; attempt < 80; attempt++)
         {
@@ -505,7 +544,7 @@ public class LockRiddleGeneratorService
             var usedDigits = new HashSet<int>();
 
             // 1) Target secret digit setzen (richtig oder falsch platziert)
-            bool placeCorrectly = _rnd.Next(3) > 0;
+            bool placeCorrectly = rnd.Next(3) > 0;
 
             if (placeCorrectly)
             {
@@ -514,7 +553,7 @@ public class LockRiddleGeneratorService
             else
             {
                 var wrongPositions = Enumerable.Range(0, length).Where(p => p != targetPos).ToList();
-                int wrongPos = wrongPositions[_rnd.Next(wrongPositions.Count)];
+                int wrongPos = wrongPositions[rnd.Next(wrongPositions.Count)];
                 slots[wrongPos] = secret[targetPos].ToString();
             }
             usedDigits.Add(secret[targetPos]);
@@ -532,7 +571,7 @@ public class LockRiddleGeneratorService
 
                 if (candidates.Count > 0)
                 {
-                    var pick = candidates[_rnd.Next(candidates.Count)];
+                    var pick = candidates[rnd.Next(candidates.Count)];
                     // platziere bevorzugt falsch (damit es nicht zu trivial wird)
                     var freePos = Enumerable.Range(0, length)
                         .Where(p => string.IsNullOrEmpty(slots[p]) && p != pick.idx)
@@ -540,7 +579,7 @@ public class LockRiddleGeneratorService
 
                     if (freePos.Count > 0)
                     {
-                        int p = freePos[_rnd.Next(freePos.Count)];
+                        int p = freePos[rnd.Next(freePos.Count)];
                         slots[p] = pick.digit.ToString();
                         usedDigits.Add(pick.digit);
                     }
@@ -561,7 +600,7 @@ public class LockRiddleGeneratorService
             {
                 if (!string.IsNullOrEmpty(slots[pos])) continue;
 
-                if (!TryPickInvalidUnique(invalid, usedDigits, out int inv))
+                if (!TryPickInvalidUnique(invalid, usedDigits, rnd, out int inv))
                     goto retry;
 
                 slots[pos] = inv.ToString();
@@ -580,7 +619,7 @@ public class LockRiddleGeneratorService
         return null;
     }
 
-    private LockHint? CreateHintShowingDigitUnique(int[] secret, List<int> invalid, int length, int digitToShow)
+    private LockHint? CreateHintShowingDigitUnique(int[] secret, List<int> invalid, int length, int digitToShow, Random rnd)
     {
         for (int attempt = 0; attempt < 80; attempt++)
         {
@@ -589,7 +628,7 @@ public class LockRiddleGeneratorService
             var slots = new string[length];
             var usedDigits = new HashSet<int>();
 
-            bool placeCorrectly = _rnd.Next(2) == 0;
+            bool placeCorrectly = rnd.Next(2) == 0;
 
             if (placeCorrectly && secretPos >= 0)
             {
@@ -598,7 +637,7 @@ public class LockRiddleGeneratorService
             else
             {
                 var wrongPositions = Enumerable.Range(0, length).Where(p => p != secretPos).ToList();
-                int wrongPos = wrongPositions[_rnd.Next(wrongPositions.Count)];
+                int wrongPos = wrongPositions[rnd.Next(wrongPositions.Count)];
                 slots[wrongPos] = digitToShow.ToString();
             }
             usedDigits.Add(digitToShow);
@@ -609,7 +648,7 @@ public class LockRiddleGeneratorService
                 var candidates = secret.Where(d => d != digitToShow && !usedDigits.Contains(d)).ToList();
                 if (candidates.Count > 0)
                 {
-                    int d2 = candidates[_rnd.Next(candidates.Count)];
+                    int d2 = candidates[rnd.Next(candidates.Count)];
                     int idx2 = Array.IndexOf(secret, d2);
 
                     var freePos = Enumerable.Range(0, length)
@@ -618,7 +657,7 @@ public class LockRiddleGeneratorService
 
                     if (freePos.Count > 0)
                     {
-                        int p = freePos[_rnd.Next(freePos.Count)];
+                        int p = freePos[rnd.Next(freePos.Count)];
                         slots[p] = d2.ToString();
                         usedDigits.Add(d2);
                     }
@@ -629,7 +668,7 @@ public class LockRiddleGeneratorService
             {
                 if (!string.IsNullOrEmpty(slots[pos])) continue;
 
-                if (!TryPickInvalidUnique(invalid, usedDigits, out int inv))
+                if (!TryPickInvalidUnique(invalid, usedDigits, rnd, out int inv))
                     goto retry;
 
                 slots[pos] = inv.ToString();
@@ -649,7 +688,7 @@ public class LockRiddleGeneratorService
     /// <summary>
     /// (0,0) Hint ist nur möglich ohne Wiederholungen, wenn invalid.Count >= length.
     /// </summary>
-    private LockHint? CreateHintNothingCorrectUnique(List<int> invalid, int length)
+    private LockHint? CreateHintNothingCorrectUnique(List<int> invalid, int length, Random rnd)
     {
         if (invalid.Count < length) return null;
 
@@ -658,7 +697,7 @@ public class LockRiddleGeneratorService
 
         for (int pos = 0; pos < length; pos++)
         {
-            if (!TryPickInvalidUnique(invalid, usedDigits, out int inv))
+            if (!TryPickInvalidUnique(invalid, usedDigits, rnd, out int inv))
                 return null;
 
             slots[pos] = inv.ToString();
@@ -680,7 +719,7 @@ public class LockRiddleGeneratorService
     /// Single-Pin (1,0) geht ohne Wiederholungen nur, wenn invalid.Count >= length-1.
     /// (für length=6 ist das NICHT der Fall -> Methode gibt null zurück)
     /// </summary>
-    private LockHint? CreateSinglePinHintUnique(int[] secret, List<int> invalid, int length, int pos)
+    private LockHint? CreateSinglePinHintUnique(int[] secret, List<int> invalid, int length, int pos, Random rnd)
     {
         if (invalid.Count < (length - 1)) return null;
 
@@ -694,7 +733,7 @@ public class LockRiddleGeneratorService
         {
             if (i == pos) continue;
 
-            if (!TryPickInvalidUnique(invalid, used, out int inv))
+            if (!TryPickInvalidUnique(invalid, used, rnd, out int inv))
                 return null;
 
             slots[i] = inv.ToString();
@@ -705,7 +744,7 @@ public class LockRiddleGeneratorService
         return BuildHint(slots, secret);
     }
 
-    private LockHint? CreateHintByRule(int[] secret, List<int> invalid, int length, int well, int wrong)
+    private LockHint? CreateHintByRule(int[] secret, List<int> invalid, int length, int well, int wrong, Random rnd)
     {
         if (well < 0 || wrong < 0 || well + wrong > length || well + wrong == 0)
             return null;
@@ -720,7 +759,7 @@ public class LockRiddleGeneratorService
             var usedDigits = new HashSet<int>();
             var usedSecretIndices = new HashSet<int>();
 
-            var allPositions = Enumerable.Range(0, length).OrderBy(_ => _rnd.Next()).ToList();
+            var allPositions = Enumerable.Range(0, length).OrderBy(_ => rnd.Next()).ToList();
             var wellPositions = allPositions.Take(well).ToList();
             var remainingPositions = allPositions.Skip(well).ToList();
 
@@ -742,7 +781,7 @@ public class LockRiddleGeneratorService
 
                 if (availableSecretIndices.Count == 0) { failed = true; break; }
 
-                int secretIdx = availableSecretIndices[_rnd.Next(availableSecretIndices.Count)];
+                int secretIdx = availableSecretIndices[rnd.Next(availableSecretIndices.Count)];
                 int digitToPlace = secret[secretIdx];
 
                 var validTargetPositions = remainingPositions
@@ -751,7 +790,7 @@ public class LockRiddleGeneratorService
 
                 if (validTargetPositions.Count == 0) { failed = true; break; }
 
-                int targetPos = validTargetPositions[_rnd.Next(validTargetPositions.Count)];
+                int targetPos = validTargetPositions[rnd.Next(validTargetPositions.Count)];
                 slots[targetPos] = digitToPlace.ToString();
                 usedDigits.Add(digitToPlace);
                 usedSecretIndices.Add(secretIdx);
@@ -765,7 +804,7 @@ public class LockRiddleGeneratorService
             {
                 if (!string.IsNullOrEmpty(slots[pos])) continue;
 
-                if (!TryPickInvalidUnique(invalid, usedDigits, out int inv))
+                if (!TryPickInvalidUnique(invalid, usedDigits, rnd, out int inv))
                 {
                     failed = true;
                     break;
@@ -790,15 +829,15 @@ public class LockRiddleGeneratorService
     // HELPERS
     // ═══════════════════════════════════════════════════════════════
 
-    private (int[] secret, List<int> invalid) GenerateSecret(int length)
+    private (int[] secret, List<int> invalid) GenerateSecret(int length, Random rnd)
     {
-        var pool = Enumerable.Range(0, 10).OrderBy(_ => _rnd.Next()).ToList();
+        var pool = Enumerable.Range(0, 10).OrderBy(_ => rnd.Next()).ToList();
         int[] secret = pool.Take(length).ToArray();
         List<int> invalid = pool.Skip(length).ToList();
         return (secret, invalid);
     }
 
-    private static bool TryPickInvalidUnique(List<int> invalid, HashSet<int> usedDigits, out int digit)
+    private static bool TryPickInvalidUnique(List<int> invalid, HashSet<int> usedDigits, Random rnd, out int digit)
     {
         var candidates = invalid.Where(d => !usedDigits.Contains(d)).ToList();
         if (candidates.Count == 0)
@@ -806,7 +845,7 @@ public class LockRiddleGeneratorService
             digit = -1;
             return false;
         }
-        digit = candidates[_rnd.Next(candidates.Count)];
+        digit = candidates[rnd.Next(candidates.Count)];
         return true;
     }
 

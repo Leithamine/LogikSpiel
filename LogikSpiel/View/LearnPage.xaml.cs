@@ -1,27 +1,27 @@
-using LogikSpiel.Services;
 using LogikSpiel.ViewModel;
 
 namespace LogikSpiel.View;
 
 public partial class LearnPage : ContentPage, IQueryAttributable
 {
-    public LearnPage()
+    private readonly LearnPageViewModel vm;
+
+    public LearnPage(LearnPageViewModel vm)
     {
         InitializeComponent();
-        BindingContext = AppServices.Get<LearnPageViewModel>();
+        this.vm = vm;
+        BindingContext = this.vm;
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
-        if (BindingContext is not LearnPageViewModel vm) return;
         if (query.TryGetValue("gameId", out var idObj) && idObj is string id)
             vm.GameId = id;
     }
 
-    protected override void OnAppearing()
+    protected override async void OnAppearing()
     {
         base.OnAppearing();
-        if (BindingContext is LearnPageViewModel vm)
-            _ = vm.LoadAsync();
+        await vm.LoadAsync();
     }
 }

@@ -159,16 +159,16 @@ public sealed class NumberRainPageViewModel : ObservableObject
         NumberTapCommand = new AsyncCommand<FallingNumberViewModel>(HandleNumberTapAsync);
 
     }
-    //public void Cleanup()
-    //{
-    //    StopTimers();
-    //    _spawnTimer?.Dispose();
-    //    _updateTimer?.Dispose();
-    //    _secondTimer?.Dispose();
-    //    _spawnTimer = null;
-    //    _updateTimer = null;
-    //    _secondTimer = null;
-    //}
+    public void Cleanup()
+    {
+        StopTimers();
+
+        _spawnTimer = null;
+        _updateTimer = null;
+        _secondTimer = null;
+
+        ActiveNumbers.Clear();
+    }
     protected override void OnCultureChanged()
     {
         base.OnCultureChanged();
@@ -341,7 +341,7 @@ public sealed class NumberRainPageViewModel : ObservableObject
             {
                 toRemove.Add(number);
                 // Nur wenn das Spiel wirklich aktiv läuft und die Arena bereit ist
-                if (ShouldCountMissOnFallNumber(number.Value))
+                if (ShouldCountMissOnFall(number.Value))
                     ApplyMiss();
             }
         }
@@ -478,6 +478,9 @@ public sealed class NumberRainPageViewModel : ObservableObject
     private bool ShouldCountMissOnFall(int value)
     {
         if (_quest is null) return false;
+
+        if (_quest.Mode == NumberRainQuestMode.Avoid)
+            return false;
 
         bool isAvoid = _quest.AvoidPredicate?.Invoke(value, _lastSelection) ?? false;
         if (isAvoid)
@@ -730,19 +733,6 @@ public sealed class NumberRainPageViewModel : ObservableObject
         };
 
         return _nav.GoToAsync(nameof(GameMapPage), navigationParameters);
-    }
-
-    private bool ShouldCountMissOnFallNumber(int value)
-    {
-        if (_quest is null) return false;
-
-        if (_quest.Mode == NumberRainQuestMode.Avoid)
-            return false;
-
-        bool isAvoid = _quest.AvoidPredicate?.Invoke(value, _lastSelection) ?? false;
-        if (isAvoid) return false;
-
-        return IsTarget(value);
     }
 
     private static int StableHash(string s)

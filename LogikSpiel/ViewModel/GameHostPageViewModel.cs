@@ -2,6 +2,7 @@
 using LogikSpiel.Model;
 using LogikSpiel.Services;
 using LogikSpiel.Services.Localization;
+using LogikSpiel.View;
 
 namespace LogikSpiel.ViewModel;
 
@@ -45,7 +46,7 @@ public sealed class GameHostPageViewModel : ObservableObject
         RulesCommand = new AsyncCommand(async () =>
         {
             if (string.IsNullOrWhiteSpace(GameId)) return;
-            await _nav.GoToAsync("Learn", new Dictionary<string, object> { ["gameId"] = GameId });
+            await _nav.GoToAsync(nameof(LearnPage), new Dictionary<string, object> { ["gameId"] = GameId });
         });
 
         SolveCommand = new AsyncCommand(async () =>
@@ -58,7 +59,7 @@ public sealed class GameHostPageViewModel : ObservableObject
             await _progressStore.SaveAsync(progress); // WICHTIG: Speichern!
 
             // Prüfe ob nächstes Level existiert
-            var maxLevel = Game?.LevelCount ?? 10000;
+            var maxLevel = Game?.LevelCount ?? GameConfig.MaxLevel;
             if (LevelNumber >= maxLevel)
             {
                 await _dialog.AlertAsync(
