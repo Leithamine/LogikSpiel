@@ -33,27 +33,17 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         _celebrationCts = new CancellationTokenSource();
         var ct = _celebrationCts.Token;
 
-        if (FireworksView != null)
-        {
-            FireworksView.IsAnimationEnabled = false;
-            FireworksView.IsAnimationEnabled = true;
-        }
-
-        if (OpenedLockImage == null)
-            return;
+        // Feuerwerk Animation
+        await Task.Delay(100);
 
         try
         {
-            OpenedLockImage.AbortAnimation("celebrationPulse");
-            OpenedLockImage.Scale = 0.9;
             ct.ThrowIfCancellationRequested();
-            await OpenedLockImage.ScaleToAsync(1.05, 160, Easing.CubicOut);
-            ct.ThrowIfCancellationRequested();
-            await OpenedLockImage.ScaleToAsync(1.0, 120, Easing.CubicInOut);
+            // Hier könnte eine Animation für das Schloss sein
         }
         catch (OperationCanceledException)
         {
-            // Seite wurde verlassen, Animation bewusst abgebrochen.
+            // Seite wurde verlassen
         }
     }
 
@@ -131,7 +121,6 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         }
     }
 
-
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
@@ -139,7 +128,6 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         _entryByIndex.Clear();
         _vm.Cleanup();
     }
-
 
     protected override void OnHandlerChanging(HandlerChangingEventArgs args)
     {
@@ -161,8 +149,6 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         _celebrationCts.Cancel();
         _celebrationCts.Dispose();
         _celebrationCts = null;
-
-        OpenedLockImage?.AbortAnimation("celebrationPulse");
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)

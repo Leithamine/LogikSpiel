@@ -26,6 +26,11 @@
   <data name="Puzzle_AllLevelsCompleteTitle" xml:space="preserve"><value>All levels completed! 🎉</value></data>
   <data name="Puzzle_AllLevelsCompleteMessage" xml:space="preserve"><value>You have completed all levels. Congratulations!</value></data>
   
+  <!-- NEW: Professor messages -->
+  <data name="Puzzle_Professor_StartMessage" xml:space="preserve"><value>Welcome! Find the correct code to open the lock. Good luck!</value></data>
+  <data name="Puzzle_Professor_WrongMessage" xml:space="preserve"><value>That wasn't quite right. Look at the hints more carefully!</value></data>
+  <data name="Puzzle_Professor_SuccessMessage" xml:space="preserve"><value>Excellent! You cracked the code!</value></data>
+  
   <!-- Other existing strings -->
   <data name="Difficulty_Complex" xml:space="preserve"><value>Complex</value></data>
   <data name="Difficulty_Easy" xml:space="preserve"><value>Easy</value></data>
@@ -63,7 +68,7 @@
   <data name="Puzzle_EnterCode" xml:space="preserve"><value>🔐 ENTER THE CODE</value></data>
   <data name="Puzzle_ErrorTitle" xml:space="preserve"><value>Error</value></data>
   <data name="Puzzle_Generating" xml:space="preserve"><value>Generating puzzle...</value></data>
-  <data name="Puzzle_HintButton" xml:space="preserve"><value>💡 Hint (10)</value></data>
+  <data name="Puzzle_HintButton" xml:space="preserve"><value>💡 Hint (50)</value></data>
   <data name="Puzzle_HintsTitle" xml:space="preserve"><value>HINTS</value></data>
   <data name="Puzzle_IncompleteMessage" xml:space="preserve"><value>Please fill in all fields.</value></data>
   <data name="Puzzle_IncompleteTitle" xml:space="preserve"><value>Incomplete</value></data>

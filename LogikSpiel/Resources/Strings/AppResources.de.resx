@@ -26,6 +26,11 @@
   <data name="Puzzle_AllLevelsCompleteTitle" xml:space="preserve"><value>Alle Level geschafft! 🎉</value></data>
   <data name="Puzzle_AllLevelsCompleteMessage" xml:space="preserve"><value>Du hast alle Level abgeschlossen. Herzlichen Glückwunsch!</value></data>
   
+  <!-- NEU: Professor Nachrichten -->
+  <data name="Puzzle_Professor_StartMessage" xml:space="preserve"><value>Willkommen! Finde den richtigen Code, um das Schloss zu öffnen. Viel Erfolg!</value></data>
+  <data name="Puzzle_Professor_WrongMessage" xml:space="preserve"><value>Das war leider nicht richtig. Schau dir die Hinweise nochmal genau an!</value></data>
+  <data name="Puzzle_Professor_SuccessMessage" xml:space="preserve"><value>Hervorragend! Du hast den Code geknackt!</value></data>
+  
   <!-- Weitere bestehende Strings -->
   <data name="Difficulty_Complex" xml:space="preserve"><value>Kompliziert</value></data>
   <data name="Difficulty_Easy" xml:space="preserve"><value>Einfach</value></data>
@@ -63,7 +68,7 @@
   <data name="Puzzle_EnterCode" xml:space="preserve"><value>🔐 GIB DEN CODE EIN</value></data>
   <data name="Puzzle_ErrorTitle" xml:space="preserve"><value>Fehler</value></data>
   <data name="Puzzle_Generating" xml:space="preserve"><value>Erzeuge Rätsel...</value></data>
-  <data name="Puzzle_HintButton" xml:space="preserve"><value>💡 Tipp (10)</value></data>
+  <data name="Puzzle_HintButton" xml:space="preserve"><value>💡 Tipp (50)</value></data>
   <data name="Puzzle_HintsTitle" xml:space="preserve"><value>HINWEISE</value></data>
   <data name="Puzzle_IncompleteMessage" xml:space="preserve"><value>Bitte fülle alle Felder aus.</value></data>
   <data name="Puzzle_IncompleteTitle" xml:space="preserve"><value>Unvollständig</value></data>
