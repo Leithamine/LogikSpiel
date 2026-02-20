@@ -25,7 +25,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<INavigationService, ShellNavigationService>();
         builder.Services.AddSingleton<IDialogService, MauiDialogService>();
         builder.Services.AddSingleton<IGameProgressStore, SqliteGameProgressStore>();
-        builder.Services.AddSingleton<LockRiddleGeneratorService>();
+        builder.Services.AddSingleton<ILockRiddleGeneratorService, LockRiddleGeneratorService>();
         builder.Services.AddSingleton<IRiddleStateStore, RiddleStateStore>();
         builder.Services.AddSingleton<PascalTriangleGeneratorService>();
         builder.Services.AddSingleton<MathCrossGeneratorService>();

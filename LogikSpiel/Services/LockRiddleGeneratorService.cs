@@ -8,7 +8,7 @@ using LogikSpiel.Services.Localization;
 
 namespace LogikSpiel.Services;
 
-public class LockRiddleGeneratorService
+public class LockRiddleGeneratorService : ILockRiddleGeneratorService
 {
     private static readonly Random _rnd = Random.Shared;
 
@@ -63,6 +63,9 @@ public class LockRiddleGeneratorService
             if (well != h.WellPlaced || wrong != h.WrongPlaced)
                 return false;
         }
+
+        if (!AreNothingCorrectHintsUseful(game.Hints))
+            return false;
 
         var solver = new ConstraintSolver(length, game.Hints);
         var sols = solver.FindAllSolutions(maxSolutions: 2);
@@ -400,6 +403,10 @@ public class LockRiddleGeneratorService
 
         if (hints.Count == 0)
             return null;
+
+        if (!AreNothingCorrectHintsUseful(hints))
+            return null;
+
         return new LockRiddleGame
         {
             SecretCode = string.Concat(secret),
@@ -486,7 +493,35 @@ public class LockRiddleGeneratorService
                 TryAddHint(hints, signatures, hint);
         }
 
-        return hints;
+        return AreNothingCorrectHintsUseful(hints) ? hints : null;
+    }
+
+    private static bool AreNothingCorrectHintsUseful(IReadOnlyList<LockHint> hints)
+    {
+        for (int i = 0; i < hints.Count; i++)
+        {
+            var current = hints[i];
+            if (current.WellPlaced != 0 || current.WrongPlaced != 0)
+                continue;
+
+            var slotSet = current.Slots
+                .Select(s => s?.Trim())
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .ToHashSet(StringComparer.Ordinal);
+
+            if (slotSet.Count == 0)
+                return false;
+
+            bool appearsElsewhere = hints
+                .Where((_, index) => index != i)
+                .SelectMany(h => h.Slots)
+                .Any(slot => !string.IsNullOrWhiteSpace(slot) && slotSet.Contains(slot.Trim()));
+
+            if (!appearsElsewhere)
+                return false;
+        }
+
+        return true;
     }
 
     // ═══════════════════════════════════════════════════════════════
