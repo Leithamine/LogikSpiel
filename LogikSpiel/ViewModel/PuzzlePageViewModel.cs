@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
 using LogikSpiel.Services.Localization;
@@ -135,7 +134,21 @@ public sealed class PuzzlePageViewModel : ObservableObject
     {
         GameId = string.IsNullOrWhiteSpace(gameId) ? "codebreaker" : gameId;
         DifficultyKey = string.IsNullOrWhiteSpace(difficulty) ? "normal" : difficulty;
-        LevelNumber = Math.Max(1, level);
+
+        int requestedLevel = Math.Max(1, level);
+        int highestCompleted = 0;
+
+        var progress = await _progressStore.LoadAsync();
+        for (int candidate = 1; candidate <= GameConfig.MaxLevel; candidate++)
+        {
+            if (progress.IsCompleted(GameId, DifficultyKey, candidate))
+                highestCompleted = candidate;
+            else
+                break;
+        }
+
+        int maxUnlockedLevel = Math.Min(GameConfig.MaxLevel, highestCompleted + 1);
+        LevelNumber = Math.Min(requestedLevel, maxUnlockedLevel);
 
         OnPropertyChanged(nameof(Title));
 
@@ -164,7 +177,9 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
         var parameters = new Dictionary<string, object>
         {
-            ["gameId"] = GameId
+            ["gameId"] = GameId,
+            ["difficulty"] = DifficultyKey,
+            ["level"] = LevelNumber
         };
 
         await _nav.GoToAsync(nameof(GameMapPage), parameters);
@@ -203,8 +218,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
             if (saved != null)
                 await _riddleState.ClearAsync(GameId, DifficultyKey, LevelNumber);
 
-            int seed = SeedHelper.CalculateSeed(GameId, DifficultyKey, LevelNumber);
-            game = await Task.Run(() => _riddleGenerator.GenerateGame(DifficultyKey, seed));
+            game = await Task.Run(() => _riddleGenerator.GenerateGame(DifficultyKey, LevelNumber));
             await _riddleState.SaveAsync(GameId, DifficultyKey, LevelNumber, game);
         }
 
