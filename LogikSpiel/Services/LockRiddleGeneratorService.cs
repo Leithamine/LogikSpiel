@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services.Localization;
 
@@ -10,15 +11,20 @@ namespace LogikSpiel.Services;
 
 public class LockRiddleGeneratorService
 {
+    private Random _rnd = new();
+
     private sealed record DifficultyStyle(
         bool AllowSinglePinDisambiguation,
         bool AllowSinglePinFill,
         List<(int well, int wrong)> PreferredDisambiguationRules
     );
 
-    public LockRiddleGame GenerateGame(string difficultyKey, int seed)
+    public LockRiddleGame GenerateGame(string difficultyKey, int levelNumber)
     {
-        var rnd = new Random(seed);
+        var normalizedLevel = Math.Max(1, levelNumber);
+        int seed = SeedHelper.CalculateSeed("lockriddle", difficultyKey, normalizedLevel);
+        _rnd = new Random(seed);
+
         var (length, minCoveredDigits, targetHints, rules, style) = GetSettings(difficultyKey);
 
         // Wenn length == 6: niemals Regeln zulassen, die mehr als 4 invalid digits benötigen
@@ -26,11 +32,11 @@ public class LockRiddleGeneratorService
         if (length == 6)
             rules = rules.Where(r => r.well + r.wrong >= 2).ToList();
 
-        return GenerateWithHardGuarantee(length, minCoveredDigits, targetHints, rules, style, rnd, seed);
+        return GenerateWithHardGuarantee(length, minCoveredDigits, targetHints, rules, style, _rnd, seed);
     }
 
     public LockRiddleGame GenerateGame(string difficultyKey)
-        => GenerateGame(difficultyKey, Random.Shared.Next());
+        => GenerateGame(difficultyKey, levelNumber: 1);
 
 
     public bool IsGameValid(LockRiddleGame game)

@@ -17,10 +17,30 @@ public class LockRiddleGeneratorServiceTests
         {
             cts.Token.ThrowIfCancellationRequested();
 
-            var game = generator.GenerateGame("hard", seed: 9000 + i);
+            var game = generator.GenerateGame("hard", levelNumber: 9000 + i);
 
             Assert.True(generator.IsGameValid(game));
             Assert.True(SatisfiesNothingCorrectCoverageRule(game.Hints));
+        }
+    }
+
+
+    [Fact]
+    public void GenerateGame_SameDifficultyAndLevel_IsDeterministic()
+    {
+        var generator = new LockRiddleGeneratorService();
+
+        var first = generator.GenerateGame("normal", levelNumber: 2);
+        var second = generator.GenerateGame("normal", levelNumber: 2);
+
+        Assert.Equal(first.SecretCode, second.SecretCode);
+        Assert.Equal(first.Hints.Count, second.Hints.Count);
+
+        for (int i = 0; i < first.Hints.Count; i++)
+        {
+            Assert.Equal(first.Hints[i].WellPlaced, second.Hints[i].WellPlaced);
+            Assert.Equal(first.Hints[i].WrongPlaced, second.Hints[i].WrongPlaced);
+            Assert.Equal(first.Hints[i].Slots, second.Hints[i].Slots);
         }
     }
 
