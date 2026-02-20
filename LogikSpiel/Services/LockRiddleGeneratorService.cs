@@ -64,6 +64,8 @@ public class LockRiddleGeneratorService
                 return false;
         }
 
+        if (!HasValidNothingCorrectCoverage(game.Hints)) return false;
+
         var solver = new ConstraintSolver(length, game.Hints);
         var sols = solver.FindAllSolutions(maxSolutions: 2);
         return sols.Count == 1 && sols[0] == game.SecretCode;
@@ -166,6 +168,7 @@ public class LockRiddleGeneratorService
 
             var unique = ForceUniqueness(secret, invalid, length, hints, signatures, maxHints, style);
             if (unique == null) continue;
+            if (!HasValidNothingCorrectCoverage(unique)) continue;
 
             var solver = new ConstraintSolver(length, unique);
             var solutions = solver.FindAllSolutions(maxSolutions: 2);
@@ -325,7 +328,7 @@ public class LockRiddleGeneratorService
         // (0,0) nur wenn möglich ohne Wiederholungen: invalid.Count >= length
         if (invalid.Count >= length)
         {
-            var nothing = CreateHintNothingCorrectUnique(invalid, length);
+            var nothing = CreateHintNothingCorrectUnique(invalid, length, hints);
             if (nothing != null) TryAddHint(hints, signatures, nothing);
         }
 
@@ -398,7 +401,7 @@ public class LockRiddleGeneratorService
             }
         }
 
-        if (hints.Count == 0)
+        if (hints.Count == 0 || !HasValidNothingCorrectCoverage(hints))
             return null;
         return new LockRiddleGame
         {
@@ -453,7 +456,7 @@ public class LockRiddleGeneratorService
         // Phase 2: (0,0) nur wenn ohne Wiederholungen möglich (invalid.Count >= length)
         if (hints.Count < targetHints && invalid.Count >= length)
         {
-            var nothingHint = CreateHintNothingCorrectUnique(invalid, length);
+            var nothingHint = CreateHintNothingCorrectUnique(invalid, length, hints);
             if (nothingHint != null)
                 TryAddHint(hints, signatures, nothingHint);
         }
@@ -486,7 +489,7 @@ public class LockRiddleGeneratorService
                 TryAddHint(hints, signatures, hint);
         }
 
-        return hints;
+        return HasValidNothingCorrectCoverage(hints) ? hints : null;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -649,15 +652,34 @@ public class LockRiddleGeneratorService
     /// <summary>
     /// (0,0) Hint ist nur möglich ohne Wiederholungen, wenn invalid.Count >= length.
     /// </summary>
-    private LockHint? CreateHintNothingCorrectUnique(List<int> invalid, int length)
+    private LockHint? CreateHintNothingCorrectUnique(List<int> invalid, int length, IReadOnlyList<LockHint>? existingHints = null)
     {
         if (invalid.Count < length) return null;
 
         var slots = new string[length];
         var usedDigits = new HashSet<int>();
 
+        // (0,0)-Regel: mind. eine Ziffer sollte in anderen Hints wieder auftauchen.
+        var reusableDigits = existingHints?
+            .SelectMany(h => h.Slots)
+            .Where(s => int.TryParse(s, out _))
+            .Select(int.Parse)
+            .Where(invalid.Contains)
+            .Distinct()
+            .ToList() ?? new List<int>();
+
+        if (reusableDigits.Count > 0)
+        {
+            int shared = reusableDigits[_rnd.Next(reusableDigits.Count)];
+            slots[0] = shared.ToString();
+            usedDigits.Add(shared);
+        }
+
         for (int pos = 0; pos < length; pos++)
         {
+            if (!string.IsNullOrEmpty(slots[pos]))
+                continue;
+
             if (!TryPickInvalidUnique(invalid, usedDigits, out int inv))
                 return null;
 
@@ -796,6 +818,22 @@ public class LockRiddleGeneratorService
         int[] secret = pool.Take(length).ToArray();
         List<int> invalid = pool.Skip(length).ToList();
         return (secret, invalid);
+    }
+
+    private static bool HasValidNothingCorrectCoverage(IReadOnlyList<LockHint> hints)
+    {
+        var nothingHints = hints.Where(h => h.WellPlaced == 0 && h.WrongPlaced == 0).ToList();
+        foreach (var currentHint in nothingHints)
+        {
+            bool hasCoverage = hints.Any(h =>
+                !ReferenceEquals(h, currentHint) &&
+                h.Slots.Intersect(currentHint.Slots).Any());
+
+            if (!hasCoverage)
+                return false;
+        }
+
+        return true;
     }
 
     private static bool TryPickInvalidUnique(List<int> invalid, HashSet<int> usedDigits, out int digit)

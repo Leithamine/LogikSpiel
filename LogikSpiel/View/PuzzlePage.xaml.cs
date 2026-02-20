@@ -8,36 +8,46 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
 {
     private bool _isLoaded;
     private readonly Dictionary<int, Entry> _entryByIndex = new();
+    private CancellationTokenSource? _animationCts;
+    private PuzzlePageViewModel? _attachedVm;
 
     public PuzzlePage(PuzzlePageViewModel vm)
     {
         InitializeComponent();
         BindingContext = vm;
-
+        _attachedVm = vm;
         vm.PropertyChanged += Vm_PropertyChanged;
     }
 
     private async void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(PuzzlePageViewModel.IsCelebrating))
+        if (e.PropertyName != nameof(PuzzlePageViewModel.IsCelebrating))
+            return;
+
+        if (BindingContext is not PuzzlePageViewModel vm || !vm.IsCelebrating)
+            return;
+
+        _animationCts?.Cancel();
+        _animationCts = new CancellationTokenSource();
+
+        if (FireworksView != null)
         {
-            if (BindingContext is not PuzzlePageViewModel vm) return;
+            FireworksView.IsAnimationEnabled = false;
+            FireworksView.IsAnimationEnabled = true;
+        }
 
-            if (vm.IsCelebrating)
-            {
-                if (FireworksView != null)
-                {
-                    FireworksView.IsAnimationEnabled = false;
-                    FireworksView.IsAnimationEnabled = true;
-                }
+        if (OpenedLockImage == null)
+            return;
 
-                if (OpenedLockImage != null)
-                {
-                    OpenedLockImage.Scale = 0.9;
-                    await OpenedLockImage.ScaleToAsync(1.05, 160, Easing.CubicOut);
-                    await OpenedLockImage.ScaleToAsync(1.0, 120, Easing.CubicInOut);
-                }
-            }
+        try
+        {
+            OpenedLockImage.Scale = 0.9;
+            await OpenedLockImage.ScaleToAsync(1.05, 160, Easing.CubicOut).WaitAsync(_animationCts.Token);
+            await OpenedLockImage.ScaleToAsync(1.0, 120, Easing.CubicInOut).WaitAsync(_animationCts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // page closed during animation
         }
     }
 
@@ -90,11 +100,8 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
     {
         if (index < 0) return;
 
-        if (_entryByIndex.TryGetValue(index, out var next))
-        {
-            if (next.IsEnabled && !next.IsReadOnly)
-                next.Focus();
-        }
+        if (_entryByIndex.TryGetValue(index, out var next) && next.IsEnabled && !next.IsReadOnly)
+            next.Focus();
     }
 
     protected override void OnAppearing()
@@ -106,6 +113,26 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
             _ = vm.LoadAsync("riddle_lock", "normal", 1);
             _isLoaded = true;
         }
+    }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+        _animationCts?.Cancel();
+        _animationCts = null;
+        _entryByIndex.Clear();
+    }
+
+    protected override void OnBindingContextChanged()
+    {
+        if (_attachedVm != null)
+            _attachedVm.PropertyChanged -= Vm_PropertyChanged;
+
+        base.OnBindingContextChanged();
+
+        _attachedVm = BindingContext as PuzzlePageViewModel;
+        if (_attachedVm != null)
+            _attachedVm.PropertyChanged += Vm_PropertyChanged;
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)

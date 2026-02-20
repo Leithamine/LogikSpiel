@@ -80,7 +80,11 @@ public class ProfileViewModel : ObservableObject
         _nav = nav;
 
         // Zurück zur vorherigen Seite
-        BackCommand = new AsyncCommand(() => _nav.GoBackAsync());
+        BackCommand = new AsyncCommand(async () =>
+        {
+            Debug.WriteLine("[Profile] BackCommand executed");
+            await _nav.GoBackAsync();
+        });
 
         // Statistik Button (Platzhalter)
         ShowStatsCommand = new AsyncCommand(async () =>
