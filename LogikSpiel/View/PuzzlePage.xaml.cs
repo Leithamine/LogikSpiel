@@ -8,36 +8,74 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
 {
     private bool _isLoaded;
     private readonly Dictionary<int, Entry> _entryByIndex = new();
+    private CancellationTokenSource? _celebrationCts;
+    private PuzzlePageViewModel? _subscribedVm;
 
     public PuzzlePage(PuzzlePageViewModel vm)
     {
         InitializeComponent();
         BindingContext = vm;
+        AttachVm(vm);
+    }
 
-        vm.PropertyChanged += Vm_PropertyChanged;
+
+    private void AttachVm(PuzzlePageViewModel? vm)
+    {
+        if (ReferenceEquals(_subscribedVm, vm))
+            return;
+
+        if (_subscribedVm != null)
+            _subscribedVm.PropertyChanged -= Vm_PropertyChanged;
+
+        _subscribedVm = vm;
+
+        if (_subscribedVm != null)
+            _subscribedVm.PropertyChanged += Vm_PropertyChanged;
     }
 
     private async void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(PuzzlePageViewModel.IsCelebrating))
+        if (e.PropertyName != nameof(PuzzlePageViewModel.IsCelebrating))
+            return;
+
+        if (BindingContext is not PuzzlePageViewModel vm)
+            return;
+
+        _celebrationCts?.Cancel();
+        _celebrationCts?.Dispose();
+        _celebrationCts = null;
+
+        if (!vm.IsCelebrating)
         {
-            if (BindingContext is not PuzzlePageViewModel vm) return;
+            OpenedLockImage?.CancelAnimations();
+            return;
+        }
 
-            if (vm.IsCelebrating)
+        var cts = new CancellationTokenSource();
+        _celebrationCts = cts;
+
+        try
+        {
+            if (FireworksView != null)
             {
-                if (FireworksView != null)
-                {
-                    FireworksView.IsAnimationEnabled = false;
-                    FireworksView.IsAnimationEnabled = true;
-                }
-
-                if (OpenedLockImage != null)
-                {
-                    OpenedLockImage.Scale = 0.9;
-                    await OpenedLockImage.ScaleToAsync(1.05, 160, Easing.CubicOut);
-                    await OpenedLockImage.ScaleToAsync(1.0, 120, Easing.CubicInOut);
-                }
+                FireworksView.IsAnimationEnabled = false;
+                FireworksView.IsAnimationEnabled = true;
             }
+
+            if (OpenedLockImage != null)
+            {
+                OpenedLockImage.CancelAnimations();
+                OpenedLockImage.Scale = 0.9;
+
+                await OpenedLockImage.ScaleToAsync(1.05, 160, Easing.CubicOut);
+                if (cts.IsCancellationRequested) return;
+
+                await OpenedLockImage.ScaleToAsync(1.0, 120, Easing.CubicInOut);
+            }
+        }
+        catch (Exception ex) when (ex is ObjectDisposedException || ex is TaskCanceledException)
+        {
+            // Seite wurde während Animation freigegeben oder Animation abgebrochen.
         }
     }
 
@@ -88,11 +126,12 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
 
     private void FocusIndex(int index)
     {
-        if (index < 0) return;
+        if (BindingContext is not PuzzlePageViewModel vm) return;
+        if (index < 0 || index >= vm.InputDigits.Count) return;
 
         if (_entryByIndex.TryGetValue(index, out var next))
         {
-            if (next.IsEnabled && !next.IsReadOnly)
+            if (next.Handler != null && next.IsEnabled && !next.IsReadOnly)
                 next.Focus();
         }
     }
@@ -106,6 +145,23 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
             _ = vm.LoadAsync("riddle_lock", "normal", 1);
             _isLoaded = true;
         }
+    }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+
+        _celebrationCts?.Cancel();
+        _celebrationCts?.Dispose();
+        _celebrationCts = null;
+        OpenedLockImage?.CancelAnimations();
+        _entryByIndex.Clear();
+    }
+
+    protected override void OnBindingContextChanged()
+    {
+        base.OnBindingContextChanged();
+        AttachVm(BindingContext as PuzzlePageViewModel);
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
