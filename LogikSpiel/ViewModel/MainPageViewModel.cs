@@ -3,12 +3,14 @@ using System.Collections.ObjectModel;
 using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
+using LogikSpiel.View;
 
 namespace LogikSpiel.ViewModel;
 
 public sealed class MainPageViewModel : ObservableObject
 {
     private readonly IGameCatalogService _catalog;
+    private readonly INavigationService _navigationService;
     private readonly IUserProfileService _userService;
 
     private bool _isLoaded;
@@ -23,25 +25,26 @@ public sealed class MainPageViewModel : ObservableObject
 
     public MainPageViewModel(
         IGameCatalogService catalog,
+        INavigationService navigationService,
         IUserProfileService userService)
     {
         _catalog = catalog;
+        _navigationService = navigationService;
         _userService = userService;
 
         OpenProfileCommand = new AsyncCommand(async () =>
         {
-            await Shell.Current.GoToAsync("ProfilePage");
+            await _navigationService.GoToAsync(nameof(ProfilePage));
         });
 
         OpenGameCommand = new AsyncCommand<GameDefinition>(async game =>
         {
             if (game == null) return;
 
-            // ═══════════════════════════════════════════════════════════
-            // WICHTIG: Verwende die Route aus GameDefinition, nicht die ID!
-            // Navigiere zur GameMapPage mit der gameId
-            // ═══════════════════════════════════════════════════════════
-            await Shell.Current.GoToAsync($"GameMapPage?gameId={game.Id}");
+            await _navigationService.GoToAsync(nameof(GameMapPage), new Dictionary<string, object>
+            {
+                ["gameId"] = game.Id
+            });
         });
     }
 
