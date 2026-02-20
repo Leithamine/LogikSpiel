@@ -134,7 +134,21 @@ public sealed class PuzzlePageViewModel : ObservableObject
     {
         GameId = string.IsNullOrWhiteSpace(gameId) ? "codebreaker" : gameId;
         DifficultyKey = string.IsNullOrWhiteSpace(difficulty) ? "normal" : difficulty;
-        LevelNumber = Math.Max(1, level);
+
+        int requestedLevel = Math.Max(1, level);
+        int highestCompleted = 0;
+
+        var progress = await _progressStore.LoadAsync();
+        for (int candidate = 1; candidate <= GameConfig.MaxLevel; candidate++)
+        {
+            if (progress.IsCompleted(GameId, DifficultyKey, candidate))
+                highestCompleted = candidate;
+            else
+                break;
+        }
+
+        int maxUnlockedLevel = Math.Min(GameConfig.MaxLevel, highestCompleted + 1);
+        LevelNumber = Math.Min(requestedLevel, maxUnlockedLevel);
 
         OnPropertyChanged(nameof(Title));
 
@@ -163,7 +177,9 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
         var parameters = new Dictionary<string, object>
         {
-            ["gameId"] = GameId
+            ["gameId"] = GameId,
+            ["difficulty"] = DifficultyKey,
+            ["level"] = LevelNumber
         };
 
         await _nav.GoToAsync(nameof(GameMapPage), parameters);
