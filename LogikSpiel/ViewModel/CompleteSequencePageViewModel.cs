@@ -105,7 +105,7 @@ public sealed class CompleteSequencePageViewModel : ObservableObject
     {
         Lives = 3;
 
-        int seed = StableHash($"{GameId}:{DifficultyKey}") + (LevelNumber * 17);
+        int seed = SeedHelper.CalculateSeed(GameId, DifficultyKey, LevelNumber);
         _puzzle = _generator.Generate(DifficultyKey, seed);
 
         SequenceCells.Clear();
@@ -132,68 +132,74 @@ public sealed class CompleteSequencePageViewModel : ObservableObject
         if (IsBusy || _puzzle == null) return;
         IsBusy = true;
 
-        if (option == _puzzle.CorrectAnswer)
+        try
         {
-            int reward = RewardForDifficulty(DifficultyKey);
-
-            if (_userProfile != null)
+            if (option == _puzzle.CorrectAnswer)
             {
-                _userProfile.Coins += reward;
-                Coins = _userProfile.Coins;
-                await _userService.SaveUserAsync(_userProfile);
-            }
+                int reward = RewardForDifficulty(DifficultyKey);
 
-            int completedLevel = LevelNumber;
-            await _progressStore.MarkLevelCompleteAsync(GameId, DifficultyKey, completedLevel);
+                if (_userProfile != null)
+                {
+                    _userProfile.Coins += reward;
+                    Coins = _userProfile.Coins;
+                    await _userService.SaveUserAsync(_userProfile);
+                }
 
-            await _dialog.AlertAsync(
-                LocalizationService.GetString("Sequence_CorrectTitle"),
-                LocalizationService.Format("Sequence_CorrectMessageFormat", _puzzle.CorrectAnswer, reward));
+                int completedLevel = LevelNumber;
+                await _progressStore.MarkLevelCompleteAsync(GameId, DifficultyKey, completedLevel);
 
-            int nextLevel = completedLevel + 1;
-            int maxLevel = 10000; // oder aus Config
-            if (nextLevel > maxLevel)
-            {
                 await _dialog.AlertAsync(
-                    LocalizationService.GetString("Sequence_CompleteTitle"),
-                    LocalizationService.GetString("Sequence_CompleteMessage"),
-                    LocalizationService.GetString("Common_Ok"));
-                await _nav.GoBackAsync();
-                return;
-            }
-            LevelNumber = nextLevel;
-            await StartNewRoundAsync();
-        }
-        else
-        {
-            Lives = Math.Max(0, Lives - 1);
+                    LocalizationService.GetString("Sequence_CorrectTitle"),
+                    LocalizationService.Format("Sequence_CorrectMessageFormat", _puzzle.CorrectAnswer, reward));
 
-            if (Lives > 0)
-            {
-                await _dialog.AlertAsync(
-                    LocalizationService.GetString("Sequence_WrongTitle"),
-                    LocalizationService.Format("Sequence_WrongMessageFormat", Lives));
+                int nextLevel = completedLevel + 1;
+                int maxLevel = GameConfig.MaxLevel;
+                if (nextLevel > maxLevel)
+                {
+                    await _dialog.AlertAsync(
+                        LocalizationService.GetString("Sequence_CompleteTitle"),
+                        LocalizationService.GetString("Sequence_CompleteMessage"),
+                        LocalizationService.GetString("Common_Ok"));
+                    await _nav.GoBackAsync();
+                    return;
+                }
+
+                LevelNumber = nextLevel;
+                await StartNewRoundAsync();
             }
             else
             {
-                bool retry = await _dialog.ConfirmAsync(
-                    LocalizationService.GetString("Sequence_GameOverTitle"),
-                    LocalizationService.GetString("Sequence_GameOverMessage"),
-                    LocalizationService.GetString("Common_Retry"),
-                    LocalizationService.GetString("Common_Back"));
+                Lives = Math.Max(0, Lives - 1);
 
-                if (retry)
+                if (Lives > 0)
                 {
-                    await StartNewRoundAsync();
+                    await _dialog.AlertAsync(
+                        LocalizationService.GetString("Sequence_WrongTitle"),
+                        LocalizationService.Format("Sequence_WrongMessageFormat", Lives));
                 }
                 else
                 {
-                    await _nav.GoBackAsync();
+                    bool retry = await _dialog.ConfirmAsync(
+                        LocalizationService.GetString("Sequence_GameOverTitle"),
+                        LocalizationService.GetString("Sequence_GameOverMessage"),
+                        LocalizationService.GetString("Common_Retry"),
+                        LocalizationService.GetString("Common_Back"));
+
+                    if (retry)
+                    {
+                        await StartNewRoundAsync();
+                    }
+                    else
+                    {
+                        await _nav.GoBackAsync();
+                    }
                 }
             }
         }
-
-        IsBusy = false;
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     private async Task ShowHintAsync()
@@ -256,22 +262,6 @@ public sealed class CompleteSequencePageViewModel : ObservableObject
             LocalizationService.GetString("Common_No"));
         if (!leave) return;
         await _nav.GoBackAsync();
-    }
-
-    private static int StableHash(string s)
-    {
-        unchecked
-        {
-            const int fnvOffset = (int)2166136261;
-            const int fnvPrime = 16777619;
-            int hash = fnvOffset;
-            foreach (var c in s)
-            {
-                hash ^= c;
-                hash *= fnvPrime;
-            }
-            return (int)Math.Abs((long)hash);
-        }
     }
 
     private static bool IsArithmetic(IReadOnlyList<int> sequence)

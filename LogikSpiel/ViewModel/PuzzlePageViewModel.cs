@@ -23,7 +23,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
     private int _coins;
     public int Coins { get => _coins; set => SetProperty(ref _coins, value); }
 
-    public string GameId { get; private set; } = "riddle_lock";
+    public string GameId { get; private set; } = "codebreaker";
     public string DifficultyKey { get; private set; } = "normal";
 
     private int _levelNumber = 1;
@@ -133,7 +133,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
     public async Task LoadAsync(string gameId, string difficulty, int level)
     {
-        GameId = string.IsNullOrWhiteSpace(gameId) ? "riddle_lock" : gameId;
+        GameId = string.IsNullOrWhiteSpace(gameId) ? "codebreaker" : gameId;
         DifficultyKey = string.IsNullOrWhiteSpace(difficulty) ? "normal" : difficulty;
         LevelNumber = Math.Max(1, level);
 
@@ -203,7 +203,8 @@ public sealed class PuzzlePageViewModel : ObservableObject
             if (saved != null)
                 await _riddleState.ClearAsync(GameId, DifficultyKey, LevelNumber);
 
-            game = await Task.Run(() => _riddleGenerator.GenerateGame(DifficultyKey));
+            int seed = SeedHelper.CalculateSeed(GameId, DifficultyKey, LevelNumber);
+            game = await Task.Run(() => _riddleGenerator.GenerateGame(DifficultyKey, seed));
             await _riddleState.SaveAsync(GameId, DifficultyKey, LevelNumber, game);
         }
 
@@ -236,6 +237,12 @@ public sealed class PuzzlePageViewModel : ObservableObject
         Hints.Clear();
         foreach (var hint in updated)
             Hints.Add(hint);
+    }
+
+    public void Cleanup()
+    {
+        _genToken++;
+        IsBusy = false;
     }
 
     private static LockHint LocalizeHint(LockHint hint)

@@ -1,5 +1,6 @@
 #nullable enable
 using System.ComponentModel;
+using LogikSpiel.Core;
 using LogikSpiel.ViewModel;
 
 namespace LogikSpiel.View;
@@ -8,13 +9,15 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
 {
     private bool _isLoaded;
     private readonly Dictionary<int, Entry> _entryByIndex = new();
+    private readonly PuzzlePageViewModel _vm;
 
     public PuzzlePage(PuzzlePageViewModel vm)
     {
         InitializeComponent();
-        BindingContext = vm;
+        _vm = vm;
+        BindingContext = _vm;
 
-        vm.PropertyChanged += Vm_PropertyChanged;
+        _vm.PropertyChanged += Vm_PropertyChanged;
     }
 
     private async void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -101,11 +104,27 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
     {
         base.OnAppearing();
 
-        if (!_isLoaded && BindingContext is PuzzlePageViewModel vm && vm.Hints.Count == 0)
+        if (!_isLoaded)
         {
-            _ = vm.LoadAsync("riddle_lock", "normal", 1);
             _isLoaded = true;
+            return;
         }
+    }
+
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+        _vm.Cleanup();
+    }
+
+
+    protected override void OnHandlerChanging(HandlerChangingEventArgs args)
+    {
+        if (args.NewHandler is null)
+            _vm.PropertyChanged -= Vm_PropertyChanged;
+
+        base.OnHandlerChanging(args);
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
@@ -113,7 +132,7 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         if (BindingContext is not PuzzlePageViewModel vm) return;
         _isLoaded = true;
 
-        var gameId = query.TryGetValue("gameId", out var idObj) ? idObj?.ToString() ?? "riddle_lock" : "riddle_lock";
+        var gameId = query.TryGetValue("gameId", out var idObj) ? idObj?.ToString() : null;
         var difficulty = query.TryGetValue("difficulty", out var diffObj) ? diffObj?.ToString() ?? "normal" : "normal";
 
         int level = 1;
@@ -122,9 +141,10 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
 
         Dispatcher.Dispatch(async () =>
         {
-            const int maxLevel = 10000;
+            const int maxLevel = GameConfig.MaxLevel;
             if (level > maxLevel) level = maxLevel;
-            await vm.LoadAsync(gameId, difficulty, level);
+            if (!string.IsNullOrWhiteSpace(gameId))
+                await vm.LoadAsync(gameId, difficulty, level);
         });
     }
 }

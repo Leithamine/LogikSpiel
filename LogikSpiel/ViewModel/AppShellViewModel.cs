@@ -1,5 +1,6 @@
 ﻿using LogikSpiel.Core;
 using LogikSpiel.Services;
+using LogikSpiel.View;
 
 namespace LogikSpiel.ViewModel;
 
@@ -27,7 +28,7 @@ public class AppShellViewModel : ObservableObject
         OpenProfileCommand = new AsyncCommand(async () =>
         {
             // Navigiere zur Profilseite
-            await _nav.GoToAsync("Profile"); // Stelle sicher, dass die Route registriert ist!
+            await _nav.GoToAsync(nameof(ProfilePage)); // Stelle sicher, dass die Route registriert ist!
         });
 
         // Start-Daten laden

@@ -1,10 +1,10 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Windows.Input;
 using LogikSpiel.Services;
 using LogikSpiel.Services.Localization;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
-using System.Threading; // WICHTIG: Für Interlocked
+using System.Threading;
 
 namespace LogikSpiel.Core;
 
@@ -12,7 +12,7 @@ public sealed class AsyncCommand : ICommand
 {
     private readonly Func<Task> _execute;
     private readonly Func<bool>? _canExecute;
-    private int _isExecuting; // 0 = false, 1 = true (für Interlocked)
+    private int _isExecuting;
 
     public event EventHandler? CanExecuteChanged;
 
@@ -22,18 +22,30 @@ public sealed class AsyncCommand : ICommand
         _canExecute = canExecute;
     }
 
+    private bool EvaluateCanExecute()
+    {
+        try
+        {
+            return _canExecute?.Invoke() ?? true;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"CANEXECUTE ERROR: {ex}");
+            return false;
+        }
+    }
+
     public bool CanExecute(object? parameter)
-        => _isExecuting == 0 && (_canExecute?.Invoke() ?? true);
+        => _isExecuting == 0 && EvaluateCanExecute();
 
     public async void Execute(object? parameter)
     {
-        // Atomare Prüfung: Wenn _isExecuting 0 war, setze es auf 1 und gib true zurück
         if (Interlocked.CompareExchange(ref _isExecuting, 1, 0) != 0)
-            return; // Bereits am Ausführen
+            return;
 
-        if (!CanExecute(parameter))
+        if (!EvaluateCanExecute())
         {
-            Interlocked.Exchange(ref _isExecuting, 0); // Zurücksetzen
+            Interlocked.Exchange(ref _isExecuting, 0);
             return;
         }
 
@@ -44,41 +56,51 @@ public sealed class AsyncCommand : ICommand
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"COMMAND ERROR: {ex}");
-
-            try
-            {
-                await MainThread.InvokeOnMainThreadAsync(async () =>
-                {
-                    try
-                    {
-                        var dialogService = AppServices.Get<IDialogService>();
-                        await dialogService.AlertAsync(
-                            LocalizationService.GetString("Common_ErrorTitle"),
-                            ex.Message,
-                            LocalizationService.GetString("Common_Ok"));
-                    }
-                    catch { /* Silent fail */ }
-                });
-            }
-            catch { }
+            await HandleExceptionAsync(ex);
         }
         finally
         {
-            Interlocked.Exchange(ref _isExecuting, 0); // Atomar zurücksetzen
+            Interlocked.Exchange(ref _isExecuting, 0);
             RaiseCanExecuteChanged();
         }
     }
 
     public void RaiseCanExecuteChanged()
         => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+
+    private static async Task HandleExceptionAsync(Exception ex)
+    {
+        Debug.WriteLine($"COMMAND ERROR: {ex}");
+
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            try
+            {
+                var dialogService = AppServices.Get<IDialogService>();
+                await dialogService.AlertAsync(
+                    LocalizationService.GetString("Common_ErrorTitle"),
+                    ex.Message,
+                    LocalizationService.GetString("Common_Ok"));
+            }
+            catch
+            {
+                if (Application.Current?.MainPage is Page page)
+                {
+                    await page.DisplayAlert(
+                        LocalizationService.GetString("Common_ErrorTitle"),
+                        ex.Message,
+                        LocalizationService.GetString("Common_Ok"));
+                }
+            }
+        });
+    }
 }
 
 public sealed class AsyncCommand<T> : ICommand
 {
     private readonly Func<T?, Task> _execute;
     private readonly Func<T?, bool>? _canExecute;
-    private int _isExecuting; // 0 = false, 1 = true (für Interlocked)
+    private int _isExecuting;
 
     public event EventHandler? CanExecuteChanged;
 
@@ -88,54 +110,77 @@ public sealed class AsyncCommand<T> : ICommand
         _canExecute = canExecute;
     }
 
+    private bool EvaluateCanExecute(T? parameter)
+    {
+        try
+        {
+            return _canExecute?.Invoke(parameter) ?? true;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"CANEXECUTE ERROR: {ex}");
+            return false;
+        }
+    }
+
     public bool CanExecute(object? parameter)
-        => _isExecuting == 0 && (_canExecute?.Invoke((T?)parameter) ?? true);
+        => _isExecuting == 0 && EvaluateCanExecute((T?)parameter);
 
     public async void Execute(object? parameter)
     {
-        // Atomare Prüfung: Wenn _isExecuting 0 war, setze es auf 1 und gib true zurück
         if (Interlocked.CompareExchange(ref _isExecuting, 1, 0) != 0)
-            return; // Bereits am Ausführen
+            return;
 
-        if (!CanExecute(parameter))
+        var typedParameter = (T?)parameter;
+        if (!EvaluateCanExecute(typedParameter))
         {
-            Interlocked.Exchange(ref _isExecuting, 0); // Zurücksetzen
+            Interlocked.Exchange(ref _isExecuting, 0);
             return;
         }
 
         try
         {
             RaiseCanExecuteChanged();
-            await _execute((T?)parameter);
+            await _execute(typedParameter);
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"COMMAND ERROR: {ex}");
-
-            try
-            {
-                await MainThread.InvokeOnMainThreadAsync(async () =>
-                {
-                    try
-                    {
-                        var dialogService = AppServices.Get<IDialogService>();
-                        await dialogService.AlertAsync(
-                            LocalizationService.GetString("Common_ErrorTitle"),
-                            ex.Message,
-                            LocalizationService.GetString("Common_Ok"));
-                    }
-                    catch { /* Silent fail */ }
-                });
-            }
-            catch { }
+            await HandleExceptionAsync(ex);
         }
         finally
         {
-            Interlocked.Exchange(ref _isExecuting, 0); // Atomar zurücksetzen
+            Interlocked.Exchange(ref _isExecuting, 0);
             RaiseCanExecuteChanged();
         }
     }
 
     public void RaiseCanExecuteChanged()
         => CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+
+    private static async Task HandleExceptionAsync(Exception ex)
+    {
+        Debug.WriteLine($"COMMAND ERROR: {ex}");
+
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            try
+            {
+                var dialogService = AppServices.Get<IDialogService>();
+                await dialogService.AlertAsync(
+                    LocalizationService.GetString("Common_ErrorTitle"),
+                    ex.Message,
+                    LocalizationService.GetString("Common_Ok"));
+            }
+            catch
+            {
+                if (Application.Current?.MainPage is Page page)
+                {
+                    await page.DisplayAlert(
+                        LocalizationService.GetString("Common_ErrorTitle"),
+                        ex.Message,
+                        LocalizationService.GetString("Common_Ok"));
+                }
+            }
+        });
+    }
 }

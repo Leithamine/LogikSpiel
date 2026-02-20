@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using System;
 using System.Globalization;
 using Microsoft.Maui.Controls;
@@ -22,16 +22,31 @@ public sealed class BoolToColorConverter : IValueConverter
 
         if (parameter is string s && s.Contains('|'))
         {
-            // Parse the two color strings from the parameter.
             var parts = s.Split('|', 2, StringSplitOptions.TrimEntries);
-            var trueColor = Color.FromArgb(parts[0]);
-            var falseColor = Color.FromArgb(parts[1]);
-            // Return the matching color based on the boolean flag.
-            return flag ? trueColor : falseColor;
+            if (parts.Length == 2
+                && TryParseColor(parts[0], out var trueColor)
+                && TryParseColor(parts[1], out var falseColor))
+            {
+                return flag ? trueColor : falseColor;
+            }
         }
 
         // Fallback colors when no parameter was provided.
         return flag ? Colors.White : Colors.Transparent;
+    }
+
+    private static bool TryParseColor(string value, out Color color)
+    {
+        try
+        {
+            color = Color.FromArgb(value);
+            return true;
+        }
+        catch
+        {
+            color = Colors.Transparent;
+            return false;
+        }
     }
 
     /// <summary>

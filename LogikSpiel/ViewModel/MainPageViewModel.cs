@@ -3,6 +3,8 @@ using System.Collections.ObjectModel;
 using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
+using LogikSpiel.View;
+using Microsoft.Maui.ApplicationModel;
 
 namespace LogikSpiel.ViewModel;
 
@@ -10,8 +12,10 @@ public sealed class MainPageViewModel : ObservableObject
 {
     private readonly IGameCatalogService _catalog;
     private readonly IUserProfileService _userService;
+    private readonly INavigationService _nav;
 
     private bool _isLoaded;
+    private bool _disposed;
 
     private int _coins;
     public int Coins { get => _coins; private set => SetProperty(ref _coins, value); }
@@ -23,14 +27,17 @@ public sealed class MainPageViewModel : ObservableObject
 
     public MainPageViewModel(
         IGameCatalogService catalog,
-        IUserProfileService userService)
+        IUserProfileService userService,
+        INavigationService nav)
     {
         _catalog = catalog;
         _userService = userService;
+        _nav = nav;
+        _userService.UserDataChanged += OnUserDataChanged;
 
         OpenProfileCommand = new AsyncCommand(async () =>
         {
-            await Shell.Current.GoToAsync("ProfilePage");
+            await _nav.GoToAsync(nameof(ProfilePage));
         });
 
         OpenGameCommand = new AsyncCommand<GameDefinition>(async game =>
@@ -41,7 +48,7 @@ public sealed class MainPageViewModel : ObservableObject
             // WICHTIG: Verwende die Route aus GameDefinition, nicht die ID!
             // Navigiere zur GameMapPage mit der gameId
             // ═══════════════════════════════════════════════════════════
-            await Shell.Current.GoToAsync($"GameMapPage?gameId={game.Id}");
+            await _nav.GoToAsync(nameof(GameMapPage), new Dictionary<string, object> { ["gameId"] = game.Id });
         });
     }
 
@@ -69,5 +76,30 @@ public sealed class MainPageViewModel : ObservableObject
         {
             Games.Add(game);
         }
+    }
+
+    private void OnUserDataChanged()
+    {
+        MainThread.BeginInvokeOnMainThread(async () =>
+        {
+            if (!_disposed)
+            {
+                await RefreshCoinsAsync();
+            }
+        });
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (_disposed)
+            return;
+
+        if (disposing)
+        {
+            _userService.UserDataChanged -= OnUserDataChanged;
+        }
+
+        _disposed = true;
+        base.Dispose(disposing);
     }
 }
