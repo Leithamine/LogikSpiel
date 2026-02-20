@@ -83,11 +83,23 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
     private int _genToken = 0;
 
+    private bool _showProfessor;
+    public bool ShowProfessor
+    {
+        get => _showProfessor;
+        set => SetProperty(ref _showProfessor, value);
+    }
+
+    private string _professorMessage = string.Empty;
+    public string ProfessorMessage
+    {
+        get => _professorMessage;
+        set => SetProperty(ref _professorMessage, value);
+    }
+
     public string Title => LocalizationService.Format("Puzzle_TitleFormat", DiffName(DifficultyKey));
     public string LevelDisplayText => $"Level {LevelNumber}";
-    public bool ShowProfessor => true;
     public string ProfessorImageSource => "professor.png";
-    public string ProfessorMessage => LocalizationService.GetString("Puzzle_Professor_StartMessage");
 
     public bool ShowSolutionForDebug => true;
     public string SecretSolution => _secretSolution;
@@ -116,6 +128,9 @@ public sealed class PuzzlePageViewModel : ObservableObject
         _riddleGenerator = riddleGenerator;
         _riddleState = riddleState;
 
+        ShowProfessor = false;
+        ProfessorMessage = string.Empty;
+
         BackCommand = new AsyncCommand(ConfirmBackAsync);
         CheckCommand = new AsyncCommand(CheckSolutionAsync);
 
@@ -143,9 +158,13 @@ public sealed class PuzzlePageViewModel : ObservableObject
     {
         base.OnCultureChanged();
         RefreshHintDescriptions();
-        OnPropertyChanged(nameof(ProfessorMessage));
         OnPropertyChanged(nameof(Title));
         OnPropertyChanged(nameof(LevelDisplayText));
+
+        if (ShowProfessor)
+        {
+            ProfessorMessage = LocalizationService.GetString("Puzzle_Professor_WrongMessage");
+        }
     }
 
     public async Task LoadAsync(string gameId, string difficulty, int level)
@@ -227,6 +246,8 @@ public sealed class PuzzlePageViewModel : ObservableObject
             IsCelebrating = false;
             RewardText = "";
             LockImageSource = "closedlock.png";
+            ShowProfessor = false;
+            ProfessorMessage = string.Empty;
             _secretSolution = "";
             OnPropertyChanged(nameof(SecretSolution));
             Hints.Clear();
@@ -382,6 +403,9 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
         if (input != _secretSolution)
         {
+            ShowProfessor = true;
+            ProfessorMessage = LocalizationService.GetString("Puzzle_Professor_WrongMessage");
+
             // Falsche Lösung - Zeige Dialog
             bool retry = await _dialog.ConfirmAsync(
                 LocalizationService.GetString("Puzzle_WrongTitle"),
