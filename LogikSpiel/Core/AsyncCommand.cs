@@ -27,15 +27,12 @@ public sealed class AsyncCommand : ICommand
 
     public async void Execute(object? parameter)
     {
-        // Atomare Prüfung: Wenn _isExecuting 0 war, setze es auf 1 und gib true zurück
+        if (!(_canExecute?.Invoke() ?? true))
+            return;
+
+        // Atomare Prüfung: Wenn _isExecuting 0 war, setze es auf 1
         if (Interlocked.CompareExchange(ref _isExecuting, 1, 0) != 0)
             return; // Bereits am Ausführen
-
-        if (!CanExecute(parameter))
-        {
-            Interlocked.Exchange(ref _isExecuting, 0); // Zurücksetzen
-            return;
-        }
 
         try
         {
@@ -93,15 +90,12 @@ public sealed class AsyncCommand<T> : ICommand
 
     public async void Execute(object? parameter)
     {
-        // Atomare Prüfung: Wenn _isExecuting 0 war, setze es auf 1 und gib true zurück
+        if (!(_canExecute?.Invoke((T?)parameter) ?? true))
+            return;
+
+        // Atomare Prüfung: Wenn _isExecuting 0 war, setze es auf 1
         if (Interlocked.CompareExchange(ref _isExecuting, 1, 0) != 0)
             return; // Bereits am Ausführen
-
-        if (!CanExecute(parameter))
-        {
-            Interlocked.Exchange(ref _isExecuting, 0); // Zurücksetzen
-            return;
-        }
 
         try
         {

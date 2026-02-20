@@ -4,6 +4,7 @@ using LogikSpiel.Services.NumberRain;
 using LogikSpiel.View;
 using LogikSpiel.ViewModel;
 using SkiaSharp.Views.Maui.Controls.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace LogikSpiel;
 
@@ -65,6 +66,36 @@ public static class MauiProgram
         // Shell
         builder.Services.AddSingleton<AppShell>();
 
-        return builder.Build();
+        var app = builder.Build();
+        ValidateServiceRegistrations(app.Services);
+
+        return app;
+    }
+
+    private static void ValidateServiceRegistrations(IServiceProvider services)
+    {
+        using var scope = services.CreateScope();
+        var sp = scope.ServiceProvider;
+
+        // Core services
+        sp.GetRequiredService<IGameCatalogService>();
+        sp.GetRequiredService<IUserProfileService>();
+        sp.GetRequiredService<INavigationService>();
+        sp.GetRequiredService<IDialogService>();
+        sp.GetRequiredService<IGameProgressStore>();
+        sp.GetRequiredService<ILockRiddleGeneratorService>();
+        sp.GetRequiredService<IRiddleStateStore>();
+
+        // ViewModels used by Shell routes
+        sp.GetRequiredService<MainPageViewModel>();
+        sp.GetRequiredService<GameMapPageViewModel>();
+        sp.GetRequiredService<ProfileViewModel>();
+        sp.GetRequiredService<PuzzlePageViewModel>();
+
+        // Pages used by Shell routes
+        sp.GetRequiredService<MainPage>();
+        sp.GetRequiredService<GameMapPage>();
+        sp.GetRequiredService<ProfilePage>();
+        sp.GetRequiredService<PuzzlePage>();
     }
 }
