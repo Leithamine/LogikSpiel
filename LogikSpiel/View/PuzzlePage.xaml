@@ -6,10 +6,10 @@
              xmlns:skia="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
              x:Class="LogikSpiel.View.PuzzlePage"
              x:DataType="vm:PuzzlePageViewModel"
-             BackgroundColor="{StaticResource C_BgDark}"
+             BackgroundImageSource="gamebg.png"
              NavigationPage.HasNavigationBar="False">
 
-    <Grid RowDefinitions="Auto,*,Auto">
+    <Grid RowDefinitions="Auto,*">
 
         <!-- Top-Bar: links zurück, mitte Titel+Level, rechts Coins -->
         <Grid Grid.Row="0"
@@ -57,7 +57,7 @@
                                    IsVisible="{Binding IsBusy}"
                                    Color="{StaticResource C_Primary}"/>
 
-                <!-- Professor immer sichtbar -->
+                <!-- Professor nur nach falscher Eingabe sichtbar -->
                 <Grid IsVisible="{Binding ShowProfessor}" ColumnDefinitions="80,*" ColumnSpacing="10">
                     <Image Grid.Column="0"
                            Source="{Binding ProfessorImageSource}"
@@ -128,6 +128,22 @@
                         </BindableLayout.ItemTemplate>
                     </HorizontalStackLayout>
 
+                    <Grid ColumnDefinitions="*,Auto,*">
+                        <Button Grid.Column="0"
+                                Text="{StaticResource Puzzle_HintButton}"
+                                Command="{Binding HintCommand}"
+                                Style="{StaticResource BtnSecondary}"/>
+
+                        <Button Grid.Column="1"
+                                Text="{StaticResource Puzzle_OpenButton}"
+                                Command="{Binding CheckCommand}"
+                                Style="{StaticResource BtnPrimary}"
+                                WidthRequest="130"
+                                Margin="10,0"/>
+
+                        <BoxView Grid.Column="2"/>
+                    </Grid>
+
                     <Label Text="{StaticResource Puzzle_HintsTitle}"
                            FontSize="18"
                            FontAttributes="Bold"
@@ -155,25 +171,5 @@
                 </VerticalStackLayout>
             </VerticalStackLayout>
         </ScrollView>
-
-        <Grid Grid.Row="2"
-              BackgroundColor="{StaticResource C_GlassStrong}"
-              Padding="15"
-              ColumnDefinitions="*,Auto,*"
-              IsVisible="{Binding IsNotBusy}">
-            <Button Grid.Column="0"
-                    Text="{StaticResource Puzzle_HintButton}"
-                    Command="{Binding HintCommand}"
-                    Style="{StaticResource BtnSecondary}"/>
-
-            <Button Grid.Column="1"
-                    Text="{StaticResource Puzzle_OpenButton}"
-                    Command="{Binding CheckCommand}"
-                    Style="{StaticResource BtnPrimary}"
-                    WidthRequest="130"
-                    Margin="10,0"/>
-
-            <BoxView Grid.Column="2"/>
-        </Grid>
     </Grid>
 </ContentPage>
