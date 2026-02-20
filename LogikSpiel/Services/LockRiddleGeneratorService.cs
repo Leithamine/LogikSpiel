@@ -66,6 +66,9 @@ public class LockRiddleGeneratorService
                 return false;
         }
 
+        if (!SatisfiesNothingCorrectCoverageRule(game.Hints))
+            return false;
+
         var solver = new ConstraintSolver(length, game.Hints);
         var sols = solver.FindAllSolutions(maxSolutions: 2);
         return sols.Count == 1 && sols[0] == game.SecretCode;
@@ -168,6 +171,7 @@ public class LockRiddleGeneratorService
 
             var unique = ForceUniqueness(secret, invalid, length, hints, signatures, maxHints, style, rnd);
             if (unique == null) continue;
+            if (!SatisfiesNothingCorrectCoverageRule(unique)) continue;
 
             var solver = new ConstraintSolver(length, unique);
             var solutions = solver.FindAllSolutions(maxSolutions: 2);
@@ -525,6 +529,9 @@ public class LockRiddleGeneratorService
                 TryAddHint(hints, signatures, hint);
         }
 
+        if (!SatisfiesNothingCorrectCoverageRule(hints))
+            return null;
+
         return hints;
     }
 
@@ -846,6 +853,32 @@ public class LockRiddleGeneratorService
             return false;
         }
         digit = candidates[rnd.Next(candidates.Count)];
+        return true;
+    }
+
+    private static bool SatisfiesNothingCorrectCoverageRule(IReadOnlyList<LockHint> hints)
+    {
+        foreach (var currentHint in hints.Where(h => h.WellPlaced == 0 && h.WrongPlaced == 0))
+        {
+            var currentDigits = currentHint.Slots
+                .Select(slot => int.TryParse(slot, out var digit) ? digit : (int?)null)
+                .Where(d => d.HasValue)
+                .Select(d => d!.Value)
+                .Distinct()
+                .ToList();
+
+            var otherDigits = hints
+                .Where(h => h != currentHint)
+                .SelectMany(h => h.Slots)
+                .Select(slot => int.TryParse(slot, out var digit) ? digit : (int?)null)
+                .Where(d => d.HasValue)
+                .Select(d => d!.Value)
+                .ToHashSet();
+
+            if (!currentDigits.All(otherDigits.Contains))
+                return false;
+        }
+
         return true;
     }
 
