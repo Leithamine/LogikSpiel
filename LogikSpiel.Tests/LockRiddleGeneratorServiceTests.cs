@@ -23,11 +23,40 @@ public class LockRiddleGeneratorServiceTests
         }
     }
 
+    [Fact]
+    public void NothingCorrectRule_RequiresEveryDigitOfZeroZeroHintToReappear()
+    {
+        var hints = new List<LockHint>
+        {
+            new() { Slots = ["5", "2", "1"], WellPlaced = 0, WrongPlaced = 0 },
+            new() { Slots = ["0", "4", "9"], WellPlaced = 1, WrongPlaced = 0 },
+            new() { Slots = ["6", "7", "8"], WellPlaced = 0, WrongPlaced = 2 },
+            new() { Slots = ["1", "8", "2"], WellPlaced = 1, WrongPlaced = 0 }
+        };
+
+        Assert.False(SatisfiesNothingCorrectCoverageRule(hints));
+    }
+
     private static bool SatisfiesNothingCorrectCoverageRule(IReadOnlyList<LockHint> hints)
     {
         foreach (var currentHint in hints.Where(h => h.WellPlaced == 0 && h.WrongPlaced == 0))
         {
-            if (!hints.Any(h => h != currentHint && h.Slots.Intersect(currentHint.Slots).Any()))
+            var currentDigits = currentHint.Slots
+                .Select(slot => int.TryParse(slot, out var digit) ? digit : (int?)null)
+                .Where(d => d.HasValue)
+                .Select(d => d!.Value)
+                .Distinct()
+                .ToList();
+
+            var otherDigits = hints
+                .Where(h => h != currentHint)
+                .SelectMany(h => h.Slots)
+                .Select(slot => int.TryParse(slot, out var digit) ? digit : (int?)null)
+                .Where(d => d.HasValue)
+                .Select(d => d!.Value)
+                .ToHashSet();
+
+            if (!currentDigits.All(otherDigits.Contains))
                 return false;
         }
 

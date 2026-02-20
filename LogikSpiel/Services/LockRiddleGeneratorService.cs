@@ -860,7 +860,22 @@ public class LockRiddleGeneratorService
     {
         foreach (var currentHint in hints.Where(h => h.WellPlaced == 0 && h.WrongPlaced == 0))
         {
-            if (!hints.Any(h => h != currentHint && h.Slots.Intersect(currentHint.Slots).Any()))
+            var currentDigits = currentHint.Slots
+                .Select(slot => int.TryParse(slot, out var digit) ? digit : (int?)null)
+                .Where(d => d.HasValue)
+                .Select(d => d!.Value)
+                .Distinct()
+                .ToList();
+
+            var otherDigits = hints
+                .Where(h => h != currentHint)
+                .SelectMany(h => h.Slots)
+                .Select(slot => int.TryParse(slot, out var digit) ? digit : (int?)null)
+                .Where(d => d.HasValue)
+                .Select(d => d!.Value)
+                .ToHashSet();
+
+            if (!currentDigits.All(otherDigits.Contains))
                 return false;
         }
 
