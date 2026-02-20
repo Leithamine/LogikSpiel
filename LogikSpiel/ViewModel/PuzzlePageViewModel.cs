@@ -114,7 +114,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
                 bool buy = await _dialog.ConfirmAsync(
                     LocalizationService.GetString("Puzzle_BuyHintTitle"),
                     LocalizationService.Format("Puzzle_BuyHintMessage", 50));
-                if (buy) RevealOneDigit();
+                if (buy) await RevealOneDigitAsync();
             }
             else
             {
@@ -362,7 +362,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
         });
     }
 
-    private void RevealOneDigit()
+    private async Task RevealOneDigitAsync()
     {
         for (int i = 0; i < _secretSolution.Length; i++)
         {
@@ -377,7 +377,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
                 {
                     _userProfile.Coins -= 50;
                     Coins = _userProfile.Coins;
-                    _ = _userService.SaveUserAsync(_userProfile);
+                    await _userService.SaveUserAsync(_userProfile);
                 }
                 return;
             }
