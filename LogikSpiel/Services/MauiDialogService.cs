@@ -10,17 +10,17 @@ public sealed class MauiDialogService : IDialogService
     private Page? CurrentPage => Shell.Current?.CurrentPage
                                  ?? Application.Current?.Windows?.FirstOrDefault()?.Page;
 
-    public async Task AlertAsync(string title, string message, string? ok = null)
+    public async Task AlertAsync(string title, string message, string? ok = null, string? imageSource = null)
     {
         var okLabel = string.IsNullOrWhiteSpace(ok) ? LocalizationService.GetString("Common_Ok") : ok;
-        await ShowDialogAsync(title, message, okLabel, cancel: null);
+        await ShowDialogAsync(title, message, okLabel, cancel: null, imageSource: imageSource);
     }
 
-    public async Task<bool> ConfirmAsync(string title, string message, string? accept = null, string? cancel = null)
+    public async Task<bool> ConfirmAsync(string title, string message, string? accept = null, string? cancel = null, string? imageSource = null)
     {
         var acceptLabel = string.IsNullOrWhiteSpace(accept) ? LocalizationService.GetString("Common_Yes") : accept;
         var cancelLabel = string.IsNullOrWhiteSpace(cancel) ? LocalizationService.GetString("Common_No") : cancel;
-        var result = await ShowDialogAsync(title, message, acceptLabel, cancelLabel);
+        var result = await ShowDialogAsync(title, message, acceptLabel, cancelLabel, imageSource);
         return result ?? false;
     }
 
@@ -31,7 +31,7 @@ public sealed class MauiDialogService : IDialogService
         return await p.DisplayActionSheetAsync(title, cancel, null, options);
     }
 
-    private async Task<bool?> ShowDialogAsync(string title, string message, string accept, string? cancel)
+    private async Task<bool?> ShowDialogAsync(string title, string message, string accept, string? cancel, string? imageSource)
     {
         var p = CurrentPage;
         if (p is null) return null;
@@ -39,7 +39,7 @@ public sealed class MauiDialogService : IDialogService
         // Gesamten Dialog-Prozess auf dem MainThread sicherstellen
         return await MainThread.InvokeOnMainThreadAsync(async () =>
         {
-            var dialog = new DialogPage(title, message, accept, cancel);
+            var dialog = new DialogPage(title, message, accept, cancel, imageSource);
             await p.Navigation.PushModalAsync(dialog);
             return await dialog.ResultAsync();
         });
