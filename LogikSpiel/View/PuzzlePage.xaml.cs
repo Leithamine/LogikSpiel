@@ -73,13 +73,9 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
                 await OpenedLockImage.ScaleToAsync(1.0, 120, Easing.CubicInOut);
             }
         }
-        catch (ObjectDisposedException)
+        catch (Exception ex) when (ex is ObjectDisposedException || ex is TaskCanceledException)
         {
-            // Seite wurde während Animation freigegeben.
-        }
-        catch (ObjectDisposedException)
-        {
-            // Seite wurde während Animation freigegeben.
+            // Seite wurde während Animation freigegeben oder Animation abgebrochen.
         }
     }
 

@@ -512,10 +512,23 @@ public class LockRiddleGeneratorService : ILockRiddleGeneratorService
             if (slotSet.Count == 0)
                 return false;
 
-            bool appearsElsewhere = hints
-                .Where((_, index) => index != i)
-                .SelectMany(h => h.Slots)
-                .Any(slot => !string.IsNullOrWhiteSpace(slot) && slotSet.Contains(slot.Trim()));
+            bool appearsElsewhere = false;
+            for (int j = 0; j < hints.Count && !appearsElsewhere; j++)
+            {
+                if (j == i)
+                    continue;
+
+                var other = hints[j];
+                for (int k = 0; k < other.Slots.Count; k++)
+                {
+                    var slot = other.Slots[k];
+                    if (!string.IsNullOrWhiteSpace(slot) && slotSet.Contains(slot.Trim()))
+                    {
+                        appearsElsewhere = true;
+                        break;
+                    }
+                }
+            }
 
             if (!appearsElsewhere)
                 return false;
