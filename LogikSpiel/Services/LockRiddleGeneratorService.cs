@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using LogikSpiel.Core;
 using LogikSpiel.Model;
 using LogikSpiel.Services.Localization;
 
@@ -10,15 +11,20 @@ namespace LogikSpiel.Services;
 
 public class LockRiddleGeneratorService
 {
+    private Random _rnd = new();
+
     private sealed record DifficultyStyle(
         bool AllowSinglePinDisambiguation,
         bool AllowSinglePinFill,
         List<(int well, int wrong)> PreferredDisambiguationRules
     );
 
-    public LockRiddleGame GenerateGame(string difficultyKey, int seed)
+    public LockRiddleGame GenerateGame(string difficultyKey, int levelNumber)
     {
-        var rnd = new Random(seed);
+        var normalizedLevel = Math.Max(1, levelNumber);
+        int seed = SeedHelper.CalculateSeed("lockriddle", difficultyKey, normalizedLevel);
+        _rnd = new Random(seed);
+
         var (length, minCoveredDigits, targetHints, rules, style) = GetSettings(difficultyKey);
 
         // Wenn length == 6: niemals Regeln zulassen, die mehr als 4 invalid digits benötigen
@@ -26,11 +32,11 @@ public class LockRiddleGeneratorService
         if (length == 6)
             rules = rules.Where(r => r.well + r.wrong >= 2).ToList();
 
-        return GenerateWithHardGuarantee(length, minCoveredDigits, targetHints, rules, style, rnd, seed);
+        return GenerateWithHardGuarantee(length, minCoveredDigits, targetHints, rules, style, _rnd, seed);
     }
 
     public LockRiddleGame GenerateGame(string difficultyKey)
-        => GenerateGame(difficultyKey, Random.Shared.Next());
+        => GenerateGame(difficultyKey, levelNumber: 1);
 
 
     public bool IsGameValid(LockRiddleGame game)
@@ -65,6 +71,9 @@ public class LockRiddleGeneratorService
             if (well != h.WellPlaced || wrong != h.WrongPlaced)
                 return false;
         }
+
+        if (!SatisfiesNothingCorrectCoverageRule(game.Hints))
+            return false;
 
         var solver = new ConstraintSolver(length, game.Hints);
         var sols = solver.FindAllSolutions(maxSolutions: 2);
@@ -168,6 +177,7 @@ public class LockRiddleGeneratorService
 
             var unique = ForceUniqueness(secret, invalid, length, hints, signatures, maxHints, style, rnd);
             if (unique == null) continue;
+            if (!SatisfiesNothingCorrectCoverageRule(unique)) continue;
 
             var solver = new ConstraintSolver(length, unique);
             var solutions = solver.FindAllSolutions(maxSolutions: 2);
@@ -525,6 +535,9 @@ public class LockRiddleGeneratorService
                 TryAddHint(hints, signatures, hint);
         }
 
+        if (!SatisfiesNothingCorrectCoverageRule(hints))
+            return null;
+
         return hints;
     }
 
@@ -846,6 +859,32 @@ public class LockRiddleGeneratorService
             return false;
         }
         digit = candidates[rnd.Next(candidates.Count)];
+        return true;
+    }
+
+    private static bool SatisfiesNothingCorrectCoverageRule(IReadOnlyList<LockHint> hints)
+    {
+        foreach (var currentHint in hints.Where(h => h.WellPlaced == 0 && h.WrongPlaced == 0))
+        {
+            var currentDigits = currentHint.Slots
+                .Select(slot => int.TryParse(slot, out var digit) ? digit : (int?)null)
+                .Where(d => d.HasValue)
+                .Select(d => d!.Value)
+                .Distinct()
+                .ToList();
+
+            var otherDigits = hints
+                .Where(h => h != currentHint)
+                .SelectMany(h => h.Slots)
+                .Select(slot => int.TryParse(slot, out var digit) ? digit : (int?)null)
+                .Where(d => d.HasValue)
+                .Select(d => d!.Value)
+                .ToHashSet();
+
+            if (!currentDigits.All(otherDigits.Contains))
+                return false;
+        }
+
         return true;
     }
 

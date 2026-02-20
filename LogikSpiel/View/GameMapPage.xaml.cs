@@ -18,6 +18,13 @@ public partial class GameMapPage : ContentPage, IQueryAttributable
     {
         if (query.TryGetValue("gameId", out var idObj) && idObj is string id)
             _vm.GameId = id;
+
+        if (_vm.GameId is { Length: > 0 } gameId &&
+            query.TryGetValue("difficulty", out var difficultyObj) &&
+            !string.IsNullOrWhiteSpace(difficultyObj?.ToString()))
+        {
+            Preferences.Set($"LAST_DIFF_{gameId}", difficultyObj!.ToString()!);
+        }
     }
 
     protected override async void OnAppearing()
@@ -31,7 +38,7 @@ public partial class GameMapPage : ContentPage, IQueryAttributable
 
         await _vm.LoadAsync();
 
-        // Wolkenhöhe 180 wie vorher
+        // WolkenhÃ¶he 180 wie vorher
         PathView.Drawable = new MapPathDrawable(_vm.Nodes, 180);
         PathView.Invalidate();
     }

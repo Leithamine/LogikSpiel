@@ -5,6 +5,7 @@ using LogikSpiel.Model;
 using LogikSpiel.Services;
 using LogikSpiel.View;
 using Microsoft.Maui.ApplicationModel;
+using System.Diagnostics;
 
 namespace LogikSpiel.ViewModel;
 
@@ -37,11 +38,13 @@ public sealed class MainPageViewModel : ObservableObject
 
         OpenProfileCommand = new AsyncCommand(async () =>
         {
+            Debug.WriteLine("[MainPage] OpenProfileCommand executed.");
             await _nav.GoToAsync(nameof(ProfilePage));
         });
 
         OpenGameCommand = new AsyncCommand<GameDefinition>(async game =>
         {
+            Debug.WriteLine($"[MainPage] OpenGameCommand executed. gameId={game?.Id}");
             if (game == null) return;
 
             // ═══════════════════════════════════════════════════════════

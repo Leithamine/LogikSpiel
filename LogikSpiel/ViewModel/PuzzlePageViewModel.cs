@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using LogikSpiel.Core;
@@ -19,6 +19,9 @@ public sealed class PuzzlePageViewModel : ObservableObject
     private readonly IRiddleStateStore _riddleState;
 
     private UserProfile? _userProfile;
+
+    // ✅ NEU: Cache für das aktuelle Rätsel, um Retry zu ermöglichen
+    private LockRiddleGame? _currentGame;
 
     private int _coins;
     public int Coins { get => _coins; set => SetProperty(ref _coins, value); }
@@ -114,7 +117,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
                 bool buy = await _dialog.ConfirmAsync(
                     LocalizationService.GetString("Puzzle_BuyHintTitle"),
                     LocalizationService.Format("Puzzle_BuyHintMessage", 50));
-                if (buy) RevealOneDigit();
+                if (buy) await RevealOneDigitAsync();
             }
             else
             {
@@ -135,7 +138,42 @@ public sealed class PuzzlePageViewModel : ObservableObject
     {
         GameId = string.IsNullOrWhiteSpace(gameId) ? "codebreaker" : gameId;
         DifficultyKey = string.IsNullOrWhiteSpace(difficulty) ? "normal" : difficulty;
-        LevelNumber = Math.Max(1, level);
+
+        int requestedLevel = Math.Max(1, level);
+        
+        // ✅ Prüfen, ob wir bereits ein Rätsel für dieses Level im Cache haben
+        if (_currentGame != null && LevelNumber == requestedLevel && GameId == gameId && DifficultyKey == difficulty)
+        {
+            // Wir haben bereits ein Rätsel für dieses Level, verwende es
+            System.Diagnostics.Debug.WriteLine($"[LoadAsync] Verwende gecachtes Rätsel für Level {requestedLevel}");
+            await DisplayGameAsync(_currentGame);
+            return;
+        }
+
+        int highestCompleted = 0;
+
+        var progress = await _progressStore.LoadAsync();
+        for (int candidate = 1; candidate <= GameConfig.MaxLevel; candidate++)
+        {
+            if (progress.IsCompleted(GameId, DifficultyKey, candidate))
+                highestCompleted = candidate;
+            else
+                break;
+        }
+
+        int maxUnlockedLevel = Math.Min(GameConfig.MaxLevel, highestCompleted + 1);
+        
+        // WICHTIG: Wenn der angeforderte Level bereits freigeschaltet ist, verwenden wir ihn
+        if (requestedLevel <= maxUnlockedLevel)
+        {
+            LevelNumber = requestedLevel;
+        }
+        else
+        {
+            LevelNumber = maxUnlockedLevel;
+        }
+
+        System.Diagnostics.Debug.WriteLine($"[LoadAsync] Level gesetzt auf: {LevelNumber} (requested: {requestedLevel}, maxUnlocked: {maxUnlockedLevel})");
 
         OnPropertyChanged(nameof(Title));
 
@@ -162,12 +200,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
         if (!leave) return;
 
-        var parameters = new Dictionary<string, object>
-        {
-            ["gameId"] = GameId
-        };
-
-        await _nav.GoToAsync(nameof(GameMapPage), parameters);
+        await NavigateToMapAsync();
     }
 
     private async Task StartNewRoundAsync()
@@ -177,40 +210,61 @@ public sealed class PuzzlePageViewModel : ObservableObject
         MainThread.BeginInvokeOnMainThread(() =>
         {
             IsBusy = true;
-
             IsCelebrating = false;
             RewardText = "";
             LockImageSource = "closedlock.png";
-
             _secretSolution = "";
             OnPropertyChanged(nameof(SecretSolution));
-
             Hints.Clear();
             InputDigits.Clear();
         });
 
-        var saved = await _riddleState.TryLoadAsync(GameId, DifficultyKey, LevelNumber);
+        LockRiddleGame? game = null;
 
-        LockRiddleGame game;
-
-        // ✅ WICHTIG: gespeicherte Rätsel nur verwenden, wenn sie konsistent + eindeutig sind
-        if (saved != null && _riddleGenerator.IsGameValid(saved))
+        // ✅ 1. Versuche, das gecachte Rätsel zu verwenden (für Retry)
+        if (_currentGame != null)
         {
-            game = saved;
+            System.Diagnostics.Debug.WriteLine($"[StartNewRoundAsync] Verwende gecachtes Rätsel");
+            game = _currentGame;
         }
         else
         {
-            if (saved != null)
-                await _riddleState.ClearAsync(GameId, DifficultyKey, LevelNumber);
+            // ✅ 2. Versuche aus dem Store zu laden
+            var saved = await _riddleState.TryLoadAsync(GameId, DifficultyKey, LevelNumber);
+            
+            if (saved != null && _riddleGenerator.IsGameValid(saved))
+            {
+                System.Diagnostics.Debug.WriteLine($"[StartNewRoundAsync] Rätsel aus Store geladen");
+                game = saved;
+            }
+        }
 
-            int seed = SeedHelper.CalculateSeed(GameId, DifficultyKey, LevelNumber);
-            game = await Task.Run(() => _riddleGenerator.GenerateGame(DifficultyKey, seed));
+        // ✅ 3. Wenn kein Rätsel gefunden, generiere ein neues
+        if (game == null)
+        {
+            System.Diagnostics.Debug.WriteLine($"[StartNewRoundAsync] Generiere neues Rätsel für Level {LevelNumber}");
+            
+            // Lösche evtl. vorhandenes ungültiges Rätsel aus dem Store
+            await _riddleState.ClearAsync(GameId, DifficultyKey, LevelNumber);
+            
+            game = await Task.Run(() => _riddleGenerator.GenerateGame(DifficultyKey, LevelNumber));
+            
+            // Speichere das neue Rätsel
             await _riddleState.SaveAsync(GameId, DifficultyKey, LevelNumber, game);
         }
 
         if (token != _genToken) return;
 
+        // ✅ WICHTIG: Speichere das Rätsel im Cache für Retry
+        _currentGame = game;
         _secretSolution = game.SecretCode;
+
+        await DisplayGameAsync(game, token);
+    }
+
+    private async Task DisplayGameAsync(LockRiddleGame game, int token = 0)
+    {
+        if (token != 0 && token != _genToken) return;
 
         MainThread.BeginInvokeOnMainThread(() =>
         {
@@ -227,7 +281,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
             IsBusy = false;
         });
 
-        System.Diagnostics.Debug.WriteLine($"[LockRiddle] diff={DifficultyKey}, level={LevelNumber}, secret={_secretSolution}, hints={game.Hints.Count}");
+        System.Diagnostics.Debug.WriteLine($"[DisplayGameAsync] Level={LevelNumber}, Secret={_secretSolution}");
     }
 
     private void RefreshHintDescriptions()
@@ -243,6 +297,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
     {
         _genToken++;
         IsBusy = false;
+        // ✅ NICHT _currentGame löschen, damit Retry funktioniert!
     }
 
     private static LockHint LocalizeHint(LockHint hint)
@@ -313,12 +368,32 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
         if (input != _secretSolution)
         {
-            await _dialog.AlertAsync(
+            // Falsche Lösung - Zeige Dialog
+            bool retry = await _dialog.ConfirmAsync(
                 LocalizationService.GetString("Puzzle_WrongTitle"),
-                LocalizationService.Format("Puzzle_WrongMessageFormat", input, _secretSolution));
+                LocalizationService.GetString("Puzzle_WrongMessage"),
+                LocalizationService.GetString("Common_Retry"),
+                LocalizationService.GetString("Common_BackToMap"));
+
+            if (retry)
+            {
+                // ✅ WICHTIG: LevelNumber bleibt gleich!
+                // Das Rätsel ist im Cache (_currentGame), daher wird beim 
+                // StartNewRoundAsync das gleiche Rätsel wieder angezeigt
+                System.Diagnostics.Debug.WriteLine($"[CheckSolutionAsync] Retry gewählt für Level {LevelNumber}");
+                await StartNewRoundAsync();
+            }
+            else
+            {
+                await NavigateToMapAsync();
+            }
+
             return;
         }
 
+        // ✅ RICHTIGE LÖSUNG
+        System.Diagnostics.Debug.WriteLine($"[CheckSolutionAsync] Richtige Lösung für Level {LevelNumber}");
+        
         int reward = RewardForDifficulty(DifficultyKey);
 
         if (_userProfile != null)
@@ -333,10 +408,37 @@ public sealed class PuzzlePageViewModel : ObservableObject
         await _progressStore.MarkLevelCompleteAsync(GameId, DifficultyKey, completedLevel);
         await _riddleState.ClearAsync(GameId, DifficultyKey, completedLevel);
 
+        // ✅ WICHTIG: Cache löschen, da dieses Rätsel abgeschlossen ist
+        _currentGame = null;
+
         await PlaySuccessOverlayAsync(reward);
 
-        LevelNumber = completedLevel + 1;
+        // Nächstes Level laden
+        int nextLevel = completedLevel + 1;
+        
+        if (nextLevel > GameConfig.MaxLevel)
+        {
+            await _dialog.AlertAsync(
+                LocalizationService.GetString("Puzzle_AllLevelsCompleteTitle"),
+                LocalizationService.GetString("Puzzle_AllLevelsCompleteMessage"));
+            await NavigateToMapAsync();
+            return;
+        }
+
+        LevelNumber = nextLevel;
         await StartNewRoundAsync();
+    }
+
+    private async Task NavigateToMapAsync()
+    {
+        var parameters = new Dictionary<string, object>
+        {
+            ["gameId"] = GameId,
+            ["difficulty"] = DifficultyKey,
+            ["level"] = LevelNumber
+        };
+
+        await _nav.GoToAsync(nameof(GameMapPage), parameters);
     }
 
     private async Task PlaySuccessOverlayAsync(int reward)
@@ -362,7 +464,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
         });
     }
 
-    private void RevealOneDigit()
+    private async Task RevealOneDigitAsync()
     {
         for (int i = 0; i < _secretSolution.Length; i++)
         {
@@ -377,7 +479,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
                 {
                     _userProfile.Coins -= 50;
                     Coins = _userProfile.Coins;
-                    _ = _userService.SaveUserAsync(_userProfile);
+                    await _userService.SaveUserAsync(_userProfile);
                 }
                 return;
             }
