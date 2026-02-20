@@ -77,6 +77,10 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         {
             // Seite wurde während Animation freigegeben.
         }
+        catch (ObjectDisposedException)
+        {
+            // Seite wurde während Animation freigegeben.
+        }
     }
 
     private void DigitEntry_Loaded(object? sender, EventArgs e)
