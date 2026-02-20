@@ -8,36 +8,58 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
 {
     private bool _isLoaded;
     private readonly Dictionary<int, Entry> _entryByIndex = new();
+    private CancellationTokenSource? _celebrationCts;
 
     public PuzzlePage(PuzzlePageViewModel vm)
     {
         InitializeComponent();
         BindingContext = vm;
 
-        vm.PropertyChanged += Vm_PropertyChanged;
     }
 
     private async void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(PuzzlePageViewModel.IsCelebrating))
+        if (e.PropertyName != nameof(PuzzlePageViewModel.IsCelebrating))
+            return;
+
+        if (BindingContext is not PuzzlePageViewModel vm)
+            return;
+
+        _celebrationCts?.Cancel();
+        _celebrationCts?.Dispose();
+        _celebrationCts = null;
+
+        if (!vm.IsCelebrating)
         {
-            if (BindingContext is not PuzzlePageViewModel vm) return;
+            OpenedLockImage?.CancelAnimations();
+            return;
+        }
 
-            if (vm.IsCelebrating)
+        var cts = new CancellationTokenSource();
+        _celebrationCts = cts;
+
+        try
+        {
+            if (FireworksView != null)
             {
-                if (FireworksView != null)
-                {
-                    FireworksView.IsAnimationEnabled = false;
-                    FireworksView.IsAnimationEnabled = true;
-                }
-
-                if (OpenedLockImage != null)
-                {
-                    OpenedLockImage.Scale = 0.9;
-                    await OpenedLockImage.ScaleToAsync(1.05, 160, Easing.CubicOut);
-                    await OpenedLockImage.ScaleToAsync(1.0, 120, Easing.CubicInOut);
-                }
+                FireworksView.IsAnimationEnabled = false;
+                FireworksView.IsAnimationEnabled = true;
             }
+
+            if (OpenedLockImage != null)
+            {
+                OpenedLockImage.CancelAnimations();
+                OpenedLockImage.Scale = 0.9;
+
+                await OpenedLockImage.ScaleToAsync(1.05, 160, Easing.CubicOut);
+                if (cts.IsCancellationRequested) return;
+
+                await OpenedLockImage.ScaleToAsync(1.0, 120, Easing.CubicInOut);
+            }
+        }
+        catch (ObjectDisposedException)
+        {
+            // Seite wurde während Animation freigegeben.
         }
     }
 
@@ -88,11 +110,12 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
 
     private void FocusIndex(int index)
     {
-        if (index < 0) return;
+        if (BindingContext is not PuzzlePageViewModel vm) return;
+        if (index < 0 || index >= vm.InputDigits.Count) return;
 
         if (_entryByIndex.TryGetValue(index, out var next))
         {
-            if (next.IsEnabled && !next.IsReadOnly)
+            if (next.Handler != null && next.IsEnabled && !next.IsReadOnly)
                 next.Focus();
         }
     }
@@ -106,6 +129,27 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
             _ = vm.LoadAsync("riddle_lock", "normal", 1);
             _isLoaded = true;
         }
+    }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+
+        _celebrationCts?.Cancel();
+        _celebrationCts?.Dispose();
+        _celebrationCts = null;
+        OpenedLockImage?.CancelAnimations();
+    }
+
+    protected override void OnBindingContextChanged()
+    {
+        if (BindingContext is PuzzlePageViewModel oldVm)
+            oldVm.PropertyChanged -= Vm_PropertyChanged;
+
+        base.OnBindingContextChanged();
+
+        if (BindingContext is PuzzlePageViewModel newVm)
+            newVm.PropertyChanged += Vm_PropertyChanged;
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
