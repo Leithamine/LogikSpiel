@@ -294,6 +294,14 @@ public class LockRiddleGeneratorService
     {
         string secretStr = string.Concat(secret);
 
+        // Prüfen ob die bestehenden Hints bereits eindeutig sind (auch wenn maxHints schon erreicht)
+        {
+            var initSolver = new ConstraintSolver(length, hints);
+            var initSols = initSolver.FindAllSolutions(maxSolutions: 2);
+            if (initSols.Count == 1 && initSols[0] == secretStr)
+                return hints;
+        }
+
         // Max 80 Iterationen, dann aufgeben
         for (int step = 0; step < 80 && hints.Count < maxHints; step++)
         {

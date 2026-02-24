@@ -65,6 +65,8 @@
   
   <data name="Puzzle_BuyHintMessage" xml:space="preserve"><value>Reveal a number for {0} coins?</value></data>
   <data name="Puzzle_BuyHintTitle" xml:space="preserve"><value>Buy hint?</value></data>
+  <data name="Puzzle_HintTitle" xml:space="preserve"><value>Hint</value></data>
+  <data name="Puzzle_AllDigitsCorrect" xml:space="preserve"><value>All digits are already correct! Press "Open" to win.</value></data>
   <data name="Puzzle_EnterCode" xml:space="preserve"><value>🔐 ENTER THE CODE</value></data>
   <data name="Puzzle_ErrorTitle" xml:space="preserve"><value>Error</value></data>
   <data name="Puzzle_Generating" xml:space="preserve"><value>Generating puzzle...</value></data>

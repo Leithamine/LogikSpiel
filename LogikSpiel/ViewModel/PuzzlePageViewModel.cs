@@ -33,7 +33,14 @@ public sealed class PuzzlePageViewModel : ObservableObject
     public int LevelNumber
     {
         get => _levelNumber;
-        private set { if (SetProperty(ref _levelNumber, value)) OnPropertyChanged(nameof(Title)); }
+        private set
+        {
+            if (SetProperty(ref _levelNumber, value))
+            {
+                OnPropertyChanged(nameof(Title));
+                OnPropertyChanged(nameof(LevelDisplayText));
+            }
+        }
     }
 
     private bool _isBusy;
@@ -77,6 +84,8 @@ public sealed class PuzzlePageViewModel : ObservableObject
     private int _genToken = 0;
 
     public string Title => LocalizationService.Format("Puzzle_TitleFormat", DiffName(DifficultyKey));
+
+    public string LevelDisplayText => LocalizationService.Format("Common_LevelFormat", LevelNumber);
 
     public bool ShowSolutionForDebug => true;
     public string SecretSolution => _secretSolution;
@@ -332,6 +341,13 @@ public sealed class PuzzlePageViewModel : ObservableObject
             _ => LocalizationService.Format("LockRiddle_HintMixedFormat", hint.WellPlaced + hint.WrongPlaced, Plural(hint.WellPlaced + hint.WrongPlaced, singular, plural), hint.WellPlaced, hint.WrongPlaced)
         };
 
+        // Visuellen Prefix aufbauen (✔️ = gut platziert, 🟡 = falsch platziert)
+        string visualPrefix = "";
+        for (int i = 0; i < hint.WellPlaced; i++) visualPrefix += "✔️";
+        for (int i = 0; i < hint.WrongPlaced; i++) visualPrefix += "🟡";
+        if (!string.IsNullOrEmpty(visualPrefix))
+            desc = $"{visualPrefix} {desc}";
+
         return new LockHint
         {
             Slots = hint.Slots.ToList(),
@@ -481,6 +497,25 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
     private async Task RevealOneDigitAsync()
     {
+        // Prüfen ob überhaupt eine Ziffer noch fehlt/falsch ist
+        bool anyWrong = false;
+        for (int i = 0; i < _secretSolution.Length; i++)
+        {
+            if (InputDigits[i].Digit != _secretSolution[i].ToString())
+            {
+                anyWrong = true;
+                break;
+            }
+        }
+
+        if (!anyWrong)
+        {
+            await _dialog.AlertAsync(
+                LocalizationService.GetString("Puzzle_HintTitle"),
+                LocalizationService.GetString("Puzzle_AllDigitsCorrect"));
+            return;
+        }
+
         for (int i = 0; i < _secretSolution.Length; i++)
         {
             string target = _secretSolution[i].ToString();
