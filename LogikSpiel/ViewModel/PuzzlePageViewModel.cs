@@ -54,6 +54,9 @@ public sealed class PuzzlePageViewModel : ObservableObject
         }
     }
 
+    // Speichert das nächste Level nach einem Erfolg
+    private int _pendingNextLevel = 1;
+
     private bool _isCelebrating;
     public bool IsCelebrating
     {
@@ -61,11 +64,17 @@ public sealed class PuzzlePageViewModel : ObservableObject
         set
         {
             if (SetProperty(ref _isCelebrating, value))
+            {
                 OnPropertyChanged(nameof(IsNotBusy));
+                OnPropertyChanged(nameof(CanCloseProfessor));
+            }
         }
     }
 
     public bool IsNotBusy => !IsBusy && !IsCelebrating;
+
+    // X-Button zum Schließen der Sprechblase: nur bei Fehleingabe sichtbar (nicht bei Erfolg)
+    public bool CanCloseProfessor => ShowProfessor && !IsCelebrating;
 
     private string _rewardText = "";
     public string RewardText
@@ -85,7 +94,11 @@ public sealed class PuzzlePageViewModel : ObservableObject
     public bool ShowProfessor
     {
         get => _showProfessor;
-        set => SetProperty(ref _showProfessor, value);
+        set
+        {
+            if (SetProperty(ref _showProfessor, value))
+                OnPropertyChanged(nameof(CanCloseProfessor));
+        }
     }
 
     private string _professorMessage = "";
@@ -115,6 +128,9 @@ public sealed class PuzzlePageViewModel : ObservableObject
     public AsyncCommand CheckCommand { get; }
     public AsyncCommand HintCommand { get; }
     public AsyncCommand ShowSolutionCommand { get; }
+    public AsyncCommand ContinueCommand { get; }
+    public AsyncCommand CloseProfessorCommand { get; }
+    public AsyncCommand BackToMapCommand { get; }
 
     public PuzzlePageViewModel(
         IGameProgressStore progressStore,
@@ -166,6 +182,20 @@ public sealed class PuzzlePageViewModel : ObservableObject
                 }
             }
         });
+
+        // Weiter → nächstes Level laden
+        ContinueCommand = new AsyncCommand(ContinueToNextLevelAsync);
+
+        // X-Button → Professor-Sprechblase schließen (nur bei Fehleingabe)
+        CloseProfessorCommand = new AsyncCommand(() =>
+        {
+            ShowProfessor = false;
+            ProfessorMessage = "";
+            return Task.CompletedTask;
+        });
+
+        // Zurück zur Karte (ohne Bestätigungs-Dialog)
+        BackToMapCommand = new AsyncCommand(NavigateToMapAsync);
     }
 
     protected override void OnCultureChanged()
@@ -359,12 +389,10 @@ public sealed class PuzzlePageViewModel : ObservableObject
             _ => LocalizationService.Format("LockRiddle_HintMixedFormat", hint.WellPlaced + hint.WrongPlaced, Plural(hint.WellPlaced + hint.WrongPlaced, singular, plural), hint.WellPlaced, hint.WrongPlaced)
         };
 
-        // Visuellen Prefix aufbauen (✔️ = gut platziert, 🟡 = falsch platziert)
-        string visualPrefix = "";
-        for (int i = 0; i < hint.WellPlaced; i++) visualPrefix += "✔️";
-        for (int i = 0; i < hint.WrongPlaced; i++) visualPrefix += "🟡";
-        if (!string.IsNullOrEmpty(visualPrefix))
-            desc = $"{visualPrefix} {desc}";
+        // Emojis für die linke Icon-Spalte (✔️ = gut platziert, 🟡 = falsch platziert)
+        string iconEmojis = "";
+        for (int i = 0; i < hint.WellPlaced; i++) iconEmojis += "✔️";
+        for (int i = 0; i < hint.WrongPlaced; i++) iconEmojis += "🟡";
 
         return new LockHint
         {
@@ -372,8 +400,8 @@ public sealed class PuzzlePageViewModel : ObservableObject
             Code = hint.Code,
             WellPlaced = hint.WellPlaced,
             WrongPlaced = hint.WrongPlaced,
-            Icon = hint.Icon,
-            Description = desc
+            Icon = string.IsNullOrEmpty(iconEmojis) ? hint.Icon : iconEmojis,
+            Description = desc  // saubere Beschreibung ohne Emoji-Prefix
         };
     }
 
@@ -440,9 +468,9 @@ public sealed class PuzzlePageViewModel : ObservableObject
             return;
         }
 
-        // ✅ RICHTIGE LÖSUNG
+        // RICHTIGE LÖSUNG
         System.Diagnostics.Debug.WriteLine($"[CheckSolutionAsync] Richtige Lösung für Level {LevelNumber}");
-        
+
         int reward = RewardForDifficulty(DifficultyKey);
 
         if (_userProfile != null)
@@ -457,15 +485,33 @@ public sealed class PuzzlePageViewModel : ObservableObject
         await _progressStore.MarkLevelCompleteAsync(GameId, DifficultyKey, completedLevel);
         await _riddleState.ClearAsync(GameId, DifficultyKey, completedLevel);
 
-        // ✅ WICHTIG: Cache löschen, da dieses Rätsel abgeschlossen ist
+        // Cache löschen, da dieses Rätsel abgeschlossen ist
         _currentGame = null;
 
-        await PlaySuccessOverlayAsync(reward);
+        // Nächstes Level für den Weiter-Button speichern
+        _pendingNextLevel = completedLevel + 1;
 
-        // Nächstes Level laden
-        int nextLevel = completedLevel + 1;
-        
-        if (nextLevel > GameConfig.MaxLevel)
+        // Feuerwerk anzeigen – Nutzer entscheidet über Weiter oder Zurück
+        await PlaySuccessOverlayAsync(reward);
+    }
+
+    /// <summary>
+    /// Wird vom "Weiter"-Button ausgelöst: Feuerwerk beenden und nächstes Level laden.
+    /// </summary>
+    private async Task ContinueToNextLevelAsync()
+    {
+        if (!IsCelebrating) return;
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            IsCelebrating = false;
+            ShowProfessor = false;
+            ProfessorMessage = "";
+            RewardText = "";
+            LockImageSource = "closedlock.png";
+        });
+
+        if (_pendingNextLevel > GameConfig.MaxLevel)
         {
             await _dialog.AlertAsync(
                 LocalizationService.GetString("Puzzle_AllLevelsCompleteTitle"),
@@ -474,7 +520,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
             return;
         }
 
-        LevelNumber = nextLevel;
+        LevelNumber = _pendingNextLevel;
         await StartNewRoundAsync();
     }
 
@@ -490,10 +536,11 @@ public sealed class PuzzlePageViewModel : ObservableObject
         await _nav.GoToAsync(nameof(GameMapPage), parameters);
     }
 
-    private async Task PlaySuccessOverlayAsync(int reward)
+    /// <summary>
+    /// Feuerwerk und Erfolgs-Overlay anzeigen. Bleibt sichtbar bis der Nutzer Weiter oder Zurück wählt.
+    /// </summary>
+    private Task PlaySuccessOverlayAsync(int reward)
     {
-        int token = ++_genToken;
-
         MainThread.BeginInvokeOnMainThread(() =>
         {
             LockImageSource = "openedlock.png";
@@ -503,18 +550,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
             IsCelebrating = true;
         });
 
-        await Task.Delay(2600);
-
-        if (token != _genToken) return;
-
-        MainThread.BeginInvokeOnMainThread(() =>
-        {
-            IsCelebrating = false;
-            ShowProfessor = false;
-            ProfessorMessage = "";
-            RewardText = "";
-            LockImageSource = "closedlock.png";
-        });
+        return Task.CompletedTask;
     }
 
     private async Task RevealOneDigitAsync()

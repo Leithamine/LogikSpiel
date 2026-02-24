@@ -3,6 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:LogikSpiel.ViewModel"
              xmlns:model="clr-namespace:LogikSpiel.Model"
+             xmlns:resx="clr-namespace:LogikSpiel.Resources.Strings"
+             xmlns:skia="clr-namespace:SkiaSharp.Extended.UI.Controls;assembly=SkiaSharp.Extended.UI"
              x:Class="LogikSpiel.View.PuzzlePage"
              x:DataType="vm:PuzzlePageViewModel"
              BackgroundImageSource="gamebg.png"
@@ -42,25 +44,36 @@
         <Border Grid.Row="1" Style="{StaticResource GlassCard}" Padding="{OnIdiom Phone=12, Desktop=16}" Margin="0">
             <VerticalStackLayout Spacing="10">
 
-                <!-- Professor (sichtbar bei falschem oder richtigem Code) -->
-                <Grid IsVisible="{Binding ShowProfessor}" ColumnDefinitions="Auto,*" ColumnSpacing="10" Margin="0,0,0,4">
-                    <Image Grid.Column="0"
-                           Source="professor.png"
-                           WidthRequest="72"
-                           HeightRequest="72"
-                           Aspect="AspectFit"
-                           VerticalOptions="Start"/>
-                    <Frame Grid.Column="1"
-                           BackgroundColor="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
-                           BorderColor="{StaticResource C_Primary}"
-                           CornerRadius="14"
-                           Padding="12"
-                           HasShadow="False">
-                        <Label Text="{Binding ProfessorMessage}"
+                <!-- Sprechblase: oben mitte über dem Schloss (bei falschem oder richtigem Code) -->
+                <Border IsVisible="{Binding ShowProfessor}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
+                        Stroke="{StaticResource C_Primary}"
+                        StrokeThickness="1.5"
+                        StrokeShape="RoundRectangle 14"
+                        Padding="12,8">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
+                        <Label Grid.Column="0"
+                               Text="{Binding ProfessorMessage}"
                                FontSize="14"
+                               HorizontalOptions="Fill"
+                               HorizontalTextAlignment="Center"
+                               VerticalOptions="Center"
                                TextColor="{AppThemeBinding Light={StaticResource C_TextDark}, Dark={StaticResource C_TextPrimary}}"/>
-                    </Frame>
-                </Grid>
+                        <!-- X-Button: nur bei Fehleingabe sichtbar, nicht bei Erfolg -->
+                        <Button Grid.Column="1"
+                                Text="✕"
+                                BackgroundColor="Transparent"
+                                TextColor="{StaticResource C_TextMuted}"
+                                FontSize="16"
+                                FontAttributes="Bold"
+                                Padding="4"
+                                WidthRequest="32"
+                                HeightRequest="32"
+                                VerticalOptions="Start"
+                                IsVisible="{Binding CanCloseProfessor}"
+                                Command="{Binding CloseProfessorCommand}"/>
+                    </Grid>
+                </Border>
 
                 <!-- Schloss & Feuerwerk -->
                 <Grid HeightRequest="140">
@@ -71,12 +84,13 @@
                            HorizontalOptions="Center"
                            VerticalOptions="Center"/>
 
-                    <Image Source="fireworks.gif"
-                           IsAnimationPlaying="{Binding IsCelebrating}"
-                           Aspect="AspectFit"
-                           HorizontalOptions="Center"
-                           VerticalOptions="Center"
-                           IsVisible="{Binding IsCelebrating}"/>
+                    <!-- Feuerwerk-Animation (Lottie) -->
+                    <skia:SKLottieView Source="fireworks_skottie.json"
+                                       RepeatCount="-1"
+                                       IsVisible="{Binding IsCelebrating}"
+                                       HorizontalOptions="Fill"
+                                       VerticalOptions="Fill"
+                                       InputTransparent="True"/>
 
                     <Label Text="{Binding RewardText}"
                            FontSize="18"
@@ -87,10 +101,24 @@
                            IsVisible="{Binding IsCelebrating}"/>
                 </Grid>
 
-                <!-- Eingabe und Buttons -->
+                <!-- Weiter / Zurück Buttons – nur bei Feuerwerk (IsCelebrating) -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10" IsVisible="{Binding IsCelebrating}">
+                    <Button Grid.Column="0"
+                            Text="Weiter ▶"
+                            Style="{StaticResource BtnSuccess}"
+                            HeightRequest="50"
+                            Command="{Binding ContinueCommand}"/>
+                    <Button Grid.Column="1"
+                            Text="Zurück"
+                            Style="{StaticResource BtnGhost}"
+                            HeightRequest="50"
+                            Command="{Binding BackToMapCommand}"/>
+                </Grid>
+
+                <!-- Eingabe und Buttons (ausgeblendet während Feuerwerk oder Laden) -->
                 <VerticalStackLayout IsVisible="{Binding IsNotBusy}" Spacing="12">
 
-                    <Label Text="{StaticResource Puzzle_EnterCode}"
+                    <Label Text="{resx:Translate Key=Puzzle_EnterCode}"
                            Style="{StaticResource H3}"
                            HorizontalOptions="Center"/>
 
@@ -123,7 +151,7 @@
                     <!-- Action Buttons -->
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
                         <Button Grid.Column="0"
-                                Text="{StaticResource Puzzle_OpenButton}"
+                                Text="Öffnen"
                                 Style="{StaticResource BtnSuccess}"
                                 HeightRequest="50"
                                 Command="{Binding CheckCommand}"/>
@@ -161,7 +189,7 @@
 
                 <!-- Überschrift -->
                 <Label Grid.Row="0"
-                       Text="{StaticResource Puzzle_HintsTitle}"
+                       Text="{resx:Translate Key=Puzzle_HintsTitle}"
                        Style="{StaticResource H3}"/>
 
                 <!-- Hinweise Liste -->
