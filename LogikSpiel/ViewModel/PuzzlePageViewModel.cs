@@ -389,10 +389,13 @@ public sealed class PuzzlePageViewModel : ObservableObject
             _ => LocalizationService.Format("LockRiddle_HintMixedFormat", hint.WellPlaced + hint.WrongPlaced, Plural(hint.WellPlaced + hint.WrongPlaced, singular, plural), hint.WellPlaced, hint.WrongPlaced)
         };
 
-        // Emojis für die linke Icon-Spalte (✔️ = gut platziert, 🟡 = falsch platziert)
+        // Mastermind-Stil: 🟢 = richtig platziert, 🟡 = falsche Position, ⬜ = nicht vorhanden
+        int codeLen = hint.Slots.Count > 0 ? hint.Slots.Count : hint.WellPlaced + hint.WrongPlaced;
         string iconEmojis = "";
-        for (int i = 0; i < hint.WellPlaced; i++) iconEmojis += "✔️";
+        for (int i = 0; i < hint.WellPlaced; i++) iconEmojis += "🟢";
         for (int i = 0; i < hint.WrongPlaced; i++) iconEmojis += "🟡";
+        int noMatch = codeLen - hint.WellPlaced - hint.WrongPlaced;
+        for (int i = 0; i < Math.Max(0, noMatch); i++) iconEmojis += "⬜";
 
         return new LockHint
         {
