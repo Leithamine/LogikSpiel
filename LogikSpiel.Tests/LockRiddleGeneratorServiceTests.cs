@@ -24,6 +24,12 @@ public class LockRiddleGeneratorServiceTests
         }
     }
 
+    [Fact]
+    public void GenerateGame_Easy_1000Runs_MustStayValidUnique()
+    {
+        var generator = new LockRiddleGeneratorService();
+
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
 
     [Fact]
     public void GenerateGame_SameDifficultyAndLevel_IsDeterministic()
