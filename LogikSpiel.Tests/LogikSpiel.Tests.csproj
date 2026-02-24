@@ -22,7 +22,7 @@
   <ItemGroup>
     <Compile Include="../LogikSpiel/Model/LockHint.cs" Link="Model/LockHint.cs" />
     <Compile Include="../LogikSpiel/Model/LockRiddleGame.cs" Link="Model/LockRiddleGame.cs" />
+    <Compile Include="../LogikSpiel/Core/SeedHelper.cs" Link="Core/SeedHelper.cs" />
     <Compile Include="../LogikSpiel/Services/LockRiddleGeneratorService.cs" Link="Services/LockRiddleGeneratorService.cs" />
-    <Compile Include="TestLocalizationService.cs" />
   </ItemGroup>
 </Project>

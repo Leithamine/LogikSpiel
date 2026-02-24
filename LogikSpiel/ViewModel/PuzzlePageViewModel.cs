@@ -89,6 +89,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
     public AsyncCommand BackCommand { get; }
     public AsyncCommand CheckCommand { get; }
     public AsyncCommand HintCommand { get; }
+    public AsyncCommand ShowSolutionCommand { get; }
 
     public PuzzlePageViewModel(
         IGameProgressStore progressStore,
@@ -124,6 +125,20 @@ public sealed class PuzzlePageViewModel : ObservableObject
                 await _dialog.AlertAsync(
                     LocalizationService.GetString("Common_NotEnoughCoinsTitle"),
                     LocalizationService.Format("Common_NeedCoinsFormat", 50));
+            }
+        });
+
+        ShowSolutionCommand = new AsyncCommand(async () =>
+        {
+            if (!IsNotBusy) return;
+            if (_secretSolution.Length == 0) return;
+
+            for (int i = 0; i < _secretSolution.Length; i++)
+            {
+                if (i < InputDigits.Count)
+                {
+                    InputDigits[i].Digit = _secretSolution[i].ToString();
+                }
             }
         });
     }
