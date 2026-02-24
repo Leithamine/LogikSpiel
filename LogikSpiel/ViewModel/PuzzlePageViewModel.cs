@@ -81,6 +81,22 @@ public sealed class PuzzlePageViewModel : ObservableObject
         set => SetProperty(ref _lockImageSource, value);
     }
 
+    private bool _showProfessor;
+    public bool ShowProfessor
+    {
+        get => _showProfessor;
+        set => SetProperty(ref _showProfessor, value);
+    }
+
+    private string _professorMessage = "";
+    public string ProfessorMessage
+    {
+        get => _professorMessage;
+        set => SetProperty(ref _professorMessage, value);
+    }
+
+    public string ProfessorImageSource => "professor.png";
+
     private int _genToken = 0;
 
     public string Title => LocalizationService.Format("Puzzle_TitleFormat", DiffName(DifficultyKey));
@@ -235,6 +251,8 @@ public sealed class PuzzlePageViewModel : ObservableObject
         {
             IsBusy = true;
             IsCelebrating = false;
+            ShowProfessor = false;
+            ProfessorMessage = "";
             RewardText = "";
             LockImageSource = "closedlock.png";
             _secretSolution = "";
@@ -399,24 +417,24 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
         if (input != _secretSolution)
         {
-            // Falsche Lösung - Zeige Dialog
-            bool retry = await _dialog.ConfirmAsync(
-                LocalizationService.GetString("Puzzle_WrongTitle"),
-                LocalizationService.GetString("Puzzle_WrongMessage"),
-                LocalizationService.GetString("Common_Retry"),
-                LocalizationService.GetString("Common_BackToMap"));
+            // Falsche Lösung - Professor anzeigen statt Dialog
+            int wrongToken = _genToken;
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                ShowProfessor = true;
+                ProfessorMessage = LocalizationService.GetString("Puzzle_Professor_WrongMessage");
+            });
 
-            if (retry)
+            // Professor nach 3 Sekunden ausblenden
+            await Task.Delay(3000);
+
+            if (wrongToken == _genToken)
             {
-                // ✅ WICHTIG: LevelNumber bleibt gleich!
-                // Das Rätsel ist im Cache (_currentGame), daher wird beim 
-                // StartNewRoundAsync das gleiche Rätsel wieder angezeigt
-                System.Diagnostics.Debug.WriteLine($"[CheckSolutionAsync] Retry gewählt für Level {LevelNumber}");
-                await StartNewRoundAsync();
-            }
-            else
-            {
-                await NavigateToMapAsync();
+                MainThread.BeginInvokeOnMainThread(() =>
+                {
+                    ShowProfessor = false;
+                    ProfessorMessage = "";
+                });
             }
 
             return;
@@ -480,6 +498,8 @@ public sealed class PuzzlePageViewModel : ObservableObject
         {
             LockImageSource = "openedlock.png";
             RewardText = reward > 0 ? LocalizationService.Format("Puzzle_RewardFormat", reward) : "";
+            ProfessorMessage = LocalizationService.GetString("Puzzle_Professor_SuccessMessage");
+            ShowProfessor = true;
             IsCelebrating = true;
         });
 
@@ -490,6 +510,8 @@ public sealed class PuzzlePageViewModel : ObservableObject
         MainThread.BeginInvokeOnMainThread(() =>
         {
             IsCelebrating = false;
+            ShowProfessor = false;
+            ProfessorMessage = "";
             RewardText = "";
             LockImageSource = "closedlock.png";
         });
