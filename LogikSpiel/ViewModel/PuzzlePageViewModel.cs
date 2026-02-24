@@ -446,24 +446,11 @@ public sealed class PuzzlePageViewModel : ObservableObject
         if (input != _secretSolution)
         {
             // Falsche Lösung - Professor anzeigen statt Dialog
-            int wrongToken = _genToken;
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 ShowProfessor = true;
                 ProfessorMessage = LocalizationService.GetString("Puzzle_Professor_WrongMessage");
             });
-
-            // Professor nach 3 Sekunden ausblenden
-            await Task.Delay(3000);
-
-            if (wrongToken == _genToken)
-            {
-                MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    ShowProfessor = false;
-                    ProfessorMessage = "";
-                });
-            }
 
             return;
         }

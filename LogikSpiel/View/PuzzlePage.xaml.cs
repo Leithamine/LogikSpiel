@@ -12,6 +12,8 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
     private readonly PuzzlePageViewModel _vm;
     private CancellationTokenSource? _celebrationCts;
     private CancellationTokenSource? _typingCts;
+    private CancellationTokenSource? _professorAnimCts;
+    private CancellationTokenSource? _speechBubbleAnimCts;
 
     public PuzzlePage(PuzzlePageViewModel vm)
     {
@@ -27,11 +29,20 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         if (BindingContext is not PuzzlePageViewModel vm)
             return;
 
-        if (e.PropertyName == nameof(PuzzlePageViewModel.ShowProfessor) && vm.ShowProfessor)
+        if (e.PropertyName == nameof(PuzzlePageViewModel.ShowProfessor))
         {
-            await ShowBubbleAsync();
-            if (!vm.IsCelebrating)
-                await ShakeLockAsync();
+            if (vm.ShowProfessor)
+            {
+                await ShowBubbleAsync();
+                StartProfessorTalkingAnimation();
+
+                if (!vm.IsCelebrating)
+                    await ShakeLockAsync();
+            }
+            else
+            {
+                StopProfessorTalkingAnimation();
+            }
         }
 
         if (e.PropertyName == nameof(PuzzlePageViewModel.ProfessorMessage) && vm.ShowProfessor)
@@ -90,6 +101,77 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
             ProfessorLabel.Text += c;
             await Task.Delay(20, ct);
         }
+    }
+
+
+    private void StartProfessorTalkingAnimation()
+    {
+        StopProfessorTalkingAnimation();
+
+        _professorAnimCts = new CancellationTokenSource();
+        _speechBubbleAnimCts = new CancellationTokenSource();
+        var professorCt = _professorAnimCts.Token;
+        var bubbleCt = _speechBubbleAnimCts.Token;
+
+        _ = MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            try
+            {
+                while (!professorCt.IsCancellationRequested)
+                {
+                    await ProfessorImage.ScaleTo(1.09, 140, Easing.CubicInOut);
+                    await ProfessorImage.RotateTo(-3, 90, Easing.CubicInOut);
+                    await ProfessorImage.RotateTo(3, 90, Easing.CubicInOut);
+                    await ProfessorImage.RotateTo(0, 90, Easing.CubicInOut);
+                    await ProfessorImage.ScaleTo(1.0, 140, Easing.CubicInOut);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // expected on close/navigation
+            }
+        });
+
+        _ = MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            try
+            {
+                while (!bubbleCt.IsCancellationRequested)
+                {
+                    await SpeechBubble.ScaleTo(1.02, 110, Easing.CubicInOut);
+                    await SpeechTail.TranslateTo(-2, 0, 110, Easing.CubicInOut);
+                    await SpeechBubble.ScaleTo(1.0, 110, Easing.CubicInOut);
+                    await SpeechTail.TranslateTo(0, 0, 110, Easing.CubicInOut);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // expected on close/navigation
+            }
+        });
+    }
+
+    private void StopProfessorTalkingAnimation()
+    {
+        _professorAnimCts?.Cancel();
+        _professorAnimCts?.Dispose();
+        _professorAnimCts = null;
+
+        _speechBubbleAnimCts?.Cancel();
+        _speechBubbleAnimCts?.Dispose();
+        _speechBubbleAnimCts = null;
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            ProfessorImage.CancelAnimations();
+            SpeechBubble.CancelAnimations();
+            SpeechTail.CancelAnimations();
+
+            ProfessorImage.Scale = 1;
+            ProfessorImage.Rotation = 0;
+            SpeechBubble.Scale = 1;
+            SpeechTail.TranslationX = 0;
+        });
     }
 
     private async Task CelebrateLockAsync()
@@ -193,6 +275,7 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
     {
         base.OnDisappearing();
         CancelCelebrationAnimation();
+        StopProfessorTalkingAnimation();
         _entryByIndex.Clear();
         _vm.Cleanup();
     }
@@ -202,6 +285,7 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         if (args.NewHandler is null)
         {
             CancelCelebrationAnimation();
+            StopProfessorTalkingAnimation();
             _entryByIndex.Clear();
             _vm.PropertyChanged -= Vm_PropertyChanged;
         }

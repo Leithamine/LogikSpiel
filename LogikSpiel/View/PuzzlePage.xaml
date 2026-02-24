@@ -48,13 +48,14 @@
                 <!-- 👨‍🏫 Professor + Bubble -->
                 <Grid IsVisible="{Binding ShowProfessor}"
                       ColumnDefinitions="Auto,*"
-                      ColumnSpacing="10"
+                      ColumnSpacing="14"
                       HorizontalOptions="Center">
 
-                    <Image Grid.Column="0"
+                    <Image x:Name="ProfessorImage"
+                           Grid.Column="0"
                            Source="{Binding ProfessorImageSource}"
-                           WidthRequest="60"
-                           HeightRequest="60"
+                           WidthRequest="96"
+                           HeightRequest="96"
                            Aspect="AspectFit"
                            VerticalOptions="Start"/>
 
@@ -64,32 +65,35 @@
                         <Border x:Name="SpeechBubble"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
                                 Stroke="{StaticResource C_Primary}"
-                                StrokeThickness="1.5"
+                                StrokeThickness="2"
                                 StrokeShape="RoundRectangle 16"
                                 Scale="0"
                                 Opacity="0"
-                                Padding="12,8">
+                                Padding="14,10"
+                                MinimumWidthRequest="360">
 
                             <Grid ColumnDefinitions="*,Auto">
                                 <Label x:Name="ProfessorLabel"
                                        Text="{Binding ProfessorMessage}"
-                                       FontSize="14"
+                                       FontSize="16"
                                        TextColor="{AppThemeBinding Light={StaticResource C_TextDark}, Dark={StaticResource C_TextPrimary}}"/>
 
                                 <Button Grid.Column="1"
                                         Text="✕"
                                         BackgroundColor="Transparent"
-                                        TextColor="{StaticResource C_TextMuted}"
-                                        FontSize="16"
-                                        WidthRequest="30"
-                                        HeightRequest="30"
+                                        TextColor="{StaticResource C_Danger}"
+                                        FontSize="18"
+                                        FontAttributes="Bold"
+                                        WidthRequest="34"
+                                        HeightRequest="34"
                                         IsVisible="{Binding CanCloseProfessor}"
                                         Command="{Binding CloseProfessorCommand}"/>
                             </Grid>
                         </Border>
 
                         <!-- Bubble Tail -->
-                        <Border WidthRequest="14"
+                        <Border x:Name="SpeechTail"
+                                WidthRequest="14"
                                 HeightRequest="14"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
                                 Stroke="{StaticResource C_Primary}"
@@ -244,8 +248,7 @@
                                         Padding="12">
                                     <VerticalStackLayout Spacing="4">
                                         <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
-                                            <Label Text="{Binding Icon}" FontSize="20" VerticalOptions="Center" MinimumWidthRequest="26"/>
-                                            <HorizontalStackLayout BindableLayout.ItemsSource="{Binding Slots}" Spacing="6" VerticalOptions="Center">
+                                            <HorizontalStackLayout BindableLayout.ItemsSource="{Binding Slots}" Spacing="6" VerticalOptions="Center" HorizontalOptions="StartAndExpand">
                                                 <BindableLayout.ItemTemplate>
                                                     <DataTemplate>
                                                         <Border BackgroundColor="{StaticResource C_CardInner}"
@@ -264,6 +267,12 @@
                                                     </DataTemplate>
                                                 </BindableLayout.ItemTemplate>
                                             </HorizontalStackLayout>
+                                            <Label Text="{Binding Icon}"
+                                                   FontSize="20"
+                                                   VerticalOptions="Center"
+                                                   HorizontalOptions="End"
+                                                   MinimumWidthRequest="34"
+                                                   HorizontalTextAlignment="End"/>
                                         </HorizontalStackLayout>
                                         <Label Text="{Binding Description}"
                                                FontSize="13"
