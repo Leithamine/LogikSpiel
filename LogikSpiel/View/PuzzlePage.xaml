@@ -59,8 +59,8 @@
                            Aspect="AspectFit"
                            VerticalOptions="Center"/>
 
-                    <!-- Speech bubble positioned at mouth level (~top third of professor image) -->
-                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center" Margin="0,-40,0,0">
+                    <!-- Speech bubble positioned at mouth level (~55px from top of 150px professor image) -->
+                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Start" Margin="0,55,0,0">
 
                         <!-- Bubble -->
                         <Border x:Name="SpeechBubble"
@@ -256,7 +256,7 @@
                                                                    Spacing="6"
                                                                    VerticalOptions="Center">
                                                 <BindableLayout.ItemTemplate>
-                                                    <DataTemplate>
+                                                    <DataTemplate x:DataType="x:String">
                                                         <Border BackgroundColor="{StaticResource C_CardInner}"
                                                                 Stroke="{StaticResource C_Primary}"
                                                                 StrokeThickness="1"
@@ -266,9 +266,8 @@
                                                             <Label Text="{Binding .}"
                                                                    FontSize="20"
                                                                    FontAttributes="Bold"
-                                                                   FontFamily="Consolas"
                                                                    HorizontalTextAlignment="Center"
-                                                                   TextColor="{StaticResource C_Warning}"/>
+                                                                   TextColor="{StaticResource C_TextPrimary}"/>
                                                         </Border>
                                                     </DataTemplate>
                                                 </BindableLayout.ItemTemplate>

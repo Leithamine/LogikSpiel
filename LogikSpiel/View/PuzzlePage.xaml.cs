@@ -93,13 +93,20 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
 
         ProfessorLabel.Text = string.Empty;
 
-        foreach (char c in text ?? string.Empty)
+        try
         {
-            if (ct.IsCancellationRequested)
-                break;
+            foreach (char c in text ?? string.Empty)
+            {
+                if (ct.IsCancellationRequested)
+                    break;
 
-            ProfessorLabel.Text += c;
-            await Task.Delay(20, ct);
+                ProfessorLabel.Text += c;
+                await Task.Delay(20, ct);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected when typing is interrupted by a new message
         }
     }
 
@@ -108,26 +115,8 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
     {
         StopProfessorTalkingAnimation();
 
-        _professorAnimCts = new CancellationTokenSource();
         _speechBubbleAnimCts = new CancellationTokenSource();
-        var professorCt = _professorAnimCts.Token;
         var bubbleCt = _speechBubbleAnimCts.Token;
-
-        _ = MainThread.InvokeOnMainThreadAsync(async () =>
-        {
-            try
-            {
-                while (!professorCt.IsCancellationRequested)
-                {
-                    await ProfessorImage.ScaleTo(1.06, 280, Easing.CubicInOut);
-                    await ProfessorImage.ScaleTo(1.0, 280, Easing.CubicInOut);
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                // expected on close/navigation
-            }
-        });
 
         _ = MainThread.InvokeOnMainThreadAsync(async () =>
         {
