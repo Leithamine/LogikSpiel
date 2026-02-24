@@ -13,6 +13,7 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
     private CancellationTokenSource? _celebrationCts;
     private CancellationTokenSource? _typingCts;
     private CancellationTokenSource? _professorAnimCts;
+    private CancellationTokenSource? _speechBubbleAnimCts;
 
     public PuzzlePage(PuzzlePageViewModel vm)
     {
@@ -108,35 +109,68 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         StopProfessorTalkingAnimation();
 
         _professorAnimCts = new CancellationTokenSource();
-        var ct = _professorAnimCts.Token;
+        _speechBubbleAnimCts = new CancellationTokenSource();
+        var professorCt = _professorAnimCts.Token;
+        var bubbleCt = _speechBubbleAnimCts.Token;
 
         _ = MainThread.InvokeOnMainThreadAsync(async () =>
         {
-            while (!ct.IsCancellationRequested)
+            try
             {
-                await ProfessorImage.ScaleTo(1.06, 170, Easing.CubicInOut);
-                await ProfessorImage.RotateTo(-2, 120, Easing.CubicInOut);
-                await ProfessorImage.RotateTo(2, 120, Easing.CubicInOut);
-                await ProfessorImage.RotateTo(0, 120, Easing.CubicInOut);
-                await ProfessorImage.ScaleTo(1.0, 170, Easing.CubicInOut);
+                while (!professorCt.IsCancellationRequested)
+                {
+                    await ProfessorImage.ScaleTo(1.09, 140, Easing.CubicInOut);
+                    await ProfessorImage.RotateTo(-3, 90, Easing.CubicInOut);
+                    await ProfessorImage.RotateTo(3, 90, Easing.CubicInOut);
+                    await ProfessorImage.RotateTo(0, 90, Easing.CubicInOut);
+                    await ProfessorImage.ScaleTo(1.0, 140, Easing.CubicInOut);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // expected on close/navigation
+            }
+        });
+
+        _ = MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            try
+            {
+                while (!bubbleCt.IsCancellationRequested)
+                {
+                    await SpeechBubble.ScaleTo(1.02, 110, Easing.CubicInOut);
+                    await SpeechTail.TranslateTo(-2, 0, 110, Easing.CubicInOut);
+                    await SpeechBubble.ScaleTo(1.0, 110, Easing.CubicInOut);
+                    await SpeechTail.TranslateTo(0, 0, 110, Easing.CubicInOut);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // expected on close/navigation
             }
         });
     }
 
     private void StopProfessorTalkingAnimation()
     {
-        if (_professorAnimCts is null)
-            return;
-
-        _professorAnimCts.Cancel();
-        _professorAnimCts.Dispose();
+        _professorAnimCts?.Cancel();
+        _professorAnimCts?.Dispose();
         _professorAnimCts = null;
+
+        _speechBubbleAnimCts?.Cancel();
+        _speechBubbleAnimCts?.Dispose();
+        _speechBubbleAnimCts = null;
 
         MainThread.BeginInvokeOnMainThread(() =>
         {
             ProfessorImage.CancelAnimations();
+            SpeechBubble.CancelAnimations();
+            SpeechTail.CancelAnimations();
+
             ProfessorImage.Scale = 1;
             ProfessorImage.Rotation = 0;
+            SpeechBubble.Scale = 1;
+            SpeechTail.TranslationX = 0;
         });
     }
 

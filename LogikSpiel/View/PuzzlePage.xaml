@@ -92,7 +92,8 @@
                         </Border>
 
                         <!-- Bubble Tail -->
-                        <Border WidthRequest="14"
+                        <Border x:Name="SpeechTail"
+                                WidthRequest="14"
                                 HeightRequest="14"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
                                 Stroke="{StaticResource C_Primary}"
@@ -247,8 +248,7 @@
                                         Padding="12">
                                     <VerticalStackLayout Spacing="4">
                                         <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
-                                            <Label Text="{Binding Icon}" FontSize="20" VerticalOptions="Center" MinimumWidthRequest="26"/>
-                                            <HorizontalStackLayout BindableLayout.ItemsSource="{Binding Slots}" Spacing="6" VerticalOptions="Center">
+                                            <HorizontalStackLayout BindableLayout.ItemsSource="{Binding Slots}" Spacing="6" VerticalOptions="Center" HorizontalOptions="StartAndExpand">
                                                 <BindableLayout.ItemTemplate>
                                                     <DataTemplate>
                                                         <Border BackgroundColor="{StaticResource C_CardInner}"
@@ -267,6 +267,12 @@
                                                     </DataTemplate>
                                                 </BindableLayout.ItemTemplate>
                                             </HorizontalStackLayout>
+                                            <Label Text="{Binding Icon}"
+                                                   FontSize="20"
+                                                   VerticalOptions="Center"
+                                                   HorizontalOptions="End"
+                                                   MinimumWidthRequest="34"
+                                                   HorizontalTextAlignment="End"/>
                                         </HorizontalStackLayout>
                                         <Label Text="{Binding Description}"
                                                FontSize="13"

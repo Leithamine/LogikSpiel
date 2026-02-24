@@ -27,11 +27,6 @@ public class LockRiddleGeneratorService
 
         var (length, minCoveredDigits, targetHints, rules, style) = GetSettings(difficultyKey);
 
-        // Wenn length == 6: niemals Regeln zulassen, die mehr als 4 invalid digits benötigen
-        // => well+wrong muss >= 2 sein, damit (length - (well+wrong)) <= 4
-        if (length == 6)
-            rules = rules.Where(r => r.well + r.wrong >= 2).ToList();
-
         return GenerateWithHardGuarantee(length, minCoveredDigits, targetHints, rules, style, _rnd, seed);
     }
 
@@ -57,7 +52,7 @@ public class LockRiddleGeneratorService
             if (h == null || h.Slots == null) return false;
             if (h.Slots.Count != length) return false;
 
-            // keine leeren Slots, nur digits, keine Wiederholungen
+            // keine leeren Slots, nur digits (Wiederholungen im Hinweis sind erlaubt)
             var digits = new List<int>(length);
             foreach (var s in h.Slots)
             {
@@ -65,8 +60,6 @@ public class LockRiddleGeneratorService
                 if (!int.TryParse(s.Trim(), out var d)) return false;
                 digits.Add(d);
             }
-            if (digits.Distinct().Count() != length) return false;
-
             var (well, wrong) = LockHintScoring.Score(h.Slots, secret);
             if (well != h.WellPlaced || wrong != h.WrongPlaced)
                 return false;
@@ -122,13 +115,13 @@ public class LockRiddleGeneratorService
                 )
             ),
 
-            // ✅ Master: (0,0) ist bei length=6 ohne Wiederholungen unmöglich -> nicht anbieten.
-            // Zusätzlich: keine 1er-Regeln (1,0)/(0,1), weil sonst 5 invalids nötig wären.
+            // ✅ Master: (0,0) soll enthalten sein; falls unique invalid digits nicht reichen,
+            // wird der (0,0)-Hinweis mit Wiederholungen erzeugt.
             "master" => (
                 length: 6,
                 minCoveredDigits: 5,
                 targetHints: 9,
-                rules: [(2, 0), (0, 2), (1, 1), (2, 1), (1, 2), (3, 0), (0, 3), (2, 2)],
+                rules: [(0, 0), (2, 0), (0, 2), (1, 1), (2, 1), (1, 2), (3, 0), (0, 3), (2, 2)],
                 style: new DifficultyStyle(
                     AllowSinglePinDisambiguation: false,
                     AllowSinglePinFill: false,
@@ -151,7 +144,7 @@ public class LockRiddleGeneratorService
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // HARTE GARANTIE: immer eindeutig + keine Leer-Slots + keine Wiederholungen in Hints
+    // HARTE GARANTIE: immer eindeutig + keine Leer-Slots
     // ═══════════════════════════════════════════════════════════════
 
     private LockRiddleGame GenerateWithHardGuarantee(
@@ -194,7 +187,7 @@ public class LockRiddleGeneratorService
             }
         }
 
-        // Ultima Ratio (immer eindeutig, aber ohne Wiederholungen pro Hint)
+        // Ultima Ratio (immer eindeutig)
         var ultraSafe = GenerateUltraSafe(length, targetHints, rules, rnd);
         if (ultraSafe != null) return ultraSafe;
 
@@ -378,10 +371,10 @@ public class LockRiddleGeneratorService
         var hints = new List<LockHint>();
         var signatures = new HashSet<string>();
 
-        // (0,0) nur wenn möglich ohne Wiederholungen: invalid.Count >= length
+        // (0,0)-Hinweis bevorzugt unique, bei Bedarf mit Wiederholungen
         if (invalid.Count >= length)
         {
-            var nothing = CreateHintNothingCorrectUnique(invalid, length, rnd);
+            var nothing = CreateHintNothingCorrect(invalid, length, rnd);
             if (nothing != null) TryAddHint(hints, signatures, nothing);
         }
 
@@ -465,7 +458,7 @@ public class LockRiddleGeneratorService
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // BUILD HINTS WITH COVERAGE (keine leeren Slots, keine Wiederholungen)
+    // BUILD HINTS WITH COVERAGE (keine leeren Slots)
     // ═══════════════════════════════════════════════════════════════
 
     private List<LockHint>? BuildHintsWithCoverageGuarantee(
@@ -507,10 +500,10 @@ public class LockRiddleGeneratorService
         if (coveredDigits.Count < minCoveredDigits)
             return null;
 
-        // Phase 2: (0,0) nur wenn ohne Wiederholungen möglich (invalid.Count >= length)
-        if (hints.Count < targetHints && invalid.Count >= length)
+        // Phase 2: (0,0)-Hinweis erzwingen, bei Master (length=6) auch mit Wiederholungen.
+        if (hints.Count < targetHints || length == 6)
         {
-            var nothingHint = CreateHintNothingCorrectUnique(invalid, length, rnd);
+            var nothingHint = CreateHintNothingCorrect(invalid, length, rnd);
             if (nothingHint != null)
                 TryAddHint(hints, signatures, nothingHint);
         }
@@ -550,7 +543,7 @@ public class LockRiddleGeneratorService
     }
 
     // ═══════════════════════════════════════════════════════════════
-    // HINT CREATORS (immer voll gefüllt, keine Wiederholungen pro Hint)
+    // HINT CREATORS (immer voll gefüllt)
     // ═══════════════════════════════════════════════════════════════
 
     /// <summary>
@@ -707,22 +700,30 @@ public class LockRiddleGeneratorService
     }
 
     /// <summary>
-    /// (0,0) Hint ist nur möglich ohne Wiederholungen, wenn invalid.Count >= length.
+    /// (0,0)-Hinweis: bevorzugt ohne Wiederholungen, fällt bei length=6 auf Wiederholungen zurück.
     /// </summary>
-    private LockHint? CreateHintNothingCorrectUnique(List<int> invalid, int length, Random rnd)
+    private LockHint? CreateHintNothingCorrect(List<int> invalid, int length, Random rnd)
     {
-        if (invalid.Count < length) return null;
+        if (invalid.Count == 0) return null;
 
         var slots = new string[length];
-        var usedDigits = new HashSet<int>();
 
-        for (int pos = 0; pos < length; pos++)
+        if (invalid.Count >= length)
         {
-            if (!TryPickInvalidUnique(invalid, usedDigits, rnd, out int inv))
-                return null;
+            var usedDigits = new HashSet<int>();
+            for (int pos = 0; pos < length; pos++)
+            {
+                if (!TryPickInvalidUnique(invalid, usedDigits, rnd, out int inv))
+                    return null;
 
-            slots[pos] = inv.ToString();
-            usedDigits.Add(inv);
+                slots[pos] = inv.ToString();
+                usedDigits.Add(inv);
+            }
+        }
+        else
+        {
+            for (int pos = 0; pos < length; pos++)
+                slots[pos] = invalid[rnd.Next(invalid.Count)].ToString();
         }
 
         return new LockHint
@@ -909,12 +910,8 @@ public class LockRiddleGeneratorService
     {
         if (hint == null) return false;
 
-        // Safety: keine leeren Slots, keine Wiederholungen
+        // Safety: keine leeren Slots
         if (hint.Slots.Count == 0 || hint.Slots.Any(s => string.IsNullOrWhiteSpace(s)))
-            return false;
-
-        var digits = hint.Slots.Select(int.Parse).ToList();
-        if (digits.Distinct().Count() != digits.Count)
             return false;
 
         string sig = SignatureOf(hint);
@@ -939,7 +936,7 @@ public class LockRiddleGeneratorService
 
     private LockHint BuildHint(string[] slots, int[] secret)
     {
-        // slots sind hier immer voll & unique
+        // slots sind hier immer voll
         var normalizedSlots = slots.Select(s => s.Trim()).ToList();
         var (well, wrong) = LockHintScoring.Score(normalizedSlots, secret);
 
