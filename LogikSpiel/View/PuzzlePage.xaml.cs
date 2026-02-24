@@ -119,11 +119,8 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
             {
                 while (!professorCt.IsCancellationRequested)
                 {
-                    await ProfessorImage.ScaleTo(1.09, 140, Easing.CubicInOut);
-                    await ProfessorImage.RotateTo(-3, 90, Easing.CubicInOut);
-                    await ProfessorImage.RotateTo(3, 90, Easing.CubicInOut);
-                    await ProfessorImage.RotateTo(0, 90, Easing.CubicInOut);
-                    await ProfessorImage.ScaleTo(1.0, 140, Easing.CubicInOut);
+                    await ProfessorImage.ScaleTo(1.06, 280, Easing.CubicInOut);
+                    await ProfessorImage.ScaleTo(1.0, 280, Easing.CubicInOut);
                 }
             }
             catch (OperationCanceledException)

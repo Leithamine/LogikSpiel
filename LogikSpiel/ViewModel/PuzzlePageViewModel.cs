@@ -445,9 +445,14 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
         if (input != _secretSolution)
         {
-            // Falsche Lösung - Professor anzeigen statt Dialog
+            // Falsche Lösung - Eingabe leeren, Professor anzeigen
             MainThread.BeginInvokeOnMainThread(() =>
             {
+                foreach (var digit in InputDigits)
+                {
+                    if (!digit.IsLocked)
+                        digit.Digit = "";
+                }
                 ShowProfessor = true;
                 ProfessorMessage = LocalizationService.GetString("Puzzle_Professor_WrongMessage");
             });
