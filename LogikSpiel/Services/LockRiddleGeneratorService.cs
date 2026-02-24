@@ -938,6 +938,16 @@ public class LockRiddleGeneratorService
             _ => LocalizationService.Format("LockRiddle_HintMixedFormat", well + wrong, Plural(well + wrong, LocalizationService.GetString("LockRiddle_NumberSingular"), LocalizationService.GetString("LockRiddle_NumberPlural")), well, wrong)
         };
 
+        // Add visual indicators
+        string visualPrefix = "";
+        for (int i = 0; i < well; i++) visualPrefix += "✔️";
+        for (int i = 0; i < wrong; i++) visualPrefix += "🟡";
+        
+        if (!string.IsNullOrEmpty(visualPrefix))
+        {
+            desc = $"{visualPrefix} {desc}";
+        }
+
         string icon = (well, wrong) switch
         {
             (0, 0) => "❌",

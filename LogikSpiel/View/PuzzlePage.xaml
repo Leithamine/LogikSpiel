@@ -71,7 +71,7 @@
                     
                     <Image Source="fireworks.gif" IsAnimationPlaying="{Binding IsCelebrating}" Aspect="AspectFit" HorizontalOptions="Center" VerticalOptions="Center" IsVisible="{Binding IsCelebrating}"/>
 
-                    <Label Text="{Binding RewardText}" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource C_Success}" HorizontalOptions="Center" VerticalOptions="Bottom" IsVisible="{Binding IsCelebrating}"/>
+                    <Label Text="{Binding RewardText}" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource C_Success}" HorizontalOptions="Center" VerticalOptions="End" IsVisible="{Binding IsCelebrating}"/>
                 </Grid>
 
                 <!-- Hinweise Liste (Scrollbar) -->
@@ -84,7 +84,7 @@
                                 <DataTemplate x:DataType="model:LockHint">
                                     <Border StrokeThickness="0" StrokeShape="RoundRectangle 12" BackgroundColor="{StaticResource C_BgLight}" Padding="12">
                                         <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
-                                            <Label Grid.Row="0" Grid.Column="0" Text="{Binding Code}" FontSize="20" FontAttributes="Bold" FontFamily="Consolas" TextColor="{StaticResource C_Warning}" LetterSpacing="5"/>
+                                            <Label Grid.Row="0" Grid.Column="0" Text="{Binding Code}" FontSize="20" FontAttributes="Bold" FontFamily="Consolas" TextColor="{StaticResource C_Warning}"/>
                                             <Label Grid.Row="1" Grid.Column="0" Text="{Binding Description}" FontSize="14" TextColor="{StaticResource C_TextSecondary}" Grid.ColumnSpan="2"/>
                                         </Grid>
                                     </Border>
