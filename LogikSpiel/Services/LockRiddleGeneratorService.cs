@@ -371,8 +371,7 @@ public class LockRiddleGeneratorService
         var hints = new List<LockHint>();
         var signatures = new HashSet<string>();
 
-        // (0,0)-Hinweis bevorzugt unique, bei Bedarf mit Wiederholungen
-        if (invalid.Count >= length)
+        // (0,0)-Hinweis bevorzugt unique, bei Bedarf mit Wiederholungen (auch für Master/length=6)
         {
             var nothing = CreateHintNothingCorrect(invalid, length, rnd);
             if (nothing != null) TryAddHint(hints, signatures, nothing);
