@@ -5,240 +5,167 @@
              xmlns:model="clr-namespace:LogikSpiel.Model"
              x:Class="LogikSpiel.View.PuzzlePage"
              x:DataType="vm:PuzzlePageViewModel"
-             BackgroundColor="{AppThemeBinding Light={StaticResource C_BgLight}, Dark={StaticResource C_BgDark}}"
-             NavigationPage.HasNavigationBar="False">
+             BackgroundImageSource="gamebg.png"
+             NavigationPage.HasNavigationBar="False"
+             Shell.NavBarIsVisible="False">
 
-    <Grid RowDefinitions="Auto,Auto,*,Auto">
+    <Grid RowDefinitions="Auto, *, Auto" 
+          Padding="{OnIdiom Phone=8, Desktop=12}" 
+          RowSpacing="{OnIdiom Phone=8, Desktop=12}">
 
         <!-- ✅ HEADER BAR -->
-        <Grid Grid.Row="0" 
-              BackgroundColor="{AppThemeBinding Light={StaticResource C_Primary}, Dark={StaticResource C_SurfaceStrong}}"
-              Padding="15,10"
-              ColumnDefinitions="Auto,*,Auto">
+        <Border Grid.Row="0" Style="{StaticResource GlassCard}" Padding="{OnIdiom Phone=8, Desktop=12}" Margin="0">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                <!-- Zurück Button Links -->
+                <Button Grid.Column="0"
+                        Text="&#x2190;"
+                        Style="{StaticResource BtnIcon}"
+                        WidthRequest="{OnIdiom Phone=76, Desktop=88}"
+                        HeightRequest="{OnIdiom Phone=40, Desktop=48}"
+                        Padding="10,0"
+                        Command="{Binding BackCommand}"/>
 
-            <!-- Zurück Button Links -->
-            <Button Grid.Column="0"
-                    Text="&#x2190;"
-                    FontSize="24"
-                    BackgroundColor="Transparent"
-                    TextColor="White"
-                    Command="{Binding BackCommand}"
-                    WidthRequest="50"
-                    HeightRequest="50"
-                    CornerRadius="25"/>
+                <!-- Titel Mitte -->
+                <VerticalStackLayout Grid.Column="1" Spacing="0" HorizontalOptions="Center" VerticalOptions="Center">
+                    <Label Text="{Binding Title}" Style="{StaticResource H3}" HorizontalOptions="Center"/>
+                    <Label Text="{Binding LevelDisplayText}" TextColor="{StaticResource C_TextMuted}" FontSize="14" HorizontalOptions="Center" FontAttributes="Bold"/>
+                </VerticalStackLayout>
 
-            <!-- Titel Mitte -->
-            <VerticalStackLayout Grid.Column="1" 
-                                 HorizontalOptions="Center" 
-                                 VerticalOptions="Center">
-                <Label Text="{Binding Title}"
-                       FontSize="18"
-                       FontAttributes="Bold"
-                       TextColor="White"
-                       HorizontalOptions="Center"/>
-            </VerticalStackLayout>
+                <!-- Coins Rechts -->
+                <Border Grid.Column="2" Style="{StaticResource CoinBadge}" Padding="{OnIdiom Phone=8, Desktop=10}">
+                    <HorizontalStackLayout Spacing="4">
+                        <Label Text="&#x1F4B0;" FontSize="14"/>
+                        <Label Text="{Binding Coins}" TextColor="{StaticResource C_Gold}" FontAttributes="Bold"/>
+                    </HorizontalStackLayout>
+                </Border>
+            </Grid>
+        </Border>
 
-            <!-- Coins Rechts -->
-            <HorizontalStackLayout Grid.Column="2" 
-                                   VerticalOptions="Center"
-                                   Spacing="5">
-                <Label Text="&#x1F4B0;"
-                       FontSize="20"/>
-                <Label Text="{Binding Coins}"
-                       FontSize="18"
-                       FontAttributes="Bold"
-                       TextColor="White"
-                       VerticalOptions="Center"/>
-            </HorizontalStackLayout>
-        </Grid>
-
-        <!-- ✅ LEVEL NUMMER ANZEIGE -->
-        <Grid Grid.Row="1"
-              BackgroundColor="{AppThemeBinding Light={StaticResource C_PrimaryDark}, Dark={StaticResource C_Surface}}"
-              Padding="10,5">
-            <Label Text="{Binding LevelDisplayText}"
-                   FontSize="16"
-                   FontAttributes="Bold"
-                   TextColor="White"
-                   HorizontalOptions="Center"/>
-        </Grid>
-
-        <!-- ✅ HAUPTINHALT -->
-        <ScrollView Grid.Row="2">
-            <VerticalStackLayout Padding="20" Spacing="20">
-
-                <!-- Loading Indicator -->
-                <ActivityIndicator IsRunning="{Binding IsBusy}"
-                                   IsVisible="{Binding IsBusy}"
-                                   Color="{StaticResource Primary}"
-                                   HeightRequest="50"
-                                   WidthRequest="50"/>
-
+        <!-- ✅ HAUPTINHALT (Schloss, Professor & Hinweise) -->
+        <Border Grid.Row="1" Style="{StaticResource GlassCard}" Padding="10" Margin="0">
+            <Grid RowDefinitions="Auto, Auto, *">
+                
                 <!-- Professor (sichtbar bei Bedarf) -->
-                <Grid IsVisible="{Binding ShowProfessor}"
-                      HorizontalOptions="Center"
-                      Margin="0,10">
+                <Grid Grid.Row="0" IsVisible="{Binding ShowProfessor}" HorizontalOptions="Center" Margin="0,0,0,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <Image Grid.Column="0"
-                           Source="{Binding ProfessorImageSource}"
-                           WidthRequest="80"
-                           HeightRequest="80"
-                           Aspect="AspectFit"/>
+                    <Image Grid.Column="0" Source="{Binding ProfessorImageSource}" WidthRequest="80" HeightRequest="80" Aspect="AspectFit"/>
 
-                    <Frame Grid.Column="1"
-                           BackgroundColor="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
-                           BorderColor="{StaticResource C_Primary}"
-                           CornerRadius="15"
-                           Padding="15"
-                           Margin="10,0,0,0">
-                        <Label Text="{Binding ProfessorMessage}"
-                               FontSize="14"
-                               TextColor="{AppThemeBinding Light={StaticResource C_TextDark}, Dark={StaticResource C_TextPrimary}}"/>
+                    <Frame Grid.Column="1" BackgroundColor="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}" BorderColor="{StaticResource C_Primary}" CornerRadius="15" Padding="15" Margin="10,0,0,0">
+                        <Label Text="{Binding ProfessorMessage}" FontSize="14" TextColor="{AppThemeBinding Light={StaticResource C_TextDark}, Dark={StaticResource C_TextPrimary}}"/>
                     </Frame>
                 </Grid>
 
-                <!-- Schloss Bild -->
-                <Image Source="{Binding LockImageSource}"
-                       WidthRequest="120"
-                       HeightRequest="120"
-                       Aspect="AspectFit"
-                       HorizontalOptions="Center">
-                    <Image.Triggers>
-                        <DataTrigger TargetType="Image" 
-                                     Binding="{Binding IsCelebrating}" 
-                                     Value="True">
-                            <Setter Property="Source" Value="openedlock.png"/>
-                        </DataTrigger>
-                    </Image.Triggers>
-                </Image>
+                <!-- Schloss & Feuerwerk -->
+                <Grid Grid.Row="1" HeightRequest="150" Margin="0,0,0,10">
+                    <Image Source="{Binding LockImageSource}" WidthRequest="120" HeightRequest="120" Aspect="AspectFit" HorizontalOptions="Center" VerticalOptions="Center">
+                        <Image.Triggers>
+                            <DataTrigger TargetType="Image" Binding="{Binding IsCelebrating}" Value="True">
+                                <Setter Property="Source" Value="openedlock.png"/>
+                            </DataTrigger>
+                        </Image.Triggers>
+                    </Image>
+                    
+                    <Image Source="fireworks.gif" IsAnimationPlaying="{Binding IsCelebrating}" Aspect="AspectFit" HorizontalOptions="Center" VerticalOptions="Center" IsVisible="{Binding IsCelebrating}"/>
 
-                <!-- Feuerwerk (nur bei Erfolg) -->
-                <Grid IsVisible="{Binding IsCelebrating}"
-                      HeightRequest="200">
-                    <Image Source="fireworks.gif"
-                           IsAnimationPlaying="{Binding IsCelebrating}"
-                           Aspect="AspectFit"
-                           HorizontalOptions="Center"/>
+                    <Label Text="{Binding RewardText}" FontSize="20" FontAttributes="Bold" TextColor="{StaticResource C_Success}" HorizontalOptions="Center" VerticalOptions="Bottom" IsVisible="{Binding IsCelebrating}"/>
                 </Grid>
 
-                <!-- Belohnungstext -->
-                <Label Text="{Binding RewardText}"
-                       FontSize="20"
-                       FontAttributes="Bold"
-                       TextColor="{StaticResource Success}"
-                       HorizontalOptions="Center"
-                       IsVisible="{Binding IsCelebrating}"/>
+                <!-- Hinweise Liste (Scrollbar) -->
+                <Grid Grid.Row="2" RowDefinitions="Auto, *">
+                    <Label Grid.Row="0" Text="{StaticResource Puzzle_HintsTitle}" Style="{StaticResource H3}" Margin="0,0,0,10"/>
+                    
+                    <ScrollView Grid.Row="1" VerticalScrollBarVisibility="Never">
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Hints}" Spacing="8">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="model:LockHint">
+                                    <Border StrokeThickness="0" StrokeShape="RoundRectangle 12" BackgroundColor="{StaticResource C_BgLight}" Padding="12">
+                                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                                            <Label Grid.Row="0" Grid.Column="0" Text="{Binding Code}" FontSize="20" FontAttributes="Bold" FontFamily="Consolas" TextColor="{StaticResource C_Warning}" LetterSpacing="5"/>
+                                            <Label Grid.Row="1" Grid.Column="0" Text="{Binding Description}" FontSize="14" TextColor="{StaticResource C_TextSecondary}" Grid.ColumnSpan="2"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </ScrollView>
+                </Grid>
+            </Grid>
+        </Border>
 
-                <!-- Eingabe Bereich -->
-                <VerticalStackLayout IsVisible="{Binding IsNotBusy}" Spacing="15">
+        <!-- ✅ EINGABE UND BUTTONS -->
+        <Border Grid.Row="2" Style="{StaticResource SolidCard}" Padding="{OnIdiom Phone=10, Desktop=16}">
+            <VerticalStackLayout IsVisible="{Binding IsNotBusy}" Spacing="15">
+                
+                <Label Text="{StaticResource Puzzle_EnterCode}" Style="{StaticResource H3}" HorizontalOptions="Center"/>
 
-                    <!-- Code Eingabe Label -->
-                    <Label Text="{StaticResource Puzzle_EnterCode}"
-                           FontSize="20"
-                           FontAttributes="Bold"
-                           HorizontalOptions="Center"
-                           TextColor="{AppThemeBinding Light={StaticResource C_TextDark}, Dark={StaticResource C_TextPrimary}}"/>
+                <!-- Ziffern Eingabe -->
+                <HorizontalStackLayout HorizontalOptions="Center" Spacing="8">
+                    <BindableLayout.ItemsSource>
+                        <Binding Path="InputDigits"/>
+                    </BindableLayout.ItemsSource>
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="vm:DigitInputViewModel">
+                            <Border Style="{StaticResource DigitBox}">
+                                <Entry Text="{Binding Digit, Mode=TwoWay}"
+                                       Keyboard="Numeric"
+                                       MaxLength="1"
+                                       FontSize="28"
+                                       FontAttributes="Bold"
+                                       HorizontalTextAlignment="Center"
+                                       VerticalTextAlignment="Center"
+                                       TextColor="{StaticResource C_TextPrimary}"
+                                       IsReadOnly="{Binding IsLocked}"
+                                       BackgroundColor="Transparent"
+                                       Loaded="DigitEntry_Loaded"
+                                       Unloaded="DigitEntry_Unloaded"
+                                       TextChanged="DigitEntry_TextChanged"/>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </HorizontalStackLayout>
 
-                    <!-- Ziffern Eingabe -->
-                    <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
-                        <BindableLayout.ItemsSource>
-                            <Binding Path="InputDigits"/>
-                        </BindableLayout.ItemsSource>
-                        <BindableLayout.ItemTemplate>
-                            <DataTemplate x:DataType="vm:DigitInputViewModel">
-                                <Frame BorderColor="{StaticResource Primary}"
-                                       BackgroundColor="{AppThemeBinding Light={StaticResource C_TextOnDark}, Dark={StaticResource C_InputBg}}"
-                                       CornerRadius="10"
-                                       Padding="5"
-                                       WidthRequest="60"
-                                       HeightRequest="70">
-                                    <Entry Text="{Binding Digit, Mode=TwoWay}"
-                                           Keyboard="Numeric"
-                                           MaxLength="1"
-                                           FontSize="28"
-                                           FontAttributes="Bold"
-                                           HorizontalTextAlignment="Center"
-                                           VerticalTextAlignment="Center"
-                                           TextColor="{AppThemeBinding Light={StaticResource C_TextDark}, Dark={StaticResource C_TextPrimary}}"
-                                           IsReadOnly="{Binding IsLocked}"
-                                           BackgroundColor="Transparent"
-                                           Loaded="DigitEntry_Loaded"
-                                           Unloaded="DigitEntry_Unloaded"
-                                           TextChanged="DigitEntry_TextChanged"/>
-                                </Frame>
-                            </DataTemplate>
-                        </BindableLayout.ItemTemplate>
-                    </HorizontalStackLayout>
+                <!-- Action Buttons: Hint, Unlock, Show(Debug) -->
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10" Margin="0,5,0,0">
+                    <Button Grid.Column="0" 
+                            Text="💡" 
+                            BackgroundColor="{StaticResource C_Warning}" 
+                            TextColor="{StaticResource C_TextDark}" 
+                            FontAttributes="Bold" 
+                            CornerRadius="14" 
+                            HeightRequest="50" 
+                            FontSize="20" 
+                            Command="{Binding HintCommand}"/>
 
-                    <!-- BUTTONS: Unlock, Hint, Show (Debug) -->
-                    <HorizontalStackLayout HorizontalOptions="Center" Spacing="10" Margin="0,15,0,0">
-                        <Button Text="{StaticResource Puzzle_HintButton}"
-                                Command="{Binding HintCommand}"
-                                BackgroundColor="{StaticResource C_Accent}"
-                                TextColor="White"
-                                CornerRadius="10"
-                                HeightRequest="50"
-                                WidthRequest="100"/>
+                    <Button Grid.Column="1" 
+                            Text="{StaticResource Puzzle_OpenButton}" 
+                            Style="{StaticResource BtnSuccess}" 
+                            HeightRequest="50" 
+                            Command="{Binding CheckCommand}"/>
 
-                        <Button Text="{StaticResource Puzzle_OpenButton}"
-                                Command="{Binding CheckCommand}"
-                                BackgroundColor="{StaticResource C_Success}"
-                                TextColor="White"
-                                CornerRadius="10"
-                                HeightRequest="50"
-                                WidthRequest="100"/>
-                                
-                        <Button Text="Show"
-                                Command="{Binding ShowSolutionCommand}"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource C_Warning}, Dark={StaticResource C_Warning}}"
-                                TextColor="White"
-                                CornerRadius="10"
-                                HeightRequest="50"
-                                WidthRequest="100"/>
-                    </HorizontalStackLayout>
+                    <!-- Debug Button -->
+                    <Button Grid.Column="2" 
+                            Text="Show" 
+                            Style="{StaticResource BtnGhost}" 
+                            HeightRequest="50" 
+                            Command="{Binding ShowSolutionCommand}"/>
+                </Grid>
 
-                    <!-- Hinweise Überschrift -->
-                    <Label Text="{StaticResource Puzzle_HintsTitle}"
-                           FontSize="18"
-                           FontAttributes="Bold"
-                           Margin="0,20,0,0"
-                           TextColor="{AppThemeBinding Light={StaticResource C_TextDark}, Dark={StaticResource C_TextPrimary}}"/>
-
-                    <!-- Hinweise Liste -->
-                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Hints}"
-                                        Spacing="10">
-                        <BindableLayout.ItemTemplate>
-                            <DataTemplate x:DataType="model:LockHint">
-                                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource C_Surface}, Dark={StaticResource C_SurfaceStrong}}"
-                                       CornerRadius="10"
-                                       Padding="15">
-                                    <VerticalStackLayout Spacing="5">
-                                        <Label Text="{Binding Code}"
-                                               FontSize="20"
-                                               FontAttributes="Bold"
-                                               FontFamily="Consolas"
-                                               TextColor="{AppThemeBinding Light={StaticResource C_TextDark}, Dark={StaticResource C_TextPrimary}}"/>
-                                        <Label Text="{Binding Description}"
-                                               FontSize="14"
-                                               TextColor="{AppThemeBinding Light={StaticResource C_TextSecondary}, Dark={StaticResource C_TextMuted}}"/>
-                                    </VerticalStackLayout>
-                                </Frame>
-                            </DataTemplate>
-                        </BindableLayout.ItemTemplate>
-                    </VerticalStackLayout>
-
-                    <!-- Debug: Lösung anzeigen -->
-                    <Label IsVisible="{Binding ShowSolutionForDebug}"
-                           Text="{Binding SecretSolution, StringFormat='Lösung: {0}'}"
-                           FontSize="12"
-                           TextColor="Gray"
-                           HorizontalOptions="Center"/>
-                </VerticalStackLayout>
+                <Label IsVisible="{Binding ShowSolutionForDebug}"
+                       Text="{Binding SecretSolution, StringFormat='Lösung: {0}'}"
+                       FontSize="12"
+                       TextColor="{StaticResource C_TextMuted}"
+                       HorizontalOptions="Center"/>
             </VerticalStackLayout>
-        </ScrollView>
+        </Border>
+
+        <!-- LOADING INDICATOR -->
+        <Grid Grid.RowSpan="3" IsVisible="{Binding IsBusy}" BackgroundColor="#DD000000" InputTransparent="False">
+            <ActivityIndicator IsRunning="{Binding IsBusy}" Color="{StaticResource C_Primary}" HeightRequest="60" WidthRequest="60" HorizontalOptions="Center" VerticalOptions="Center"/>
+        </Grid>
+
     </Grid>
 </ContentPage>
