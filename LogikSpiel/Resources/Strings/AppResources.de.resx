@@ -65,6 +65,8 @@
   
   <data name="Puzzle_BuyHintMessage" xml:space="preserve"><value>Eine Zahl aufdecken für {0} Münzen?</value></data>
   <data name="Puzzle_BuyHintTitle" xml:space="preserve"><value>Tipp kaufen?</value></data>
+  <data name="Puzzle_HintTitle" xml:space="preserve"><value>Tipp</value></data>
+  <data name="Puzzle_AllDigitsCorrect" xml:space="preserve"><value>Alle Ziffern sind bereits richtig! Drücke "Öffnen" um zu gewinnen.</value></data>
   <data name="Puzzle_EnterCode" xml:space="preserve"><value>🔐 GIB DEN CODE EIN</value></data>
   <data name="Puzzle_ErrorTitle" xml:space="preserve"><value>Fehler</value></data>
   <data name="Puzzle_Generating" xml:space="preserve"><value>Erzeuge Rätsel...</value></data>
