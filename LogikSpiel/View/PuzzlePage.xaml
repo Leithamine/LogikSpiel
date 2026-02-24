@@ -5,14 +5,14 @@
              xmlns:model="clr-namespace:LogikSpiel.Model"
              x:Class="LogikSpiel.View.PuzzlePage"
              x:DataType="vm:PuzzlePageViewModel"
-             BackgroundColor="{AppThemeBinding Light={StaticResource LightBackground}, Dark={StaticResource DarkBackground}}"
+             BackgroundColor="{AppThemeBinding Light={StaticResource C_BgLight}, Dark={StaticResource C_BgDark}}"
              NavigationPage.HasNavigationBar="False">
 
     <Grid RowDefinitions="Auto,Auto,*,Auto">
 
         <!-- ✅ HEADER BAR -->
         <Grid Grid.Row="0" 
-              BackgroundColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource DarkPrimary}}"
+              BackgroundColor="{AppThemeBinding Light={StaticResource C_Primary}, Dark={StaticResource C_SurfaceStrong}}"
               Padding="15,10"
               ColumnDefinitions="Auto,*,Auto">
 
@@ -54,7 +54,7 @@
 
         <!-- ✅ LEVEL NUMMER ANZEIGE -->
         <Grid Grid.Row="1"
-              BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource DarkSecondary}}"
+              BackgroundColor="{AppThemeBinding Light={StaticResource C_PrimaryDark}, Dark={StaticResource C_Surface}}"
               Padding="10,5">
             <Label Text="{Binding LevelDisplayText}"
                    FontSize="16"
@@ -90,14 +90,14 @@
                            Aspect="AspectFit"/>
 
                     <Frame Grid.Column="1"
-                           BackgroundColor="{AppThemeBinding Light=#E3F2FD, Dark=#1E3A5F}"
-                           BorderColor="{StaticResource Primary}"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
+                           BorderColor="{StaticResource C_Primary}"
                            CornerRadius="15"
                            Padding="15"
                            Margin="10,0,0,0">
                         <Label Text="{Binding ProfessorMessage}"
                                FontSize="14"
-                               TextColor="{AppThemeBinding Light=Black, Dark=White}"/>
+                               TextColor="{AppThemeBinding Light={StaticResource C_TextDark}, Dark={StaticResource C_TextPrimary}}"/>
                     </Frame>
                 </Grid>
 
@@ -141,7 +141,7 @@
                            FontSize="20"
                            FontAttributes="Bold"
                            HorizontalOptions="Center"
-                           TextColor="{AppThemeBinding Light=Black, Dark=White}"/>
+                           TextColor="{AppThemeBinding Light={StaticResource C_TextDark}, Dark={StaticResource C_TextPrimary}}"/>
 
                     <!-- Ziffern Eingabe -->
                     <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
@@ -151,7 +151,7 @@
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="vm:DigitInputViewModel">
                                 <Frame BorderColor="{StaticResource Primary}"
-                                       BackgroundColor="{AppThemeBinding Light=White, Dark=#2C2C2C}"
+                                       BackgroundColor="{AppThemeBinding Light={StaticResource C_TextOnDark}, Dark={StaticResource C_InputBg}}"
                                        CornerRadius="10"
                                        Padding="5"
                                        WidthRequest="60"
@@ -163,7 +163,7 @@
                                            FontAttributes="Bold"
                                            HorizontalTextAlignment="Center"
                                            VerticalTextAlignment="Center"
-                                           TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                                           TextColor="{AppThemeBinding Light={StaticResource C_TextDark}, Dark={StaticResource C_TextPrimary}}"
                                            IsReadOnly="{Binding IsLocked}"
                                            BackgroundColor="Transparent"
                                            Loaded="DigitEntry_Loaded"
@@ -178,7 +178,7 @@
                     <HorizontalStackLayout HorizontalOptions="Center" Spacing="10" Margin="0,15,0,0">
                         <Button Text="{StaticResource Puzzle_HintButton}"
                                 Command="{Binding HintCommand}"
-                                BackgroundColor="{StaticResource Secondary}"
+                                BackgroundColor="{StaticResource C_Accent}"
                                 TextColor="White"
                                 CornerRadius="10"
                                 HeightRequest="50"
@@ -186,7 +186,7 @@
 
                         <Button Text="{StaticResource Puzzle_OpenButton}"
                                 Command="{Binding CheckCommand}"
-                                BackgroundColor="{StaticResource Primary}"
+                                BackgroundColor="{StaticResource C_Success}"
                                 TextColor="White"
                                 CornerRadius="10"
                                 HeightRequest="50"
@@ -194,7 +194,7 @@
                                 
                         <Button Text="Show"
                                 Command="{Binding ShowSolutionCommand}"
-                                BackgroundColor="{AppThemeBinding Light=#FF9800, Dark=#E65100}"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource C_Warning}, Dark={StaticResource C_Warning}}"
                                 TextColor="White"
                                 CornerRadius="10"
                                 HeightRequest="50"
@@ -206,14 +206,14 @@
                            FontSize="18"
                            FontAttributes="Bold"
                            Margin="0,20,0,0"
-                           TextColor="{AppThemeBinding Light=Black, Dark=White}"/>
+                           TextColor="{AppThemeBinding Light={StaticResource C_TextDark}, Dark={StaticResource C_TextPrimary}}"/>
 
                     <!-- Hinweise Liste -->
                     <VerticalStackLayout BindableLayout.ItemsSource="{Binding Hints}"
                                         Spacing="10">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="model:LockHint">
-                                <Frame BackgroundColor="{AppThemeBinding Light=#F5F5F5, Dark=#3C3C3C}"
+                                <Frame BackgroundColor="{AppThemeBinding Light={StaticResource C_Surface}, Dark={StaticResource C_SurfaceStrong}}"
                                        CornerRadius="10"
                                        Padding="15">
                                     <VerticalStackLayout Spacing="5">
@@ -221,10 +221,10 @@
                                                FontSize="20"
                                                FontAttributes="Bold"
                                                FontFamily="Consolas"
-                                               TextColor="{AppThemeBinding Light=Black, Dark=White}"/>
+                                               TextColor="{AppThemeBinding Light={StaticResource C_TextDark}, Dark={StaticResource C_TextPrimary}}"/>
                                         <Label Text="{Binding Description}"
                                                FontSize="14"
-                                               TextColor="{AppThemeBinding Light=Gray, Dark=LightGray}"/>
+                                               TextColor="{AppThemeBinding Light={StaticResource C_TextSecondary}, Dark={StaticResource C_TextMuted}}"/>
                                     </VerticalStackLayout>
                                 </Frame>
                             </DataTemplate>
