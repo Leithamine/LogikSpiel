@@ -224,7 +224,7 @@
                                         Padding="12">
                                     <VerticalStackLayout Spacing="4">
                                         <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
-                                            <Label Text="{Binding Icon}" FontSize="20" VerticalOptions="Center" MinWidthRequest="26"/>
+                                            <Label Text="{Binding Icon}" FontSize="20" VerticalOptions="Center" MinimumWidthRequest="26"/>
                                             <HorizontalStackLayout BindableLayout.ItemsSource="{Binding Slots}" Spacing="6" VerticalOptions="Center">
                                                 <BindableLayout.ItemTemplate>
                                                     <DataTemplate>
