@@ -872,25 +872,34 @@ public class LockRiddleGeneratorService
 
     private static bool SatisfiesNothingCorrectCoverageRule(IReadOnlyList<LockHint> hints)
     {
-        foreach (var currentHint in hints.Where(h => h.WellPlaced == 0 && h.WrongPlaced == 0))
+        var allHints = hints.ToList();
+
+        foreach (var zeroHint in allHints.Where(h => h.WellPlaced == 0 && h.WrongPlaced == 0))
         {
-            var currentDigits = currentHint.Slots
+            var zeroDigits = zeroHint.Slots
                 .Select(slot => int.TryParse(slot, out var digit) ? digit : (int?)null)
                 .Where(d => d.HasValue)
                 .Select(d => d!.Value)
                 .Distinct()
-                .ToList();
-
-            var otherDigits = hints
-                .Where(h => h != currentHint)
-                .SelectMany(h => h.Slots)
-                .Select(slot => int.TryParse(slot, out var digit) ? digit : (int?)null)
-                .Where(d => d.HasValue)
-                .Select(d => d!.Value)
                 .ToHashSet();
 
-            if (!currentDigits.All(otherDigits.Contains))
+            if (zeroDigits.Count == 0)
                 return false;
+
+            // Qualitätsregel für Lesbarkeit:
+            // In JEDEM anderen Hinweis soll mindestens eine Ziffer aus dem (0,0)-Hinweis vorkommen,
+            // damit die "falschen" Ziffern klar über das gesamte Hint-Set hinweg wiedererkennbar sind.
+            foreach (var otherHint in allHints.Where(h => h != zeroHint))
+            {
+                bool hasSharedDigit = otherHint.Slots
+                    .Select(slot => int.TryParse(slot, out var digit) ? digit : (int?)null)
+                    .Where(d => d.HasValue)
+                    .Select(d => d!.Value)
+                    .Any(zeroDigits.Contains);
+
+                if (!hasSharedDigit)
+                    return false;
+            }
         }
 
         return true;
