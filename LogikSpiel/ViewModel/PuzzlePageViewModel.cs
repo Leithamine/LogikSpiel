@@ -597,6 +597,18 @@ public sealed class PuzzlePageViewModel : ObservableObject
     private static LockHint NormalizeHint(LockHint hint, int codeLength)
     {
         var slots = hint.Slots ?? new List<string>();
+
+        // Fallback für ältere/inkonsistente gespeicherte Rätsel:
+        // wenn Slots fehlen/leer sind, versuchen wir die Ziffern aus Code zu extrahieren.
+        if (slots.Count == 0 || slots.All(string.IsNullOrWhiteSpace))
+        {
+            slots = (hint.Code ?? "")
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Select(s => s.Trim())
+                .Where(s => s.Length == 1 && char.IsDigit(s[0]))
+                .ToList();
+        }
+
         var normalized = Enumerable.Range(0, codeLength)
             .Select(i => i < slots.Count && !string.IsNullOrWhiteSpace(slots[i]) ? slots[i].Trim() : "")
             .ToList();

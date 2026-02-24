@@ -11,6 +11,7 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
     private readonly Dictionary<int, Entry> _entryByIndex = new();
     private readonly PuzzlePageViewModel _vm;
     private CancellationTokenSource? _celebrationCts;
+    private CancellationTokenSource? _typingCts;
 
     public PuzzlePage(PuzzlePageViewModel vm)
     {
@@ -23,28 +24,95 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
 
     private async void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (BindingContext is not PuzzlePageViewModel vm)
+            return;
+
+        if (e.PropertyName == nameof(PuzzlePageViewModel.ShowProfessor) && vm.ShowProfessor)
+        {
+            await ShowBubbleAsync();
+            if (!vm.IsCelebrating)
+                await ShakeLockAsync();
+        }
+
+        if (e.PropertyName == nameof(PuzzlePageViewModel.ProfessorMessage) && vm.ShowProfessor)
+            await TypeTextAsync(vm.ProfessorMessage);
+
         if (e.PropertyName != nameof(PuzzlePageViewModel.IsCelebrating))
             return;
 
-        if (BindingContext is not PuzzlePageViewModel vm || !vm.IsCelebrating)
+        if (!vm.IsCelebrating)
             return;
 
         CancelCelebrationAnimation();
         _celebrationCts = new CancellationTokenSource();
         var ct = _celebrationCts.Token;
 
-        // Feuerwerk Animation
         await Task.Delay(100);
 
         try
         {
             ct.ThrowIfCancellationRequested();
-            // Hier könnte eine Animation für das Schloss sein
+            await CelebrateLockAsync();
         }
         catch (OperationCanceledException)
         {
             // Seite wurde verlassen
         }
+    }
+
+    private async Task ShowBubbleAsync()
+    {
+        SpeechBubble.Scale = 0.6;
+        SpeechBubble.Opacity = 0;
+
+        await Task.WhenAll(
+            SpeechBubble.FadeTo(1, 150),
+            SpeechBubble.ScaleTo(1.05, 180, Easing.CubicOut)
+        );
+
+        await SpeechBubble.ScaleTo(1.0, 80);
+    }
+
+    private async Task TypeTextAsync(string text)
+    {
+        _typingCts?.Cancel();
+        _typingCts?.Dispose();
+        _typingCts = new CancellationTokenSource();
+        var ct = _typingCts.Token;
+
+        ProfessorLabel.Text = string.Empty;
+
+        foreach (char c in text ?? string.Empty)
+        {
+            if (ct.IsCancellationRequested)
+                break;
+
+            ProfessorLabel.Text += c;
+            await Task.Delay(20, ct);
+        }
+    }
+
+    private async Task CelebrateLockAsync()
+    {
+        await LockImage.ScaleTo(1.2, 200);
+        await LockImage.ScaleTo(1.0, 120);
+        await LockImage.RotateTo(10, 80);
+        await LockImage.RotateTo(-10, 80);
+        await LockImage.RotateTo(0, 80);
+    }
+
+    private async Task ShakeLockAsync()
+    {
+        const int shakeDistance = 12;
+        const uint shakeSpeed = 50;
+
+        for (int i = 0; i < 4; i++)
+        {
+            await LockImage.TranslateTo(-shakeDistance, 0, shakeSpeed);
+            await LockImage.TranslateTo(shakeDistance, 0, shakeSpeed);
+        }
+
+        await LockImage.TranslateTo(0, 0, shakeSpeed);
     }
 
     private void DigitEntry_Loaded(object? sender, EventArgs e)
@@ -143,12 +211,16 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
 
     private void CancelCelebrationAnimation()
     {
-        if (_celebrationCts == null)
-            return;
+        if (_celebrationCts != null)
+        {
+            _celebrationCts.Cancel();
+            _celebrationCts.Dispose();
+            _celebrationCts = null;
+        }
 
-        _celebrationCts.Cancel();
-        _celebrationCts.Dispose();
-        _celebrationCts = null;
+        _typingCts?.Cancel();
+        _typingCts?.Dispose();
+        _typingCts = null;
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)

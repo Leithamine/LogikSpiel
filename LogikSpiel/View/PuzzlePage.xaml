@@ -42,91 +42,113 @@
 
         <!-- SCHLOSS + EINGABE BORDER -->
         <Border Grid.Row="1" Style="{StaticResource GlassCard}" Padding="{OnIdiom Phone=12, Desktop=16}" Margin="0">
-            <VerticalStackLayout Spacing="10">
 
-                <!-- Sprechblase: oben mitte über dem Schloss (bei falschem oder richtigem Code) -->
-                <Border IsVisible="{Binding ShowProfessor}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
-                        Stroke="{StaticResource C_Primary}"
-                        StrokeThickness="1.5"
-                        StrokeShape="RoundRectangle 14"
-                        Padding="12,8">
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="6">
-                        <Label Grid.Column="0"
-                               Text="{Binding ProfessorMessage}"
-                               FontSize="14"
-                               HorizontalOptions="Fill"
-                               HorizontalTextAlignment="Center"
-                               VerticalOptions="Center"
-                               TextColor="{AppThemeBinding Light={StaticResource C_TextDark}, Dark={StaticResource C_TextPrimary}}"/>
-                        <!-- X-Button: nur bei Fehleingabe sichtbar, nicht bei Erfolg -->
-                        <Button Grid.Column="1"
-                                Text="✕"
-                                BackgroundColor="Transparent"
-                                TextColor="{StaticResource C_TextMuted}"
-                                FontSize="16"
-                                FontAttributes="Bold"
-                                Padding="4"
-                                WidthRequest="32"
-                                HeightRequest="32"
-                                VerticalOptions="Start"
-                                IsVisible="{Binding CanCloseProfessor}"
-                                Command="{Binding CloseProfessorCommand}"/>
+            <VerticalStackLayout Spacing="14">
+
+                <!-- 👨‍🏫 Professor + Bubble -->
+                <Grid IsVisible="{Binding ShowProfessor}"
+                      ColumnDefinitions="Auto,*"
+                      ColumnSpacing="10"
+                      HorizontalOptions="Center">
+
+                    <Image Grid.Column="0"
+                           Source="{Binding ProfessorImageSource}"
+                           WidthRequest="60"
+                           HeightRequest="60"
+                           Aspect="AspectFit"
+                           VerticalOptions="Start"/>
+
+                    <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center">
+
+                        <!-- Bubble -->
+                        <Border x:Name="SpeechBubble"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
+                                Stroke="{StaticResource C_Primary}"
+                                StrokeThickness="1.5"
+                                StrokeShape="RoundRectangle 16"
+                                Scale="0"
+                                Opacity="0"
+                                Padding="12,8">
+
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label x:Name="ProfessorLabel"
+                                       Text="{Binding ProfessorMessage}"
+                                       FontSize="14"
+                                       TextColor="{AppThemeBinding Light={StaticResource C_TextDark}, Dark={StaticResource C_TextPrimary}}"/>
+
+                                <Button Grid.Column="1"
+                                        Text="✕"
+                                        BackgroundColor="Transparent"
+                                        TextColor="{StaticResource C_TextMuted}"
+                                        FontSize="16"
+                                        WidthRequest="30"
+                                        HeightRequest="30"
+                                        IsVisible="{Binding CanCloseProfessor}"
+                                        Command="{Binding CloseProfessorCommand}"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Bubble Tail -->
+                        <Border WidthRequest="14"
+                                HeightRequest="14"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
+                                Stroke="{StaticResource C_Primary}"
+                                StrokeThickness="1.5"
+                                StrokeShape="RoundRectangle 3"
+                                Rotation="45"
+                                TranslationX="-6"
+                                HorizontalOptions="Start"/>
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- 🔒 Schlossbereich -->
+                <Border Stroke="{StaticResource C_Primary}"
+                        StrokeThickness="1.2"
+                        StrokeShape="RoundRectangle 18"
+                        Padding="10">
+
+                    <Grid HeightRequest="140">
+
+                        <!-- Schloss -->
+                        <Image x:Name="LockImage"
+                               Source="{Binding LockImageSource}"
+                               WidthRequest="110"
+                               HeightRequest="110"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"/>
+
+                        <!-- Feuerwerk -->
+                        <skia:SKLottieView Source="fireworks_skottie.json"
+                                           RepeatCount="-1"
+                                           IsVisible="{Binding IsCelebrating}"
+                                           HorizontalOptions="Fill"
+                                           VerticalOptions="Fill"
+                                           InputTransparent="True"/>
+
+                        <!-- Reward -->
+                        <Label Text="{Binding RewardText}"
+                               FontSize="18"
+                               FontAttributes="Bold"
+                               TextColor="{StaticResource C_Success}"
+                               HorizontalOptions="Center"
+                               VerticalOptions="End"
+                               IsVisible="{Binding IsCelebrating}"/>
                     </Grid>
                 </Border>
 
-                <!-- Schloss & Feuerwerk -->
-                <Grid HeightRequest="140">
-                    <Image Source="{Binding LockImageSource}"
-                           WidthRequest="110"
-                           HeightRequest="110"
-                           Aspect="AspectFit"
-                           HorizontalOptions="Center"
-                           VerticalOptions="Center"/>
-
-                    <!-- Feuerwerk-Animation (Lottie) -->
-                    <skia:SKLottieView Source="fireworks_skottie.json"
-                                       RepeatCount="-1"
-                                       IsVisible="{Binding IsCelebrating}"
-                                       HorizontalOptions="Fill"
-                                       VerticalOptions="Fill"
-                                       InputTransparent="True"/>
-
-                    <Label Text="{Binding RewardText}"
-                           FontSize="18"
-                           FontAttributes="Bold"
-                           TextColor="{StaticResource C_Success}"
-                           HorizontalOptions="Center"
-                           VerticalOptions="End"
-                           IsVisible="{Binding IsCelebrating}"/>
-                </Grid>
-
-                <!-- Weiter / Zurück Buttons – nur bei Feuerwerk (IsCelebrating) -->
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="10" IsVisible="{Binding IsCelebrating}">
-                    <Button Grid.Column="0"
-                            Text="Weiter ▶"
-                            Style="{StaticResource BtnSuccess}"
-                            HeightRequest="50"
-                            Command="{Binding ContinueCommand}"/>
-                    <Button Grid.Column="1"
-                            Text="Zurück"
-                            Style="{StaticResource BtnGhost}"
-                            HeightRequest="50"
-                            Command="{Binding BackToMapCommand}"/>
-                </Grid>
-
-                <!-- Eingabe und Buttons (ausgeblendet während Feuerwerk oder Laden) -->
-                <VerticalStackLayout IsVisible="{Binding IsNotBusy}" Spacing="12">
+                <!-- 🔢 Eingabe DIREKT unter Schloss -->
+                <VerticalStackLayout IsVisible="{Binding IsNotBusy}"
+                                     Spacing="10">
 
                     <Label Text="{resx:Translate Key=Puzzle_EnterCode}"
                            Style="{StaticResource H3}"
                            HorizontalOptions="Center"/>
 
-                    <!-- Ziffern Eingabe -->
                     <HorizontalStackLayout HorizontalOptions="Center" Spacing="8">
                         <BindableLayout.ItemsSource>
                             <Binding Path="InputDigits"/>
                         </BindableLayout.ItemsSource>
+
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="vm:DigitInputViewModel">
                                 <Border Style="{StaticResource DigitBox}">
@@ -148,8 +170,9 @@
                         </BindableLayout.ItemTemplate>
                     </HorizontalStackLayout>
 
-                    <!-- Action Buttons -->
+                    <!-- Buttons -->
                     <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+
                         <Button Grid.Column="0"
                                 Text="Öffnen"
                                 Style="{StaticResource BtnSuccess}"
@@ -160,7 +183,6 @@
                                 Text="💡"
                                 BackgroundColor="{StaticResource C_Warning}"
                                 TextColor="{StaticResource C_TextDark}"
-                                FontAttributes="Bold"
                                 CornerRadius="14"
                                 HeightRequest="50"
                                 FontSize="20"
@@ -173,13 +195,32 @@
                                 Command="{Binding ShowSolutionCommand}"/>
                     </Grid>
 
+                    <!-- Debug -->
                     <Label IsVisible="{Binding ShowSolutionForDebug}"
                            Text="{Binding SecretSolution, StringFormat='Lösung: {0}'}"
                            FontSize="12"
                            TextColor="{StaticResource C_TextMuted}"
                            HorizontalOptions="Center"/>
-
                 </VerticalStackLayout>
+
+                <!-- ▶ Weiter / Zurück -->
+                <Grid ColumnDefinitions="*,*"
+                      ColumnSpacing="10"
+                      IsVisible="{Binding IsCelebrating}">
+
+                    <Button Grid.Column="0"
+                            Text="Weiter ▶"
+                            Style="{StaticResource BtnSuccess}"
+                            HeightRequest="50"
+                            Command="{Binding ContinueCommand}"/>
+
+                    <Button Grid.Column="1"
+                            Text="Zurück"
+                            Style="{StaticResource BtnGhost}"
+                            HeightRequest="50"
+                            Command="{Binding BackToMapCommand}"/>
+                </Grid>
+
             </VerticalStackLayout>
         </Border>
 
@@ -203,13 +244,26 @@
                                         Padding="12">
                                     <VerticalStackLayout Spacing="4">
                                         <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
-                                            <Label Text="{Binding Icon}" FontSize="20" VerticalOptions="Center"/>
-                                            <Label Text="{Binding Code}"
-                                                   FontSize="20"
-                                                   FontAttributes="Bold"
-                                                   FontFamily="Consolas"
-                                                   TextColor="{StaticResource C_Warning}"
-                                                   VerticalOptions="Center"/>
+                                            <Label Text="{Binding Icon}" FontSize="20" VerticalOptions="Center" MinimumWidthRequest="26"/>
+                                            <HorizontalStackLayout BindableLayout.ItemsSource="{Binding Slots}" Spacing="6" VerticalOptions="Center">
+                                                <BindableLayout.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Border BackgroundColor="{StaticResource C_CardInner}"
+                                                                Stroke="{StaticResource C_Primary}"
+                                                                StrokeThickness="1"
+                                                                StrokeShape="RoundRectangle 8"
+                                                                Padding="8,4"
+                                                                MinimumWidthRequest="34">
+                                                            <Label Text="{Binding .}"
+                                                                   FontSize="20"
+                                                                   FontAttributes="Bold"
+                                                                   FontFamily="Consolas"
+                                                                   HorizontalTextAlignment="Center"
+                                                                   TextColor="{StaticResource C_Warning}"/>
+                                                        </Border>
+                                                    </DataTemplate>
+                                                </BindableLayout.ItemTemplate>
+                                            </HorizontalStackLayout>
                                         </HorizontalStackLayout>
                                         <Label Text="{Binding Description}"
                                                FontSize="13"
