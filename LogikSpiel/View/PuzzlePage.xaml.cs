@@ -7,6 +7,7 @@ namespace LogikSpiel.View;
 
 public partial class PuzzlePage : ContentPage, IQueryAttributable
 {
+    private static readonly bool IsAndroid = DeviceInfo.Platform == DevicePlatform.Android;
     private bool _isLoaded;
     private readonly Dictionary<int, Entry> _entryByIndex = new();
     private readonly PuzzlePageViewModel _vm;
@@ -78,11 +79,21 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
 
     private async Task ShowBubbleAsync()
     {
-        SpeechBubble.Scale = 0.6;
+        SpeechBubble.Scale = IsAndroid ? 1.0 : 0.6;
         SpeechBubble.Opacity = 0;
 
-        SpeechTailGroup.Scale = 0.7;
+        SpeechTailGroup.Scale = IsAndroid ? 1.0 : 0.7;
         SpeechTailGroup.Opacity = 0;
+
+        if (IsAndroid)
+        {
+            await Task.WhenAll(
+                SpeechBubble.FadeToAsync(1, 150),
+                SpeechTailGroup.FadeToAsync(1, 140)
+            );
+
+            return;
+        }
 
         await Task.WhenAll(
             SpeechBubble.FadeToAsync(1, 150),
@@ -187,12 +198,22 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
     {
         try
         {
-            await Task.WhenAll(
-                SpeechBubble.FadeToAsync(0, 180, Easing.CubicIn),
-                SpeechBubble.ScaleToAsync(0.85, 180, Easing.CubicIn),
-                SpeechTailGroup.FadeToAsync(0, 120, Easing.CubicIn),
-                SpeechTailGroup.ScaleToAsync(0.8, 120, Easing.CubicIn)
-            );
+            if (IsAndroid)
+            {
+                await Task.WhenAll(
+                    SpeechBubble.FadeToAsync(0, 180, Easing.CubicIn),
+                    SpeechTailGroup.FadeToAsync(0, 120, Easing.CubicIn)
+                );
+            }
+            else
+            {
+                await Task.WhenAll(
+                    SpeechBubble.FadeToAsync(0, 180, Easing.CubicIn),
+                    SpeechBubble.ScaleToAsync(0.85, 180, Easing.CubicIn),
+                    SpeechTailGroup.FadeToAsync(0, 120, Easing.CubicIn),
+                    SpeechTailGroup.ScaleToAsync(0.8, 120, Easing.CubicIn)
+                );
+            }
         }
         catch { }
 
