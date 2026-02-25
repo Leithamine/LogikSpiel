@@ -24,6 +24,11 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         _vm.PropertyChanged += Vm_PropertyChanged;
     }
 
+    // Backward-compatible aliases: keep legacy code references compilable
+    // if older branches still reference the previous tail element names.
+    private VisualElement SpeechTailPrimary => SpeechTailGroup;
+    private VisualElement SpeechTailSecondary => SpeechTailGroup;
+
     private async void Vm_PropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (BindingContext is not PuzzlePageViewModel vm)
