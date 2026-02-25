@@ -75,12 +75,23 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         SpeechBubble.Scale = 0.6;
         SpeechBubble.Opacity = 0;
 
+        SpeechTailPrimary.Scale = 0;
+        SpeechTailPrimary.Opacity = 0;
+        SpeechTailSecondary.Scale = 0;
+        SpeechTailSecondary.Opacity = 0;
+
         await Task.WhenAll(
             SpeechBubble.FadeToAsync(1, 150),
-            SpeechBubble.ScaleToAsync(1.05, 180, Easing.CubicOut)
+            SpeechBubble.ScaleToAsync(1.05, 180, Easing.CubicOut),
+            SpeechTailPrimary.FadeToAsync(1, 130),
+            SpeechTailPrimary.ScaleToAsync(1.0, 160, Easing.CubicOut)
         );
 
-        await SpeechBubble.ScaleToAsync(1.0, 80);
+        await Task.WhenAll(
+            SpeechBubble.ScaleToAsync(1.0, 80),
+            SpeechTailSecondary.FadeToAsync(1, 120),
+            SpeechTailSecondary.ScaleToAsync(1.0, 140, Easing.CubicOut)
+        );
     }
 
     private async Task TypeTextAsync(string text)
@@ -150,12 +161,16 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         {
             ProfessorImage.CancelAnimations();
             SpeechBubble.CancelAnimations();
-            SpeechTail.CancelAnimations();
+            SpeechTailPrimary.CancelAnimations();
+            SpeechTailSecondary.CancelAnimations();
 
             ProfessorImage.Scale = 1;
             ProfessorImage.Rotation = 0;
             SpeechBubble.Scale = 1;
-            SpeechTail.TranslationX = 0;
+            SpeechTailPrimary.Scale = 1;
+            SpeechTailPrimary.Opacity = 1;
+            SpeechTailSecondary.Scale = 1;
+            SpeechTailSecondary.Opacity = 1;
         });
     }
 
@@ -173,13 +188,19 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         {
             await Task.WhenAll(
                 SpeechBubble.FadeToAsync(0, 180, Easing.CubicIn),
-                SpeechBubble.ScaleToAsync(0.85, 180, Easing.CubicIn)
+                SpeechBubble.ScaleToAsync(0.85, 180, Easing.CubicIn),
+                SpeechTailPrimary.FadeToAsync(0, 120, Easing.CubicIn),
+                SpeechTailSecondary.FadeToAsync(0, 100, Easing.CubicIn)
             );
         }
         catch { }
 
         SpeechBubble.Opacity = 0;
         SpeechBubble.Scale = 1;
+        SpeechTailPrimary.Opacity = 0;
+        SpeechTailPrimary.Scale = 1;
+        SpeechTailSecondary.Opacity = 0;
+        SpeechTailSecondary.Scale = 1;
     }
     private async Task ShakeLockAsync()
     {
