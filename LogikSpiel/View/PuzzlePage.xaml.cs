@@ -85,7 +85,11 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
             SpeechTailGroup.ScaleToAsync(1.0, 170, Easing.CubicOut)
         );
 
-        await SpeechBubble.ScaleToAsync(1.0, 80);
+        await Task.WhenAll(
+            SpeechBubble.ScaleToAsync(1.0, 80),
+            SpeechTailSecondary.FadeToAsync(1, 120),
+            SpeechTailSecondary.ScaleToAsync(1.0, 140, Easing.CubicOut)
+        );
     }
 
     private async Task TypeTextAsync(string text)
