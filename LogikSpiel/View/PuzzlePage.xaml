@@ -59,22 +59,38 @@
                            VerticalOptions="Start"/>
                     <Grid Grid.Column="1" VerticalOptions="Start" Margin="0, 20, 0, 0">
 
-                        <Border x:Name="SpeechTail"
-                                WidthRequest="16"
-                                HeightRequest="16"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
-                                Stroke="{StaticResource C_Primary}"
-                                StrokeThickness="1.5"
-                                StrokeShape="RoundRectangle 4"
-                                Rotation="45"
-                                HorizontalOptions="Start"
-                                VerticalOptions="Center"
-                                TranslationX="6"
-                                Scale="0"
-                                Opacity="0"
-                                ZIndex="0"/>
+                        <!-- Tail shape that visibly connects bubble to the professor -->
+                        <Grid x:Name="SpeechTailGroup"
+                              Margin="4,0,0,0"
+                              WidthRequest="28"
+                              HeightRequest="44"
+                              InputTransparent="True"
+                              HorizontalOptions="Start"
+                              VerticalOptions="Center"
+                              ZIndex="2"
+                              Scale="0"
+                              Opacity="0">
+                            <Path x:Name="SpeechTailMain"
+                                  Data="M 24,2 L 24,28 L 2,18 Z"
+                                  Fill="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
+                                  Stroke="{StaticResource C_Primary}"
+                                  StrokeThickness="1.6"
+                                  HorizontalOptions="Start"
+                                  VerticalOptions="Center"/>
+                            <Border x:Name="SpeechTailTip"
+                                    WidthRequest="9"
+                                    HeightRequest="9"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
+                                    Stroke="{StaticResource C_Primary}"
+                                    StrokeThickness="1.2"
+                                    StrokeShape="RoundRectangle 5"
+                                    HorizontalOptions="Start"
+                                    VerticalOptions="End"
+                                    Margin="-1,0,0,2"/>
+                        </Grid>
+
                         <Border x:Name="SpeechBubble"
-                                Margin="12, 0, 0, 0"
+                                Margin="24, 0, 0, 0"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
                                 Stroke="{StaticResource C_Primary}"
                                 StrokeThickness="2"

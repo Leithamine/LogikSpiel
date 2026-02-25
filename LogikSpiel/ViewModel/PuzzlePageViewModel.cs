@@ -534,11 +534,15 @@ public sealed class PuzzlePageViewModel : ObservableObject
 
     private async Task NavigateToMapAsync()
     {
+        int levelForMap = LevelNumber;
+        if (IsCelebrating && _pendingNextLevel > LevelNumber)
+            levelForMap = _pendingNextLevel;
+
         var parameters = new Dictionary<string, object>
         {
             ["gameId"] = GameId,
             ["difficulty"] = DifficultyKey,
-            ["level"] = LevelNumber
+            ["level"] = levelForMap
         };
 
         await _nav.GoToAsync(nameof(GameMapPage), parameters);
