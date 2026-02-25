@@ -1,0 +1,564 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<!-- 
+		Microsoft ResX Schema
+
+		Version 1.3
+
+		The primary goals of this format is to allow a simple XML format 
+		that is mostly human readable. The generation and parsing of the 
+		various data types are done through the TypeConverter classes 
+		associated with the data types.
+
+		Example:
+
+		... ado.net/XML headers & schema ...
+		<resheader name="resmimetype">text/microsoft-resx</resheader>
+		<resheader name="version">1.3</resheader>
+		<resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+		<resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+		<data name="Name1">this is my long string</data>
+		<data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+		<data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+			[base64 mime encoded serialized .NET Framework object]
+		</data>
+		<data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+			[base64 mime encoded string representing a byte array form of the .NET Framework object]
+		</data>
+
+		There are any number of "resheader" rows that contain simple 
+		name/value pairs.
+
+		Each data row contains a name, and value. The row also contains a 
+		type or mimetype. Type corresponds to a .NET class that support 
+		text/value conversion through the TypeConverter architecture. 
+		Classes that don't support this are serialized and stored with the 
+		mimetype set.
+
+		The mimetype is used for serialized objects, and tells the 
+		ResXResourceReader how to depersist the object. This is currently not 
+		extensible. For a given mimetype the value must be set accordingly:
+
+		Note - application/x-microsoft.net.object.binary.base64 is the format 
+		that the ResXResourceWriter will generate, however the reader can 
+		read any of the formats listed below.
+
+		mimetype: application/x-microsoft.net.object.binary.base64
+		value   : The object must be serialized with 
+			: System.Serialization.Formatters.Binary.BinaryFormatter
+			: and then encoded with base64 encoding.
+
+		mimetype: application/x-microsoft.net.object.soap.base64
+		value   : The object must be serialized with 
+			: System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+			: and then encoded with base64 encoding.
+
+		mimetype: application/x-microsoft.net.object.bytearray.base64
+		value   : The object must be serialized into a byte array 
+			: using a System.ComponentModel.TypeConverter
+			: and then encoded with base64 encoding.
+	-->
+	
+	<xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+		<xsd:element name="root" msdata:IsDataSet="true">
+			<xsd:complexType>
+				<xsd:choice maxOccurs="unbounded">
+					<xsd:element name="data">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+								<xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+							</xsd:sequence>
+							<xsd:attribute name="name" type="xsd:string" msdata:Ordinal="1" />
+							<xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+							<xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+						</xsd:complexType>
+					</xsd:element>
+					<xsd:element name="resheader">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+							</xsd:sequence>
+							<xsd:attribute name="name" type="xsd:string" use="required" />
+						</xsd:complexType>
+					</xsd:element>
+				</xsd:choice>
+			</xsd:complexType>
+		</xsd:element>
+	</xsd:schema>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>1.3</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<data name="Common_Back" xml:space="preserve"><value>Indietro</value></data>
+	<data name="Common_BackArrow" xml:space="preserve"><value>←</value></data>
+	<data name="Common_Cancel" xml:space="preserve"><value>Annulla</value></data>
+	<data name="Common_CoinsRewardFormat" xml:space="preserve"><value>✨ +{0} Monete</value></data>
+	<data name="Common_LeavePuzzlePrompt" xml:space="preserve"><value>Vuoi davvero abbandonare il puzzle?</value></data>
+	<data name="Common_LevelFormat" xml:space="preserve"><value>🧩 Livello {0}</value></data>
+	<data name="Common_NeedCoinsFormat" xml:space="preserve"><value>💰 Ti servono {0} monete!</value></data>
+	<data name="Common_No" xml:space="preserve"><value>No</value></data>
+	<data name="Common_NotEnoughCoinsTitle" xml:space="preserve"><value>Monete insufficienti</value></data>
+	<data name="Common_PriceCoinsFormat" xml:space="preserve"><value>{0} 💰</value></data>
+	<data name="Common_Purchased" xml:space="preserve"><value>Acquistato</value></data>
+	<data name="Common_Retry" xml:space="preserve"><value>Riprova</value></data>
+	<data name="Common_Yes" xml:space="preserve"><value>Sì</value></data>
+	<data name="Common_Ok" xml:space="preserve"><value>OK</value></data>
+	<data name="Common_ErrorTitle" xml:space="preserve"><value>Errore</value></data>
+
+	<data name="Difficulty_Complex" xml:space="preserve"><value>Complesso</value></data>
+	<data name="Difficulty_Easy" xml:space="preserve"><value>Facile</value></data>
+	<data name="Difficulty_God" xml:space="preserve"><value>Divino</value></data>
+	<data name="Difficulty_Hard" xml:space="preserve"><value>Difficile</value></data>
+	<data name="Difficulty_Master" xml:space="preserve"><value>Maestro</value></data>
+	<data name="Difficulty_Normal" xml:space="preserve"><value>Normale</value></data>
+
+	<data name="GameHost_InfoBody" xml:space="preserve"><value>La tua vera interfaccia puzzle arriverà qui in seguito. "Risolvi" segna il livello come completato e carica automaticamente il successivo.</value></data>
+	<data name="GameHost_InfoTitle" xml:space="preserve"><value>🎮 Info di gioco</value></data>
+	<data name="GameHost_RulesButton" xml:space="preserve"><value>📖 Regole</value></data>
+	<data name="GameHost_SolveButton" xml:space="preserve"><value>✅ Risolvi</value></data>
+	<data name="GameHost_TitleDefault" xml:space="preserve"><value>Puzzle</value></data>
+	<data name="GameHost_TitleFormat" xml:space="preserve"><value>{0} – {1} – Livello {2}</value></data>
+
+	<data name="GameMap_DifficultyEasy" xml:space="preserve"><value>🌱 Facile</value></data>
+	<data name="GameMap_DifficultyHard" xml:space="preserve"><value>🔥 Difficile</value></data>
+	<data name="GameMap_DifficultyMaster" xml:space="preserve"><value>👑 Maestro</value></data>
+	<data name="GameMap_DifficultyNormal" xml:space="preserve"><value>⭐ Normale</value></data>
+	<data name="GameMap_DifficultyTitle" xml:space="preserve"><value>🎮 Difficoltà</value></data>
+	<data name="GameMap_TitleDefault" xml:space="preserve"><value>Mappa</value></data>
+
+	<data name="Learn_RulesTitle" xml:space="preserve"><value>Regole del gioco</value></data>
+	<data name="Learn_TitleDefault" xml:space="preserve"><value>Regole</value></data>
+
+	<data name="Main_GamesTitle" xml:space="preserve"><value>Giochi</value></data>
+	<data name="Main_PlayButton" xml:space="preserve"><value>▶ Gioca</value></data>
+	<data name="Main_Subtitle" xml:space="preserve"><value>Allena il tuo cervello</value></data>
+	<data name="Main_Title" xml:space="preserve"><value>Giochi di logica</value></data>
+	<data name="Main_Welcome" xml:space="preserve"><value>👋 Bentornato!</value></data>
+	<data name="Main_WelcomeSub" xml:space="preserve"><value>Scegli un gioco e inizia!</value></data>
+
+	<data name="MathCross_BuyHintMessage" xml:space="preserve"><value>Rivelare una cella per {0} monete?</value></data>
+	<data name="MathCross_BuyHintTitle" xml:space="preserve"><value>Acquistare suggerimento?</value></data>
+	<data name="MathCross_ErrorGenerateMessage" xml:space="preserve"><value>Impossibile generare il puzzle.</value></data>
+	<data name="MathCross_ErrorTitle" xml:space="preserve"><value>Errore</value></data>
+	<data name="MathCross_Generating" xml:space="preserve"><value>Creazione puzzle in corso...</value></data>
+	<data name="MathCross_MissingMessageFormat" xml:space="preserve"><value>{0} celle mancanti.</value></data>
+	<data name="MathCross_MissingTitle" xml:space="preserve"><value>Mancante</value></data>
+	<data name="MathCross_NoHintMessage" xml:space="preserve"><value>Tutte le celle sono già compilate!</value></data>
+	<data name="MathCross_NoHintTitle" xml:space="preserve"><value>Nessun suggerimento</value></data>
+	<data name="MathCross_ResetMessage" xml:space="preserve"><value>Cancellare tutti i dati inseriti?</value></data>
+	<data name="MathCross_ResetTitle" xml:space="preserve"><value>Reimposta</value></data>
+	<data name="MathCross_SuccessTitle" xml:space="preserve"><value>Ottimo! 🎉</value></data>
+	<data name="MathCross_Tip" xml:space="preserve"><value>👆 Tocca una cella</value></data>
+	<data name="MathCross_Title" xml:space="preserve"><value>Math Cross</value></data>
+	<data name="MathCross_TitleFormat" xml:space="preserve"><value>Math Cross – {0} (Livello {1})</value></data>
+	<data name="MathCross_WrongMessage" xml:space="preserve"><value>Almeno una cella è errata.</value></data>
+	<data name="MathCross_WrongTitle" xml:space="preserve"><value>Sbagliato</value></data>
+
+	<data name="MathHangman_BuyHintSheetTitle" xml:space="preserve"><value>💡 Acquista suggerimento</value></data>
+	<data name="MathHangman_DifficultyRangeFormat" xml:space="preserve"><value>Intervallo: {0:N0} – {1:N0}</value></data>
+	<data name="MathHangman_DigitSumFormat" xml:space="preserve"><value>Somma delle cifre: {0}</value></data>
+	<data name="MathHangman_ExamplesFormat" xml:space="preserve"><value>Esempi: {0}</value></data>
+	<data name="MathHangman_GuessPlaceholder" xml:space="preserve"><value>Inserisci un numero...</value></data>
+	<data name="MathHangman_HintDistinctCountFormat" xml:space="preserve"><value>🎲 Il numero ha {0} cifre distinte.</value></data>
+	<data name="MathHangman_HintFirstDigitFormat" xml:space="preserve"><value>🔝 La prima cifra è {0}.</value></data>
+	<data name="MathHangman_HintHasDoubleFalse" xml:space="preserve"><value>♻️ Tutte le cifre sono diverse.</value></data>
+	<data name="MathHangman_HintHasDoubleTrue" xml:space="preserve"><value>♻️ Almeno una cifra compare più volte.</value></data>
+	<data name="MathHangman_HintLastDigitFormat" xml:space="preserve"><value>🔚 L'ultima cifra è {0}.</value></data>
+	<data name="MathHangman_HintNotAvailable" xml:space="preserve"><value>💡 Suggerimento non disponibile.</value></data>
+	<data name="MathHangman_HintsPurchasedMessage" xml:space="preserve"><value>Tutti i suggerimenti sono già stati acquistati.</value></data>
+	<data name="MathHangman_HintsTitle" xml:space="preserve"><value>💡 Suggerimenti</value></data>
+	<data name="MathHangman_HintsTitleDialog" xml:space="preserve"><value>Suggerimenti</value></data>
+	<data name="MathHangman_InputMessage" xml:space="preserve"><value>Inserisci un numero.</value></data>
+	<data name="MathHangman_InputTitle" xml:space="preserve"><value>Inserimento</value></data>
+	<data name="MathHangman_LoseMessageFormat" xml:space="preserve"><value>Il numero era: {0}</value></data>
+	<data name="MathHangman_LoseTitle" xml:space="preserve"><value>Hai perso 😢</value></data>
+	<data name="MathHangman_NotEnoughCoinsMessage" xml:space="preserve"><value>Un suggerimento costa 10 monete.</value></data>
+	<data name="MathHangman_PropertiesTitle" xml:space="preserve"><value>✨ Proprietà del numero</value></data>
+	<data name="MathHangman_PropertyDetailsFormat" xml:space="preserve"><value>{0}
+Esempi: {1}</value></data>
+
+	<!-- Articolo (per "Questo numero è {0}." → "un …") -->
+	<data name="MathHangman_Property_Abundant_Article" xml:space="preserve"><value>un</value></data>
+	<data name="MathHangman_Property_Armstrong_Article" xml:space="preserve"><value>un</value></data>
+	<data name="MathHangman_Property_Automorphic_Article" xml:space="preserve"><value>un</value></data>
+	<data name="MathHangman_Property_Composite_Article" xml:space="preserve"><value>un</value></data>
+	<data name="MathHangman_Property_Cube_Article" xml:space="preserve"><value>un</value></data>
+	<data name="MathHangman_Property_Deficient_Article" xml:space="preserve"><value>un</value></data>
+	<data name="MathHangman_Property_Even_Article" xml:space="preserve"><value>un</value></data>
+	<data name="MathHangman_Property_Factorial_Article" xml:space="preserve"><value>un</value></data>
+	<data name="MathHangman_Property_Fibonacci_Article" xml:space="preserve"><value>un</value></data>
+	<data name="MathHangman_Property_Happy_Article" xml:space="preserve"><value>un</value></data>
+	<data name="MathHangman_Property_Harshad_Article" xml:space="preserve"><value>un</value></data>
+	<data name="MathHangman_Property_Mersenne_Article" xml:space="preserve"><value>un</value></data>
+	<data name="MathHangman_Property_Odd_Article" xml:space="preserve"><value>un</value></data>
+	<data name="MathHangman_Property_Palindrome_Article" xml:space="preserve"><value>un</value></data>
+	<data name="MathHangman_Property_Perfect_Article" xml:space="preserve"><value>un</value></data>
+	<data name="MathHangman_Property_Prime_Article" xml:space="preserve"><value>un</value></data>
+	<data name="MathHangman_Property_Semiprime_Article" xml:space="preserve"><value>un</value></data>
+	<data name="MathHangman_Property_SophieGermain_Article" xml:space="preserve"><value>un</value></data>
+	<data name="MathHangman_Property_Square_Article" xml:space="preserve"><value>un</value></data>
+	<data name="MathHangman_Property_Strong_Article" xml:space="preserve"><value>un</value></data>
+	<data name="MathHangman_Property_Triangular_Article" xml:space="preserve"><value>un</value></data>
+
+	<data name="MathHangman_Property_Abundant_Examples" xml:space="preserve"><value>12, 18, 20, 24</value></data>
+	<data name="MathHangman_Property_Abundant_Key" xml:space="preserve"><value>numero abbondante</value></data>
+	<data name="MathHangman_Property_Abundant_KidDesc" xml:space="preserve"><value>La somma dei suoi divisori è maggiore del numero.</value></data>
+
+	<data name="MathHangman_Property_Armstrong_Examples" xml:space="preserve"><value>153, 370, 407</value></data>
+	<data name="MathHangman_Property_Armstrong_Key" xml:space="preserve"><value>numero di Armstrong</value></data>
+	<data name="MathHangman_Property_Armstrong_KidDesc" xml:space="preserve"><value>La somma di ogni cifra elevata al numero di cifre dà il numero stesso.</value></data>
+
+	<data name="MathHangman_Property_Automorphic_Examples" xml:space="preserve"><value>5, 6, 25, 76</value></data>
+	<data name="MathHangman_Property_Automorphic_Key" xml:space="preserve"><value>numero automorfo</value></data>
+	<data name="MathHangman_Property_Automorphic_KidDesc" xml:space="preserve"><value>Il suo quadrato termina con il numero stesso.</value></data>
+
+	<data name="MathHangman_Property_Composite_Examples" xml:space="preserve"><value>4, 6, 8, 9, 10</value></data>
+	<data name="MathHangman_Property_Composite_Key" xml:space="preserve"><value>numero composto</value></data>
+	<data name="MathHangman_Property_Composite_KidDesc" xml:space="preserve"><value>Ha più di due divisori.</value></data>
+
+	<data name="MathHangman_Property_Cube_Examples" xml:space="preserve"><value>1, 8, 27, 64</value></data>
+	<data name="MathHangman_Property_Cube_Key" xml:space="preserve"><value>cubo perfetto</value></data>
+	<data name="MathHangman_Property_Cube_KidDesc" xml:space="preserve"><value>Risultato di n × n × n.</value></data>
+
+	<data name="MathHangman_Property_Deficient_Examples" xml:space="preserve"><value>8, 10, 14, 16</value></data>
+	<data name="MathHangman_Property_Deficient_Key" xml:space="preserve"><value>numero difettivo</value></data>
+	<data name="MathHangman_Property_Deficient_KidDesc" xml:space="preserve"><value>La somma dei suoi divisori è minore del numero.</value></data>
+
+	<data name="MathHangman_Property_Even_Examples" xml:space="preserve"><value>2, 4, 6, 8</value></data>
+	<data name="MathHangman_Property_Even_Key" xml:space="preserve"><value>numero pari</value></data>
+	<data name="MathHangman_Property_Even_KidDesc" xml:space="preserve"><value>Divisibile per 2.</value></data>
+
+	<data name="MathHangman_Property_Factorial_Examples" xml:space="preserve"><value>1, 2, 6, 24, 120</value></data>
+	<data name="MathHangman_Property_Factorial_Key" xml:space="preserve"><value>numero fattoriale</value></data>
+	<data name="MathHangman_Property_Factorial_KidDesc" xml:space="preserve"><value>Un numero della forma n!.</value></data>
+
+	<data name="MathHangman_Property_Fibonacci_Examples" xml:space="preserve"><value>1, 2, 3, 5, 8</value></data>
+	<data name="MathHangman_Property_Fibonacci_Key" xml:space="preserve"><value>numero di Fibonacci</value></data>
+	<data name="MathHangman_Property_Fibonacci_KidDesc" xml:space="preserve"><value>Somma dei due numeri precedenti.</value></data>
+
+	<data name="MathHangman_Property_Happy_Examples" xml:space="preserve"><value>1, 7, 10, 13, 19</value></data>
+	<data name="MathHangman_Property_Happy_Key" xml:space="preserve"><value>numero felice</value></data>
+	<data name="MathHangman_Property_Happy_KidDesc" xml:space="preserve"><value>La somma dei quadrati delle sue cifre alla fine raggiunge 1.</value></data>
+
+	<data name="MathHangman_Property_Harshad_Examples" xml:space="preserve"><value>18, 21, 72, 100</value></data>
+	<data name="MathHangman_Property_Harshad_Key" xml:space="preserve"><value>numero di Harshad</value></data>
+	<data name="MathHangman_Property_Harshad_KidDesc" xml:space="preserve"><value>Divisibile per la somma delle sue cifre.</value></data>
+
+	<data name="MathHangman_Property_Mersenne_Examples" xml:space="preserve"><value>3, 7, 31, 127</value></data>
+	<data name="MathHangman_Property_Mersenne_Key" xml:space="preserve"><value>primo di Mersenne</value></data>
+	<data name="MathHangman_Property_Mersenne_KidDesc" xml:space="preserve"><value>Un primo della forma 2^p - 1.</value></data>
+
+	<data name="MathHangman_Property_Odd_Examples" xml:space="preserve"><value>1, 3, 5, 7</value></data>
+	<data name="MathHangman_Property_Odd_Key" xml:space="preserve"><value>numero dispari</value></data>
+	<data name="MathHangman_Property_Odd_KidDesc" xml:space="preserve"><value>Non divisibile per 2.</value></data>
+
+	<data name="MathHangman_Property_Palindrome_Examples" xml:space="preserve"><value>11, 22, 121, 1331</value></data>
+	<data name="MathHangman_Property_Palindrome_Key" xml:space="preserve"><value>numero palindromo</value></data>
+	<data name="MathHangman_Property_Palindrome_KidDesc" xml:space="preserve"><value>Si legge uguale da sinistra e da destra.</value></data>
+
+	<data name="MathHangman_Property_Perfect_Examples" xml:space="preserve"><value>6, 28, 496</value></data>
+	<data name="MathHangman_Property_Perfect_Key" xml:space="preserve"><value>numero perfetto</value></data>
+	<data name="MathHangman_Property_Perfect_KidDesc" xml:space="preserve"><value>La somma dei suoi divisori propri è uguale al numero.</value></data>
+
+	<data name="MathHangman_Property_Prime_Examples" xml:space="preserve"><value>2, 3, 5, 7, 11</value></data>
+	<data name="MathHangman_Property_Prime_Key" xml:space="preserve"><value>numero primo</value></data>
+	<data name="MathHangman_Property_Prime_KidDesc" xml:space="preserve"><value>Divisibile solo per 1 e per se stesso.</value></data>
+
+	<data name="MathHangman_Property_Semiprime_Examples" xml:space="preserve"><value>4, 6, 9, 10, 14</value></data>
+	<data name="MathHangman_Property_Semiprime_Key" xml:space="preserve"><value>numero semiprimo</value></data>
+	<data name="MathHangman_Property_Semiprime_KidDesc" xml:space="preserve"><value>Prodotto di esattamente due numeri primi.</value></data>
+
+	<data name="MathHangman_Property_SophieGermain_Examples" xml:space="preserve"><value>2, 3, 5, 11, 23</value></data>
+	<data name="MathHangman_Property_SophieGermain_Key" xml:space="preserve"><value>primo di Sophie Germain</value></data>
+	<data name="MathHangman_Property_SophieGermain_KidDesc" xml:space="preserve"><value>p è primo e 2p+1 è anch'esso primo.</value></data>
+
+	<data name="MathHangman_Property_Square_Examples" xml:space="preserve"><value>1, 4, 9, 16, 25</value></data>
+	<data name="MathHangman_Property_Square_Key" xml:space="preserve"><value>quadrato perfetto</value></data>
+	<data name="MathHangman_Property_Square_KidDesc" xml:space="preserve"><value>Risultato di n × n.</value></data>
+
+	<data name="MathHangman_Property_Strong_Examples" xml:space="preserve"><value>1, 2, 145</value></data>
+	<data name="MathHangman_Property_Strong_Key" xml:space="preserve"><value>numero forte</value></data>
+	<data name="MathHangman_Property_Strong_KidDesc" xml:space="preserve"><value>La somma dei fattoriali delle sue cifre è uguale al numero.</value></data>
+
+	<data name="MathHangman_Property_Triangular_Examples" xml:space="preserve"><value>1, 3, 6, 10, 15</value></data>
+	<data name="MathHangman_Property_Triangular_Key" xml:space="preserve"><value>numero triangolare</value></data>
+	<data name="MathHangman_Property_Triangular_KidDesc" xml:space="preserve"><value>Somma 1+2+...+n.</value></data>
+
+	<data name="MathHangman_ShopDistinctCountDesc" xml:space="preserve"><value>Quante cifre distinte?</value></data>
+	<data name="MathHangman_ShopDistinctCountTitle" xml:space="preserve"><value>🎲 Numero di cifre distinte</value></data>
+	<data name="MathHangman_ShopFirstDigitDesc" xml:space="preserve"><value>Qual è la cifra iniziale?</value></data>
+	<data name="MathHangman_ShopFirstDigitTitle" xml:space="preserve"><value>🔝 Prima cifra</value></data>
+	<data name="MathHangman_ShopHasDoubleDesc" xml:space="preserve"><value>Ci sono cifre ripetute?</value></data>
+	<data name="MathHangman_ShopHasDoubleTitle" xml:space="preserve"><value>♻️ Cifra ripetuta?</value></data>
+	<data name="MathHangman_ShopLastDigitDesc" xml:space="preserve"><value>Qual è la cifra delle unità?</value></data>
+	<data name="MathHangman_ShopLastDigitTitle" xml:space="preserve"><value>🔚 Ultima cifra</value></data>
+	<data name="MathHangman_Title" xml:space="preserve"><value>🎯 Math Hangman</value></data>
+	<data name="MathHangman_WinMessageFormat" xml:space="preserve"><value>Corretto! Il numero era {0}
++50 Monete</value></data>
+	<data name="MathHangman_WinTitle" xml:space="preserve"><value>Hai vinto! 🎉</value></data>
+
+	<data name="NumberProperty_TitleFormat" xml:space="preserve"><value>Questo numero è {0}.</value></data>
+
+	<data name="NumberRain_ActiveRuleFormat" xml:space="preserve"><value>Regola attiva: {0}</value></data>
+	<data name="NumberRain_AvoidFormat" xml:space="preserve"><value>Evita: {0}.</value></data>
+	<data name="NumberRain_ComboProgressFormat" xml:space="preserve"><value>Combo: {0}/{1}</value></data>
+	<data name="NumberRain_Explain" xml:space="preserve"><value>Spiega</value></data>
+	<data name="NumberRain_ExplainTitle" xml:space="preserve"><value>Spiegazione</value></data>
+	<data name="NumberRain_GameOverMessage" xml:space="preserve"><value>Hai esaurito tutte le vite.</value></data>
+	<data name="NumberRain_GameOverTitle" xml:space="preserve"><value>Game Over</value></data>
+	<data name="NumberRain_GoalsFormat" xml:space="preserve"><value>Obiettivo: {0}</value></data>
+	<data name="NumberRain_HitsMissesFormat" xml:space="preserve"><value>Centrati: {0}/{1} • Errori: {2}/{3}</value></data>
+	<data name="NumberRain_LeavePrompt" xml:space="preserve"><value>Vuoi abbandonare il gioco?</value></data>
+	<data name="NumberRain_MissesFormat" xml:space="preserve"><value>Errori: {0}/{1}</value></data>
+	<data name="NumberRain_MissionTitle" xml:space="preserve"><value>🧩 Missione</value></data>
+	<data name="NumberRain_ModeLabel" xml:space="preserve"><value>Modalità</value></data>
+	<data name="NumberRain_Mode_Avoid" xml:space="preserve"><value>Evita</value></data>
+	<data name="NumberRain_Mode_Combo" xml:space="preserve"><value>Combo</value></data>
+	<data name="NumberRain_Mode_Count" xml:space="preserve"><value>Conta</value></data>
+	<data name="NumberRain_Mode_Dynamic" xml:space="preserve"><value>Dinamico</value></data>
+	<data name="NumberRain_Mode_Multi" xml:space="preserve"><value>Multi</value></data>
+	<data name="NumberRain_Mode_Survival" xml:space="preserve"><value>Sopravvivenza</value></data>
+	<data name="NumberRain_Mode_Switch" xml:space="preserve"><value>Alternanza</value></data>
+	<data name="NumberRain_Mode_Timed" xml:space="preserve"><value>A tempo</value></data>
+	<data name="NumberRain_NoQuestLoaded" xml:space="preserve"><value>Nessuna missione caricata.</value></data>
+	<data name="NumberRain_QuestReady" xml:space="preserve"><value>Pronto? Tocca Avvia!</value></data>
+	<data name="NumberRain_RewardTitle" xml:space="preserve"><value>Ottimo! 🎉</value></data>
+	<data name="NumberRain_RuleFormat" xml:space="preserve"><value>Regola: {0}</value></data>
+	<data name="NumberRain_RulesFormat" xml:space="preserve"><value>Regola matematica: {0}</value></data>
+	<data name="NumberRain_Start" xml:space="preserve"><value>Avvia</value></data>
+	<data name="NumberRain_StatusReady" xml:space="preserve"><value>Pronto per iniziare.</value></data>
+	<data name="NumberRain_StatusRunning" xml:space="preserve"><value>Pioggia di numeri in corso!</value></data>
+	<data name="NumberRain_TapInstruction" xml:space="preserve"><value>Tocca i numeri corretti prima che spariscano in basso.</value></data>
+	<data name="NumberRain_TimeLimitFormat" xml:space="preserve"><value>Limite di tempo: {0}s.</value></data>
+	<data name="NumberRain_Title" xml:space="preserve"><value>🌧️ Pioggia di numeri</value></data>
+
+	<data name="Onboarding_AgePlaceholder" xml:space="preserve"><value>La tua età (5–99)</value></data>
+	<data name="Onboarding_NamePlaceholder" xml:space="preserve"><value>Il tuo nome</value></data>
+	<data name="Onboarding_Start" xml:space="preserve"><value>🚀 Iniziamo!</value></data>
+	<data name="Onboarding_Subtitle" xml:space="preserve"><value>Crea il tuo profilo e inizia il viaggio!</value></data>
+	<data name="Onboarding_Title" xml:space="preserve"><value>👋 Benvenuto!</value></data>
+
+	<data name="Pascal_BuyHintMessage" xml:space="preserve"><value>Mostrare i primi 2 passi del percorso soluzione per {0} monete?</value></data>
+	<data name="Pascal_BuyHintTitle" xml:space="preserve"><value>Acquistare suggerimento?</value></data>
+	<data name="Pascal_GoalMax" xml:space="preserve"><value>OBIETTIVO: MAX</value></data>
+	<data name="Pascal_GoalMin" xml:space="preserve"><value>OBIETTIVO: MIN</value></data>
+	<data name="Pascal_NotEnoughCoinsMessage" xml:space="preserve"><value>Ti servono {0} monete per un suggerimento!</value></data>
+	<data name="Pascal_NotOptimalMessageFormat" xml:space="preserve"><value>La tua somma: {0}
+Miglior somma {1}: {2}</value></data>
+	<data name="Pascal_NotOptimalTitle" xml:space="preserve"><value>Non ottimale ❌</value></data>
+	<data name="Pascal_OptimalWordMax" xml:space="preserve"><value>massimo</value></data>
+	<data name="Pascal_OptimalWordMin" xml:space="preserve"><value>minimo</value></data>
+	<data name="Pascal_PathEndMessageFormat" xml:space="preserve"><value>Il tuo percorso deve terminare alla base (riga {0}).</value></data>
+	<data name="Pascal_PathIncompleteMessageFormat" xml:space="preserve"><value>Il tuo percorso ha {0} celle, ma il triangolo ha {1} righe.
+Il percorso deve andare dall'alto alla base.</value></data>
+	<data name="Pascal_PathIncompleteTitle" xml:space="preserve"><value>Percorso incompleto</value></data>
+	<data name="Pascal_PathStartMessage" xml:space="preserve"><value>Il tuo percorso deve iniziare in cima (riga 0).</value></data>
+	<data name="Pascal_PerfectMessageFormat" xml:space="preserve"><value>Hai trovato il percorso ottimale!
++{0} Monete</value></data>
+	<data name="Pascal_PerfectTitle" xml:space="preserve"><value>Perfetto! 🎉</value></data>
+	<data name="Pascal_TapInstruction" xml:space="preserve"><value>Tocca le celle dall'alto verso il basso</value></data>
+	<data name="Pascal_TitleFormat" xml:space="preserve"><value>Percorso di Pascal – {0} (Livello {1})</value></data>
+
+	<data name="Profile_AgeFormat" xml:space="preserve"><value>🎂 {0} anni</value></data>
+	<data name="Profile_IdFormat" xml:space="preserve"><value>ID: {0}</value></data>
+	<data name="Profile_MusicSubtitle" xml:space="preserve"><value>Musica di sottofondo</value></data>
+	<data name="Profile_MusicTitle" xml:space="preserve"><value>Musica</value></data>
+	<data name="Profile_SettingsTitle" xml:space="preserve"><value>⚙️ Impostazioni</value></data>
+	<data name="Profile_SoundSubtitle" xml:space="preserve"><value>Suoni di gioco</value></data>
+	<data name="Profile_SoundTitle" xml:space="preserve"><value>Effetti sonori</value></data>
+	<data name="Profile_StatsAll" xml:space="preserve"><value>Tutte le statistiche →</value></data>
+	<data name="Profile_StatsDialogMessage" xml:space="preserve"><value>Le tue statistiche di gioco appariranno qui presto!</value></data>
+	<data name="Profile_StatsDialogTitle" xml:space="preserve"><value>Statistiche</value></data>
+	<data name="Profile_StatsPlayed" xml:space="preserve"><value>Giocate</value></data>
+	<data name="Profile_StatsSolved" xml:space="preserve"><value>Risolte</value></data>
+	<data name="Profile_StatsStreak" xml:space="preserve"><value>Serie</value></data>
+	<data name="Profile_StatsTitle" xml:space="preserve"><value>📊 Statistiche</value></data>
+	<data name="Profile_Title" xml:space="preserve"><value>Il mio profilo</value></data>
+	<data name="Profile_Version" xml:space="preserve"><value>Versione 1.0.0 • Fatto con ❤️</value></data>
+	<data name="Profile_LanguageTitle" xml:space="preserve"><value>Lingua</value></data>
+	<data name="Profile_LanguageSubtitle" xml:space="preserve"><value>Seleziona la lingua dell'app</value></data>
+
+	<data name="Puzzle_BuyHintMessage" xml:space="preserve"><value>Rivelare un numero per {0} monete?</value></data>
+	<data name="Puzzle_BuyHintTitle" xml:space="preserve"><value>Acquistare suggerimento?</value></data>
+	<data name="Puzzle_HintTitle" xml:space="preserve"><value>Suggerimento</value></data>
+	<data name="Puzzle_AllDigitsCorrect" xml:space="preserve"><value>Tutte le cifre sono già corrette! Premi "Apri" per vincere.</value></data>
+	<data name="Puzzle_EnterCode" xml:space="preserve"><value>🔐 INSERISCI IL CODICE</value></data>
+	<data name="Puzzle_ErrorTitle" xml:space="preserve"><value>Errore</value></data>
+	<data name="Puzzle_Generating" xml:space="preserve"><value>Creazione puzzle in corso...</value></data>
+	<data name="Puzzle_HintButton" xml:space="preserve"><value>💡 Suggerimento (10)</value></data>
+	<data name="Puzzle_HintsTitle" xml:space="preserve"><value>SUGGERIMENTI</value></data>
+	<data name="Puzzle_IncompleteMessage" xml:space="preserve"><value>Compila tutti i campi.</value></data>
+	<data name="Puzzle_IncompleteTitle" xml:space="preserve"><value>Incompleto</value></data>
+	<data name="Puzzle_InvalidMessage" xml:space="preserve"><value>Ogni numero può comparire una sola volta.</value></data>
+	<data name="Puzzle_InvalidTitle" xml:space="preserve"><value>Non valido</value></data>
+	<data name="Puzzle_NoPuzzleMessage" xml:space="preserve"><value>Nessun puzzle caricato.</value></data>
+	<data name="Puzzle_OpenButton" xml:space="preserve"><value>🔓 Apri</value></data>
+	<data name="Puzzle_RewardFormat" xml:space="preserve"><value>Ricevi {0} monete 💰</value></data>
+	<data name="Puzzle_Solved" xml:space="preserve"><value>🎉 RISOLTO!</value></data>
+	<data name="Puzzle_TitleFormat" xml:space="preserve"><value>Code Breaker – {0}</value></data>
+	<data name="Puzzle_WrongMessageFormat" xml:space="preserve"><value>Il codice è sbagliato.
+
+Il tuo codice: {0}
+Soluzione (Debug): {1}</value></data>
+	<data name="Puzzle_WrongTitle" xml:space="preserve"><value>Sbagliato ❌</value></data>
+
+	<data name="LockRiddle_NoDigitCorrect" xml:space="preserve"><value>Nessuna cifra è corretta</value></data>
+	<data name="LockRiddle_OneCorrectWellPlaced" xml:space="preserve"><value>Una cifra è corretta e nella posizione giusta</value></data>
+	<data name="LockRiddle_OneCorrectWrongPlaced" xml:space="preserve"><value>Una cifra è corretta ma nella posizione sbagliata</value></data>
+	<data name="LockRiddle_HintWellPlacedFormat" xml:space="preserve"><value>In questo suggerimento {0} {1} sono corrette e nella posizione giusta</value></data>
+	<data name="LockRiddle_HintWrongPlacedFormat" xml:space="preserve"><value>In questo suggerimento {0} {1} sono corrette ma nella posizione sbagliata</value></data>
+	<data name="LockRiddle_HintMixedFormat" xml:space="preserve"><value>In questo suggerimento {0} {1} sono corrette: {2} nella posizione giusta, {3} nella posizione sbagliata</value></data>
+	<data name="LockRiddle_NumberSingular" xml:space="preserve"><value>cifra</value></data>
+	<data name="LockRiddle_NumberPlural" xml:space="preserve"><value>cifre</value></data>
+
+	<data name="Game_Codebreaker_Title" xml:space="preserve"><value>Code Breaker (Matematica)</value></data>
+	<data name="Game_Codebreaker_Description" xml:space="preserve"><value>Decifra il codice usando indizi logici</value></data>
+	<data name="Game_Codebreaker_Rule1" xml:space="preserve"><value>Trova il codice corretto per aprire il lucchetto</value></data>
+	<data name="Game_Codebreaker_Rule2" xml:space="preserve"><value>Ogni indizio mostra se una cifra è presente nel codice e se si trova nella posizione giusta</value></data>
+	<data name="Game_Codebreaker_Rule3" xml:space="preserve"><value>Vinci quando tutte le cifre sono posizionate correttamente</value></data>
+
+	<data name="Game_MathCross_Title" xml:space="preserve"><value>Math Cross</value></data>
+	<data name="Game_MathCross_Description" xml:space="preserve"><value>Risolvi il cruciverba matematico con equazioni</value></data>
+	<data name="Game_MathCross_Rule1" xml:space="preserve"><value>Riempi la griglia con numeri e operatori (+ − × ÷) in modo che ogni riga e colonna formi un'equazione valida</value></data>
+	<data name="Game_MathCross_Rule2" xml:space="preserve"><value>Non puoi modificare le celle già inserite</value></data>
+	<data name="Game_MathCross_Rule3" xml:space="preserve"><value>Vinci quando tutte le equazioni sono corrette</value></data>
+
+	<data name="Game_PascalTriangle_Title" xml:space="preserve"><value>Percorso di Pascal</value></data>
+	<data name="Game_PascalTriangle_Description" xml:space="preserve"><value>Trova il percorso ottimale attraverso il triangolo</value></data>
+	<data name="Game_PascalTriangle_Rule1" xml:space="preserve"><value>Scegli un percorso connesso dall'alto verso il basso</value></data>
+	<data name="Game_PascalTriangle_Rule2" xml:space="preserve"><value>Per ogni riga puoi scegliere solo una delle due celle adiacenti</value></data>
+	<data name="Game_PascalTriangle_Rule3" xml:space="preserve"><value>L'obiettivo è la somma minima o massima a seconda del compito</value></data>
+
+	<data name="Game_MathHangman_Title" xml:space="preserve"><value>Math Hangman</value></data>
+	<data name="Game_MathHangman_Description" xml:space="preserve"><value>Indovina il numero in base alle sue proprietà matematiche</value></data>
+	<data name="Game_MathHangman_Rule1" xml:space="preserve"><value>Indovina il numero segreto</value></data>
+	<data name="Game_MathHangman_Rule2" xml:space="preserve"><value>I suggerimenti rivelano le proprietà del numero</value></data>
+	<data name="Game_MathHangman_Rule3" xml:space="preserve"><value>Dopo 6 tentativi sbagliati il gioco è finito</value></data>
+
+	<data name="Game_NumberRain_Title" xml:space="preserve"><value>Pioggia di numeri</value></data>
+	<data name="Game_NumberRain_Description" xml:space="preserve"><value>Reagisci velocemente e raccogli i numeri giusti</value></data>
+	<data name="Game_NumberRain_Rule1" xml:space="preserve"><value>Tocca i numeri che corrispondono alla missione</value></data>
+	<data name="Game_NumberRain_Rule2" xml:space="preserve"><value>Una selezione sbagliata o un obiettivo mancato costa una vita</value></data>
+	<data name="Game_NumberRain_Rule3" xml:space="preserve"><value>Hai 3 vite — più sei veloce e preciso, meglio è</value></data>
+
+	<data name="NumberRain_Quest_SelectCountFormat" xml:space="preserve"><value>Seleziona {0} {1}</value></data>
+	<data name="NumberRain_Quest_CollectCountFormat" xml:space="preserve"><value>Raccogli {0} {1}</value></data>
+	<data name="NumberRain_Quest_CollectDualFormat" xml:space="preserve"><value>Raccogli {0} {1} e {2} {3}</value></data>
+	<data name="NumberRain_Quest_CollectTripleFormat" xml:space="preserve"><value>Raccogli {0} {1}, {2} {3} e {4} {5}</value></data>
+	<data name="NumberRain_Quest_TimedFormat" xml:space="preserve"><value>In {0}s: {1}</value></data>
+	<data name="NumberRain_Quest_AvoidFormat" xml:space="preserve"><value>{0}, ma evita {1}</value></data>
+	<data name="NumberRain_Quest_ComboFormat" xml:space="preserve"><value>Raggiungi combo {0} con regola: {1}</value></data>
+	<data name="NumberRain_Quest_SurviveHitsFormat" xml:space="preserve"><value>Sopravvivi {0}s e raggiungi almeno {1} centri</value></data>
+	<data name="NumberRain_Quest_SurviveMaxMissesFormat" xml:space="preserve"><value>Sopravvivi {0}s con max. {1} errori (regola: {2})</value></data>
+	<data name="NumberRain_Quest_ChainGreaterFormat" xml:space="preserve"><value>Regola a catena: Seleziona {0} numeri maggiori dell'ultima scelta</value></data>
+	<data name="NumberRain_Quest_ChainDivisibleFormat" xml:space="preserve"><value>Regola a catena: Seleziona {0} numeri divisibili per l'ultima scelta</value></data>
+	<data name="NumberRain_Quest_SwitchRuleFormat" xml:space="preserve"><value>Regola alternata: Ogni {0}s la regola alterna tra {1} e {2}</value></data>
+
+	<data name="NumberRain_LabelEvenNumbers" xml:space="preserve"><value>numeri pari</value></data>
+	<data name="NumberRain_LabelOddNumbers" xml:space="preserve"><value>numeri dispari</value></data>
+	<data name="NumberRain_LabelMultiplesOfFormat" xml:space="preserve"><value>multipli di {0}</value></data>
+	<data name="NumberRain_LabelOddMultiplesOfFormat" xml:space="preserve"><value>multipli dispari di {0}</value></data>
+	<data name="NumberRain_LabelEndsWithDigitFormat" xml:space="preserve"><value>termina con {0}</value></data>
+	<data name="NumberRain_LabelRangeFormat" xml:space="preserve"><value>intervallo {0}-{1}</value></data>
+	<data name="NumberRain_LabelLessThanFormat" xml:space="preserve"><value>&lt; {0}</value></data>
+	<data name="NumberRain_LabelGreaterThanFormat" xml:space="preserve"><value>&gt; {0}</value></data>
+	<data name="NumberRain_LabelTwoDigitNumbers" xml:space="preserve"><value>numeri a due cifre</value></data>
+	<data name="NumberRain_LabelDigitCountFormat" xml:space="preserve"><value>numeri a {0} cifre</value></data>
+	<data name="NumberRain_LabelContainsDigitFormat" xml:space="preserve"><value>contiene {0}</value></data>
+	<data name="NumberRain_LabelNotContainsDigitFormat" xml:space="preserve"><value>senza {0}</value></data>
+	<data name="NumberRain_LabelDigitSumEven" xml:space="preserve"><value>somma delle cifre pari</value></data>
+	<data name="NumberRain_LabelDigitSumOdd" xml:space="preserve"><value>somma delle cifre dispari</value></data>
+	<data name="NumberRain_LabelDigitSumEqualsFormat" xml:space="preserve"><value>somma delle cifre {0}</value></data>
+	<data name="NumberRain_LabelDivisibleBy2Or5" xml:space="preserve"><value>divisibile per 2 o 5</value></data>
+	<data name="NumberRain_LabelPrimes" xml:space="preserve"><value>numeri primi</value></data>
+	<data name="NumberRain_LabelNonPrimes" xml:space="preserve"><value>numeri non primi</value></data>
+	<data name="NumberRain_LabelSquares" xml:space="preserve"><value>quadrati perfetti</value></data>
+	<data name="NumberRain_LabelPalindrome" xml:space="preserve"><value>numeri palindromi</value></data>
+	<data name="NumberRain_LabelDigitSumPrime" xml:space="preserve"><value>somma delle cifre prima</value></data>
+	<data name="NumberRain_LabelContainsDigitAndEvenFormat" xml:space="preserve"><value>contiene {0} ed è pari</value></data>
+	<data name="NumberRain_LabelContainsDigitAndNotDivisibleFormat" xml:space="preserve"><value>contiene {0} e non divisibile per {1}</value></data>
+	<data name="NumberRain_LabelAtLeastTwoEqualDigits" xml:space="preserve"><value>almeno due cifre uguali</value></data>
+	<data name="NumberRain_LabelAllDigitsDifferent" xml:space="preserve"><value>tutte le cifre diverse</value></data>
+	<data name="NumberRain_LabelCloserToFormat" xml:space="preserve"><value>più vicino a {0}</value></data>
+	<data name="NumberRain_LabelDivisibleByBothFormat" xml:space="preserve"><value>divisibile per {0} e {1}</value></data>
+	<data name="NumberRain_LabelDivisibleByNotFormat" xml:space="preserve"><value>divisibile per {0} ma non per {1}</value></data>
+	<data name="NumberRain_LabelModuloFormat" xml:space="preserve"><value>mod {0} = {1}</value></data>
+	<data name="NumberRain_LabelPrimeGreaterThanFormat" xml:space="preserve"><value>primi &gt; {0}</value></data>
+	<data name="NumberRain_LabelPrimeContainsDigitFormat" xml:space="preserve"><value>primi contenenti {0}</value></data>
+	<data name="NumberRain_LabelSquareOrPrime" xml:space="preserve"><value>quadrato o primo</value></data>
+	<data name="NumberRain_LabelMultiplesAndDigitSumPrimeFormat" xml:space="preserve"><value>multipli di {0} con somma delle cifre prima</value></data>
+	<data name="NumberRain_LabelFibonacci" xml:space="preserve"><value>numeri di Fibonacci</value></data>
+	<data name="NumberRain_LabelPowersOfTwo" xml:space="preserve"><value>potenze di 2</value></data>
+	<data name="NumberRain_LabelDigitsIncreasing" xml:space="preserve"><value>cifre strettamente crescenti</value></data>
+	<data name="NumberRain_LabelDigitsDecreasing" xml:space="preserve"><value>cifre strettamente decrescenti</value></data>
+	<data name="NumberRain_LabelContainsDigitNotFormat" xml:space="preserve"><value>contiene {0} ma non {1}</value></data>
+	<data name="NumberRain_LabelDivisibleByButDigitSumOddFormat" xml:space="preserve"><value>divisibile per {0} con somma delle cifre dispari</value></data>
+	<data name="NumberRain_LabelPalindromeDivisibleByFormat" xml:space="preserve"><value>palindromo e divisibile per {0}</value></data>
+	<data name="NumberRain_LabelContainsDigitAndDigitSumPrimeFormat" xml:space="preserve"><value>contiene {0} e somma delle cifre prima</value></data>
+	<data name="NumberRain_LabelPrimeDigitSumFormat" xml:space="preserve"><value>primo con somma delle cifre {0}</value></data>
+	<data name="NumberRain_LabelModuloDigitSumPrimeFormat" xml:space="preserve"><value>mod {0}={1} con somma delle cifre prima</value></data>
+	<data name="NumberRain_LabelContainsDigitModuloOddFormat" xml:space="preserve"><value>contiene {0}, mod {1}={2}, dispari</value></data>
+	<data name="NumberRain_LabelHarshadWithoutTen" xml:space="preserve"><value>Harshad, non divisibile per 10</value></data>
+	<data name="NumberRain_LabelPronic" xml:space="preserve"><value>numeri pronici</value></data>
+	<data name="NumberRain_LabelAutomorphic" xml:space="preserve"><value>numeri automorfi</value></data>
+	<data name="NumberRain_LabelPalindromeNotPrime" xml:space="preserve"><value>palindromo, non primo</value></data>
+	<data name="NumberRain_LabelSquareContainsDigitFormat" xml:space="preserve"><value>quadrato perfetto contenente {0}</value></data>
+	<data name="NumberRain_LabelSemiPrime" xml:space="preserve"><value>numeri semiprimi</value></data>
+	<data name="NumberRain_LabelSquareFree" xml:space="preserve"><value>numeri privi di quadrati</value></data>
+	<data name="NumberRain_LabelHits" xml:space="preserve"><value>Centri</value></data>
+	<data name="NumberRain_LabelRuleR" xml:space="preserve"><value>Regola R</value></data>
+	<data name="NumberRain_LabelRuleHeavy" xml:space="preserve"><value>regola difficile</value></data>
+	<data name="NumberRain_LabelRulePrimeOrMod3" xml:space="preserve"><value>primo o mod 3</value></data>
+	<data name="NumberRain_LabelRuleR1Even" xml:space="preserve"><value>R1: pari</value></data>
+	<data name="NumberRain_LabelRuleR2Prime" xml:space="preserve"><value>R2: primo</value></data>
+	<data name="NumberRain_LabelGreaterThanLastPick" xml:space="preserve"><value>maggiore dell'ultima scelta</value></data>
+	<data name="NumberRain_LabelDivisibleByLastPick" xml:space="preserve"><value>divisibile per l'ultima scelta</value></data>
+	<data name="NumberRain_LabelBombDigitFormat" xml:space="preserve"><value>cifra {0}</value></data>
+
+	<data name="Game_Sequence_Title" xml:space="preserve"><value>Completa la sequenza</value></data>
+	<data name="Game_Sequence_Description" xml:space="preserve"><value>Inserisci il numero mancante</value></data>
+	<data name="Game_Sequence_Rule1" xml:space="preserve"><value>Trova il numero mancante nella sequenza</value></data>
+	<data name="Game_Sequence_Rule2" xml:space="preserve"><value>Solo un'opzione è corretta</value></data>
+	<data name="Game_Sequence_Rule3" xml:space="preserve"><value>Hai tre vite per livello</value></data>
+
+	<data name="Sequence_TitleFormat" xml:space="preserve"><value>Completa la sequenza – {0} (Livello {1})</value></data>
+	<data name="Sequence_Prompt" xml:space="preserve"><value>Inserisci il numero mancante</value></data>
+	<data name="Sequence_LivesFormat" xml:space="preserve"><value>Vite: {0}</value></data>
+	<data name="Sequence_CorrectTitle" xml:space="preserve"><value>Corretto! 🎉</value></data>
+	<data name="Sequence_CorrectMessageFormat" xml:space="preserve"><value>Il numero mancante è {0}.
++{1} Monete</value></data>
+	<data name="Sequence_WrongTitle" xml:space="preserve"><value>Sbagliato ❌</value></data>
+	<data name="Sequence_WrongMessageFormat" xml:space="preserve"><value>Riprova. Vite rimaste: {0}</value></data>
+	<data name="Sequence_GameOverTitle" xml:space="preserve"><value>Nessuna vita rimasta</value></data>
+	<data name="Sequence_GameOverMessage" xml:space="preserve"><value>Non hai più vite. Riprovare?</value></data>
+	<data name="Sequence_HintButton" xml:space="preserve"><value>Suggerimento</value></data>
+	<data name="Sequence_HintTitle" xml:space="preserve"><value>Suggerimento</value></data>
+	<data name="Sequence_Hint_Arithmetic" xml:space="preserve"><value>Controlla se la differenza tra numeri adiacenti rimane costante.</value></data>
+	<data name="Sequence_Hint_Geometric" xml:space="preserve"><value>Controlla se ogni numero viene moltiplicato per un fattore fisso.</value></data>
+	<data name="Sequence_Hint_Squares" xml:space="preserve"><value>Questi sono quadrati perfetti.</value></data>
+	<data name="Sequence_Hint_Triangular" xml:space="preserve"><value>Questi sono numeri triangolari.</value></data>
+	<data name="Sequence_Hint_Pentagonal" xml:space="preserve"><value>Questi sono numeri pentagonali.</value></data>
+	<data name="Sequence_Hint_Alternating" xml:space="preserve"><value>I passi alternano tra due schemi.</value></data>
+	<data name="Sequence_Hint_RepeatingDiff" xml:space="preserve"><value>Le differenze si ripetono in un ciclo breve.</value></data>
+	<data name="Sequence_Hint_Fallback" xml:space="preserve"><value>Osserva attentamente i cambiamenti tra i numeri consecutivi.</value></data>
+
+	<data xml:space="preserve" name="Puzzle_Professor_SuccessMessage_1"><value>✨ Decifrato alla perfezione!</value></data>
+	<data xml:space="preserve" name="Puzzle_Professor_SuccessMessage_2"><value>🚀 Accesso consentito, ottimo lavoro!</value></data>
+	<data xml:space="preserve" name="Puzzle_Professor_SuccessMessage_3"><value>🎉 Lucchetto violato da vero professionista!</value></data>
+	<data xml:space="preserve" name="Puzzle_Professor_SuccessMessage_4"><value>🟢 Codice corretto. Sistema stabile.</value></data>
+	<data xml:space="preserve" name="Puzzle_Professor_SuccessMessage_5"><value>💡 Geniale! Era il codice giusto.</value></data>
+	<data xml:space="preserve" name="Puzzle_Professor_WrongMessage_1"><value>❌ Accesso negato. Riprova!</value></data>
+	<data xml:space="preserve" name="Puzzle_Professor_WrongMessage_2"><value>🤔 Hmm… il lucchetto rimane chiuso.</value></data>
+	<data xml:space="preserve" name="Puzzle_Professor_WrongMessage_3"><value>🔴 Codice instabile. Nuovo tentativo!</value></data>
+	<data xml:space="preserve" name="Puzzle_Professor_WrongMessage_4"><value>⚠️ Quasi! Ma non è del tutto corretto.</value></data>
+	<data xml:space="preserve" name="Puzzle_Professor_WrongMessage_5"><value>😈 Il lucchetto ride soltanto… riprova 😉</value></data>
+</root>

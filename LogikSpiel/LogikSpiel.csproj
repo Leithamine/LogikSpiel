@@ -75,14 +75,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Compile Update="Resources\Strings\AppResources.Designer.cs">
-	    <DesignTime>True</DesignTime>
-	    <AutoGen>True</AutoGen>
-	    <DependentUpon>AppResources.resx</DependentUpon>
-	  </Compile>
-	</ItemGroup>
-
-	<ItemGroup>
 		<MauiXaml Update="Resources\Styles\ConverterResources.xaml">
 		  <Generator>MSBuild:Compile</Generator>
 		</MauiXaml>
@@ -128,19 +120,16 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<EmbeddedResource Update="Resources\Strings\AppResources.resx">
-			<Generator>PublicResXFileCodeGenerator</Generator>
-			<PublicClass>true</PublicClass>
-			<CustomToolNamespace>LogikSpiel.Resources.Strings</CustomToolNamespace>
-			<LastGenOutput>AppResources.Designer.cs</LastGenOutput>
+		<EmbeddedResource Update="Resources\Strings\AppRessources.resx">
+		  <Generator>ResXFileCodeGenerator</Generator>
+		  <LastGenOutput>AppRessources.Designer.cs</LastGenOutput>
 		</EmbeddedResource>
-		<EmbeddedResource Update="Resources\Strings\AppResources.de.resx" />
-		<EmbeddedResource Update="Resources\Strings\AppResources.en.resx" />
-		<EmbeddedResource Update="Resources\Strings\AppResources.es.resx" />
-		<EmbeddedResource Update="Resources\Strings\AppResources.fr.resx" />
-		<EmbeddedResource Update="Resources\Strings\AppResources.it.resx" />
-		<EmbeddedResource Update="Resources\Strings\AppResources.pt.resx" />
-		<EmbeddedResource Update="Resources\Strings\AppResources.ar.resx" />
 	</ItemGroup>
-
+	<ItemGroup>
+		<Compile Update="Resources\Strings\AppRessources.Designer.cs">
+		  <DesignTime>True</DesignTime>
+		  <AutoGen>True</AutoGen>
+		  <DependentUpon>AppRessources.resx</DependentUpon>
+		</Compile>
+	</ItemGroup>
 </Project>

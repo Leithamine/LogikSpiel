@@ -48,41 +48,56 @@
                 <!-- 👨‍🏫 Professor + Bubble -->
                 <Grid IsVisible="{Binding ShowProfessor}"
                       ColumnDefinitions="Auto,*"
-                      ColumnSpacing="10"
-                      HorizontalOptions="Center">
-
+                      ColumnSpacing="0"
+                      HorizontalOptions="Center"
+                      Margin="0, 0, 0, -10">
                     <Image x:Name="ProfessorImage"
                            Grid.Column="0"
                            Source="{Binding ProfessorImageSource}"
-                           WidthRequest="130"
-                           HeightRequest="150"
+                           WidthRequest="110"  HeightRequest="110"
                            Aspect="AspectFit"
-                           VerticalOptions="Center"/>
+                           VerticalOptions="Start"/>
+                    <Grid Grid.Column="1" VerticalOptions="Start" Margin="0, 20, 0, 0">
 
-                    <!-- Speech bubble positioned at mouth level (~55px from top of 150px professor image) -->
-                    <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Start" Margin="0,55,0,0">
-
-                        <!-- Bubble -->
+                        <Border x:Name="SpeechTail"
+                                WidthRequest="16"
+                                HeightRequest="16"
+                                BackgroundColor="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
+                                Stroke="{StaticResource C_Primary}"
+                                StrokeThickness="1.5"
+                                StrokeShape="RoundRectangle 4"
+                                Rotation="45"
+                                HorizontalOptions="Start"
+                                VerticalOptions="Center"
+                                TranslationX="6"
+                                Scale="0"
+                                Opacity="0"
+                                ZIndex="0"/>
                         <Border x:Name="SpeechBubble"
+                                Margin="12, 0, 0, 0"
                                 BackgroundColor="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
                                 Stroke="{StaticResource C_Primary}"
                                 StrokeThickness="2"
-                                StrokeShape="RoundRectangle 16"
+                                StrokeShape="RoundRectangle 18"
                                 Scale="0"
                                 Opacity="0"
-                                Padding="12,10">
-
+                                Padding="14,10"
+                                ZIndex="1">
+                            <Border.Shadow>
+                                <Shadow Brush="{StaticResource C_Primary}"
+                                        Opacity="0.35"
+                                        Radius="12"/>
+                            </Border.Shadow>
                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="4">
                                 <Label x:Name="ProfessorLabel"
                                        Text="{Binding ProfessorMessage}"
                                        FontSize="15"
                                        LineBreakMode="WordWrap"
                                        TextColor="{AppThemeBinding Light={StaticResource C_TextDark}, Dark={StaticResource C_TextPrimary}}"/>
-
                                 <Button Grid.Column="1"
                                         Text="✕"
                                         BackgroundColor="Transparent"
-                                        TextColor="{StaticResource C_Danger}"
+                                        TextColor="{StaticResource C_Error}"
                                         FontSize="16"
                                         FontAttributes="Bold"
                                         WidthRequest="36"
@@ -93,20 +108,7 @@
                                         Command="{Binding CloseProfessorCommand}"/>
                             </Grid>
                         </Border>
-
-                        <!-- Bubble Tail (points left toward professor's mouth) -->
-                        <Border x:Name="SpeechTail"
-                                WidthRequest="14"
-                                HeightRequest="14"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
-                                Stroke="{StaticResource C_Primary}"
-                                StrokeThickness="1.5"
-                                StrokeShape="RoundRectangle 3"
-                                Rotation="45"
-                                TranslationX="-6"
-                                HorizontalOptions="Start"/>
-
-                    </VerticalStackLayout>
+                    </Grid>
                 </Grid>
 
                 <!-- 🔒 Schlossbereich -->

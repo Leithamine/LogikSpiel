@@ -86,7 +86,7 @@ public sealed class AsyncCommand : ICommand
             {
                 if (Application.Current?.MainPage is Page page)
                 {
-                    await page.DisplayAlert(
+                    await page.DisplayAlertAsync(
                         LocalizationService.GetString("Common_ErrorTitle"),
                         ex.Message,
                         LocalizationService.GetString("Common_Ok"));
@@ -175,7 +175,7 @@ public sealed class AsyncCommand<T> : ICommand
             {
                 if (Application.Current?.MainPage is Page page)
                 {
-                    await page.DisplayAlert(
+                    await page.DisplayAlertAsync(
                         LocalizationService.GetString("Common_ErrorTitle"),
                         ex.Message,
                         LocalizationService.GetString("Common_Ok"));

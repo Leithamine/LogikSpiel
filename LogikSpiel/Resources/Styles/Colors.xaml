@@ -90,4 +90,7 @@
     <Color x:Key="C_NodeCurrentFill">#1E2532</Color>
     <Color x:Key="C_NodeCurrentStroke">#F2C94C</Color>
 
+    <Color x:Key="C_BubbleNeutral">#FF2A3342</Color>
+    <Color x:Key="C_BubbleSuccess">#4CAF50</Color>
+    <Color x:Key="C_BubbleError">#EB5757</Color>
 </ResourceDictionary>

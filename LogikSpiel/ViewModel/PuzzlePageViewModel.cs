@@ -131,7 +131,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
     public AsyncCommand ContinueCommand { get; }
     public AsyncCommand CloseProfessorCommand { get; }
     public AsyncCommand BackToMapCommand { get; }
-
+    private static readonly Random _rnd = new();
     public PuzzlePageViewModel(
         IGameProgressStore progressStore,
         IDialogService dialog,
@@ -203,6 +203,18 @@ public sealed class PuzzlePageViewModel : ObservableObject
         base.OnCultureChanged();
         RefreshHintDescriptions();
     }
+    private string GetRandomSuccessMessage()
+    {
+        int i = _rnd.Next(1, 6); // 1–5
+        return LocalizationService.GetString($"Puzzle_Professor_SuccessMessage_{i}");
+    }
+
+    private string GetRandomWrongMessage()
+    {
+        int i = _rnd.Next(1, 6);
+        return LocalizationService.GetString($"Puzzle_Professor_WrongMessage_{i}");
+    }
+
 
     public async Task LoadAsync(string gameId, string difficulty, int level)
     {
@@ -392,10 +404,10 @@ public sealed class PuzzlePageViewModel : ObservableObject
         // Mastermind-Stil: 🟢 = richtig platziert, 🟡 = falsche Position, ⬜ = nicht vorhanden
         int codeLen = hint.Slots.Count > 0 ? hint.Slots.Count : hint.WellPlaced + hint.WrongPlaced;
         string iconEmojis = "";
-        for (int i = 0; i < hint.WellPlaced; i++) iconEmojis += "🟢";
-        for (int i = 0; i < hint.WrongPlaced; i++) iconEmojis += "🟡";
+        for (int i = 0; i < hint.WellPlaced; i++) iconEmojis += "🎯";
+        for (int i = 0; i < hint.WrongPlaced; i++) iconEmojis += "🔄";
         int noMatch = codeLen - hint.WellPlaced - hint.WrongPlaced;
-        for (int i = 0; i < Math.Max(0, noMatch); i++) iconEmojis += "⬜";
+        for (int i = 0; i < Math.Max(0, noMatch); i++) iconEmojis += "🚫";
 
         return new LockHint
         {
@@ -456,8 +468,9 @@ public sealed class PuzzlePageViewModel : ObservableObject
                     if (!digit.IsLocked)
                         digit.Digit = "";
                 }
+                BubbleColor = (Color)Application.Current.Resources["C_BubbleError"];
+                ProfessorMessage = GetRandomWrongMessage();
                 ShowProfessor = true;
-                ProfessorMessage = LocalizationService.GetString("Puzzle_Professor_WrongMessage");
             });
 
             return;
@@ -540,7 +553,8 @@ public sealed class PuzzlePageViewModel : ObservableObject
         {
             LockImageSource = "openedlock.png";
             RewardText = reward > 0 ? LocalizationService.Format("Puzzle_RewardFormat", reward) : "";
-            ProfessorMessage = LocalizationService.GetString("Puzzle_Professor_SuccessMessage");
+            ProfessorMessage = GetRandomSuccessMessage();
+            BubbleColor = (Color)Application.Current.Resources["C_BubbleSuccess"];
             ShowProfessor = true;
             IsCelebrating = true;
         });
@@ -588,7 +602,13 @@ public sealed class PuzzlePageViewModel : ObservableObject
             }
         }
     }
+    private Color _bubbleColor = (Color)Application.Current.Resources["C_BubbleNeutral"];
 
+    public Color BubbleColor
+    {
+        get => _bubbleColor;
+        set => SetProperty(ref _bubbleColor, value);
+    }
     private static LockHint NormalizeHint(LockHint hint, int codeLength)
     {
         var slots = hint.Slots ?? new List<string>();

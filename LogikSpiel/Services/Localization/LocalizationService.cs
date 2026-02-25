@@ -41,7 +41,7 @@ public static class LocalizationService
     }
 
     public static string GetString(string key)
-        => AppResources.ResourceManager.GetString(key, CultureInfo.CurrentUICulture) ?? key;
+        => AppRessources.ResourceManager.GetString(key, CultureInfo.CurrentUICulture) ?? key;
 
     public static string Format(string key, params object[] args)
         => string.Format(CultureInfo.CurrentCulture, GetString(key), args);

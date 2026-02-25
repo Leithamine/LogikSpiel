@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using LogikSpiel.Resources.Strings;
 using LogikSpiel.Services.Localization;
 
 namespace LogikSpiel.Resources.Strings;
@@ -17,7 +18,7 @@ public sealed class LocalizationResourceManager : INotifyPropertyChanged
         LocalizationService.CultureChanged += (_, _) => OnPropertyChanged(string.Empty);
     }
 
-    public string this[string key] => AppResources.ResourceManager.GetString(key) ?? key;
+    public string this[string key] => AppRessources.ResourceManager.GetString(key) ?? key;
 
     private void OnPropertyChanged([CallerMemberName] string? name = null)
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));

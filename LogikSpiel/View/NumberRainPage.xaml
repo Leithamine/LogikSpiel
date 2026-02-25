@@ -38,7 +38,7 @@
                     <Label Text="{resx:Translate Key=NumberRain_Title}"
                            Style="{StaticResource H2}"
                            HorizontalOptions="Center" />
-                    <Label Text="{Binding LevelNumber, StringFormat={x:Static resx:AppResources.Common_LevelFormat}}"
+                    <Label Text="{Binding LevelNumber, StringFormat={x:Static resx:AppRessources.Common_LevelFormat}}"
                            TextColor="{StaticResource C_TextMuted}"
                            FontSize="{OnIdiom Phone=12, Desktop=14}"
                            HorizontalOptions="Center"

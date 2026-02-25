@@ -1,0 +1,564 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<!-- 
+		Microsoft ResX Schema
+
+		Version 1.3
+
+		The primary goals of this format is to allow a simple XML format 
+		that is mostly human readable. The generation and parsing of the 
+		various data types are done through the TypeConverter classes 
+		associated with the data types.
+
+		Example:
+
+		... ado.net/XML headers & schema ...
+		<resheader name="resmimetype">text/microsoft-resx</resheader>
+		<resheader name="version">1.3</resheader>
+		<resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+		<resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+		<data name="Name1">this is my long string</data>
+		<data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+		<data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+			[base64 mime encoded serialized .NET Framework object]
+		</data>
+		<data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+			[base64 mime encoded string representing a byte array form of the .NET Framework object]
+		</data>
+
+		There are any number of "resheader" rows that contain simple 
+		name/value pairs.
+
+		Each data row contains a name, and value. The row also contains a 
+		type or mimetype. Type corresponds to a .NET class that support 
+		text/value conversion through the TypeConverter architecture. 
+		Classes that don't support this are serialized and stored with the 
+		mimetype set.
+
+		The mimetype is used for serialized objects, and tells the 
+		ResXResourceReader how to depersist the object. This is currently not 
+		extensible. For a given mimetype the value must be set accordingly:
+
+		Note - application/x-microsoft.net.object.binary.base64 is the format 
+		that the ResXResourceWriter will generate, however the reader can 
+		read any of the formats listed below.
+
+		mimetype: application/x-microsoft.net.object.binary.base64
+		value   : The object must be serialized with 
+			: System.Serialization.Formatters.Binary.BinaryFormatter
+			: and then encoded with base64 encoding.
+
+		mimetype: application/x-microsoft.net.object.soap.base64
+		value   : The object must be serialized with 
+			: System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+			: and then encoded with base64 encoding.
+
+		mimetype: application/x-microsoft.net.object.bytearray.base64
+		value   : The object must be serialized into a byte array 
+			: using a System.ComponentModel.TypeConverter
+			: and then encoded with base64 encoding.
+	-->
+	
+	<xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+		<xsd:element name="root" msdata:IsDataSet="true">
+			<xsd:complexType>
+				<xsd:choice maxOccurs="unbounded">
+					<xsd:element name="data">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+								<xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+							</xsd:sequence>
+							<xsd:attribute name="name" type="xsd:string" msdata:Ordinal="1" />
+							<xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+							<xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+						</xsd:complexType>
+					</xsd:element>
+					<xsd:element name="resheader">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+							</xsd:sequence>
+							<xsd:attribute name="name" type="xsd:string" use="required" />
+						</xsd:complexType>
+					</xsd:element>
+				</xsd:choice>
+			</xsd:complexType>
+		</xsd:element>
+	</xsd:schema>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>1.3</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<data name="Common_Back" xml:space="preserve"><value>رجوع</value></data>
+	<data name="Common_BackArrow" xml:space="preserve"><value>→</value></data>
+	<data name="Common_Cancel" xml:space="preserve"><value>إلغاء</value></data>
+	<data name="Common_CoinsRewardFormat" xml:space="preserve"><value>✨ +{0} عملة</value></data>
+	<data name="Common_LeavePuzzlePrompt" xml:space="preserve"><value>هل تريد فعلاً مغادرة اللغز؟</value></data>
+	<data name="Common_LevelFormat" xml:space="preserve"><value>🧩 المستوى {0}</value></data>
+	<data name="Common_NeedCoinsFormat" xml:space="preserve"><value>💰 تحتاج إلى {0} عملة!</value></data>
+	<data name="Common_No" xml:space="preserve"><value>لا</value></data>
+	<data name="Common_NotEnoughCoinsTitle" xml:space="preserve"><value>عملات غير كافية</value></data>
+	<data name="Common_PriceCoinsFormat" xml:space="preserve"><value>{0} 💰</value></data>
+	<data name="Common_Purchased" xml:space="preserve"><value>تم الشراء</value></data>
+	<data name="Common_Retry" xml:space="preserve"><value>حاول مجدداً</value></data>
+	<data name="Common_Yes" xml:space="preserve"><value>نعم</value></data>
+	<data name="Common_Ok" xml:space="preserve"><value>حسناً</value></data>
+	<data name="Common_ErrorTitle" xml:space="preserve"><value>خطأ</value></data>
+
+	<data name="Difficulty_Complex" xml:space="preserve"><value>معقد</value></data>
+	<data name="Difficulty_Easy" xml:space="preserve"><value>سهل</value></data>
+	<data name="Difficulty_God" xml:space="preserve"><value>إلهي</value></data>
+	<data name="Difficulty_Hard" xml:space="preserve"><value>صعب</value></data>
+	<data name="Difficulty_Master" xml:space="preserve"><value>أستاذ</value></data>
+	<data name="Difficulty_Normal" xml:space="preserve"><value>عادي</value></data>
+
+	<data name="GameHost_InfoBody" xml:space="preserve"><value>واجهة اللغز الحقيقية ستظهر هنا لاحقاً. "حل" تُعلّم المستوى كمكتمل وتحمّل التالي تلقائياً.</value></data>
+	<data name="GameHost_InfoTitle" xml:space="preserve"><value>🎮 معلومات اللعبة</value></data>
+	<data name="GameHost_RulesButton" xml:space="preserve"><value>📖 القواعد</value></data>
+	<data name="GameHost_SolveButton" xml:space="preserve"><value>✅ حل</value></data>
+	<data name="GameHost_TitleDefault" xml:space="preserve"><value>لغز</value></data>
+	<data name="GameHost_TitleFormat" xml:space="preserve"><value>{0} – {1} – المستوى {2}</value></data>
+
+	<data name="GameMap_DifficultyEasy" xml:space="preserve"><value>🌱 سهل</value></data>
+	<data name="GameMap_DifficultyHard" xml:space="preserve"><value>🔥 صعب</value></data>
+	<data name="GameMap_DifficultyMaster" xml:space="preserve"><value>👑 أستاذ</value></data>
+	<data name="GameMap_DifficultyNormal" xml:space="preserve"><value>⭐ عادي</value></data>
+	<data name="GameMap_DifficultyTitle" xml:space="preserve"><value>🎮 الصعوبة</value></data>
+	<data name="GameMap_TitleDefault" xml:space="preserve"><value>الخريطة</value></data>
+
+	<data name="Learn_RulesTitle" xml:space="preserve"><value>قواعد اللعبة</value></data>
+	<data name="Learn_TitleDefault" xml:space="preserve"><value>القواعد</value></data>
+
+	<data name="Main_GamesTitle" xml:space="preserve"><value>الألعاب</value></data>
+	<data name="Main_PlayButton" xml:space="preserve"><value>▶ العب</value></data>
+	<data name="Main_Subtitle" xml:space="preserve"><value>درّب عقلك</value></data>
+	<data name="Main_Title" xml:space="preserve"><value>ألعاب منطقية</value></data>
+	<data name="Main_Welcome" xml:space="preserve"><value>👋 أهلاً بعودتك!</value></data>
+	<data name="Main_WelcomeSub" xml:space="preserve"><value>اختر لعبة وابدأ!</value></data>
+
+	<data name="MathCross_BuyHintMessage" xml:space="preserve"><value>الكشف عن خلية مقابل {0} عملة؟</value></data>
+	<data name="MathCross_BuyHintTitle" xml:space="preserve"><value>شراء تلميح؟</value></data>
+	<data name="MathCross_ErrorGenerateMessage" xml:space="preserve"><value>تعذّر إنشاء اللغز.</value></data>
+	<data name="MathCross_ErrorTitle" xml:space="preserve"><value>خطأ</value></data>
+	<data name="MathCross_Generating" xml:space="preserve"><value>جارٍ إنشاء اللغز...</value></data>
+	<data name="MathCross_MissingMessageFormat" xml:space="preserve"><value>{0} خلايا مفقودة.</value></data>
+	<data name="MathCross_MissingTitle" xml:space="preserve"><value>مفقود</value></data>
+	<data name="MathCross_NoHintMessage" xml:space="preserve"><value>جميع الخلايا مملوءة بالفعل!</value></data>
+	<data name="MathCross_NoHintTitle" xml:space="preserve"><value>لا يوجد تلميح</value></data>
+	<data name="MathCross_ResetMessage" xml:space="preserve"><value>حذف جميع الإدخالات؟</value></data>
+	<data name="MathCross_ResetTitle" xml:space="preserve"><value>إعادة تعيين</value></data>
+	<data name="MathCross_SuccessTitle" xml:space="preserve"><value>رائع! 🎉</value></data>
+	<data name="MathCross_Tip" xml:space="preserve"><value>👆 اضغط على خلية</value></data>
+	<data name="MathCross_Title" xml:space="preserve"><value>Math Cross</value></data>
+	<data name="MathCross_TitleFormat" xml:space="preserve"><value>Math Cross – {0} (المستوى {1})</value></data>
+	<data name="MathCross_WrongMessage" xml:space="preserve"><value>خلية واحدة على الأقل غير صحيحة.</value></data>
+	<data name="MathCross_WrongTitle" xml:space="preserve"><value>خطأ</value></data>
+
+	<data name="MathHangman_BuyHintSheetTitle" xml:space="preserve"><value>💡 شراء تلميح</value></data>
+	<data name="MathHangman_DifficultyRangeFormat" xml:space="preserve"><value>النطاق: {0:N0} – {1:N0}</value></data>
+	<data name="MathHangman_DigitSumFormat" xml:space="preserve"><value>مجموع الأرقام: {0}</value></data>
+	<data name="MathHangman_ExamplesFormat" xml:space="preserve"><value>أمثلة: {0}</value></data>
+	<data name="MathHangman_GuessPlaceholder" xml:space="preserve"><value>أدخل رقماً...</value></data>
+	<data name="MathHangman_HintDistinctCountFormat" xml:space="preserve"><value>🎲 الرقم يحتوي على {0} أرقام مختلفة.</value></data>
+	<data name="MathHangman_HintFirstDigitFormat" xml:space="preserve"><value>🔝 الرقم الأول هو {0}.</value></data>
+	<data name="MathHangman_HintHasDoubleFalse" xml:space="preserve"><value>♻️ جميع الأرقام مختلفة.</value></data>
+	<data name="MathHangman_HintHasDoubleTrue" xml:space="preserve"><value>♻️ رقم واحد على الأقل يتكرر أكثر من مرة.</value></data>
+	<data name="MathHangman_HintLastDigitFormat" xml:space="preserve"><value>🔚 الرقم الأخير هو {0}.</value></data>
+	<data name="MathHangman_HintNotAvailable" xml:space="preserve"><value>💡 التلميح غير متاح.</value></data>
+	<data name="MathHangman_HintsPurchasedMessage" xml:space="preserve"><value>تم شراء جميع التلميحات بالفعل.</value></data>
+	<data name="MathHangman_HintsTitle" xml:space="preserve"><value>💡 التلميحات</value></data>
+	<data name="MathHangman_HintsTitleDialog" xml:space="preserve"><value>التلميحات</value></data>
+	<data name="MathHangman_InputMessage" xml:space="preserve"><value>الرجاء إدخال رقم.</value></data>
+	<data name="MathHangman_InputTitle" xml:space="preserve"><value>إدخال</value></data>
+	<data name="MathHangman_LoseMessageFormat" xml:space="preserve"><value>كان الرقم: {0}</value></data>
+	<data name="MathHangman_LoseTitle" xml:space="preserve"><value>خسرت 😢</value></data>
+	<data name="MathHangman_NotEnoughCoinsMessage" xml:space="preserve"><value>التلميح يكلف 10 عملات.</value></data>
+	<data name="MathHangman_PropertiesTitle" xml:space="preserve"><value>✨ خصائص العدد</value></data>
+	<data name="MathHangman_PropertyDetailsFormat" xml:space="preserve"><value>{0}
+أمثلة: {1}</value></data>
+
+	<!-- أداة (لـ "هذا الرقم هو {0}.") -->
+	<data name="MathHangman_Property_Abundant_Article" xml:space="preserve"><value>عدد</value></data>
+	<data name="MathHangman_Property_Armstrong_Article" xml:space="preserve"><value>عدد</value></data>
+	<data name="MathHangman_Property_Automorphic_Article" xml:space="preserve"><value>عدد</value></data>
+	<data name="MathHangman_Property_Composite_Article" xml:space="preserve"><value>عدد</value></data>
+	<data name="MathHangman_Property_Cube_Article" xml:space="preserve"><value>عدد</value></data>
+	<data name="MathHangman_Property_Deficient_Article" xml:space="preserve"><value>عدد</value></data>
+	<data name="MathHangman_Property_Even_Article" xml:space="preserve"><value>عدد</value></data>
+	<data name="MathHangman_Property_Factorial_Article" xml:space="preserve"><value>عدد</value></data>
+	<data name="MathHangman_Property_Fibonacci_Article" xml:space="preserve"><value>عدد</value></data>
+	<data name="MathHangman_Property_Happy_Article" xml:space="preserve"><value>عدد</value></data>
+	<data name="MathHangman_Property_Harshad_Article" xml:space="preserve"><value>عدد</value></data>
+	<data name="MathHangman_Property_Mersenne_Article" xml:space="preserve"><value>عدد</value></data>
+	<data name="MathHangman_Property_Odd_Article" xml:space="preserve"><value>عدد</value></data>
+	<data name="MathHangman_Property_Palindrome_Article" xml:space="preserve"><value>عدد</value></data>
+	<data name="MathHangman_Property_Perfect_Article" xml:space="preserve"><value>عدد</value></data>
+	<data name="MathHangman_Property_Prime_Article" xml:space="preserve"><value>عدد</value></data>
+	<data name="MathHangman_Property_Semiprime_Article" xml:space="preserve"><value>عدد</value></data>
+	<data name="MathHangman_Property_SophieGermain_Article" xml:space="preserve"><value>عدد</value></data>
+	<data name="MathHangman_Property_Square_Article" xml:space="preserve"><value>عدد</value></data>
+	<data name="MathHangman_Property_Strong_Article" xml:space="preserve"><value>عدد</value></data>
+	<data name="MathHangman_Property_Triangular_Article" xml:space="preserve"><value>عدد</value></data>
+
+	<data name="MathHangman_Property_Abundant_Examples" xml:space="preserve"><value>12, 18, 20, 24</value></data>
+	<data name="MathHangman_Property_Abundant_Key" xml:space="preserve"><value>عدد وفير</value></data>
+	<data name="MathHangman_Property_Abundant_KidDesc" xml:space="preserve"><value>مجموع مقسوماته أكبر من العدد نفسه.</value></data>
+
+	<data name="MathHangman_Property_Armstrong_Examples" xml:space="preserve"><value>153, 370, 407</value></data>
+	<data name="MathHangman_Property_Armstrong_Key" xml:space="preserve"><value>عدد أرمسترونج</value></data>
+	<data name="MathHangman_Property_Armstrong_KidDesc" xml:space="preserve"><value>مجموع كل رقم مرفوعاً لأس عدد الأرقام يساوي العدد.</value></data>
+
+	<data name="MathHangman_Property_Automorphic_Examples" xml:space="preserve"><value>5, 6, 25, 76</value></data>
+	<data name="MathHangman_Property_Automorphic_Key" xml:space="preserve"><value>عدد ذاتي الشكل</value></data>
+	<data name="MathHangman_Property_Automorphic_KidDesc" xml:space="preserve"><value>مربّعه ينتهي بالعدد نفسه.</value></data>
+
+	<data name="MathHangman_Property_Composite_Examples" xml:space="preserve"><value>4, 6, 8, 9, 10</value></data>
+	<data name="MathHangman_Property_Composite_Key" xml:space="preserve"><value>عدد مركّب</value></data>
+	<data name="MathHangman_Property_Composite_KidDesc" xml:space="preserve"><value>له أكثر من قاسمين.</value></data>
+
+	<data name="MathHangman_Property_Cube_Examples" xml:space="preserve"><value>1, 8, 27, 64</value></data>
+	<data name="MathHangman_Property_Cube_Key" xml:space="preserve"><value>مكعب تام</value></data>
+	<data name="MathHangman_Property_Cube_KidDesc" xml:space="preserve"><value>ناتج n × n × n.</value></data>
+
+	<data name="MathHangman_Property_Deficient_Examples" xml:space="preserve"><value>8, 10, 14, 16</value></data>
+	<data name="MathHangman_Property_Deficient_Key" xml:space="preserve"><value>عدد ناقص</value></data>
+	<data name="MathHangman_Property_Deficient_KidDesc" xml:space="preserve"><value>مجموع مقسوماته أصغر من العدد نفسه.</value></data>
+
+	<data name="MathHangman_Property_Even_Examples" xml:space="preserve"><value>2, 4, 6, 8</value></data>
+	<data name="MathHangman_Property_Even_Key" xml:space="preserve"><value>عدد زوجي</value></data>
+	<data name="MathHangman_Property_Even_KidDesc" xml:space="preserve"><value>يقبل القسمة على 2.</value></data>
+
+	<data name="MathHangman_Property_Factorial_Examples" xml:space="preserve"><value>1, 2, 6, 24, 120</value></data>
+	<data name="MathHangman_Property_Factorial_Key" xml:space="preserve"><value>عدد مضروب</value></data>
+	<data name="MathHangman_Property_Factorial_KidDesc" xml:space="preserve"><value>عدد على الشكل n!.</value></data>
+
+	<data name="MathHangman_Property_Fibonacci_Examples" xml:space="preserve"><value>1, 2, 3, 5, 8</value></data>
+	<data name="MathHangman_Property_Fibonacci_Key" xml:space="preserve"><value>عدد فيبوناتشي</value></data>
+	<data name="MathHangman_Property_Fibonacci_KidDesc" xml:space="preserve"><value>مجموع العددين السابقين.</value></data>
+
+	<data name="MathHangman_Property_Happy_Examples" xml:space="preserve"><value>1, 7, 10, 13, 19</value></data>
+	<data name="MathHangman_Property_Happy_Key" xml:space="preserve"><value>عدد سعيد</value></data>
+	<data name="MathHangman_Property_Happy_KidDesc" xml:space="preserve"><value>مجموع مربعات أرقامه يصل في النهاية إلى 1.</value></data>
+
+	<data name="MathHangman_Property_Harshad_Examples" xml:space="preserve"><value>18, 21, 72, 100</value></data>
+	<data name="MathHangman_Property_Harshad_Key" xml:space="preserve"><value>عدد هارشاد</value></data>
+	<data name="MathHangman_Property_Harshad_KidDesc" xml:space="preserve"><value>يقبل القسمة على مجموع أرقامه.</value></data>
+
+	<data name="MathHangman_Property_Mersenne_Examples" xml:space="preserve"><value>3, 7, 31, 127</value></data>
+	<data name="MathHangman_Property_Mersenne_Key" xml:space="preserve"><value>عدد أولي ميرسين</value></data>
+	<data name="MathHangman_Property_Mersenne_KidDesc" xml:space="preserve"><value>عدد أولي على الشكل 2^p - 1.</value></data>
+
+	<data name="MathHangman_Property_Odd_Examples" xml:space="preserve"><value>1, 3, 5, 7</value></data>
+	<data name="MathHangman_Property_Odd_Key" xml:space="preserve"><value>عدد فردي</value></data>
+	<data name="MathHangman_Property_Odd_KidDesc" xml:space="preserve"><value>لا يقبل القسمة على 2.</value></data>
+
+	<data name="MathHangman_Property_Palindrome_Examples" xml:space="preserve"><value>11, 22, 121, 1331</value></data>
+	<data name="MathHangman_Property_Palindrome_Key" xml:space="preserve"><value>عدد متناظر</value></data>
+	<data name="MathHangman_Property_Palindrome_KidDesc" xml:space="preserve"><value>يُقرأ بنفس الشكل من اليسار ومن اليمين.</value></data>
+
+	<data name="MathHangman_Property_Perfect_Examples" xml:space="preserve"><value>6, 28, 496</value></data>
+	<data name="MathHangman_Property_Perfect_Key" xml:space="preserve"><value>عدد كامل</value></data>
+	<data name="MathHangman_Property_Perfect_KidDesc" xml:space="preserve"><value>مجموع مقسوماته الحقيقية يساوي العدد نفسه.</value></data>
+
+	<data name="MathHangman_Property_Prime_Examples" xml:space="preserve"><value>2, 3, 5, 7, 11</value></data>
+	<data name="MathHangman_Property_Prime_Key" xml:space="preserve"><value>عدد أولي</value></data>
+	<data name="MathHangman_Property_Prime_KidDesc" xml:space="preserve"><value>يقبل القسمة على 1 وعلى نفسه فقط.</value></data>
+
+	<data name="MathHangman_Property_Semiprime_Examples" xml:space="preserve"><value>4, 6, 9, 10, 14</value></data>
+	<data name="MathHangman_Property_Semiprime_Key" xml:space="preserve"><value>عدد شبه أولي</value></data>
+	<data name="MathHangman_Property_Semiprime_KidDesc" xml:space="preserve"><value>حاصل ضرب عددين أوليين تماماً.</value></data>
+
+	<data name="MathHangman_Property_SophieGermain_Examples" xml:space="preserve"><value>2, 3, 5, 11, 23</value></data>
+	<data name="MathHangman_Property_SophieGermain_Key" xml:space="preserve"><value>عدد أولي صوفي جيرمان</value></data>
+	<data name="MathHangman_Property_SophieGermain_KidDesc" xml:space="preserve"><value>p أولي و 2p+1 أولي أيضاً.</value></data>
+
+	<data name="MathHangman_Property_Square_Examples" xml:space="preserve"><value>1, 4, 9, 16, 25</value></data>
+	<data name="MathHangman_Property_Square_Key" xml:space="preserve"><value>مربع تام</value></data>
+	<data name="MathHangman_Property_Square_KidDesc" xml:space="preserve"><value>ناتج n × n.</value></data>
+
+	<data name="MathHangman_Property_Strong_Examples" xml:space="preserve"><value>1, 2, 145</value></data>
+	<data name="MathHangman_Property_Strong_Key" xml:space="preserve"><value>عدد قوي</value></data>
+	<data name="MathHangman_Property_Strong_KidDesc" xml:space="preserve"><value>مجموع مضروبات أرقامه يساوي العدد نفسه.</value></data>
+
+	<data name="MathHangman_Property_Triangular_Examples" xml:space="preserve"><value>1, 3, 6, 10, 15</value></data>
+	<data name="MathHangman_Property_Triangular_Key" xml:space="preserve"><value>عدد مثلثي</value></data>
+	<data name="MathHangman_Property_Triangular_KidDesc" xml:space="preserve"><value>مجموع 1+2+...+n.</value></data>
+
+	<data name="MathHangman_ShopDistinctCountDesc" xml:space="preserve"><value>كم عدد الأرقام المختلفة؟</value></data>
+	<data name="MathHangman_ShopDistinctCountTitle" xml:space="preserve"><value>🎲 عدد الأرقام المختلفة</value></data>
+	<data name="MathHangman_ShopFirstDigitDesc" xml:space="preserve"><value>ما هو الرقم الأول؟</value></data>
+	<data name="MathHangman_ShopFirstDigitTitle" xml:space="preserve"><value>🔝 الرقم الأول</value></data>
+	<data name="MathHangman_ShopHasDoubleDesc" xml:space="preserve"><value>هل توجد أرقام متكررة؟</value></data>
+	<data name="MathHangman_ShopHasDoubleTitle" xml:space="preserve"><value>♻️ رقم متكرر؟</value></data>
+	<data name="MathHangman_ShopLastDigitDesc" xml:space="preserve"><value>ما هو رقم الآحاد؟</value></data>
+	<data name="MathHangman_ShopLastDigitTitle" xml:space="preserve"><value>🔚 الرقم الأخير</value></data>
+	<data name="MathHangman_Title" xml:space="preserve"><value>🎯 Math Hangman</value></data>
+	<data name="MathHangman_WinMessageFormat" xml:space="preserve"><value>صحيح! كان الرقم {0}
++50 عملة</value></data>
+	<data name="MathHangman_WinTitle" xml:space="preserve"><value>فزت! 🎉</value></data>
+
+	<data name="NumberProperty_TitleFormat" xml:space="preserve"><value>هذا الرقم هو {0}.</value></data>
+
+	<data name="NumberRain_ActiveRuleFormat" xml:space="preserve"><value>القاعدة النشطة: {0}</value></data>
+	<data name="NumberRain_AvoidFormat" xml:space="preserve"><value>تجنّب: {0}.</value></data>
+	<data name="NumberRain_ComboProgressFormat" xml:space="preserve"><value>كومبو: {0}/{1}</value></data>
+	<data name="NumberRain_Explain" xml:space="preserve"><value>شرح</value></data>
+	<data name="NumberRain_ExplainTitle" xml:space="preserve"><value>الشرح</value></data>
+	<data name="NumberRain_GameOverMessage" xml:space="preserve"><value>لقد فقدت جميع حياتك.</value></data>
+	<data name="NumberRain_GameOverTitle" xml:space="preserve"><value>انتهت اللعبة</value></data>
+	<data name="NumberRain_GoalsFormat" xml:space="preserve"><value>الهدف: {0}</value></data>
+	<data name="NumberRain_HitsMissesFormat" xml:space="preserve"><value>إصابات: {0}/{1} • أخطاء: {2}/{3}</value></data>
+	<data name="NumberRain_LeavePrompt" xml:space="preserve"><value>هل تريد مغادرة اللعبة؟</value></data>
+	<data name="NumberRain_MissesFormat" xml:space="preserve"><value>أخطاء: {0}/{1}</value></data>
+	<data name="NumberRain_MissionTitle" xml:space="preserve"><value>🧩 المهمة</value></data>
+	<data name="NumberRain_ModeLabel" xml:space="preserve"><value>الوضع</value></data>
+	<data name="NumberRain_Mode_Avoid" xml:space="preserve"><value>تجنّب</value></data>
+	<data name="NumberRain_Mode_Combo" xml:space="preserve"><value>كومبو</value></data>
+	<data name="NumberRain_Mode_Count" xml:space="preserve"><value>عدّ</value></data>
+	<data name="NumberRain_Mode_Dynamic" xml:space="preserve"><value>ديناميكي</value></data>
+	<data name="NumberRain_Mode_Multi" xml:space="preserve"><value>متعدد</value></data>
+	<data name="NumberRain_Mode_Survival" xml:space="preserve"><value>بقاء</value></data>
+	<data name="NumberRain_Mode_Switch" xml:space="preserve"><value>تبديل</value></data>
+	<data name="NumberRain_Mode_Timed" xml:space="preserve"><value>موقّت</value></data>
+	<data name="NumberRain_NoQuestLoaded" xml:space="preserve"><value>لم يتم تحميل أي مهمة.</value></data>
+	<data name="NumberRain_QuestReady" xml:space="preserve"><value>مستعد؟ اضغط ابدأ!</value></data>
+	<data name="NumberRain_RewardTitle" xml:space="preserve"><value>رائع! 🎉</value></data>
+	<data name="NumberRain_RuleFormat" xml:space="preserve"><value>القاعدة: {0}</value></data>
+	<data name="NumberRain_RulesFormat" xml:space="preserve"><value>قاعدة رياضية: {0}</value></data>
+	<data name="NumberRain_Start" xml:space="preserve"><value>ابدأ</value></data>
+	<data name="NumberRain_StatusReady" xml:space="preserve"><value>جاهز للبدء.</value></data>
+	<data name="NumberRain_StatusRunning" xml:space="preserve"><value>مطر الأرقام يعمل!</value></data>
+	<data name="NumberRain_TapInstruction" xml:space="preserve"><value>اضغط على الأرقام الصحيحة قبل أن تختفي في الأسفل.</value></data>
+	<data name="NumberRain_TimeLimitFormat" xml:space="preserve"><value>الحد الزمني: {0} ثانية.</value></data>
+	<data name="NumberRain_Title" xml:space="preserve"><value>🌧️ مطر الأرقام</value></data>
+
+	<data name="Onboarding_AgePlaceholder" xml:space="preserve"><value>عمرك (5–99)</value></data>
+	<data name="Onboarding_NamePlaceholder" xml:space="preserve"><value>اسمك</value></data>
+	<data name="Onboarding_Start" xml:space="preserve"><value>🚀 هيا نبدأ!</value></data>
+	<data name="Onboarding_Subtitle" xml:space="preserve"><value>أنشئ ملفك الشخصي وابدأ الرحلة!</value></data>
+	<data name="Onboarding_Title" xml:space="preserve"><value>👋 مرحباً!</value></data>
+
+	<data name="Pascal_BuyHintMessage" xml:space="preserve"><value>عرض أول خطوتين من مسار الحل مقابل {0} عملة؟</value></data>
+	<data name="Pascal_BuyHintTitle" xml:space="preserve"><value>شراء تلميح؟</value></data>
+	<data name="Pascal_GoalMax" xml:space="preserve"><value>الهدف: الحد الأقصى</value></data>
+	<data name="Pascal_GoalMin" xml:space="preserve"><value>الهدف: الحد الأدنى</value></data>
+	<data name="Pascal_NotEnoughCoinsMessage" xml:space="preserve"><value>تحتاج {0} عملة للحصول على تلميح!</value></data>
+	<data name="Pascal_NotOptimalMessageFormat" xml:space="preserve"><value>مجموعك: {0}
+أفضل مجموع {1}: {2}</value></data>
+	<data name="Pascal_NotOptimalTitle" xml:space="preserve"><value>غير مثالي ❌</value></data>
+	<data name="Pascal_OptimalWordMax" xml:space="preserve"><value>الأقصى</value></data>
+	<data name="Pascal_OptimalWordMin" xml:space="preserve"><value>الأدنى</value></data>
+	<data name="Pascal_PathEndMessageFormat" xml:space="preserve"><value>يجب أن ينتهي مسارك عند القاعدة (الصف {0}).</value></data>
+	<data name="Pascal_PathIncompleteMessageFormat" xml:space="preserve"><value>مسارك يحتوي على {0} خلايا، لكن المثلث يحتوي على {1} صفوف.
+يجب أن يمتد المسار من الأعلى إلى القاعدة.</value></data>
+	<data name="Pascal_PathIncompleteTitle" xml:space="preserve"><value>المسار غير مكتمل</value></data>
+	<data name="Pascal_PathStartMessage" xml:space="preserve"><value>يجب أن يبدأ مسارك من الأعلى (الصف 0).</value></data>
+	<data name="Pascal_PerfectMessageFormat" xml:space="preserve"><value>لقد وجدت المسار الأمثل!
++{0} عملة</value></data>
+	<data name="Pascal_PerfectTitle" xml:space="preserve"><value>مثالي! 🎉</value></data>
+	<data name="Pascal_TapInstruction" xml:space="preserve"><value>اضغط على الخلايا من الأعلى إلى الأسفل</value></data>
+	<data name="Pascal_TitleFormat" xml:space="preserve"><value>مسار باسكال – {0} (المستوى {1})</value></data>
+
+	<data name="Profile_AgeFormat" xml:space="preserve"><value>🎂 {0} سنة</value></data>
+	<data name="Profile_IdFormat" xml:space="preserve"><value>المعرّف: {0}</value></data>
+	<data name="Profile_MusicSubtitle" xml:space="preserve"><value>موسيقى الخلفية</value></data>
+	<data name="Profile_MusicTitle" xml:space="preserve"><value>الموسيقى</value></data>
+	<data name="Profile_SettingsTitle" xml:space="preserve"><value>⚙️ الإعدادات</value></data>
+	<data name="Profile_SoundSubtitle" xml:space="preserve"><value>أصوات اللعبة</value></data>
+	<data name="Profile_SoundTitle" xml:space="preserve"><value>المؤثرات الصوتية</value></data>
+	<data name="Profile_StatsAll" xml:space="preserve"><value>جميع الإحصائيات ←</value></data>
+	<data name="Profile_StatsDialogMessage" xml:space="preserve"><value>ستظهر إحصائيات لعبتك هنا قريباً!</value></data>
+	<data name="Profile_StatsDialogTitle" xml:space="preserve"><value>الإحصائيات</value></data>
+	<data name="Profile_StatsPlayed" xml:space="preserve"><value>ملعوبة</value></data>
+	<data name="Profile_StatsSolved" xml:space="preserve"><value>محلولة</value></data>
+	<data name="Profile_StatsStreak" xml:space="preserve"><value>سلسلة</value></data>
+	<data name="Profile_StatsTitle" xml:space="preserve"><value>📊 الإحصائيات</value></data>
+	<data name="Profile_Title" xml:space="preserve"><value>ملفي الشخصي</value></data>
+	<data name="Profile_Version" xml:space="preserve"><value>الإصدار 1.0.0 • صُنع بـ ❤️</value></data>
+	<data name="Profile_LanguageTitle" xml:space="preserve"><value>اللغة</value></data>
+	<data name="Profile_LanguageSubtitle" xml:space="preserve"><value>اختر لغة التطبيق</value></data>
+
+	<data name="Puzzle_BuyHintMessage" xml:space="preserve"><value>الكشف عن رقم مقابل {0} عملة؟</value></data>
+	<data name="Puzzle_BuyHintTitle" xml:space="preserve"><value>شراء تلميح؟</value></data>
+	<data name="Puzzle_HintTitle" xml:space="preserve"><value>تلميح</value></data>
+	<data name="Puzzle_AllDigitsCorrect" xml:space="preserve"><value>جميع الأرقام صحيحة بالفعل! اضغط "فتح" للفوز.</value></data>
+	<data name="Puzzle_EnterCode" xml:space="preserve"><value>🔐 أدخل الرمز</value></data>
+	<data name="Puzzle_ErrorTitle" xml:space="preserve"><value>خطأ</value></data>
+	<data name="Puzzle_Generating" xml:space="preserve"><value>جارٍ إنشاء اللغز...</value></data>
+	<data name="Puzzle_HintButton" xml:space="preserve"><value>💡 تلميح (10)</value></data>
+	<data name="Puzzle_HintsTitle" xml:space="preserve"><value>التلميحات</value></data>
+	<data name="Puzzle_IncompleteMessage" xml:space="preserve"><value>يرجى ملء جميع الحقول.</value></data>
+	<data name="Puzzle_IncompleteTitle" xml:space="preserve"><value>غير مكتمل</value></data>
+	<data name="Puzzle_InvalidMessage" xml:space="preserve"><value>يجوز لكل رقم أن يظهر مرة واحدة فقط.</value></data>
+	<data name="Puzzle_InvalidTitle" xml:space="preserve"><value>غير صالح</value></data>
+	<data name="Puzzle_NoPuzzleMessage" xml:space="preserve"><value>لم يتم تحميل أي لغز.</value></data>
+	<data name="Puzzle_OpenButton" xml:space="preserve"><value>🔓 فتح</value></data>
+	<data name="Puzzle_RewardFormat" xml:space="preserve"><value>تحصل على {0} عملة 💰</value></data>
+	<data name="Puzzle_Solved" xml:space="preserve"><value>🎉 تم الحل!</value></data>
+	<data name="Puzzle_TitleFormat" xml:space="preserve"><value>Code Breaker – {0}</value></data>
+	<data name="Puzzle_WrongMessageFormat" xml:space="preserve"><value>الرمز خاطئ.
+
+رمزك: {0}
+الحل (تصحيح): {1}</value></data>
+	<data name="Puzzle_WrongTitle" xml:space="preserve"><value>خطأ ❌</value></data>
+
+	<data name="LockRiddle_NoDigitCorrect" xml:space="preserve"><value>لا توجد أرقام صحيحة</value></data>
+	<data name="LockRiddle_OneCorrectWellPlaced" xml:space="preserve"><value>رقم واحد صحيح وفي المكان الصحيح</value></data>
+	<data name="LockRiddle_OneCorrectWrongPlaced" xml:space="preserve"><value>رقم واحد صحيح لكن في المكان الخاطئ</value></data>
+	<data name="LockRiddle_HintWellPlacedFormat" xml:space="preserve"><value>في هذا التلميح {0} {1} صحيحة وفي المكان الصحيح</value></data>
+	<data name="LockRiddle_HintWrongPlacedFormat" xml:space="preserve"><value>في هذا التلميح {0} {1} صحيحة لكن في المكان الخاطئ</value></data>
+	<data name="LockRiddle_HintMixedFormat" xml:space="preserve"><value>في هذا التلميح {0} {1} صحيحة: {2} في المكان الصحيح، {3} في المكان الخاطئ</value></data>
+	<data name="LockRiddle_NumberSingular" xml:space="preserve"><value>رقم</value></data>
+	<data name="LockRiddle_NumberPlural" xml:space="preserve"><value>أرقام</value></data>
+
+	<data name="Game_Codebreaker_Title" xml:space="preserve"><value>Code Breaker (رياضيات)</value></data>
+	<data name="Game_Codebreaker_Description" xml:space="preserve"><value>اكسر الرمز باستخدام التلميحات المنطقية</value></data>
+	<data name="Game_Codebreaker_Rule1" xml:space="preserve"><value>ابحث عن الرمز الصحيح لفتح القفل</value></data>
+	<data name="Game_Codebreaker_Rule2" xml:space="preserve"><value>كل تلميح يُظهر ما إذا كان الرقم موجوداً في الرمز وإذا كان في موضعه الصحيح</value></data>
+	<data name="Game_Codebreaker_Rule3" xml:space="preserve"><value>تفوز عندما تكون جميع الأرقام في مواضعها الصحيحة</value></data>
+
+	<data name="Game_MathCross_Title" xml:space="preserve"><value>Math Cross</value></data>
+	<data name="Game_MathCross_Description" xml:space="preserve"><value>حل الكلمات المتقاطعة الرياضية بالمعادلات</value></data>
+	<data name="Game_MathCross_Rule1" xml:space="preserve"><value>املأ الشبكة بالأرقام والعمليات (+ − × ÷) بحيث تشكّل كل صف وعمود معادلة صحيحة</value></data>
+	<data name="Game_MathCross_Rule2" xml:space="preserve"><value>لا يمكنك تغيير الخلايا المملوءة مسبقاً</value></data>
+	<data name="Game_MathCross_Rule3" xml:space="preserve"><value>تفوز عندما تكون جميع المعادلات صحيحة</value></data>
+
+	<data name="Game_PascalTriangle_Title" xml:space="preserve"><value>مسار باسكال</value></data>
+	<data name="Game_PascalTriangle_Description" xml:space="preserve"><value>ابحث عن المسار الأمثل عبر المثلث</value></data>
+	<data name="Game_PascalTriangle_Rule1" xml:space="preserve"><value>اختر مساراً متصلاً من الأعلى إلى الأسفل</value></data>
+	<data name="Game_PascalTriangle_Rule2" xml:space="preserve"><value>في كل صف يمكنك اختيار واحدة فقط من الخليتين المجاورتين</value></data>
+	<data name="Game_PascalTriangle_Rule3" xml:space="preserve"><value>الهدف هو الحد الأدنى أو الأقصى للمجموع حسب المهمة</value></data>
+
+	<data name="Game_MathHangman_Title" xml:space="preserve"><value>Math Hangman</value></data>
+	<data name="Game_MathHangman_Description" xml:space="preserve"><value>خمّن العدد بناءً على خصائصه الرياضية</value></data>
+	<data name="Game_MathHangman_Rule1" xml:space="preserve"><value>خمّن الرقم السري</value></data>
+	<data name="Game_MathHangman_Rule2" xml:space="preserve"><value>التلميحات تكشف خصائص العدد</value></data>
+	<data name="Game_MathHangman_Rule3" xml:space="preserve"><value>بعد 6 محاولات خاطئة تنتهي اللعبة</value></data>
+
+	<data name="Game_NumberRain_Title" xml:space="preserve"><value>مطر الأرقام</value></data>
+	<data name="Game_NumberRain_Description" xml:space="preserve"><value>تفاعل بسرعة واجمع الأرقام الصحيحة</value></data>
+	<data name="Game_NumberRain_Rule1" xml:space="preserve"><value>اضغط على الأرقام التي تتوافق مع المهمة</value></data>
+	<data name="Game_NumberRain_Rule2" xml:space="preserve"><value>الاختيار الخاطئ أو الهدف الفائت يكلّفك حياة</value></data>
+	<data name="Game_NumberRain_Rule3" xml:space="preserve"><value>لديك 3 حيوات — كلما كنت أسرع وأدق كان أفضل</value></data>
+
+	<data name="NumberRain_Quest_SelectCountFormat" xml:space="preserve"><value>اختر {0} {1}</value></data>
+	<data name="NumberRain_Quest_CollectCountFormat" xml:space="preserve"><value>اجمع {0} {1}</value></data>
+	<data name="NumberRain_Quest_CollectDualFormat" xml:space="preserve"><value>اجمع {0} {1} و{2} {3}</value></data>
+	<data name="NumberRain_Quest_CollectTripleFormat" xml:space="preserve"><value>اجمع {0} {1} و{2} {3} و{4} {5}</value></data>
+	<data name="NumberRain_Quest_TimedFormat" xml:space="preserve"><value>في {0} ثانية: {1}</value></data>
+	<data name="NumberRain_Quest_AvoidFormat" xml:space="preserve"><value>{0}، لكن تجنّب {1}</value></data>
+	<data name="NumberRain_Quest_ComboFormat" xml:space="preserve"><value>ابلغ كومبو {0} بالقاعدة: {1}</value></data>
+	<data name="NumberRain_Quest_SurviveHitsFormat" xml:space="preserve"><value>ابقَ على قيد الحياة {0} ثانية وحقق {1} إصابة على الأقل</value></data>
+	<data name="NumberRain_Quest_SurviveMaxMissesFormat" xml:space="preserve"><value>ابقَ على قيد الحياة {0} ثانية بأقصى {1} أخطاء (القاعدة: {2})</value></data>
+	<data name="NumberRain_Quest_ChainGreaterFormat" xml:space="preserve"><value>قاعدة السلسلة: اختر {0} أرقام أكبر من الاختيار الأخير</value></data>
+	<data name="NumberRain_Quest_ChainDivisibleFormat" xml:space="preserve"><value>قاعدة السلسلة: اختر {0} أرقام قابلة للقسمة على الاختيار الأخير</value></data>
+	<data name="NumberRain_Quest_SwitchRuleFormat" xml:space="preserve"><value>قاعدة التبديل: كل {0} ثوانٍ تتناوب القاعدة بين {1} و{2}</value></data>
+
+	<data name="NumberRain_LabelEvenNumbers" xml:space="preserve"><value>أعداد زوجية</value></data>
+	<data name="NumberRain_LabelOddNumbers" xml:space="preserve"><value>أعداد فردية</value></data>
+	<data name="NumberRain_LabelMultiplesOfFormat" xml:space="preserve"><value>مضاعفات {0}</value></data>
+	<data name="NumberRain_LabelOddMultiplesOfFormat" xml:space="preserve"><value>مضاعفات فردية لـ {0}</value></data>
+	<data name="NumberRain_LabelEndsWithDigitFormat" xml:space="preserve"><value>ينتهي بـ {0}</value></data>
+	<data name="NumberRain_LabelRangeFormat" xml:space="preserve"><value>النطاق {0}-{1}</value></data>
+	<data name="NumberRain_LabelLessThanFormat" xml:space="preserve"><value>&lt; {0}</value></data>
+	<data name="NumberRain_LabelGreaterThanFormat" xml:space="preserve"><value>&gt; {0}</value></data>
+	<data name="NumberRain_LabelTwoDigitNumbers" xml:space="preserve"><value>أرقام من خانتين</value></data>
+	<data name="NumberRain_LabelDigitCountFormat" xml:space="preserve"><value>أرقام من {0} خانات</value></data>
+	<data name="NumberRain_LabelContainsDigitFormat" xml:space="preserve"><value>يحتوي على {0}</value></data>
+	<data name="NumberRain_LabelNotContainsDigitFormat" xml:space="preserve"><value>لا يحتوي على {0}</value></data>
+	<data name="NumberRain_LabelDigitSumEven" xml:space="preserve"><value>مجموع الأرقام زوجي</value></data>
+	<data name="NumberRain_LabelDigitSumOdd" xml:space="preserve"><value>مجموع الأرقام فردي</value></data>
+	<data name="NumberRain_LabelDigitSumEqualsFormat" xml:space="preserve"><value>مجموع الأرقام {0}</value></data>
+	<data name="NumberRain_LabelDivisibleBy2Or5" xml:space="preserve"><value>يقبل القسمة على 2 أو 5</value></data>
+	<data name="NumberRain_LabelPrimes" xml:space="preserve"><value>أعداد أولية</value></data>
+	<data name="NumberRain_LabelNonPrimes" xml:space="preserve"><value>أعداد غير أولية</value></data>
+	<data name="NumberRain_LabelSquares" xml:space="preserve"><value>مربعات تامة</value></data>
+	<data name="NumberRain_LabelPalindrome" xml:space="preserve"><value>أعداد متناظرة</value></data>
+	<data name="NumberRain_LabelDigitSumPrime" xml:space="preserve"><value>مجموع الأرقام أولي</value></data>
+	<data name="NumberRain_LabelContainsDigitAndEvenFormat" xml:space="preserve"><value>يحتوي على {0} وهو زوجي</value></data>
+	<data name="NumberRain_LabelContainsDigitAndNotDivisibleFormat" xml:space="preserve"><value>يحتوي على {0} وغير قابل للقسمة على {1}</value></data>
+	<data name="NumberRain_LabelAtLeastTwoEqualDigits" xml:space="preserve"><value>رقمان متطابقان على الأقل</value></data>
+	<data name="NumberRain_LabelAllDigitsDifferent" xml:space="preserve"><value>جميع الأرقام مختلفة</value></data>
+	<data name="NumberRain_LabelCloserToFormat" xml:space="preserve"><value>أقرب إلى {0}</value></data>
+	<data name="NumberRain_LabelDivisibleByBothFormat" xml:space="preserve"><value>يقبل القسمة على {0} و{1}</value></data>
+	<data name="NumberRain_LabelDivisibleByNotFormat" xml:space="preserve"><value>يقبل القسمة على {0} لكن ليس على {1}</value></data>
+	<data name="NumberRain_LabelModuloFormat" xml:space="preserve"><value>mod {0} = {1}</value></data>
+	<data name="NumberRain_LabelPrimeGreaterThanFormat" xml:space="preserve"><value>أولية &gt; {0}</value></data>
+	<data name="NumberRain_LabelPrimeContainsDigitFormat" xml:space="preserve"><value>أولية تحتوي على {0}</value></data>
+	<data name="NumberRain_LabelSquareOrPrime" xml:space="preserve"><value>مربع تام أو أولي</value></data>
+	<data name="NumberRain_LabelMultiplesAndDigitSumPrimeFormat" xml:space="preserve"><value>مضاعفات {0} بمجموع أرقام أولي</value></data>
+	<data name="NumberRain_LabelFibonacci" xml:space="preserve"><value>أعداد فيبوناتشي</value></data>
+	<data name="NumberRain_LabelPowersOfTwo" xml:space="preserve"><value>قوى العدد 2</value></data>
+	<data name="NumberRain_LabelDigitsIncreasing" xml:space="preserve"><value>أرقام تصاعدية بشكل صارم</value></data>
+	<data name="NumberRain_LabelDigitsDecreasing" xml:space="preserve"><value>أرقام تنازلية بشكل صارم</value></data>
+	<data name="NumberRain_LabelContainsDigitNotFormat" xml:space="preserve"><value>يحتوي على {0} لكن ليس {1}</value></data>
+	<data name="NumberRain_LabelDivisibleByButDigitSumOddFormat" xml:space="preserve"><value>يقبل القسمة على {0} بمجموع أرقام فردي</value></data>
+	<data name="NumberRain_LabelPalindromeDivisibleByFormat" xml:space="preserve"><value>متناظر ويقبل القسمة على {0}</value></data>
+	<data name="NumberRain_LabelContainsDigitAndDigitSumPrimeFormat" xml:space="preserve"><value>يحتوي على {0} ومجموع أرقامه أولي</value></data>
+	<data name="NumberRain_LabelPrimeDigitSumFormat" xml:space="preserve"><value>أولي بمجموع أرقام {0}</value></data>
+	<data name="NumberRain_LabelModuloDigitSumPrimeFormat" xml:space="preserve"><value>mod {0}={1} بمجموع أرقام أولي</value></data>
+	<data name="NumberRain_LabelContainsDigitModuloOddFormat" xml:space="preserve"><value>يحتوي على {0}، mod {1}={2}، فردي</value></data>
+	<data name="NumberRain_LabelHarshadWithoutTen" xml:space="preserve"><value>هارشاد، لا يقبل القسمة على 10</value></data>
+	<data name="NumberRain_LabelPronic" xml:space="preserve"><value>أعداد برونيكية</value></data>
+	<data name="NumberRain_LabelAutomorphic" xml:space="preserve"><value>أعداد ذاتية الشكل</value></data>
+	<data name="NumberRain_LabelPalindromeNotPrime" xml:space="preserve"><value>متناظر، غير أولي</value></data>
+	<data name="NumberRain_LabelSquareContainsDigitFormat" xml:space="preserve"><value>مربع تام يحتوي على {0}</value></data>
+	<data name="NumberRain_LabelSemiPrime" xml:space="preserve"><value>أعداد شبه أولية</value></data>
+	<data name="NumberRain_LabelSquareFree" xml:space="preserve"><value>أعداد خالية من المربعات</value></data>
+	<data name="NumberRain_LabelHits" xml:space="preserve"><value>إصابات</value></data>
+	<data name="NumberRain_LabelRuleR" xml:space="preserve"><value>القاعدة R</value></data>
+	<data name="NumberRain_LabelRuleHeavy" xml:space="preserve"><value>قاعدة صعبة</value></data>
+	<data name="NumberRain_LabelRulePrimeOrMod3" xml:space="preserve"><value>أولي أو mod 3</value></data>
+	<data name="NumberRain_LabelRuleR1Even" xml:space="preserve"><value>R1: زوجي</value></data>
+	<data name="NumberRain_LabelRuleR2Prime" xml:space="preserve"><value>R2: أولي</value></data>
+	<data name="NumberRain_LabelGreaterThanLastPick" xml:space="preserve"><value>أكبر من الاختيار الأخير</value></data>
+	<data name="NumberRain_LabelDivisibleByLastPick" xml:space="preserve"><value>يقبل القسمة على الاختيار الأخير</value></data>
+	<data name="NumberRain_LabelBombDigitFormat" xml:space="preserve"><value>الرقم {0}</value></data>
+
+	<data name="Game_Sequence_Title" xml:space="preserve"><value>أكمل المتتالية</value></data>
+	<data name="Game_Sequence_Description" xml:space="preserve"><value>أدخل العدد المفقود</value></data>
+	<data name="Game_Sequence_Rule1" xml:space="preserve"><value>ابحث عن العدد المفقود في المتتالية</value></data>
+	<data name="Game_Sequence_Rule2" xml:space="preserve"><value>خيار واحد فقط هو الصحيح</value></data>
+	<data name="Game_Sequence_Rule3" xml:space="preserve"><value>لديك ثلاث حيوات في كل مستوى</value></data>
+
+	<data name="Sequence_TitleFormat" xml:space="preserve"><value>أكمل المتتالية – {0} (المستوى {1})</value></data>
+	<data name="Sequence_Prompt" xml:space="preserve"><value>أدخل العدد المفقود</value></data>
+	<data name="Sequence_LivesFormat" xml:space="preserve"><value>الحيوات: {0}</value></data>
+	<data name="Sequence_CorrectTitle" xml:space="preserve"><value>صحيح! 🎉</value></data>
+	<data name="Sequence_CorrectMessageFormat" xml:space="preserve"><value>العدد المفقود هو {0}.
++{1} عملة</value></data>
+	<data name="Sequence_WrongTitle" xml:space="preserve"><value>خطأ ❌</value></data>
+	<data name="Sequence_WrongMessageFormat" xml:space="preserve"><value>حاول مجدداً. الحيوات المتبقية: {0}</value></data>
+	<data name="Sequence_GameOverTitle" xml:space="preserve"><value>لا حيوات متبقية</value></data>
+	<data name="Sequence_GameOverMessage" xml:space="preserve"><value>لم تعد لديك حيوات. هل تريد المحاولة مجدداً؟</value></data>
+	<data name="Sequence_HintButton" xml:space="preserve"><value>تلميح</value></data>
+	<data name="Sequence_HintTitle" xml:space="preserve"><value>تلميح</value></data>
+	<data name="Sequence_Hint_Arithmetic" xml:space="preserve"><value>تحقق مما إذا كان الفرق بين الأعداد المتجاورة ثابتاً.</value></data>
+	<data name="Sequence_Hint_Geometric" xml:space="preserve"><value>تحقق مما إذا كان كل عدد يُضرب في عامل ثابت.</value></data>
+	<data name="Sequence_Hint_Squares" xml:space="preserve"><value>هذه مربعات تامة.</value></data>
+	<data name="Sequence_Hint_Triangular" xml:space="preserve"><value>هذه أعداد مثلثية.</value></data>
+	<data name="Sequence_Hint_Pentagonal" xml:space="preserve"><value>هذه أعداد خماسية.</value></data>
+	<data name="Sequence_Hint_Alternating" xml:space="preserve"><value>الخطوات تتناوب بين نمطين.</value></data>
+	<data name="Sequence_Hint_RepeatingDiff" xml:space="preserve"><value>الفروق تتكرر في دورة قصيرة.</value></data>
+	<data name="Sequence_Hint_Fallback" xml:space="preserve"><value>انظر بعناية إلى التغيرات بين الأعداد المتتالية.</value></data>
+
+	<data xml:space="preserve" name="Puzzle_Professor_SuccessMessage_1"><value>✨ تم فك الشفرة بإتقان!</value></data>
+	<data xml:space="preserve" name="Puzzle_Professor_SuccessMessage_2"><value>🚀 تم منح الوصول، أحسنت!</value></data>
+	<data xml:space="preserve" name="Puzzle_Professor_SuccessMessage_3"><value>🎉 تم كسر القفل كالمحترفين!</value></data>
+	<data xml:space="preserve" name="Puzzle_Professor_SuccessMessage_4"><value>🟢 الرمز صحيح. النظام مستقر.</value></data>
+	<data xml:space="preserve" name="Puzzle_Professor_SuccessMessage_5"><value>💡 رائع! كان هذا هو الرمز الصحيح.</value></data>
+	<data xml:space="preserve" name="Puzzle_Professor_WrongMessage_1"><value>❌ تم رفض الوصول. حاول مجدداً!</value></data>
+	<data xml:space="preserve" name="Puzzle_Professor_WrongMessage_2"><value>🤔 همم… القفل لا يزال مغلقاً.</value></data>
+	<data xml:space="preserve" name="Puzzle_Professor_WrongMessage_3"><value>🔴 الرمز غير مستقر. محاولة جديدة!</value></data>
+	<data xml:space="preserve" name="Puzzle_Professor_WrongMessage_4"><value>⚠️ تقريباً! لكن ليس صحيحاً تماماً.</value></data>
+	<data xml:space="preserve" name="Puzzle_Professor_WrongMessage_5"><value>😈 القفل يضحك فقط... حاول مجدداً 😉</value></data>
+</root>

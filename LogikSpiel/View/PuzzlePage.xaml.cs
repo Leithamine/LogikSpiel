@@ -31,17 +31,16 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
 
         if (e.PropertyName == nameof(PuzzlePageViewModel.ShowProfessor))
         {
-            if (vm.ShowProfessor)
+            if (vm.ShowProfessor && SpeechBubble.Opacity == 0)
             {
                 await ShowBubbleAsync();
-                StartProfessorTalkingAnimation();
 
                 if (!vm.IsCelebrating)
                     await ShakeLockAsync();
             }
-            else
+            else if (!vm.ShowProfessor && SpeechBubble.Opacity > 0)
             {
-                StopProfessorTalkingAnimation();
+                await HideBubbleAsync();
             }
         }
 
@@ -77,11 +76,11 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         SpeechBubble.Opacity = 0;
 
         await Task.WhenAll(
-            SpeechBubble.FadeTo(1, 150),
-            SpeechBubble.ScaleTo(1.05, 180, Easing.CubicOut)
+            SpeechBubble.FadeToAsync(1, 150),
+            SpeechBubble.ScaleToAsync(1.05, 180, Easing.CubicOut)
         );
 
-        await SpeechBubble.ScaleTo(1.0, 80);
+        await SpeechBubble.ScaleToAsync(1.0, 80);
     }
 
     private async Task TypeTextAsync(string text)
@@ -111,31 +110,31 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
     }
 
 
-    private void StartProfessorTalkingAnimation()
-    {
-        StopProfessorTalkingAnimation();
+    //private void StartProfessorTalkingAnimation()
+    //{
+    //    StopProfessorTalkingAnimation();
 
-        _speechBubbleAnimCts = new CancellationTokenSource();
-        var bubbleCt = _speechBubbleAnimCts.Token;
+    //    _speechBubbleAnimCts = new CancellationTokenSource();
+    //    var bubbleCt = _speechBubbleAnimCts.Token;
 
-        _ = MainThread.InvokeOnMainThreadAsync(async () =>
-        {
-            try
-            {
-                while (!bubbleCt.IsCancellationRequested)
-                {
-                    await SpeechBubble.ScaleTo(1.02, 110, Easing.CubicInOut);
-                    await SpeechTail.TranslateTo(-2, 0, 110, Easing.CubicInOut);
-                    await SpeechBubble.ScaleTo(1.0, 110, Easing.CubicInOut);
-                    await SpeechTail.TranslateTo(0, 0, 110, Easing.CubicInOut);
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                // expected on close/navigation
-            }
-        });
-    }
+    //    _ = MainThread.InvokeOnMainThreadAsync(async () =>
+    //    {
+    //        try
+    //        {
+    //            while (!bubbleCt.IsCancellationRequested)
+    //            {
+    //                await SpeechBubble.ScaleTo(1.02, 110, Easing.CubicInOut);
+    //                await SpeechTail.TranslateTo(-2, 0, 110, Easing.CubicInOut);
+    //                await SpeechBubble.ScaleTo(1.0, 110, Easing.CubicInOut);
+    //                await SpeechTail.TranslateTo(0, 0, 110, Easing.CubicInOut);
+    //            }
+    //        }
+    //        catch (OperationCanceledException)
+    //        {
+    //            // expected on close/navigation
+    //        }
+    //    });
+    //}
 
     private void StopProfessorTalkingAnimation()
     {
@@ -162,13 +161,26 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
 
     private async Task CelebrateLockAsync()
     {
-        await LockImage.ScaleTo(1.2, 200);
-        await LockImage.ScaleTo(1.0, 120);
-        await LockImage.RotateTo(10, 80);
-        await LockImage.RotateTo(-10, 80);
-        await LockImage.RotateTo(0, 80);
+        await LockImage.ScaleToAsync(1.2, 200);
+        await LockImage.ScaleToAsync(1.0, 120);
+        await LockImage.RotateToAsync(10, 80);
+        await LockImage.RotateToAsync(-10, 80);
+        await LockImage.RotateToAsync(0, 80);
     }
+    private async Task HideBubbleAsync()
+    {
+        try
+        {
+            await Task.WhenAll(
+                SpeechBubble.FadeToAsync(0, 180, Easing.CubicIn),
+                SpeechBubble.ScaleToAsync(0.85, 180, Easing.CubicIn)
+            );
+        }
+        catch { }
 
+        SpeechBubble.Opacity = 0;
+        SpeechBubble.Scale = 1;
+    }
     private async Task ShakeLockAsync()
     {
         const int shakeDistance = 12;
@@ -176,11 +188,11 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
 
         for (int i = 0; i < 4; i++)
         {
-            await LockImage.TranslateTo(-shakeDistance, 0, shakeSpeed);
-            await LockImage.TranslateTo(shakeDistance, 0, shakeSpeed);
+            await LockImage.TranslateToAsync(-shakeDistance, 0, shakeSpeed);
+            await LockImage.TranslateToAsync(shakeDistance, 0, shakeSpeed);
         }
 
-        await LockImage.TranslateTo(0, 0, shakeSpeed);
+        await LockImage.TranslateToAsync(0, 0, shakeSpeed);
     }
 
     private void DigitEntry_Loaded(object? sender, EventArgs e)

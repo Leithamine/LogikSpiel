@@ -60,12 +60,12 @@
                                     StrokeShape="RoundRectangle 8"
                                     StrokeThickness="0"
                                     Padding="8,4">
-                                <Label Text="{Binding Age, StringFormat={x:Static resx:AppResources.Profile_AgeFormat}}"
+                                <Label Text="{Binding Age, StringFormat={x:Static resx:AppRessources.Profile_AgeFormat}}"
                                        FontSize="12"
                                        TextColor="{StaticResource C_TextSecondary}"/>
                             </Border>
 
-                            <Label Text="{Binding Id, StringFormat={x:Static resx:AppResources.Profile_IdFormat}}"
+                            <Label Text="{Binding Id, StringFormat={x:Static resx:AppRessources.Profile_IdFormat}}"
                                    FontSize="10"
                                    TextColor="{StaticResource C_TextMuted}"/>
                         </VerticalStackLayout>

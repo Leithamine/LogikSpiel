@@ -30,30 +30,30 @@ public class LockRiddleGeneratorServiceTests
         var generator = new LockRiddleGeneratorService();
 
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-
-    [Fact]
-    public void GenerateGame_SameDifficultyAndLevel_IsDeterministic()
-    {
-        var generator = new LockRiddleGeneratorService();
-
-        var first = generator.GenerateGame("normal", levelNumber: 2);
-        var second = generator.GenerateGame("normal", levelNumber: 2);
-
-        Assert.Equal(first.SecretCode, second.SecretCode);
-        Assert.Equal(first.Hints.Count, second.Hints.Count);
-
-        for (int i = 0; i < first.Hints.Count; i++)
-        {
-            Assert.Equal(first.Hints[i].WellPlaced, second.Hints[i].WellPlaced);
-            Assert.Equal(first.Hints[i].WrongPlaced, second.Hints[i].WrongPlaced);
-            Assert.Equal(first.Hints[i].Slots, second.Hints[i].Slots);
-        }
     }
+        [Fact]
+        public void GenerateGame_SameDifficultyAndLevel_IsDeterministic()
+        {
+            var generator = new LockRiddleGeneratorService();
 
-    [Fact]
-    public void NothingCorrectRule_RequiresEveryDigitOfZeroZeroHintToReappear()
-    {
-        var hints = new List<LockHint>
+            var first = generator.GenerateGame("normal", levelNumber: 2);
+            var second = generator.GenerateGame("normal", levelNumber: 2);
+
+            Assert.Equal(first.SecretCode, second.SecretCode);
+            Assert.Equal(first.Hints.Count, second.Hints.Count);
+
+            for (int i = 0; i < first.Hints.Count; i++)
+            {
+                Assert.Equal(first.Hints[i].WellPlaced, second.Hints[i].WellPlaced);
+                Assert.Equal(first.Hints[i].WrongPlaced, second.Hints[i].WrongPlaced);
+                Assert.Equal(first.Hints[i].Slots, second.Hints[i].Slots);
+            }
+        }
+
+        [Fact]
+        public void NothingCorrectRule_RequiresEveryDigitOfZeroZeroHintToReappear()
+        {
+            var hints = new List<LockHint>
         {
             new() { Slots = ["5", "2", "1"], WellPlaced = 0, WrongPlaced = 0 },
             new() { Slots = ["0", "4", "9"], WellPlaced = 1, WrongPlaced = 0 },
@@ -61,9 +61,9 @@ public class LockRiddleGeneratorServiceTests
             new() { Slots = ["1", "8", "2"], WellPlaced = 1, WrongPlaced = 0 }
         };
 
-        Assert.False(SatisfiesNothingCorrectCoverageRule(hints));
-    }
-
+            Assert.False(SatisfiesNothingCorrectCoverageRule(hints));
+        }
+    
     private static bool SatisfiesNothingCorrectCoverageRule(IReadOnlyList<LockHint> hints)
     {
         foreach (var currentHint in hints.Where(h => h.WellPlaced == 0 && h.WrongPlaced == 0))
