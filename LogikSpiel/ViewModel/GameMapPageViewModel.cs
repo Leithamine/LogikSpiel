@@ -144,10 +144,9 @@ public sealed class GameMapPageViewModel : ObservableObject
 
         var progress = await _progressStore.LoadAsync();
 
-        var maxLevel = Game?.LevelCount ?? 100;
         int highestCompleted = 0;
 
-        for (int level = 1; level <= maxLevel; level++)
+        for (int level = 1; level <= GameConfig.MaxLevel; level++)
         {
             if (progress.IsCompleted(GameId!, DifficultyKey, level))
                 highestCompleted = level;
