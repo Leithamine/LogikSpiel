@@ -72,7 +72,7 @@
                               Opacity="0">
                             <Path x:Name="SpeechTailMain"
                                   Data="M 24,2 L 24,28 L 2,18 Z"
-                                  Fill="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
+                                  Fill="{StaticResource C_CardInner}"
                                   Stroke="{StaticResource C_Primary}"
                                   StrokeThickness="1.6"
                                   HorizontalOptions="Start"
@@ -80,7 +80,7 @@
                             <Border x:Name="SpeechTailTip"
                                     WidthRequest="9"
                                     HeightRequest="9"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
+                                    BackgroundColor="{StaticResource C_CardInner}"
                                     Stroke="{StaticResource C_Primary}"
                                     StrokeThickness="1.2"
                                     StrokeShape="RoundRectangle 5"
@@ -91,7 +91,7 @@
 
                         <Border x:Name="SpeechBubble"
                                 Margin="24, 0, 0, 0"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
+                                BackgroundColor="{StaticResource C_CardInner}"
                                 Stroke="{StaticResource C_Primary}"
                                 StrokeThickness="2"
                                 StrokeShape="RoundRectangle 18"
@@ -109,7 +109,7 @@
                                        Text="{Binding ProfessorMessage}"
                                        FontSize="15"
                                        LineBreakMode="WordWrap"
-                                       TextColor="{AppThemeBinding Light={StaticResource C_TextDark}, Dark={StaticResource C_TextPrimary}}"/>
+                                       TextColor="{StaticResource C_TextPrimary}"/>
                                 <Button Grid.Column="1"
                                         Text="✕"
                                         BackgroundColor="Transparent"
