@@ -58,6 +58,13 @@ public sealed class GameMapPageViewModel : ObservableObject
 
     public string DifficultyLabel => LocalizationService.GetDifficultyLabel(DifficultyKey);
 
+    private int? _requestedLevel;
+    public int? RequestedLevel
+    {
+        get => _requestedLevel;
+        set => SetProperty(ref _requestedLevel, value);
+    }
+
     private double _mapHeight = 900;
     public double MapHeight { get => _mapHeight; private set => SetProperty(ref _mapHeight, value); }
 
@@ -155,6 +162,12 @@ public sealed class GameMapPageViewModel : ObservableObject
         }
 
         int currentLevelNumber = highestCompleted + 1;
+
+        if (RequestedLevel is int requestedLevel)
+        {
+            int boundedLevel = Math.Clamp(requestedLevel, 1, GameConfig.MaxLevel);
+            currentLevelNumber = Math.Max(currentLevelNumber, boundedLevel);
+        }
 
         int startLevel = 1;
         int endLevel = currentLevelNumber + 50;

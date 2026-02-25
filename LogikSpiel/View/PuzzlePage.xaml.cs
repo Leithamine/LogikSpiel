@@ -75,9 +75,14 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         SpeechBubble.Scale = 0.6;
         SpeechBubble.Opacity = 0;
 
+        SpeechTailGroup.Scale = 0.7;
+        SpeechTailGroup.Opacity = 0;
+
         await Task.WhenAll(
             SpeechBubble.FadeToAsync(1, 150),
-            SpeechBubble.ScaleToAsync(1.05, 180, Easing.CubicOut)
+            SpeechBubble.ScaleToAsync(1.05, 180, Easing.CubicOut),
+            SpeechTailGroup.FadeToAsync(1, 140),
+            SpeechTailGroup.ScaleToAsync(1.0, 170, Easing.CubicOut)
         );
 
         await SpeechBubble.ScaleToAsync(1.0, 80);
@@ -150,12 +155,13 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         {
             ProfessorImage.CancelAnimations();
             SpeechBubble.CancelAnimations();
-            SpeechTail.CancelAnimations();
+            SpeechTailGroup.CancelAnimations();
 
             ProfessorImage.Scale = 1;
             ProfessorImage.Rotation = 0;
             SpeechBubble.Scale = 1;
-            SpeechTail.TranslationX = 0;
+            SpeechTailGroup.Scale = 1;
+            SpeechTailGroup.Opacity = 1;
         });
     }
 
@@ -173,13 +179,17 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         {
             await Task.WhenAll(
                 SpeechBubble.FadeToAsync(0, 180, Easing.CubicIn),
-                SpeechBubble.ScaleToAsync(0.85, 180, Easing.CubicIn)
+                SpeechBubble.ScaleToAsync(0.85, 180, Easing.CubicIn),
+                SpeechTailGroup.FadeToAsync(0, 120, Easing.CubicIn),
+                SpeechTailGroup.ScaleToAsync(0.8, 120, Easing.CubicIn)
             );
         }
         catch { }
 
         SpeechBubble.Opacity = 0;
         SpeechBubble.Scale = 1;
+        SpeechTailGroup.Opacity = 0;
+        SpeechTailGroup.Scale = 1;
     }
     private async Task ShakeLockAsync()
     {
