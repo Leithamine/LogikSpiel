@@ -39,6 +39,7 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
             if (vm.ShowProfessor && SpeechBubble.Opacity == 0)
             {
                 await ShowBubbleAsync();
+                await TypeTextAsync(vm.ProfessorMessage);
 
                 if (!vm.IsCelebrating)
                     await ShakeLockAsync();
@@ -286,6 +287,9 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
             _isLoaded = true;
             return;
         }
+
+        if (_vm.ShowProfessor && string.IsNullOrWhiteSpace(ProfessorLabel.Text) && !string.IsNullOrWhiteSpace(_vm.ProfessorMessage))
+            _ = TypeTextAsync(_vm.ProfessorMessage);
     }
 
     protected override void OnDisappearing()
