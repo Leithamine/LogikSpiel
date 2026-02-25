@@ -57,41 +57,42 @@
                            WidthRequest="110"  HeightRequest="110"
                            Aspect="AspectFit"
                            VerticalOptions="Start"/>
-                    <Grid Grid.Column="1" VerticalOptions="Start" Margin="0, 20, 0, 0">
+                    <Grid Grid.Column="1" VerticalOptions="Start" Margin="-8, 4, 0, 0">
 
-                        <!-- Tail shape that visibly connects bubble to the professor -->
+                        <!-- Bubble-tail with two circles: starts near the professor mouth -->
                         <Grid x:Name="SpeechTailGroup"
-                              Margin="4,0,0,0"
-                              WidthRequest="28"
-                              HeightRequest="44"
+                              Margin="-3,10,0,0"
+                              WidthRequest="30"
+                              HeightRequest="22"
                               InputTransparent="True"
                               HorizontalOptions="Start"
-                              VerticalOptions="Center"
+                              VerticalOptions="Start"
                               ZIndex="2"
                               Scale="0"
                               Opacity="0">
-                            <Path x:Name="SpeechTailMain"
-                                  Data="M 24,2 L 24,28 L 2,18 Z"
-                                  Fill="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
-                                  Stroke="{StaticResource C_Primary}"
-                                  StrokeThickness="1.6"
-                                  HorizontalOptions="Start"
-                                  VerticalOptions="Center"/>
-                            <Border x:Name="SpeechTailTip"
-                                    WidthRequest="9"
-                                    HeightRequest="9"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
+                            <Border WidthRequest="8"
+                                    HeightRequest="8"
+                                    BackgroundColor="{StaticResource C_CardInner}"
                                     Stroke="{StaticResource C_Primary}"
                                     StrokeThickness="1.2"
-                                    StrokeShape="RoundRectangle 5"
+                                    StrokeShape="RoundRectangle 4"
                                     HorizontalOptions="Start"
-                                    VerticalOptions="End"
-                                    Margin="-1,0,0,2"/>
+                                    VerticalOptions="Start"
+                                    Margin="0,8,0,0"/>
+                            <Border WidthRequest="12"
+                                    HeightRequest="12"
+                                    BackgroundColor="{StaticResource C_CardInner}"
+                                    Stroke="{StaticResource C_Primary}"
+                                    StrokeThickness="1.4"
+                                    StrokeShape="RoundRectangle 6"
+                                    HorizontalOptions="Start"
+                                    VerticalOptions="Start"
+                                    Margin="9,2,0,0"/>
                         </Grid>
 
                         <Border x:Name="SpeechBubble"
-                                Margin="24, 0, 0, 0"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource C_CardInner}, Dark={StaticResource C_Card}}"
+                                Margin="18, 0, 0, 0"
+                                BackgroundColor="{StaticResource C_CardInner}"
                                 Stroke="{StaticResource C_Primary}"
                                 StrokeThickness="2"
                                 StrokeShape="RoundRectangle 18"
@@ -109,7 +110,7 @@
                                        Text="{Binding ProfessorMessage}"
                                        FontSize="15"
                                        LineBreakMode="WordWrap"
-                                       TextColor="{AppThemeBinding Light={StaticResource C_TextDark}, Dark={StaticResource C_TextPrimary}}"/>
+                                       TextColor="{StaticResource C_TextPrimary}"/>
                                 <Button Grid.Column="1"
                                         Text="✕"
                                         BackgroundColor="Transparent"
