@@ -19,6 +19,10 @@ public partial class GameMapPage : ContentPage, IQueryAttributable
         if (query.TryGetValue("gameId", out var idObj) && idObj is string id)
             _vm.GameId = id;
 
+        _vm.RequestedLevel = null;
+        if (query.TryGetValue("level", out var levelObj) && int.TryParse(levelObj?.ToString(), out var level))
+            _vm.RequestedLevel = level;
+
         if (_vm.GameId is { Length: > 0 } gameId &&
             query.TryGetValue("difficulty", out var difficultyObj) &&
             !string.IsNullOrWhiteSpace(difficultyObj?.ToString()))
