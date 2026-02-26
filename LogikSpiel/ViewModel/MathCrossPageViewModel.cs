@@ -39,11 +39,15 @@ public sealed class MathCrossPageViewModel : ObservableObject
         private set
         {
             if (SetProperty(ref _levelNumber, value))
+            {
                 OnPropertyChanged(nameof(Title));
+                OnPropertyChanged(nameof(LevelDisplayText));
+            }
         }
     }
 
     public string Title => LocalizationService.Format("MathCross_TitleFormat", DiffName(DifficultyKey), LevelNumber);
+    public string LevelDisplayText => LocalizationService.Format("Common_LevelFormat", LevelNumber);
     public string DifficultyText => DiffName(DifficultyKey);
 
     private MathCrossGame? _game;
