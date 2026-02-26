@@ -1053,8 +1053,140 @@ public sealed class MathCrossGeneratorService
         return allowFailure || solvable;
     }
 
+    private record DeductionResult(int Completions, Dictionary<int, HashSet<string>> Candidates, bool IsConsistent, bool LimitReached);
+
+    private DeductionResult GetValidCandidates(MathCrossGame game, MathEquation eq, bool[,] solvable, Settings s)
+    {
+        var validCells = eq.Cells.Where(p => IsWithinBounds(game, p.row, p.col)).ToList();
+        
+        List<decimal> numDomain = new List<decimal>();
+        for (decimal v = s.MinVal; v <= s.MaxVal; v += s.AllowDecimals ? 0.1m : 1m)
+            numDomain.Add(v);
+            
+        List<string> opDomain = s.Ops.ToList();
+
+        var domains = new List<string>[eq.CellCount];
+        for (int i = 0; i < eq.CellCount; i++)
+        {
+            var (cr, cc) = validCells[i];
+            if (i == eq.CellCount - 2) 
+            {
+                domains[i] = new List<string> { "=" };
+            }
+            else if (solvable[cr, cc])
+            {
+                domains[i] = new List<string> { game.Grid[cr, cc].Solution };
+            }
+            else
+            {
+                if (i % 2 == 0) domains[i] = numDomain.Select(Format).ToList();
+                else domains[i] = opDomain.ToList();
+            }
+        }
+
+        var candidates = new Dictionary<int, HashSet<string>>();
+        for (int i = 0; i < eq.CellCount; i++) candidates[i] = new HashSet<string>();
+
+        int completions = 0;
+        bool isConsistent = false;
+        bool limitReached = false;
+
+        void SolveDFS(int idx, string[] current)
+        {
+            if (limitReached) return;
+            
+            if (idx == eq.CellCount)
+            {
+                decimal? result = null;
+                try {
+                    int numVars = (eq.CellCount + 1) / 2;
+                    decimal currentVal = decimal.Parse(current[0], System.Globalization.CultureInfo.InvariantCulture);
+                    for (int o = 0; o < numVars - 2; o++)
+                    {
+                        string op = current[o * 2 + 1];
+                        decimal nextNum = decimal.Parse(current[o * 2 + 2], System.Globalization.CultureInfo.InvariantCulture);
+                        var nextRes = CalcDec(currentVal, op, nextNum, s.AllowDecimals);
+                        if (nextRes == null) { result = null; break; }
+                        currentVal = nextRes.Value;
+                    }
+                    result = currentVal;
+                } catch { result = null; }
+
+                if (result != null)
+                {
+                    decimal expected = decimal.Parse(current[eq.CellCount - 1], System.Globalization.CultureInfo.InvariantCulture);
+                    if (Math.Abs(result.Value - expected) < 0.0001m)
+                    {
+                        isConsistent = true;
+                        completions++;
+                        for (int i = 0; i < eq.CellCount; i++)
+                        {
+                            if (!solvable[validCells[i].row, validCells[i].col])
+                                candidates[i].Add(current[i]);
+                        }
+                        if (completions > 2000) limitReached = true;
+                    }
+                }
+                return;
+            }
+
+            if (idx == eq.CellCount - 1 && !solvable[validCells[idx].row, validCells[idx].col])
+            {
+                decimal? result = null;
+                try {
+                    int numVars = (eq.CellCount + 1) / 2;
+                    decimal currentVal = decimal.Parse(current[0], System.Globalization.CultureInfo.InvariantCulture);
+                    for (int o = 0; o < numVars - 2; o++)
+                    {
+                        string op = current[o * 2 + 1];
+                        decimal nextNum = decimal.Parse(current[o * 2 + 2], System.Globalization.CultureInfo.InvariantCulture);
+                        var nextRes = CalcDec(currentVal, op, nextNum, s.AllowDecimals);
+                        if (nextRes == null) { result = null; break; }
+                        currentVal = nextRes.Value;
+                    }
+                    result = currentVal;
+                } catch { result = null; }
+
+                if (result != null)
+                {
+                    string resStr = Format(result.Value);
+                    if (domains[idx].Contains(resStr))
+                    {
+                        current[idx] = resStr;
+                        SolveDFS(idx + 1, current);
+                    }
+                }
+                return;
+            }
+
+            foreach (var val in domains[idx])
+            {
+                current[idx] = val;
+                SolveDFS(idx + 1, current);
+                if (limitReached) return;
+            }
+        }
+
+        SolveDFS(0, new string[eq.CellCount]);
+
+        if (limitReached)
+        {
+            foreach (var key in candidates.Keys.ToList())
+            {
+                if (candidates[key].Count < 2) 
+                {
+                    candidates[key].Add("AMB_1");
+                    candidates[key].Add("AMB_2");
+                }
+            }
+        }
+
+        return new DeductionResult(completions, candidates, isConsistent, limitReached);
+    }
+
     private bool EnsureSolvable(MathCrossGame game, Random rnd)
     {
+        Settings s = GetSettings(game.Difficulty);
         int extraGivens = 0;
         int MaxExtraGivens = Math.Max(2, game.Equations.Count / 3);
 
@@ -1068,27 +1200,44 @@ public sealed class MathCrossGeneratorService
                         solvable[r, c] = true;
 
             bool progress = true;
+            bool anyInconsistent = false;
+
             while (progress)
             {
                 progress = false;
                 foreach (var eq in game.Equations)
                 {
-                    var validCells = eq.Cells
-                        .Where(p => IsWithinBounds(game, p.row, p.col))
-                        .ToList();
-
-                    if (validCells.Count == 0)
-                        continue;
+                    var validCells = eq.Cells.Where(p => IsWithinBounds(game, p.row, p.col)).ToList();
+                    if (validCells.Count == 0) continue;
 
                     int unknowns = validCells.Count(p => !solvable[p.row, p.col]);
-                    if (unknowns == 1)
+                    if (unknowns > 0)
                     {
-                        foreach (var (er, ec) in validCells)
-                            solvable[er, ec] = true;
-                        progress = true;
+                        var res = GetValidCandidates(game, eq, solvable, s);
+                        if (!res.IsConsistent || res.Completions == 0)
+                        {
+                            anyInconsistent = true;
+                            break;
+                        }
+
+                        for (int i = 0; i < validCells.Count; i++)
+                        {
+                            var (cr, cc) = validCells[i];
+                            if (!solvable[cr, cc])
+                            {
+                                if (res.Candidates[i].Count == 1)
+                                {
+                                    solvable[cr, cc] = true;
+                                    progress = true;
+                                }
+                            }
+                        }
                     }
                 }
+                if (anyInconsistent) break;
             }
+
+            if (anyInconsistent) return false;
 
             var unsolved = new List<MathCrossCell>();
             for (int r = 0; r < game.Rows; r++)
@@ -1097,11 +1246,46 @@ public sealed class MathCrossGeneratorService
                         unsolved.Add(game.Grid[r, c]);
 
             if (unsolved.Count == 0) return true;
-            
+
             if (extraGivens >= MaxExtraGivens) return false;
             extraGivens++;
 
-            var pick = unsolved[rnd.Next(unsolved.Count)];
+            var cellCands = new Dictionary<MathCrossCell, int>();
+            var cellEqCount = new Dictionary<MathCrossCell, int>();
+            
+            foreach (var cell in unsolved) 
+            {
+                cellCands[cell] = 999999; 
+                cellEqCount[cell] = 0; 
+            }
+            
+            foreach (var eq in game.Equations)
+            {
+                var validCells = eq.Cells.Where(p => IsWithinBounds(game, p.row, p.col)).ToList();
+                if (validCells.Count == 0) continue;
+
+                var res = GetValidCandidates(game, eq, solvable, s);
+                if (res.Completions > 0)
+                {
+                    for (int i = 0; i < validCells.Count; i++)
+                    {
+                        var (cr,cc) = validCells[i];
+                        if (!solvable[cr, cc])
+                        {
+                            var cell = game.Grid[cr, cc];
+                            cellEqCount[cell]++;
+                            int cCount = res.Candidates[i].Count;
+                            if (cCount < cellCands[cell]) cellCands[cell] = cCount;
+                        }
+                    }
+                }
+            }
+
+            var pick = unsolved
+                .OrderBy(c => cellCands[c])
+                .ThenByDescending(c => cellEqCount[c])
+                .First();
+
             pick.IsGiven = true;
             pick.UserInput = pick.Solution;
         }
