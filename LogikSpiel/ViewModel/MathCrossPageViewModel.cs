@@ -154,12 +154,12 @@ public sealed class MathCrossPageViewModel : ObservableObject
                 LocalizationService.Format("MathCross_BuyHintMessage", HintCost));
             if (!buy) return;
 
-            var empty = FlatCells
-                .Where(c => c.IsEditable && string.IsNullOrWhiteSpace(c.Cell.UserInput))
+            var candidate = FlatCells
+                .Where(c => c.IsEditable && !IsCellSolved(c.Cell))
                 .OrderBy(_ => Random.Shared.Next())
                 .FirstOrDefault();
 
-            if (empty == null)
+            if (candidate == null)
             {
                 await _dialog.AlertAsync(
                     LocalizationService.GetString("MathCross_NoHintTitle"),
@@ -167,9 +167,9 @@ public sealed class MathCrossPageViewModel : ObservableObject
                 return;
             }
 
-            empty.Cell.UserInput = empty.Cell.Solution;
-            empty.Cell.IsGiven = true;
-            empty.UpdateDisplay();
+            candidate.Cell.UserInput = candidate.Cell.Solution;
+            candidate.Cell.IsGiven = true;
+            candidate.UpdateDisplay();
 
             if (_userProfile != null)
             {
@@ -430,6 +430,14 @@ public sealed class MathCrossPageViewModel : ObservableObject
 
         LevelNumber++;
         await StartNewRoundAsync();
+    }
+
+    private bool IsCellSolved(MathCrossCell cell)
+    {
+        if (cell.Type is CellType.Empty or CellType.Equals) return true;
+        if (cell.Type == CellType.Number) return SameNumber(cell.UserInput, cell.Solution);
+        if (cell.Type == CellType.Operator) return SameOp(cell.UserInput, cell.Solution);
+        return false;
     }
 
     private static bool SameOp(string? u, string? s) =>

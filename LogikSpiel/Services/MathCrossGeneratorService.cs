@@ -529,26 +529,11 @@ public sealed class MathCrossGeneratorService
 
     private MathCrossGame GenerateFallbackGrid(Settings s, Random rnd)
     {
-        int eqLen = s.EquationLength;
-        int rows = eqLen * 2 + 3;
-        int cols = eqLen * 2 + 3;
-
-        // Return an empty-safe board object only as an internal guard; caller will continue with rescue generation attempts.
-        return new MathCrossGame
-        {
-            Rows = 1,
-            Cols = 1,
-            Grid = new[,] { { new MathCrossCell { Row = 0, Col = 0, Type = CellType.Empty, IsGiven = true, Solution = "", UserInput = "" } } },
-            Difficulty = s.DifficultyKey,
-            EquationLength = s.EquationLength,
-            UseExtendedEquations = s.IsExtended,
-            Equations = new List<MathEquation>()
-        };
+        return TryBuildEmergencyTemplate(s, rnd);
     }
 
-    private MathCrossGame? TryBuildEmergencyTemplate(Settings s, int seed)
+    private MathCrossGame TryBuildEmergencyTemplate(Settings s, Random rnd)
     {
-        int len = s.EquationLength;
         int rows = 25;
         int cols = 25;
         var game = new MathCrossGame
@@ -557,7 +542,7 @@ public sealed class MathCrossGeneratorService
             Cols = cols,
             Grid = new MathCrossCell[rows, cols],
             Difficulty = s.DifficultyKey,
-            EquationLength = eqLen,
+            EquationLength = s.EquationLength,
             UseExtendedEquations = s.IsExtended
         };
 
@@ -565,7 +550,7 @@ public sealed class MathCrossGeneratorService
             for (int c = 0; c < cols; c++)
                 game.Grid[r, c] = new MathCrossCell { Row = r, Col = c, Type = CellType.Empty, Solution = "", UserInput = "", IsGiven = false };
 
-        int[] lineStarts = { 1, 1 + eqLen };
+        int[] lineStarts = { 1, 1 + game.EquationLength };
 
         // 4 horizontal equations
         foreach (int hr in lineStarts)
@@ -573,7 +558,7 @@ public sealed class MathCrossGeneratorService
             foreach (int hc in lineStarts)
             {
                 var eq = GenerateEquation(s, rnd);
-                if (eq != null) PlaceInGame(game, hr, hc, horizontal: true, eq, eqLen);
+                if (eq != null) PlaceInGame(game, hr, hc, horizontal: true, eq, game.EquationLength);
             }
         }
 
@@ -583,11 +568,11 @@ public sealed class MathCrossGeneratorService
             foreach (int vr in lineStarts)
             {
                 var eq = GenerateEquation(s, rnd);
-                if (eq != null) PlaceInGame(game, vr, vc, horizontal: false, eq, eqLen);
+                if (eq != null) PlaceInGame(game, vr, vc, horizontal: false, eq, game.EquationLength);
             }
         }
 
-        game.Equations = ScanEquations(game, eqLen);
+        game.Equations = ScanEquations(game, game.EquationLength);
         return game;
     }
 
@@ -706,6 +691,7 @@ public sealed class MathCrossGeneratorService
         }
 
         EnsureSolvable(game, rnd);
+        HideCellsInFullyGivenEquations(game, rnd);
 
         if (editable.Count > 0 && editable.All(c => c.IsGiven))
         {
@@ -715,6 +701,58 @@ public sealed class MathCrossGeneratorService
         }
 
         game.GivenCells = editable.Count(c => c.IsGiven);
+    }
+
+    private IEnumerable<MathCrossCell> ChooseInitialGivens(
+        MathCrossGame game,
+        List<MathCrossCell> editable,
+        int targetCount,
+        Random rnd)
+    {
+        var picked = new HashSet<MathCrossCell>();
+
+        foreach (var eq in game.Equations.OrderBy(_ => rnd.Next()))
+        {
+            var candidates = eq.Cells
+                .Where(p => IsWithinBounds(game, p.row, p.col))
+                .Select(p => game.Grid[p.row, p.col])
+                .Where(c => c.Type is CellType.Number or CellType.Operator)
+                .ToList();
+
+            if (candidates.Count == 0) continue;
+            picked.Add(candidates[rnd.Next(candidates.Count)]);
+        }
+
+        var remaining = editable.Where(c => !picked.Contains(c)).OrderBy(_ => rnd.Next()).ToList();
+        foreach (var cell in remaining)
+        {
+            if (picked.Count >= targetCount) break;
+            picked.Add(cell);
+        }
+
+        if (picked.Count == 0 && editable.Count > 0)
+            picked.Add(editable[rnd.Next(editable.Count)]);
+
+        return picked;
+    }
+
+    private void HideCellsInFullyGivenEquations(MathCrossGame game, Random rnd)
+    {
+        foreach (var eq in game.Equations.OrderBy(_ => rnd.Next()))
+        {
+            var cells = eq.Cells
+                .Where(p => IsWithinBounds(game, p.row, p.col))
+                .Select(p => game.Grid[p.row, p.col])
+                .Where(c => c.Type is CellType.Number or CellType.Operator)
+                .ToList();
+
+            if (cells.Count == 0 || cells.Any(c => !c.IsGiven))
+                continue;
+
+            var hide = cells[rnd.Next(cells.Count)];
+            hide.IsGiven = false;
+            hide.UserInput = "";
+        }
     }
 
     private void EnsureSolvable(MathCrossGame game, Random rnd)
