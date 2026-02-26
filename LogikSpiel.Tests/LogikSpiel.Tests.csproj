@@ -17,6 +17,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.40" />
   </ItemGroup>
 
   <ItemGroup>
@@ -25,6 +26,18 @@
     <Compile Include="../LogikSpiel/Core/SeedHelper.cs" Link="Core/SeedHelper.cs" />
     <Compile Include="../LogikSpiel/Services/LockRiddleGeneratorService.cs" Link="Services/LockRiddleGeneratorService.cs" />
     <Compile Include="../LogikSpiel/Model/MathCrossGame.cs" Link="Model/MathCrossGame.cs" />
+    <Compile Include="../LogikSpiel/Model/GameDefinition.cs" Link="Model/GameDefinition.cs" />
+    <Compile Include="../LogikSpiel/Model/LevelSpec.cs" Link="Model/LevelSpec.cs" />
+    <Compile Include="../LogikSpiel/Model/GameProgress.cs" Link="Model/GameProgress.cs" />
+    <Compile Include="../LogikSpiel/Model/UserProfile.cs" Link="Model/UserProfile.cs" />
+    <Compile Include="../LogikSpiel/Core/ObservableObject.cs" Link="Core/ObservableObject.cs" />
+    <Compile Include="../LogikSpiel/Core/AsyncCommand.cs" Link="Core/AsyncCommand.cs" />
     <Compile Include="../LogikSpiel/Services/MathCrossGeneratorService.cs" Link="Services/MathCrossGeneratorService.cs" />
+    <Compile Include="../LogikSpiel/Services/IGameProgressStore.cs" Link="Services/IGameProgressStore.cs" />
+    <Compile Include="../LogikSpiel/Services/IGameCatalogService.cs" Link="Services/IGameCatalogService.cs" />
+    <Compile Include="../LogikSpiel/Services/IUserProfileService.cs" Link="Services/IUserProfileService.cs" />
+    <Compile Include="../LogikSpiel/Services/INavigationService.cs" Link="Services/INavigationService.cs" />
+    <Compile Include="../LogikSpiel/Services/IDialogService.cs" Link="Services/IDialogService.cs" />
+    <Compile Include="../LogikSpiel/ViewModel/MathCrossPageViewModel.cs" Link="ViewModel/MathCrossPageViewModel.cs" />
   </ItemGroup>
 </Project>
