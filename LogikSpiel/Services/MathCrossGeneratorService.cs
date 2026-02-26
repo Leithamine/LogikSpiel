@@ -301,10 +301,10 @@ public sealed class MathCrossGeneratorService
     {
         if (s.AllowDecimals && rnd.Next(10) < 3)
         {
-            int whole = rnd.Next(Math.Max(0, s.MinVal), Math.Min(50, s.MaxVal) + 1);
+            int whole = rnd.Next(Math.Max(-50, s.MinVal), Math.Min(50, s.MaxVal) + 1);
             return whole + rnd.Next(1, 10) / 10m;
         }
-        return rnd.Next(Math.Max(1, s.MinVal), Math.Min(50, s.MaxVal) + 1);
+        return rnd.Next(Math.Max(-50, s.MinVal), Math.Min(50, s.MaxVal) + 1);
     }
 
     private static int? Calc(int a, string op, int b)
@@ -368,7 +368,11 @@ public sealed class MathCrossGeneratorService
                     if (b >= s.MinVal && b <= s.MaxVal) return (a, b);
                     break;
                 case "-":
-                    b = rnd.Next(Math.Max(1, s.MinVal), s.MaxVal);
+                    int minB = Math.Max(s.MinVal, s.MinVal - c);
+                    int maxB = Math.Min(s.MaxVal, s.MaxVal - c);
+                    if (maxB < minB) break;
+
+                    b = rnd.Next(minB, maxB + 1);
                     a = c + b;
                     if (a >= s.MinVal && a <= s.MaxVal) return (a, b);
                     break;

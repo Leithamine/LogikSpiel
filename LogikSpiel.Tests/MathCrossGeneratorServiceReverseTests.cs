@@ -44,7 +44,39 @@ public class MathCrossGeneratorServiceReverseTests
         Assert.Null(exception);
     }
 
-    private static object? InvokeReverse(int c, string op, string difficulty)
+
+    [Theory]
+    [InlineData("hard", -1)]
+    [InlineData("hard", 0)]
+    [InlineData("master", -1)]
+    [InlineData("master", 0)]
+    public void Reverse_Subtraction_AllowsNegativeOperandsWhenDifficultyAllows(string difficulty, int c)
+    {
+        bool foundNegativeOperand = false;
+
+        for (int seed = 1; seed <= 200; seed++)
+        {
+            var reverseResult = InvokeReverse(c, "-", difficulty, seed);
+            if (reverseResult == null) continue;
+
+            var tupleType = reverseResult.GetType();
+            int a = (int)(tupleType.GetField("Item1")?.GetValue(reverseResult)
+                ?? throw new InvalidOperationException("Could not read Item1 from reverse tuple."));
+            int b = (int)(tupleType.GetField("Item2")?.GetValue(reverseResult)
+                ?? throw new InvalidOperationException("Could not read Item2 from reverse tuple."));
+
+            if (a < 0 || b < 0)
+            {
+                foundNegativeOperand = true;
+                break;
+            }
+        }
+
+        Assert.True(foundNegativeOperand,
+            $"Expected Reverse('-', c={c}) to allow at least one negative operand for '{difficulty}'.");
+    }
+
+    private static object? InvokeReverse(int c, string op, string difficulty, int seed = 12345)
     {
         var service = new MathCrossGeneratorService();
         var type = typeof(MathCrossGeneratorService);
@@ -60,7 +92,7 @@ public class MathCrossGeneratorServiceReverseTests
 
         try
         {
-            return reverse.Invoke(service, new object[] { c, op, settings, new Random(12345) });
+            return reverse.Invoke(service, new object[] { c, op, settings, new Random(seed) });
         }
         catch (TargetInvocationException ex) when (ex.InnerException != null)
         {
