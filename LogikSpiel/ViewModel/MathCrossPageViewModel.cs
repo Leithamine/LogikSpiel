@@ -12,6 +12,7 @@ namespace LogikSpiel.ViewModel;
 
 public sealed class MathCrossPageViewModel : ObservableObject
 {
+    private const int HintCost = 50;
     private readonly IGameProgressStore _progressStore;
     private readonly IDialogService _dialog;
     private readonly INavigationService _nav;
@@ -140,17 +141,17 @@ public sealed class MathCrossPageViewModel : ObservableObject
 
         HintCommand = new AsyncCommand(async () =>
         {
-            if (Coins < 50)
+            if (Coins < HintCost)
             {
                 await _dialog.AlertAsync(
                     LocalizationService.GetString("Common_NotEnoughCoinsTitle"),
-                    LocalizationService.Format("Common_NeedCoinsFormat", 10));
+                    LocalizationService.Format("Common_NeedCoinsFormat", HintCost));
                 return;
             }
 
             bool buy = await _dialog.ConfirmAsync(
                 LocalizationService.GetString("MathCross_BuyHintTitle"),
-                LocalizationService.Format("MathCross_BuyHintMessage", 50));
+                LocalizationService.Format("MathCross_BuyHintMessage", HintCost));
             if (!buy) return;
 
             var empty = FlatCells
@@ -172,7 +173,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
 
             if (_userProfile != null)
             {
-                _userProfile.Coins -= 10;
+                _userProfile.Coins -= HintCost;
                 Coins = _userProfile.Coins;
                 await _userService.SaveUserAsync(_userProfile);
             }
