@@ -691,6 +691,7 @@ public sealed class MathCrossGeneratorService
         }
 
         EnsureSolvable(game, rnd);
+        HideCellsInFullyGivenEquations(game, rnd);
 
         if (editable.Count > 0 && editable.All(c => c.IsGiven))
         {
@@ -733,6 +734,25 @@ public sealed class MathCrossGeneratorService
             picked.Add(editable[rnd.Next(editable.Count)]);
 
         return picked;
+    }
+
+    private void HideCellsInFullyGivenEquations(MathCrossGame game, Random rnd)
+    {
+        foreach (var eq in game.Equations.OrderBy(_ => rnd.Next()))
+        {
+            var cells = eq.Cells
+                .Where(p => IsWithinBounds(game, p.row, p.col))
+                .Select(p => game.Grid[p.row, p.col])
+                .Where(c => c.Type is CellType.Number or CellType.Operator)
+                .ToList();
+
+            if (cells.Count == 0 || cells.Any(c => !c.IsGiven))
+                continue;
+
+            var hide = cells[rnd.Next(cells.Count)];
+            hide.IsGiven = false;
+            hide.UserInput = "";
+        }
     }
 
     private void EnsureSolvable(MathCrossGame game, Random rnd)
