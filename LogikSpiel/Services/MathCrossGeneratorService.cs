@@ -301,10 +301,10 @@ public sealed class MathCrossGeneratorService
     {
         if (s.AllowDecimals && rnd.Next(10) < 3)
         {
-            int whole = rnd.Next(Math.Max(0, s.MinVal), Math.Min(50, s.MaxVal) + 1);
+            int whole = rnd.Next(Math.Max(-50, s.MinVal), Math.Min(50, s.MaxVal) + 1);
             return whole + rnd.Next(1, 10) / 10m;
         }
-        return rnd.Next(Math.Max(1, s.MinVal), Math.Min(50, s.MaxVal) + 1);
+        return rnd.Next(Math.Max(-50, s.MinVal), Math.Min(50, s.MaxVal) + 1);
     }
 
     private static int? Calc(int a, string op, int b)
@@ -333,21 +333,10 @@ public sealed class MathCrossGeneratorService
 
     private static decimal? Evaluate(decimal a, string op1, decimal b, string op2, decimal c)
     {
-        // Punkt vor Strich
-        if (op1 is "×" or "÷")
-        {
-            var t = CalcDec(a, op1, b);
-            if (t == null) return null;
-            return CalcDec(t.Value, op2, c);
-        }
-        if (op2 is "×" or "÷")
-        {
-            var t = CalcDec(b, op2, c);
-            if (t == null) return null;
-            return CalcDec(a, op1, t.Value);
-        }
+        // Spielregel: strikt links-nach-rechts auswerten
         var t1 = CalcDec(a, op1, b);
         if (t1 == null) return null;
+
         return CalcDec(t1.Value, op2, c);
     }
 
@@ -359,17 +348,29 @@ public sealed class MathCrossGeneratorService
             switch (op)
             {
                 case "+":
-                    a = rnd.Next(Math.Max(1, s.MinVal), c);
+                    int minAddend = Math.Max(1, s.MinVal);
+                    int maxAddend = Math.Min(s.MaxVal, c - 1);
+                    if (maxAddend < minAddend) break;
+
+                    a = rnd.Next(minAddend, maxAddend + 1);
                     b = c - a;
                     if (b >= s.MinVal && b <= s.MaxVal) return (a, b);
                     break;
                 case "-":
-                    b = rnd.Next(Math.Max(1, s.MinVal), s.MaxVal);
+                    int minB = Math.Max(s.MinVal, s.MinVal - c);
+                    int maxB = Math.Min(s.MaxVal, s.MaxVal - c);
+                    if (maxB < minB) break;
+
+                    b = rnd.Next(minB, maxB + 1);
                     a = c + b;
                     if (a >= s.MinVal && a <= s.MaxVal) return (a, b);
                     break;
                 case "×":
-                    var divs = Enumerable.Range(2, Math.Min(12, Math.Abs(c)) - 1)
+                    int absC = Math.Abs(c);
+                    int maxDivisor = Math.Min(12, absC);
+                    if (maxDivisor < 2) break;
+
+                    var divs = Enumerable.Range(2, maxDivisor - 1)
                         .Where(d => c % d == 0).ToList();
                     if (divs.Count > 0)
                     {
