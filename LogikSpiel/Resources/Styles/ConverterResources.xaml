@@ -15,8 +15,8 @@
 
     <!-- ═══════════════ CELL TYPE CONVERTERS ═══════════════ -->
 
-    <!-- CellType zu Hintergrundfarbe -->
-    <conv:CellTypeToColorConverter x:Key="CellTypeToColorConverter"/>
+    <!-- MathCrossCell zu Hintergrundfarbe -->
+    <conv:MathCellToColorConverter x:Key="MathCellToColorConverter"/>
 
     <!-- CellType zu Visibility (nicht Empty = sichtbar) -->
     <conv:NotEmptyCellConverter x:Key="NotEmptyCellConverter"/>

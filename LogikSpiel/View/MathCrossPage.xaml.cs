@@ -1,4 +1,5 @@
 using LogikSpiel.Core;
+using LogikSpiel.Model;
 using LogikSpiel.Services;
 using LogikSpiel.Services.Localization;
 using LogikSpiel.ViewModel;
@@ -68,14 +69,21 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
 
                 var border = new Border
                 {
-                    StrokeThickness = 1,
-                    Stroke = Color.FromArgb("#4DFFFFFF"),
                     StrokeShape = new RoundRectangle { CornerRadius = 6 },
                     Padding = 0
                 };
 
+                border.SetBinding(Border.StrokeProperty,
+                    new Binding(nameof(MathCrossCellViewModel.BorderStroke), source: cellVm));
+                border.SetBinding(Border.StrokeThicknessProperty,
+                    new Binding(nameof(MathCrossCellViewModel.BorderThickness), source: cellVm));
+                border.SetBinding(Border.ShadowProperty,
+                    new Binding(nameof(MathCrossCellViewModel.FocusGlow), source: cellVm));
+
                 border.SetBinding(Border.BackgroundColorProperty,
-                    new Binding(nameof(MathCrossCellViewModel.BackgroundColor), source: cellVm));
+                    new Binding(nameof(MathCrossCellViewModel.Cell),
+                        source: cellVm,
+                        converter: (IValueConverter)Resources["MathCellToColorConverter"]));
 
                 Grid.SetRow(border, cell.Row);
                 Grid.SetColumn(border, cell.Col);
@@ -88,7 +96,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
                         FontAttributes = FontAttributes.Bold,
                         FontSize = 15,
                         BackgroundColor = Colors.Transparent,
-                        TextColor = Colors.White,
+                        TextColor = ResolveTextColor(cell),
                         BorderWidth = 0
                     };
                     btn.SetBinding(Button.TextProperty, new Binding(nameof(MathCrossCellViewModel.EditableText), source: cellVm));
@@ -102,7 +110,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
                         HorizontalTextAlignment = TextAlignment.Center,
                         VerticalTextAlignment = TextAlignment.Center,
                         FontAttributes = FontAttributes.Bold,
-                        TextColor = Color.FromArgb("#DADADA"),
+                        TextColor = ResolveTextColor(cell),
                         FontSize = 15
                     };
                     lbl.SetBinding(Label.TextProperty, new Binding(nameof(MathCrossCellViewModel.DisplayText), source: cellVm));
@@ -112,6 +120,31 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
                 BoardGrid.Children.Add(border);
             }
         });
+    }
+
+    private static Color ResolveTextColor(MathCrossCell cell)
+    {
+        if (cell.IsGiven || cell.Type == CellType.Equals)
+            return GetColor("C_MathCell_Fixed_Text", "#E8EDF5");
+
+        return cell.Type switch
+        {
+            CellType.Number => GetColor("C_MathCell_Num_Text", "#F3FAFF"),
+            CellType.Operator => GetColor("C_MathCell_Op_Text", "#F7F4FF"),
+            _ => Colors.White
+        };
+    }
+
+    private static Color GetColor(string key, string fallbackHex)
+    {
+        if (Application.Current?.Resources != null
+            && Application.Current.Resources.TryGetValue(key, out var resource)
+            && resource is Color color)
+        {
+            return color;
+        }
+
+        return Color.FromArgb(fallbackHex);
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
