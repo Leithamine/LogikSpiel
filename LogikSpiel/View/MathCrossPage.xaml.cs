@@ -69,11 +69,16 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
 
                 var border = new Border
                 {
-                    StrokeThickness = 1,
-                    Stroke = ResolveBorderColor(cell),
                     StrokeShape = new RoundRectangle { CornerRadius = 6 },
                     Padding = 0
                 };
+
+                border.SetBinding(Border.StrokeProperty,
+                    new Binding(nameof(MathCrossCellViewModel.BorderStroke), source: cellVm));
+                border.SetBinding(Border.StrokeThicknessProperty,
+                    new Binding(nameof(MathCrossCellViewModel.BorderThickness), source: cellVm));
+                border.SetBinding(Border.ShadowProperty,
+                    new Binding(nameof(MathCrossCellViewModel.FocusGlow), source: cellVm));
 
                 border.SetBinding(Border.BackgroundColorProperty,
                     new Binding(nameof(MathCrossCellViewModel.Cell),
@@ -115,19 +120,6 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
                 BoardGrid.Children.Add(border);
             }
         });
-    }
-
-    private static Color ResolveBorderColor(MathCrossCell cell)
-    {
-        if (cell.IsGiven || cell.Type == CellType.Equals)
-            return GetColor("C_MathCell_Fixed_Border", "#646B76");
-
-        return cell.Type switch
-        {
-            CellType.Number => GetColor("C_MathCell_Num_Border", "#5EA6D8"),
-            CellType.Operator => GetColor("C_MathCell_Op_Border", "#9A8BE0"),
-            _ => Colors.Transparent
-        };
     }
 
     private static Color ResolveTextColor(MathCrossCell cell)

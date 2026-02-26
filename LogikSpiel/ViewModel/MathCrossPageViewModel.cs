@@ -6,6 +6,8 @@ using LogikSpiel.Model;
 using LogikSpiel.Services;
 using LogikSpiel.Services.Localization;
 using LogikSpiel.View;
+using Microsoft.Maui.Controls;
+using Microsoft.Maui.Graphics;
 
 namespace LogikSpiel.ViewModel;
 
@@ -507,7 +509,15 @@ public sealed class MathCrossCellViewModel : ObservableObject
     public bool IsSelected
     {
         get => _isSelected;
-        set => SetProperty(ref _isSelected, value);
+        set
+        {
+            if (!SetProperty(ref _isSelected, value))
+                return;
+
+            OnPropertyChanged(nameof(BorderStroke));
+            OnPropertyChanged(nameof(BorderThickness));
+            OnPropertyChanged(nameof(FocusGlow));
+        }
     }
 
     public bool IsGiven => Cell.IsGiven;
@@ -520,12 +530,76 @@ public sealed class MathCrossCellViewModel : ObservableObject
             (string.IsNullOrWhiteSpace(Cell.UserInput) ? "?" : Cell.UserInput) :
             (string.IsNullOrWhiteSpace(Cell.UserInput) ? "·" : Cell.UserInput);
 
+
+    public Brush BorderStroke => new SolidColorBrush(ResolveBorderColor());
+
+    public double BorderThickness => IsSelected ? 2.5 : 1;
+
+    public Shadow? FocusGlow => IsSelected
+        ? new Shadow
+        {
+            Brush = new SolidColorBrush(ResolveGlowColor()),
+            Offset = new Point(0, 0),
+            Radius = 14,
+            Opacity = 1
+        }
+        : null;
+
     public AsyncCommand TapCellCommand { get; }
+
+    private Color ResolveBorderColor()
+    {
+        if (Cell.IsGiven || Cell.Type == CellType.Equals)
+            return GetColor("C_MathCell_Fixed_Border", "#646B76");
+
+        if (IsSelected)
+        {
+            return Cell.Type switch
+            {
+                CellType.Number => GetColor("C_MathCell_Num_HoverBorder", "#79BCEB"),
+                CellType.Operator => GetColor("C_MathCell_Op_HoverBorder", "#B2A4F0"),
+                _ => GetColor("C_MathCell_Fixed_Border", "#646B76")
+            };
+        }
+
+        return Cell.Type switch
+        {
+            CellType.Number => GetColor("C_MathCell_Num_Border", "#5EA6D8"),
+            CellType.Operator => GetColor("C_MathCell_Op_Border", "#9A8BE0"),
+            _ => Colors.Transparent
+        };
+    }
+
+    private Color ResolveGlowColor()
+    {
+        return Cell.Type switch
+        {
+            CellType.Number => GetColor("C_MathCell_Num_Glow", "#595EA6D8"),
+            CellType.Operator => GetColor("C_MathCell_Op_Glow", "#599A8BE0"),
+            _ => Colors.Transparent
+        };
+    }
+
+    private static Color GetColor(string key, string fallbackHex)
+    {
+        if (Application.Current?.Resources != null
+            && Application.Current.Resources.TryGetValue(key, out var resource)
+            && resource is Color color)
+        {
+            return color;
+        }
+
+        return Color.FromArgb(fallbackHex);
+    }
+
     public void UpdateDisplay()
     {
         OnPropertyChanged(nameof(DisplayText));
         OnPropertyChanged(nameof(EditableText));
         OnPropertyChanged(nameof(IsGiven));
         OnPropertyChanged(nameof(IsEditable));
+        OnPropertyChanged(nameof(BorderStroke));
+        OnPropertyChanged(nameof(BorderThickness));
+        OnPropertyChanged(nameof(FocusGlow));
     }
 }
