@@ -230,6 +230,42 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         _entryByIndex.Remove(dvm.Index);
     }
 
+
+    private void DigitEntry_Focused(object? sender, FocusEventArgs e)
+    {
+        if (sender is not Entry entry) return;
+        if (entry.Parent is not Border border) return;
+
+        border.Stroke = GetBrushResource("C_Primary") ?? border.Stroke;
+        border.StrokeThickness = 2.5;
+        border.Shadow = new Shadow
+        {
+            Brush = new SolidColorBrush(Color.FromArgb("#5C79BCEB")),
+            Offset = new Point(0, 0),
+            Radius = 14,
+            Opacity = 1
+        };
+    }
+
+    private void DigitEntry_Unfocused(object? sender, FocusEventArgs e)
+    {
+        if (sender is not Entry entry) return;
+        if (entry.Parent is not Border border) return;
+
+        border.Stroke = GetBrushResource("C_InputBorder") ?? border.Stroke;
+        border.StrokeThickness = 2;
+        if (Application.Current?.Resources.TryGetValue("ShadowSmall", out var shadow) == true && shadow is Shadow s)
+            border.Shadow = s;
+    }
+
+    private static Brush? GetBrushResource(string key)
+    {
+        if (Application.Current?.Resources.TryGetValue(key, out var resource) == true && resource is Color color)
+            return new SolidColorBrush(color);
+
+        return null;
+    }
+
     private void DigitEntry_TextChanged(object? sender, TextChangedEventArgs e)
     {
         if (BindingContext is PuzzlePageViewModel vm && !vm.IsNotBusy) return;
