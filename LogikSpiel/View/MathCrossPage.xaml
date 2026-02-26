@@ -22,7 +22,7 @@
                         Command="{Binding BackCommand}" IsEnabled="{Binding IsNotBusy}"/>
 
                 <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center" VerticalOptions="Center">
-                    <Label Text="{resx:Translate Key=MathCross_Title}" Style="{StaticResource H3}" HorizontalOptions="Center"/>
+                    <Label Text="{Binding Title}" Style="{StaticResource H3}" HorizontalOptions="Center"/>
                     <Border StrokeThickness="0" StrokeShape="RoundRectangle 8"
                             BackgroundColor="{StaticResource C_Primary}" Padding="10,4">
                         <Label Text="{Binding DifficultyText}" TextColor="{StaticResource C_TextOnColor}" FontSize="11" FontAttributes="Bold"/>

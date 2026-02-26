@@ -317,12 +317,17 @@ public sealed class MathCrossGeneratorService
 
     private decimal GenValue(Settings s, Random rnd)
     {
+        int min = Math.Max(-50, s.MinVal);
+        int max = Math.Min(50, s.MaxVal);
+        if (min > max) (min, max) = (max, min);
+
         if (s.AllowDecimals && rnd.Next(10) < 3)
         {
-            int whole = rnd.Next(Math.Max(-50, s.MinVal), Math.Min(50, s.MaxVal) + 1);
+            int whole = rnd.Next(min, max + 1);
             return whole + rnd.Next(1, 10) / 10m;
         }
-        return rnd.Next(Math.Max(-50, s.MinVal), Math.Min(50, s.MaxVal) + 1);
+
+        return rnd.Next(min, max + 1);
     }
 
     private static int? Calc(int a, string op, int b)
@@ -377,50 +382,70 @@ public sealed class MathCrossGeneratorService
 
     private (int a, int b)? Reverse(int c, string op, Settings s, Random rnd)
     {
-        for (int i = 0; i < 20; i++)
+        for (int i = 0; i < 40; i++)
         {
             int a, b;
             switch (op)
             {
                 case "+":
-                    int minAddend = Math.Max(1, s.MinVal);
-                    int maxAddend = Math.Min(s.MaxVal, c - 1);
-                    if (maxAddend < minAddend) break;
-
-                    a = rnd.Next(minAddend, maxAddend + 1);
-                    b = c - a;
-                    if (b >= s.MinVal && b <= s.MaxVal) return (a, b);
-                    break;
-                case "-":
-                    int minB = Math.Max(s.MinVal, s.MinVal - c);
-                    int maxB = Math.Min(s.MaxVal, s.MaxVal - c);
-                    if (maxB < minB) break;
-
-                    b = rnd.Next(minB, maxB + 1);
-                    a = c + b;
-                    if (a >= s.MinVal && a <= s.MaxVal) return (a, b);
-                    break;
-                case "×":
-                    int absC = Math.Abs(c);
-                    int maxDivisor = Math.Min(12, absC);
-                    if (maxDivisor < 2) break;
-
-                    var divs = Enumerable.Range(2, maxDivisor - 1)
-                        .Where(d => c % d == 0).ToList();
-                    if (divs.Count > 0)
                     {
-                        a = divs[rnd.Next(divs.Count)];
-                        b = c / a;
+                        int minA = Math.Max(s.MinVal, c - s.MaxVal);
+                        int maxA = Math.Min(s.MaxVal, c - s.MinVal);
+                        if (maxA < minA) break;
+
+                        a = rnd.Next(minA, maxA + 1);
+                        b = c - a;
                         if (b >= s.MinVal && b <= s.MaxVal) return (a, b);
+                        break;
                     }
-                    break;
+                case "-":
+                    {
+                        int minB = Math.Max(s.MinVal, s.MinVal - c);
+                        int maxB = Math.Min(s.MaxVal, s.MaxVal - c);
+                        if (maxB < minB) break;
+
+                        b = rnd.Next(minB, maxB + 1);
+                        a = c + b;
+                        if (a >= s.MinVal && a <= s.MaxVal) return (a, b);
+                        break;
+                    }
+                case "×":
+                    {
+                        var candidates = new List<(int a, int b)>();
+                        for (int tryA = -12; tryA <= 12; tryA++)
+                        {
+                            if (tryA is 0 or 1 or -1) continue;
+                            if (c % tryA != 0) continue;
+
+                            int tryB = c / tryA;
+                            if (tryB is 0 or 1 or -1) continue;
+                            if (tryB < s.MinVal || tryB > s.MaxVal) continue;
+                            if (tryA < s.MinVal || tryA > s.MaxVal) continue;
+                            candidates.Add((tryA, tryB));
+                        }
+
+                        if (candidates.Count == 0) break;
+                        var pick = candidates[rnd.Next(candidates.Count)];
+                        return pick;
+                    }
                 case "÷":
-                    b = rnd.Next(2, 12);
-                    a = c * b;
-                    if (a >= s.MinVal && a <= s.MaxVal) return (a, b);
-                    break;
+                    {
+                        var divisors = Enumerable.Range(2, 10)
+                            .Select(d => rnd.Next(2) == 0 ? d : -d)
+                            .Where(d => d >= s.MinVal && d <= s.MaxVal)
+                            .Distinct()
+                            .ToList();
+
+                        if (divisors.Count == 0) break;
+
+                        b = divisors[rnd.Next(divisors.Count)];
+                        a = c * b;
+                        if (a >= s.MinVal && a <= s.MaxVal) return (a, b);
+                        break;
+                    }
             }
         }
+
         return null;
     }
 
@@ -572,7 +597,7 @@ public sealed class MathCrossGeneratorService
         // Erzeuge ein garantiertes 8-Gleichungen Grid im Gitter-Muster
         int eqLen = s.EquationLength;
 
-        // 4 horizontal + 4 vertikal in einem Gitter
+        // 4 horizontal + 4 vertikal in einem Gitter (inkl. klarer Spacer zwischen Gleichungen)
         int rows = eqLen * 2 + 3;
         int cols = eqLen * 2 + 3;
 
@@ -598,30 +623,44 @@ public sealed class MathCrossGeneratorService
                     IsGiven = false
                 };
 
-        // 4 horizontale Gleichungen
-        int[] hRows = { 1, 1 + eqLen, 1, 1 + eqLen };
-        int[] hCols = { 1, 1, 1 + eqLen, 1 + eqLen };
+        int first = 1;
+        int second = 1 + eqLen + 1;
 
-        for (int i = 0; i < 4; i++)
+        // 4 horizontale Gleichungen
+        var starts = new (int row, int col)[]
+        {
+            (first, first),
+            (first, second),
+            (second, first),
+            (second, second)
+        };
+
+        foreach (var (row, col) in starts)
         {
             var eq = GenerateEquation(s, rnd);
-            if (eq == null) continue;
-            PlaceInGame(game, hRows[i], hCols[i], true, eq, eqLen);
+            if (eq == null || !PlaceInGame(game, row, col, true, eq, eqLen))
+                return GenerateFallbackGrid(s, new Random(rnd.Next()));
         }
 
-        // 4 vertikale Gleichungen
-        for (int i = 0; i < 4; i++)
+        // 4 vertikale Gleichungen, jeweils über den vorhandenen Startwert verankert
+        foreach (var (row, col) in starts)
         {
-            var eq = GenerateEquation(s, rnd);
-            if (eq == null) continue;
-            PlaceInGame(game, hRows[i], hCols[i], false, eq, eqLen);
+            if (!decimal.TryParse(game.Grid[row, col].Solution, System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out var anchor))
+            {
+                return GenerateFallbackGrid(s, new Random(rnd.Next()));
+            }
+
+            var eq = GenerateEquationWithValue(s, rnd, anchorPos: 0, anchorVal: anchor);
+            if (eq == null || !PlaceInGame(game, row, col, false, eq, eqLen))
+                return GenerateFallbackGrid(s, new Random(rnd.Next()));
         }
 
         game.Equations = ScanEquations(game, eqLen);
         return game;
     }
 
-    private void PlaceInGame(MathCrossGame game, int startR, int startC, bool horizontal, EquationData eq, int len)
+    private bool PlaceInGame(MathCrossGame game, int startR, int startC, bool horizontal, EquationData eq, int len)
     {
         int dr = horizontal ? 0 : 1;
         int dc = horizontal ? 1 : 0;
@@ -632,16 +671,22 @@ public sealed class MathCrossGeneratorService
         {
             int r = startR + i * dr;
             int c = startC + i * dc;
-            if (r < 0 || r >= game.Rows || c < 0 || c >= game.Cols) continue;
+            if (r < 0 || r >= game.Rows || c < 0 || c >= game.Cols) return false;
 
-            // Nur setzen wenn leer oder übereinstimmend
-            if (game.Grid[r, c].Type == CellType.Empty ||
-                (game.Grid[r, c].Type == cells[i].type && game.Grid[r, c].Solution == cells[i].val))
-            {
-                game.Grid[r, c].Type = cells[i].type;
-                game.Grid[r, c].Solution = cells[i].val;
-            }
+            var existing = game.Grid[r, c];
+            if (existing.Type != CellType.Empty && (existing.Type != cells[i].type || existing.Solution != cells[i].val))
+                return false;
         }
+
+        for (int i = 0; i < len; i++)
+        {
+            int r = startR + i * dr;
+            int c = startC + i * dc;
+            game.Grid[r, c].Type = cells[i].type;
+            game.Grid[r, c].Solution = cells[i].val;
+        }
+
+        return true;
     }
 
     private List<MathEquation> ScanEquations(MathCrossGame game, int len)

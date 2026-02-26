@@ -17,12 +17,13 @@ public class MathCrossGeneratorServiceFallbackTests
             var game = InvokeGenerateFallbackGrid(difficulty, seed);
             int eqLen = game.EquationLength;
 
+            var second = 1 + eqLen + 1;
             var intersections = new (int r, int c)[]
             {
                 (1, 1),
-                (1, 1 + eqLen),
-                (1 + eqLen, 1),
-                (1 + eqLen, 1 + eqLen)
+                (1, second),
+                (second, 1),
+                (second, second)
             };
 
             foreach (var (r, c) in intersections)

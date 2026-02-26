@@ -59,9 +59,12 @@ public static class MathCrossValueNormalizer
             return false;
 
         if (allowDecimals)
-            return Math.Abs(u - s) < 0.0001;
+            return Math.Abs(u - s) <= 0.0001;
 
-        return Math.Abs(u - s) < 0.0000001 && Math.Round(u) == Math.Round(s);
+        if (Math.Abs(u - Math.Round(u)) > 0.0000001 || Math.Abs(s - Math.Round(s)) > 0.0000001)
+            return false;
+
+        return (long)Math.Round(u) == (long)Math.Round(s);
     }
 
 }
