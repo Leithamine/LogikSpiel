@@ -10,32 +10,90 @@ public class MathCrossGeneratorServiceFallbackTests
     [Theory]
     [InlineData("easy")]
     [InlineData("hard")]
-    public void FallbackGrid_MultipleSeeds_HasExpectedCrossIntersections(string difficulty)
+    public void FallbackGrid_MultipleSeeds_IsFullyConnected(string difficulty)
     {
         for (int seed = 1; seed <= 40; seed++)
         {
             var game = InvokeGenerateFallbackGrid(difficulty, seed);
-            int eqLen = game.EquationLength;
-
-            var second = 1 + eqLen + 1;
-            var intersections = new (int r, int c)[]
-            {
-                (1, 1),
-                (1, second),
-                (second, 1),
-                (second, second)
-            };
-
-            foreach (var (r, c) in intersections)
-            {
-                Assert.True(r >= 0 && r < game.Rows && c >= 0 && c < game.Cols,
-                    $"Intersection ({r},{c}) out of bounds for seed={seed}, difficulty={difficulty}.");
-                Assert.Equal(CellType.Number, game.Grid[r, c].Type);
-            }
-
+            
             Assert.True(game.Equations.Count >= 8,
                 $"Expected at least 8 equations in fallback for seed={seed}, difficulty={difficulty}, got {game.Equations.Count}.");
+                
+            Assert.True(IsGameFullyConnected(game), 
+                $"Fallback Grid is not fully connected for seed={seed}, difficulty={difficulty}.");
         }
+    }
+
+    [Theory]
+    [InlineData("easy")]
+    [InlineData("normal")]
+    [InlineData("hard")]
+    [InlineData("master")]
+    public void GenerateGame_MultipleSeeds_IsFullyConnected(string difficulty)
+    {
+        var service = new MathCrossGeneratorService();
+        for (int seed = 1; seed <= 40; seed++)
+        {
+            var game = service.GenerateGame(difficulty, seed);
+            Assert.True(IsGameFullyConnected(game), 
+                $"Generated Grid is not fully connected for seed={seed}, difficulty={difficulty}.");
+        }
+    }
+
+    private static bool IsGameFullyConnected(MathCrossGame game)
+    {
+        int startR = -1, startC = -1;
+        int totalCells = 0;
+
+        for (int r = 0; r < game.Rows; r++)
+        {
+            for (int c = 0; c < game.Cols; c++)
+            {
+                if (game.Grid[r, c].Type != CellType.Empty)
+                {
+                    totalCells++;
+                    if (startR == -1)
+                    {
+                        startR = r;
+                        startC = c;
+                    }
+                }
+            }
+        }
+
+        if (totalCells == 0) return true;
+
+        var visited = new bool[game.Rows, game.Cols];
+        var queue = new Queue<(int r, int c)>();
+        queue.Enqueue((startR, startC));
+        visited[startR, startC] = true;
+        int visitedCount = 0;
+
+        int[] dr = { -1, 1, 0, 0 };
+        int[] dc = { 0, 0, -1, 1 };
+
+        while (queue.Count > 0)
+        {
+            var (r, c) = queue.Dequeue();
+            visitedCount++;
+
+            for (int i = 0; i < 4; i++)
+            {
+                int nr = r + dr[i];
+                int nc = c + dc[i];
+
+                if (nr >= 0 && nr < game.Rows && nc >= 0 && nc < game.Cols)
+                {
+                    if (!visited[nr, nc] && game.Grid[nr, nc].Type != CellType.Empty)
+                    {
+                        visited[nr, nc] = true;
+                        queue.Enqueue((nr, nc));
+                    }
+                }
+            }
+        }
+
+        return visitedCount == totalCells;
     }
 
     [Theory]

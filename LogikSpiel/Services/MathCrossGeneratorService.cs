@@ -128,8 +128,65 @@ public sealed class MathCrossGeneratorService
         }
 
         if (placed.Count < s.MinEquations) return null;
+        if (!IsFullyConnected(grid)) return null;
 
         return BuildGame(grid, solutions, s);
+    }
+
+    private bool IsFullyConnected(CellType[,] grid)
+    {
+        int startR = -1, startC = -1;
+        int totalCells = 0;
+
+        for (int r = 0; r < GridSize; r++)
+        {
+            for (int c = 0; c < GridSize; c++)
+            {
+                if (grid[r, c] != CellType.Empty)
+                {
+                    totalCells++;
+                    if (startR == -1)
+                    {
+                        startR = r;
+                        startC = c;
+                    }
+                }
+            }
+        }
+
+        if (totalCells == 0) return true;
+
+        var visited = new bool[GridSize, GridSize];
+        var queue = new Queue<(int r, int c)>();
+        queue.Enqueue((startR, startC));
+        visited[startR, startC] = true;
+        int visitedCount = 0;
+
+        int[] dr = { -1, 1, 0, 0 };
+        int[] dc = { 0, 0, -1, 1 };
+
+        while (queue.Count > 0)
+        {
+            var (r, c) = queue.Dequeue();
+            visitedCount++;
+
+            for (int i = 0; i < 4; i++)
+            {
+                int nr = r + dr[i];
+                int nc = c + dc[i];
+
+                if (nr >= 0 && nr < GridSize && nc >= 0 && nc < GridSize)
+                {
+                    if (!visited[nr, nc] && grid[nr, nc] != CellType.Empty)
+                    {
+                        visited[nr, nc] = true;
+                        queue.Enqueue((nr, nc));
+                    }
+                }
+            }
+        }
+
+        return visitedCount == totalCells;
     }
 
     private bool HasEquationInDirection(CellType[,] grid, int r, int c, bool horizontal)
@@ -597,12 +654,9 @@ public sealed class MathCrossGeneratorService
 
     private MathCrossGame GenerateFallbackGrid(Settings s, Random rnd)
     {
-        // Erzeuge ein garantiertes 8-Gleichungen Grid im Gitter-Muster
         int eqLen = s.EquationLength;
-
-        // 4 horizontal + 4 vertikal in einem Gitter (inkl. klarer Spacer zwischen Gleichungen)
-        int rows = eqLen * 2 + 3;
-        int cols = eqLen * 2 + 3;
+        int rows = GridSize;
+        int cols = GridSize;
 
         var game = new MathCrossGame
         {
@@ -618,49 +672,75 @@ public sealed class MathCrossGeneratorService
             for (int c = 0; c < cols; c++)
                 game.Grid[r, c] = new MathCrossCell
                 {
-                    Row = r,
-                    Col = c,
-                    Type = CellType.Empty,
-                    Solution = "",
-                    UserInput = "",
-                    IsGiven = false
+                    Row = r, Col = c, Type = CellType.Empty, Solution = "", UserInput = "", IsGiven = false
                 };
 
-        int first = 1;
-        int second = 1 + eqLen + 1;
-
-        // 4 horizontale Gleichungen
-        var starts = new (int row, int col)[]
+        int curR = 1;
+        int curC = 1;
+        bool horizontal = true;
+        
+        var firstEq = GenerateEquation(s, rnd);
+        // Da dies ein Fallback ist, darf hier null kommen, falls schwer, aber rnd versucht es.
+        // Wenn's fehlschlägt, wiederholen wir es via Rekursion mit neuem Seed.
+        if (firstEq == null || !PlaceInGame(game, curR, curC, horizontal, firstEq, eqLen))
+            return GenerateFallbackGrid(s, new Random(rnd.Next()));
+            
+        // Treppen-Muster: Jede Gleichung dockt an das Ende der vorherigen an.
+        for (int i = 1; i < s.MinEquations; i++)
         {
-            (first, first),
-            (first, second),
-            (second, first),
-            (second, second)
-        };
-
-        foreach (var (row, col) in starts)
-        {
-            var eq = GenerateEquation(s, rnd);
-            if (eq == null || !PlaceInGame(game, row, col, true, eq, eqLen))
-                return GenerateFallbackGrid(s, new Random(rnd.Next()));
-        }
-
-        // 4 vertikale Gleichungen, jeweils über den vorhandenen Startwert verankert
-        foreach (var (row, col) in starts)
-        {
-            if (!decimal.TryParse(game.Grid[row, col].Solution, System.Globalization.NumberStyles.Any,
+            if (horizontal) curC += (eqLen - 1);
+            else curR += (eqLen - 1);
+            
+            horizontal = !horizontal;
+            
+            if (!decimal.TryParse(game.Grid[curR, curC].Solution, System.Globalization.NumberStyles.Any,
                 System.Globalization.CultureInfo.InvariantCulture, out var anchor))
             {
                 return GenerateFallbackGrid(s, new Random(rnd.Next()));
             }
 
             var eq = GenerateEquationWithValue(s, rnd, anchorPos: 0, anchorVal: anchor);
-            if (eq == null || !PlaceInGame(game, row, col, false, eq, eqLen))
+            if (eq == null || !PlaceInGame(game, curR, curC, horizontal, eq, eqLen))
                 return GenerateFallbackGrid(s, new Random(rnd.Next()));
         }
 
         game.Equations = ScanEquations(game, eqLen);
-        return game;
+        
+        // Trim Game Board
+        int minR = GridSize, maxR = 0, minC = GridSize, maxC = 0;
+        for (int r = 0; r < game.Rows; r++)
+        {
+            for (int c = 0; c < game.Cols; c++)
+            {
+                if (game.Grid[r, c].Type != CellType.Empty)
+                {
+                    minR = Math.Min(minR, r);
+                    maxR = Math.Max(maxR, r);
+                    minC = Math.Min(minC, c);
+                    maxC = Math.Max(maxC, c);
+                }
+            }
+        }
+        
+        int nRows = maxR - minR + 1;
+        int nCols = maxC - minC + 1;
+        var trimmed = new MathCrossGame
+        {
+            Rows = nRows, Cols = nCols, Grid = new MathCrossCell[nRows, nCols],
+            Difficulty = s.DifficultyKey, EquationLength = eqLen, UseExtendedEquations = s.IsExtended
+        };
+        for (int r = 0; r < nRows; r++)
+        {
+            for (int c = 0; c < nCols; c++)
+            {
+                var orig = game.Grid[minR + r, minC + c];
+                orig.Row = r; orig.Col = c;
+                trimmed.Grid[r, c] = orig;
+            }
+        }
+        trimmed.Equations = ScanEquations(trimmed, eqLen);
+
+        return trimmed;
     }
 
     private bool PlaceInGame(MathCrossGame game, int startR, int startC, bool horizontal, EquationData eq, int len)
