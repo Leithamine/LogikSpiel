@@ -12,27 +12,45 @@ namespace LogikSpiel.Services;
 public sealed class MathCrossGeneratorService
 {
     private const int GridSize = 30;
+    private const int FinalizeAttempts = 8;
+    private const int SolvabilityRetryLimit = 60;
 
     public MathCrossGame GenerateGame(string difficultyKey, int seed)
     {
         var s = GetSettings(difficultyKey);
-        var rnd = new Random(seed);
 
-        // Versuche mehrmals ein gutes Rätsel zu generieren
+        // Versuche mehrmals ein gutes und lösbares Rätsel zu generieren
         for (int attempt = 0; attempt < 50; attempt++)
         {
             var game = TryGenerate(s, new Random(seed + attempt * 1000));
-            if (game != null && game.Equations.Count >= s.MinEquations)
+            if (game == null || game.Equations.Count < s.MinEquations) continue;
+
+            for (int finalizeAttempt = 0; finalizeAttempt < FinalizeAttempts; finalizeAttempt++)
             {
-                FinalizeGame(game, rnd, s);
-                return game;
+                var finalizeRnd = new Random(seed + attempt * 1000 + finalizeAttempt * 97 + 17);
+                if (FinalizeGame(game, finalizeRnd, s))
+                {
+                    return game;
+                }
             }
         }
 
-        // Fallback: Einfaches Grid-Layout
-        var fallback = GenerateFallbackGrid(s, rnd);
-        FinalizeGame(fallback, rnd, s);
-        return fallback;
+        // Fallback: Einfaches Grid-Layout; bei unlösbaren Starts neu würfeln
+        for (int attempt = 0; attempt < 30; attempt++)
+        {
+            var fallbackRnd = new Random(seed + 50000 + attempt * 131);
+            var fallback = GenerateFallbackGrid(s, fallbackRnd);
+            if (FinalizeGame(fallback, fallbackRnd, s))
+            {
+                return fallback;
+            }
+        }
+
+        // Letzte Absicherung: Minimal konfiguriertes Fallback ohne Vollaufdeckung.
+        var lastRnd = new Random(seed + 999999);
+        var lastFallback = GenerateFallbackGrid(s, lastRnd);
+        FinalizeGame(lastFallback, lastRnd, s, allowFailure: true);
+        return lastFallback;
     }
 
     private MathCrossGame? TryGenerate(Settings s, Random rnd)
@@ -579,7 +597,7 @@ public sealed class MathCrossGeneratorService
         {
             var eq = GenerateEquation(s, rnd);
             if (eq == null) continue;
-            PlaceInGame(game, hCols[i], hRows[i], false, eq, eqLen);
+            PlaceInGame(game, hRows[i], hCols[i], false, eq, eqLen);
         }
 
         game.Equations = ScanEquations(game, eqLen);
@@ -658,7 +676,7 @@ public sealed class MathCrossGeneratorService
         return true;
     }
 
-    private void FinalizeGame(MathCrossGame game, Random rnd, Settings s)
+    private bool FinalizeGame(MathCrossGame game, Random rnd, Settings s, bool allowFailure = false)
     {
         // Setze Defaults
         for (int r = 0; r < game.Rows; r++)
@@ -701,13 +719,25 @@ public sealed class MathCrossGeneratorService
             cell.UserInput = cell.Solution;
         }
 
-        EnsureSolvable(game, rnd);
+        bool solvable = EnsureSolvable(game, rnd);
+
+        // Startzustand darf nicht vollständig gelöst sein.
+        if (editable.Count > 0 && editable.All(c => c.IsGiven))
+        {
+            var toHide = editable[rnd.Next(editable.Count)];
+            toHide.IsGiven = false;
+            toHide.UserInput = "";
+            solvable = false;
+        }
+
         game.GivenCells = editable.Count(c => c.IsGiven);
+
+        return allowFailure || solvable;
     }
 
-    private void EnsureSolvable(MathCrossGame game, Random rnd)
+    private bool EnsureSolvable(MathCrossGame game, Random rnd)
     {
-        for (int iter = 0; iter < 100; iter++)
+        for (int iter = 0; iter < SolvabilityRetryLimit; iter++)
         {
             var solvable = new bool[game.Rows, game.Cols];
 
@@ -735,30 +765,17 @@ public sealed class MathCrossGeneratorService
             var unsolved = new List<MathCrossCell>();
             for (int r = 0; r < game.Rows; r++)
                 for (int c = 0; c < game.Cols; c++)
-                    if (game.Grid[r, c].Type != CellType.Empty && !solvable[r, c])
+                    if (game.Grid[r, c].Type is CellType.Number or CellType.Operator && !solvable[r, c])
                         unsolved.Add(game.Grid[r, c]);
 
-            if (unsolved.Count == 0) return;
+            if (unsolved.Count == 0) return true;
 
             var pick = unsolved[rnd.Next(unsolved.Count)];
             pick.IsGiven = true;
             pick.UserInput = pick.Solution;
         }
 
-        // Harte Absicherung: falls der iterative Ansatz nicht ausreicht,
-        // alle verbleibenden Zellen freigeben, damit das Rätsel immer lösbar ist.
-        for (int r = 0; r < game.Rows; r++)
-        {
-            for (int c = 0; c < game.Cols; c++)
-            {
-                var cell = game.Grid[r, c];
-                if (cell.Type is CellType.Number or CellType.Operator && !cell.IsGiven)
-                {
-                    cell.IsGiven = true;
-                    cell.UserInput = cell.Solution;
-                }
-            }
-        }
+        return false;
     }
 
     private static string Format(decimal v)
