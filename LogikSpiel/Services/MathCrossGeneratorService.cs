@@ -83,47 +83,58 @@ public sealed class MathCrossGeneratorService
         bool tryVertical = true;
         int fails = 0;
 
-        while (placed.Count < target && fails < 300)
+        while (placed.Count < target && fails < 30) // lowered fails since we do more attempts inside
         {
             fails++;
 
-            // Sammle alle Zahlen-Zellen
             var numbers = GetNumberPositions(grid, solutions);
             if (numbers.Count == 0) continue;
 
-            // Wähle zufällig eine Zahl
-            var (nr, nc, val) = numbers[rnd.Next(numbers.Count)];
-
-            // Prüfe ob diese Zelle schon Teil einer Gleichung in der gewünschten Richtung ist
-            bool hasHorizontal = HasEquationInDirection(grid, nr, nc, true);
-            bool hasVertical = HasEquationInDirection(grid, nr, nc, false);
-
-            // Wähle die Richtung die noch nicht belegt ist
-            bool vertical;
-            if (hasHorizontal && !hasVertical) vertical = true;
-            else if (!hasHorizontal && hasVertical) vertical = false;
-            else if (!hasHorizontal && !hasVertical) vertical = tryVertical;
-            else continue; // Beide Richtungen belegt
-
-            // Versuche alle Ankerpositionen
-            int[] anchors = s.IsExtended ? new[] { 0, 2, 4, 6 } : new[] { 0, 2, 4 };
-
-            foreach (int anchor in anchors.OrderBy(_ => rnd.Next()))
+            var candidates = new List<(EquationPlacement placement, int score)>();
+            int attempts = 0;
+            
+            // Generate up to 15 valid candidate placements
+            while (candidates.Count < 15 && attempts < 100)
             {
-                var eq = GenerateEquationWithValue(s, rnd, anchor, val);
-                if (eq == null) continue;
+                attempts++;
+                var (nr, nc, val) = numbers[rnd.Next(numbers.Count)];
 
-                int startR = vertical ? nr - anchor : nr;
-                int startC = vertical ? nc : nc - anchor;
+                bool hasHorizontal = HasEquationInDirection(grid, nr, nc, true);
+                bool hasVertical = HasEquationInDirection(grid, nr, nc, false);
 
-                if (CanPlace(grid, solutions, startR, startC, vertical, s.EquationLength, eq, nr, nc))
+                bool vertical;
+                if (hasHorizontal && !hasVertical) vertical = true;
+                else if (!hasHorizontal && hasVertical) vertical = false;
+                else if (!hasHorizontal && !hasVertical) vertical = tryVertical;
+                else continue;
+
+                int[] anchors = s.IsExtended ? new[] { 0, 2, 4, 6 } : new[] { 0, 2, 4 };
+
+                foreach (int anchor in anchors.OrderBy(_ => rnd.Next()))
                 {
-                    Place(grid, solutions, startR, startC, vertical, eq, s.EquationLength);
-                    placed.Add(new EquationPlacement(startR, startC, vertical, eq));
-                    tryVertical = !tryVertical;
-                    fails = 0;
-                    break;
+                    var eq = GenerateEquationWithValue(s, rnd, anchor, val);
+                    if (eq == null) continue;
+
+                    int startR = vertical ? nr - anchor : nr;
+                    int startC = vertical ? nc : nc - anchor;
+
+                    if (CanPlace(grid, solutions, startR, startC, vertical, s.EquationLength, eq, nr, nc))
+                    {
+                        var placement = new EquationPlacement(startR, startC, vertical, eq);
+                        int score = ScorePlacement(placed, placement, grid, s.EquationLength, nr, nc);
+                        candidates.Add((placement, score));
+                        break; // One valid candidate per chosen (nr, nc)
+                    }
                 }
+            }
+
+            if (candidates.Count > 0)
+            {
+                var best = candidates.OrderBy(c => c.score).First();
+                Place(grid, solutions, best.placement.StartR, best.placement.StartC, best.placement.Vertical, best.placement.Eq, s.EquationLength);
+                placed.Add(best.placement);
+                tryVertical = !tryVertical;
+                fails = 0;
             }
         }
 
@@ -131,6 +142,58 @@ public sealed class MathCrossGeneratorService
         if (!IsFullyConnected(grid)) return null;
 
         return BuildGame(grid, solutions, s);
+    }
+
+    private int ScorePlacement(List<EquationPlacement> placed, EquationPlacement p, CellType[,] grid, int len, int anchorR, int anchorC)
+    {
+        int minR = p.StartR;
+        int maxR = p.StartR + (p.Vertical ? len - 1 : 0);
+        int minC = p.StartC;
+        int maxC = p.StartC + (p.Vertical ? 0 : len - 1);
+
+        foreach (var exist in placed)
+        {
+            minR = Math.Min(minR, exist.StartR);
+            maxR = Math.Max(maxR, exist.StartR + (exist.Vertical ? len - 1 : 0));
+            minC = Math.Min(minC, exist.StartC);
+            maxC = Math.Max(maxC, exist.StartC + (exist.Vertical ? 0 : len - 1));
+        }
+
+        int width = maxC - minC + 1;
+        int height = maxR - minR + 1;
+        int area = width * height;
+        
+        int score = area * 10;
+
+        int intersections = 0;
+        for (int i = 0; i < len; i++)
+        {
+            int r = p.StartR + i * (p.Vertical ? 1 : 0);
+            int c = p.StartC + i * (p.Vertical ? 0 : 1);
+            if (grid[r, c] != CellType.Empty)
+            {
+                intersections++;
+            }
+        }
+        
+        // Huge bonus for reusing existing cells (genuine matrix crossings)
+        if (intersections > 1) 
+        {
+            score -= (intersections - 1) * 200;
+        }
+
+        // Bonus for anchoring in the middle rather than ends
+        int anchorIdx = p.Vertical ? (anchorR - p.StartR) : (anchorC - p.StartC);
+        if (anchorIdx > 0 && anchorIdx < len - 1)
+        {
+            score -= 50; 
+        }
+
+        // Penalty for long aspect ratios
+        int ratio = Math.Max(width, height) - Math.Min(width, height);
+        score += ratio * 15;
+
+        return score;
     }
 
     private bool IsFullyConnected(CellType[,] grid)
