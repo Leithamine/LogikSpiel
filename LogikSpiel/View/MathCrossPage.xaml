@@ -12,6 +12,7 @@
              BackgroundImageSource="gamebg.png">
     <ContentPage.Resources>
         <conv:InvertBoolConverter x:Key="InvertBoolConverter"/>
+        <conv:MathCellToColorConverter x:Key="MathCellToColorConverter"/>
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*,Auto" Padding="12" RowSpacing="12">

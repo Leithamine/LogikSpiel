@@ -10,7 +10,7 @@
             <conv:StringNotNullOrEmptyConverter x:Key="StringNotNullOrEmptyConverter" />
             <conv:LockedToButtonTextConverter x:Key="LockedToButtonTextConverter" />
             <conv:BoolToColorConverter x:Key="BoolToColorConverter"/>
-            <conv:CellTypeToColorConverter x:Key="CellTypeToColorConverter"/>
+            <conv:MathCellToColorConverter x:Key="MathCellToColorConverter"/>
             <conv:InvertBoolConverter x:Key="InvertBoolConverter"/>
             <conv:SlotsHasDigitsConverter x:Key="SlotsHasDigitsConverter" />
             <conv:StringOrBulletConverter x:Key="StringOrBulletConverter" />

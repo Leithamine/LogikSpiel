@@ -6,7 +6,6 @@ using LogikSpiel.Model;
 using LogikSpiel.Services;
 using LogikSpiel.Services.Localization;
 using LogikSpiel.View;
-using Microsoft.Maui.Graphics;
 
 namespace LogikSpiel.ViewModel;
 
@@ -455,16 +454,6 @@ public sealed class MathCrossPageViewModel : ObservableObject
         return MathCrossValueNormalizer.TryParseNumber(s, out r);
     }
 
-    public Color GetCellColor(MathCrossCell cell, bool sel)
-    {
-        if (cell.Type == CellType.Empty) return Colors.Transparent;
-        if (sel) return Color.FromArgb("#3A4A64");
-        if (cell.Type == CellType.Equals) return Color.FromArgb("#2B3140");
-        if (cell.IsGiven) return Color.FromArgb("#313B4A");
-        if (cell.Type == CellType.Operator) return Color.FromArgb("#2F3442");
-        return Color.FromArgb("#242C3A");
-    }
-
     private static string NormalizeDifficulty(string? difficulty)
     {
         var value = (difficulty ?? "easy").Trim().ToLowerInvariant();
@@ -518,7 +507,7 @@ public sealed class MathCrossCellViewModel : ObservableObject
     public bool IsSelected
     {
         get => _isSelected;
-        set { if (SetProperty(ref _isSelected, value)) OnPropertyChanged(nameof(BackgroundColor)); }
+        set => SetProperty(ref _isSelected, value);
     }
 
     public bool IsGiven => Cell.IsGiven;
@@ -532,14 +521,11 @@ public sealed class MathCrossCellViewModel : ObservableObject
             (string.IsNullOrWhiteSpace(Cell.UserInput) ? "·" : Cell.UserInput);
 
     public AsyncCommand TapCellCommand { get; }
-    public Color BackgroundColor => _parent.GetCellColor(Cell, IsSelected);
-
     public void UpdateDisplay()
     {
         OnPropertyChanged(nameof(DisplayText));
         OnPropertyChanged(nameof(EditableText));
         OnPropertyChanged(nameof(IsGiven));
         OnPropertyChanged(nameof(IsEditable));
-        OnPropertyChanged(nameof(BackgroundColor));
     }
 }
