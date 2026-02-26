@@ -288,7 +288,7 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         }
 
         if (_vm.ShowProfessor && string.IsNullOrWhiteSpace(ProfessorLabel.Text) && !string.IsNullOrWhiteSpace(_vm.ProfessorMessage))
-            _ = TypeTextAsync(_vm.ProfessorMessage);
+            SetProfessorText(_vm.ProfessorMessage);
     }
 
     protected override void OnDisappearing()
@@ -322,9 +322,6 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
             _celebrationCts = null;
         }
 
-        _typingCts?.Cancel();
-        _typingCts?.Dispose();
-        _typingCts = null;
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
