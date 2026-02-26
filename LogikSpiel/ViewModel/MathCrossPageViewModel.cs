@@ -157,6 +157,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
 
             var candidate = FlatCells
                 .Where(c => c.IsEditable
+                    && string.IsNullOrWhiteSpace(c.Cell.UserInput)
                     && !IsCellSolved(c.Cell)
                     && !string.IsNullOrWhiteSpace(c.Cell.Solution))
                 .OrderBy(_ => Random.Shared.Next())
