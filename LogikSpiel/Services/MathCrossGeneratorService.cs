@@ -12,20 +12,24 @@ namespace LogikSpiel.Services;
 public sealed class MathCrossGeneratorService
 {
     private const int GridSize = 30;
-    private const int FinalizeAttempts = 8;
-    private const int SolvabilityRetryLimit = 60;
+    private const int FinalizeAttempts = 3;
+    private const int SolvabilityRetryLimit = 24;
+    private const int CandidateSearchLimit = 1200;
+    private const int GenerationBudgetMs = 2800;
+    private const int MaxTryGenerateAttempts = 14;
+    private const int MaxFallbackAttempts = 3;
 
     public MathCrossGame GenerateGame(string difficultyKey, int seed)
     {
         var s = GetSettings(difficultyKey);
+        var startedAt = DateTime.UtcNow;
 
-        // Versuche mehrmals ein gutes und lösbares Rätsel zu generieren
-        for (int attempt = 0; attempt < 50; attempt++)
+        for (int attempt = 0; attempt < MaxTryGenerateAttempts && !IsBudgetExceeded(startedAt); attempt++)
         {
             var game = TryGenerate(s, new Random(seed + attempt * 1000));
             if (game == null || game.Equations.Count < s.MinEquations) continue;
 
-            for (int finalizeAttempt = 0; finalizeAttempt < FinalizeAttempts; finalizeAttempt++)
+            for (int finalizeAttempt = 0; finalizeAttempt < FinalizeAttempts && !IsBudgetExceeded(startedAt); finalizeAttempt++)
             {
                 var finalizeRnd = new Random(seed + attempt * 1000 + finalizeAttempt * 97 + 17);
                 if (FinalizeGame(game, finalizeRnd, s))
@@ -35,8 +39,7 @@ public sealed class MathCrossGeneratorService
             }
         }
 
-        // Fallback: Einfaches Grid-Layout; bei unlösbaren Starts neu würfeln
-        for (int attempt = 0; attempt < 30; attempt++)
+        for (int attempt = 0; attempt < MaxFallbackAttempts && !IsBudgetExceeded(startedAt); attempt++)
         {
             var fallbackRnd = new Random(seed + 50000 + attempt * 131);
             var fallback = GenerateFallbackGrid(s, fallbackRnd);
@@ -46,11 +49,23 @@ public sealed class MathCrossGeneratorService
             }
         }
 
-        // Letzte Absicherung: Minimal konfiguriertes Fallback ohne Vollaufdeckung.
-        var lastRnd = new Random(seed + 999999);
-        var lastFallback = GenerateFallbackGrid(s, lastRnd);
-        FinalizeGame(lastFallback, lastRnd, s, allowFailure: true);
-        return lastFallback;
+        for (int emergencyAttempt = 0; emergencyAttempt < 24; emergencyAttempt++)
+        {
+            var emergency = GenerateEmergencyTemplateGame(s, seed + 777777 + emergencyAttempt * 101);
+            if (FinalizeGame(emergency, new Random(seed + 888888 + emergencyAttempt * 103), s))
+                return emergency;
+        }
+
+        // Last-resort reliability path: keep trying regular generation seeds until a valid board is finalized.
+        for (int rescueAttempt = 0; rescueAttempt < 200; rescueAttempt++)
+        {
+            var candidate = TryGenerate(s, new Random(seed + 990000 + rescueAttempt * 211));
+            if (candidate == null) continue;
+            if (FinalizeGame(candidate, new Random(seed + 995000 + rescueAttempt * 223), s))
+                return candidate;
+        }
+
+        throw new InvalidOperationException("MathCross generation failed to produce a valid solvable puzzle.");
     }
 
     private MathCrossGame? TryGenerate(Settings s, Random rnd)
@@ -756,131 +771,163 @@ public sealed class MathCrossGeneratorService
 
     private MathCrossGame GenerateFallbackGrid(Settings s, Random rnd, int depth = 0)
     {
-        int eqLen = s.EquationLength;
-        int rows = GridSize;
-        int cols = GridSize;
+        return GenerateEmergencyTemplateGame(s, rnd.Next());
+    }
 
+    private MathCrossGame GenerateEmergencyTemplateGame(Settings s, int seed)
+    {
+        for (int variant = 0; variant < 80; variant++)
+        {
+            var built = TryBuildEmergencyTemplate(s, seed + variant * 37);
+            if (built != null)
+                return built;
+        }
+
+        // Return an empty-safe board object only as an internal guard; caller will continue with rescue generation attempts.
+        return new MathCrossGame
+        {
+            Rows = 1,
+            Cols = 1,
+            Grid = new[,] { { new MathCrossCell { Row = 0, Col = 0, Type = CellType.Empty, IsGiven = true, Solution = "", UserInput = "" } } },
+            Difficulty = s.DifficultyKey,
+            EquationLength = s.EquationLength,
+            UseExtendedEquations = s.IsExtended,
+            Equations = new List<MathEquation>()
+        };
+    }
+
+    private MathCrossGame? TryBuildEmergencyTemplate(Settings s, int seed)
+    {
+        int len = s.EquationLength;
+        int rows = 25;
+        int cols = 25;
         var game = new MathCrossGame
         {
-            Rows = rows, Cols = cols, Grid = new MathCrossCell[rows, cols],
-            Difficulty = s.DifficultyKey, EquationLength = eqLen, UseExtendedEquations = s.IsExtended
+            Rows = rows,
+            Cols = cols,
+            Grid = new MathCrossCell[rows, cols],
+            Difficulty = s.DifficultyKey,
+            EquationLength = len,
+            UseExtendedEquations = s.IsExtended
         };
 
         for (int r = 0; r < rows; r++)
             for (int c = 0; c < cols; c++)
-                game.Grid[r, c] = new MathCrossCell
-                {
-                    Row = r, Col = c, Type = CellType.Empty, Solution = "", UserInput = "", IsGiven = false
-                };
+                game.Grid[r, c] = new MathCrossCell { Row = r, Col = c, Type = CellType.Empty, Solution = "", UserInput = "", IsGiven = false };
 
-        int centerR = GridSize / 2;
-        int centerC = GridSize / 2;
-        
-        var firstEq = GenerateEquation(s, rnd);
-        if (firstEq == null || !PlaceInGame(game, centerR, centerC, true, firstEq, eqLen))
-        {
-            if (depth > 50) return game;
-            return GenerateFallbackGrid(s, new Random(rnd.Next()), depth + 1);
-        }
+        var rnd = new Random(seed);
+        var placements = GetEmergencyPlacements(len).OrderBy(_ => rnd.Next()).ToList();
+        var used = new Dictionary<(int r, int c), string>();
 
-        var queue = new Queue<(int r, int c, decimal val, bool parentWasHorizontal)>();
-        int[] anchors = s.IsExtended ? new[] { 0, 2, 4, 6 } : new[] { 0, 2, 4 };
-        
-        foreach(int a in anchors)
+        foreach (var (startR, startC, horizontal) in placements)
         {
-            if (decimal.TryParse(game.Grid[centerR, centerC + a].Solution, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var val))
-                queue.Enqueue((centerR, centerC + a, val, true));
-        }
-
-        int count = 1;
-        int attempts = 0;
-        
-        while(count < s.MaxEquations && queue.Count > 0 && attempts < 80)
-        {
-            attempts++;
-            var (nr, nc, val, parentHoriz) = queue.Dequeue();
-            
-            bool horizontal = !parentHoriz;
-            var bestAnchors = anchors.OrderBy(_ => rnd.Next()).ToList();
-            bool placedOne = false;
-            
-            foreach(int anchor in bestAnchors)
+            EquationData? picked = null;
+            for (int attempt = 0; attempt < 180; attempt++)
             {
-                var eq = GenerateEquationWithValue(s, rnd, anchorPos: anchor, anchorVal: val);
-                if (eq == null) continue;
-                
-                int startR = horizontal ? nr : nr - anchor;
-                int startC = horizontal ? nc - anchor : nc;
-                
-                if (PlaceInGame(game, startR, startC, horizontal, eq, eqLen))
+                var candidate = GenerateEquation(s, rnd);
+                if (candidate == null) continue;
+
+                bool ok = true;
+                var cells = BuildCells(candidate, len);
+                for (int i = 0; i < len; i++)
                 {
-                    count++;
-                    placedOne = true;
-                    foreach(int newAnchor in anchors)
+                    int r = startR + (horizontal ? 0 : i);
+                    int c = startC + (horizontal ? i : 0);
+                    if (used.TryGetValue((r, c), out var existing) && existing != cells[i].val)
                     {
-                        if (newAnchor == anchor) continue; 
-                        int cr = horizontal ? startR : startR + newAnchor;
-                        int cc = horizontal ? startC + newAnchor : startC;
-                        if (decimal.TryParse(game.Grid[cr, cc].Solution, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var nVal))
-                        {
-                            queue.Enqueue((cr, cc, nVal, horizontal));
-                        }
+                        ok = false;
+                        break;
                     }
-                    if (count >= s.MinEquations && count <= s.MaxEquations && rnd.NextDouble() > 0.6) 
-                    {
-                        // Stop early sometimes if we have enough equations to create variety
-                        queue.Clear(); 
-                    }
+                }
+
+                if (ok)
+                {
+                    picked = candidate;
                     break;
                 }
             }
-            if (!placedOne && count < s.MinEquations)
+
+            if (picked == null)
+                return null;
+
+            var packed = BuildCells(picked, len);
+            for (int i = 0; i < len; i++)
             {
-                queue.Enqueue((nr, nc, val, parentHoriz));
+                int r = startR + (horizontal ? 0 : i);
+                int c = startC + (horizontal ? i : 0);
+                used[(r, c)] = packed[i].val;
+                game.Grid[r, c].Type = packed[i].type;
+                game.Grid[r, c].Solution = packed[i].val;
             }
         }
-        
-        game.Equations = ScanEquations(game, eqLen);
-        if (game.Equations.Count < s.MinEquations || game.Equations.Count > s.MaxEquations)
-        {
-            if (depth > 50) return game;
-            return GenerateFallbackGrid(s, new Random(rnd.Next()), depth + 1);
-        }
 
-        
-        // Trim Game Board
-        int minR = GridSize, maxR = 0, minC = GridSize, maxC = 0;
+        return TrimAndScanGame(game, s);
+    }
+
+    private List<(int startR, int startC, bool horizontal)> GetEmergencyPlacements(int len)
+    {
+        int mid = 12;
+        int half = len / 2;
+        return new List<(int, int, bool)>
+        {
+            (mid, mid - half, true),
+            (mid - half, mid, false),
+            (mid - 4, mid - half, true),
+            (mid - half, mid - 4, false),
+            (mid + 4, mid - half, true),
+            (mid - half, mid + 4, false),
+            (mid - 2, mid - half - 2, true),
+            (mid - half - 2, mid - 2, false)
+        };
+    }
+
+    private MathCrossGame? TrimAndScanGame(MathCrossGame game, Settings s)
+    {
+        int minR = game.Rows, maxR = 0, minC = game.Cols, maxC = 0;
         for (int r = 0; r < game.Rows; r++)
         {
             for (int c = 0; c < game.Cols; c++)
             {
-                if (game.Grid[r, c].Type != CellType.Empty)
-                {
-                    minR = Math.Min(minR, r);
-                    maxR = Math.Max(maxR, r);
-                    minC = Math.Min(minC, c);
-                    maxC = Math.Max(maxC, c);
-                }
+                if (game.Grid[r, c].Type == CellType.Empty) continue;
+                minR = Math.Min(minR, r);
+                maxR = Math.Max(maxR, r);
+                minC = Math.Min(minC, c);
+                maxC = Math.Max(maxC, c);
             }
         }
-        
+
         int nRows = maxR - minR + 1;
         int nCols = maxC - minC + 1;
         var trimmed = new MathCrossGame
         {
-            Rows = nRows, Cols = nCols, Grid = new MathCrossCell[nRows, nCols],
-            Difficulty = s.DifficultyKey, EquationLength = eqLen, UseExtendedEquations = s.IsExtended
+            Rows = nRows,
+            Cols = nCols,
+            Grid = new MathCrossCell[nRows, nCols],
+            Difficulty = s.DifficultyKey,
+            EquationLength = s.EquationLength,
+            UseExtendedEquations = s.IsExtended
         };
+
         for (int r = 0; r < nRows; r++)
         {
             for (int c = 0; c < nCols; c++)
             {
-                var orig = game.Grid[minR + r, minC + c];
-                orig.Row = r; orig.Col = c;
-                trimmed.Grid[r, c] = orig;
+                var src = game.Grid[minR + r, minC + c];
+                trimmed.Grid[r, c] = new MathCrossCell
+                {
+                    Row = r,
+                    Col = c,
+                    Type = src.Type,
+                    Solution = src.Solution,
+                    UserInput = "",
+                    IsGiven = false
+                };
             }
         }
-        trimmed.Equations = ScanEquations(trimmed, eqLen);
+
+        trimmed.Equations = ScanEquations(trimmed, s.EquationLength);
+        if (trimmed.Equations.Count < s.MinEquations || trimmed.Equations.Count > s.MaxEquations)
+            return null;
 
         return trimmed;
     }
@@ -956,9 +1003,16 @@ public sealed class MathCrossGeneratorService
             {
                 if (IsValidEq(game, r, c, 0, 1, len))
                 {
+                    var cells = Enumerable.Range(0, len).Select(i => (r, c + i)).ToList();
                     list.Add(new MathEquation
                     {
-                        Cells = Enumerable.Range(0, len).Select(i => (r, c + i)).ToList()
+                        StartRow = r,
+                        StartCol = c,
+                        IsHorizontal = true,
+                        Cells = cells,
+                        Operator = game.Grid[r, c + 1].Solution,
+                        Operator2 = len >= 7 ? game.Grid[r, c + 3].Solution : "",
+                        Operator3 = len >= 9 ? game.Grid[r, c + 5].Solution : ""
                     });
                 }
             }
@@ -971,9 +1025,16 @@ public sealed class MathCrossGeneratorService
             {
                 if (IsValidEq(game, r, c, 1, 0, len))
                 {
+                    var cells = Enumerable.Range(0, len).Select(i => (r + i, c)).ToList();
                     list.Add(new MathEquation
                     {
-                        Cells = Enumerable.Range(0, len).Select(i => (r + i, c)).ToList()
+                        StartRow = r,
+                        StartCol = c,
+                        IsHorizontal = false,
+                        Cells = cells,
+                        Operator = game.Grid[r + 1, c].Solution,
+                        Operator2 = len >= 7 ? game.Grid[r + 3, c].Solution : "",
+                        Operator3 = len >= 9 ? game.Grid[r + 5, c].Solution : ""
                     });
                 }
             }
@@ -1031,7 +1092,7 @@ public sealed class MathCrossGeneratorService
         toGive = Math.Min(toGive, editable.Count - 2);
         toGive = Math.Max(toGive, 0);
 
-        foreach (var cell in editable.OrderBy(_ => rnd.Next()).Take(toGive))
+        foreach (var cell in ChooseInitialGivens(game, editable, toGive, rnd))
         {
             cell.IsGiven = true;
             cell.UserInput = cell.Solution;
@@ -1055,10 +1116,21 @@ public sealed class MathCrossGeneratorService
 
     private record DeductionResult(int Completions, Dictionary<int, HashSet<string>> Candidates, bool IsConsistent, bool LimitReached);
 
-    private DeductionResult GetValidCandidates(MathCrossGame game, MathEquation eq, bool[,] solvable, Settings s)
+    private record DeductionPassResult(
+        bool IsConsistent,
+        Dictionary<(int row, int col), string> KnownValues,
+        Dictionary<(int row, int col), int> CandidateCounts,
+        Dictionary<(int row, int col), int> EquationCoverage);
+
+    private DeductionResult GetValidCandidates(MathCrossGame game, MathEquation eq, Dictionary<(int row, int col), string> knownValues, Settings s)
     {
         var validCells = eq.Cells.Where(p => IsWithinBounds(game, p.row, p.col)).ToList();
-        
+        if (validCells.Count != eq.CellCount)
+            return new DeductionResult(0, new Dictionary<int, HashSet<string>>(), false, false);
+
+        if (eq.CellCount == 5)
+            return GetValidCandidatesSimple(eq, validCells, knownValues, s);
+
         List<decimal> numDomain = new List<decimal>();
         for (decimal v = s.MinVal; v <= s.MaxVal; v += s.AllowDecimals ? 0.1m : 1m)
             numDomain.Add(v);
@@ -1068,14 +1140,13 @@ public sealed class MathCrossGeneratorService
         var domains = new List<string>[eq.CellCount];
         for (int i = 0; i < eq.CellCount; i++)
         {
-            var (cr, cc) = validCells[i];
             if (i == eq.CellCount - 2) 
             {
                 domains[i] = new List<string> { "=" };
             }
-            else if (solvable[cr, cc])
+            else if (knownValues.TryGetValue(validCells[i], out var knownValue))
             {
-                domains[i] = new List<string> { game.Grid[cr, cc].Solution };
+                domains[i] = new List<string> { knownValue };
             }
             else
             {
@@ -1121,16 +1192,23 @@ public sealed class MathCrossGeneratorService
                         completions++;
                         for (int i = 0; i < eq.CellCount; i++)
                         {
-                            if (!solvable[validCells[i].row, validCells[i].col])
+                            if (!knownValues.ContainsKey(validCells[i]))
                                 candidates[i].Add(current[i]);
                         }
-                        if (completions > 2000) limitReached = true;
+                        if (completions > CandidateSearchLimit) limitReached = true;
                     }
                 }
                 return;
             }
 
-            if (idx == eq.CellCount - 1 && !solvable[validCells[idx].row, validCells[idx].col])
+            if (idx == eq.CellCount - 2)
+            {
+                current[idx] = "=";
+                SolveDFS(idx + 1, current);
+                return;
+            }
+
+            if (idx == eq.CellCount - 1 && !knownValues.ContainsKey(validCells[idx]))
             {
                 decimal? result = null;
                 try {
@@ -1184,113 +1262,390 @@ public sealed class MathCrossGeneratorService
         return new DeductionResult(completions, candidates, isConsistent, limitReached);
     }
 
+    private DeductionResult GetValidCandidatesSimple(
+        MathEquation eq,
+        List<(int row, int col)> validCells,
+        Dictionary<(int row, int col), string> knownValues,
+        Settings s)
+    {
+        var candidates = new Dictionary<int, HashSet<string>>
+        {
+            [0] = new HashSet<string>(),
+            [1] = new HashSet<string>(),
+            [2] = new HashSet<string>(),
+            [3] = new HashSet<string>(),
+            [4] = new HashSet<string>()
+        };
+
+        decimal? a = TryGetKnownNumber(0);
+        decimal? b = TryGetKnownNumber(2);
+        decimal? c = TryGetKnownNumber(4);
+        string? op = TryGetKnownOperator(1);
+
+        if (op != null)
+        {
+            TryUseOperator(op);
+        }
+        else
+        {
+            foreach (var allowedOp in s.Ops)
+            {
+                TryUseOperator(allowedOp);
+            }
+        }
+
+        bool allCoreKnown = knownValues.ContainsKey(validCells[0]) && knownValues.ContainsKey(validCells[1]) && knownValues.ContainsKey(validCells[2]) && knownValues.ContainsKey(validCells[4]);
+        if (allCoreKnown)
+        {
+            bool matches = false;
+            if (decimal.TryParse(knownValues[validCells[0]], System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var ka)
+                && decimal.TryParse(knownValues[validCells[2]], System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var kb)
+                && decimal.TryParse(knownValues[validCells[4]], System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var kc))
+            {
+                var computed = CalcDec(ka, knownValues[validCells[1]], kb, s.AllowDecimals);
+                matches = computed != null && AreSameNumber(computed.Value, kc);
+            }
+
+            return new DeductionResult(matches ? 1 : 0, candidates, matches, false);
+        }
+
+        int completions = candidates[0].Count == 0 && candidates[1].Count == 0 && candidates[2].Count == 0 && candidates[4].Count == 0
+            ? 0
+            : Math.Max(Math.Max(candidates[0].Count, candidates[2].Count), Math.Max(candidates[1].Count, candidates[4].Count));
+
+        bool consistent = candidates[0].Count > 0 || candidates[1].Count > 0 || candidates[2].Count > 0 || candidates[4].Count > 0;
+        return new DeductionResult(consistent ? Math.Max(1, completions) : 0, candidates, consistent, false);
+
+        decimal? TryGetKnownNumber(int idx)
+        {
+            if (!knownValues.TryGetValue(validCells[idx], out var txt)) return null;
+            if (!decimal.TryParse(txt, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var v)) return null;
+            return v;
+        }
+
+        string? TryGetKnownOperator(int idx)
+        {
+            return knownValues.TryGetValue(validCells[idx], out var txt) ? txt : null;
+        }
+
+        void TryUseOperator(string currentOp)
+        {
+            if (!s.Ops.Contains(currentOp)) return;
+
+            if (a.HasValue && b.HasValue)
+            {
+                var result = CalcDec(a.Value, currentOp, b.Value, s.AllowDecimals);
+                if (result == null || !IsAllowedNumber(result.Value, s)) return;
+                if (c.HasValue && !AreSameNumber(c.Value, result.Value)) return;
+                AddCompletion(a.Value, currentOp, b.Value, result.Value);
+                return;
+            }
+
+            if (a.HasValue && c.HasValue)
+            {
+                var inferredB = SolveRightOperand(a.Value, c.Value, currentOp, s.AllowDecimals);
+                if (inferredB == null || !IsAllowedNumber(inferredB.Value, s)) return;
+                AddCompletion(a.Value, currentOp, inferredB.Value, c.Value);
+                return;
+            }
+
+            if (b.HasValue && c.HasValue)
+            {
+                var inferredA = SolveLeftOperand(b.Value, c.Value, currentOp, s.AllowDecimals);
+                if (inferredA == null || !IsAllowedNumber(inferredA.Value, s)) return;
+                AddCompletion(inferredA.Value, currentOp, b.Value, c.Value);
+                return;
+            }
+
+            if (a.HasValue && !b.HasValue && !c.HasValue)
+            {
+                foreach (var bCandidate in NumberDomain(s))
+                {
+                    var result = CalcDec(a.Value, currentOp, bCandidate, s.AllowDecimals);
+                    if (result == null || !IsAllowedNumber(result.Value, s)) continue;
+                    AddCompletion(a.Value, currentOp, bCandidate, result.Value);
+                }
+                return;
+            }
+
+            if (!a.HasValue && b.HasValue && !c.HasValue)
+            {
+                foreach (var aCandidate in NumberDomain(s))
+                {
+                    var result = CalcDec(aCandidate, currentOp, b.Value, s.AllowDecimals);
+                    if (result == null || !IsAllowedNumber(result.Value, s)) continue;
+                    AddCompletion(aCandidate, currentOp, b.Value, result.Value);
+                }
+                return;
+            }
+
+            if (!a.HasValue && !b.HasValue && c.HasValue)
+            {
+                foreach (var aCandidate in NumberDomain(s))
+                {
+                    var inferred = SolveRightOperand(aCandidate, c.Value, currentOp, s.AllowDecimals);
+                    if (inferred == null || !IsAllowedNumber(inferred.Value, s)) continue;
+                    AddCompletion(aCandidate, currentOp, inferred.Value, c.Value);
+                }
+                return;
+            }
+
+            foreach (var aCandidate in NumberDomain(s))
+            {
+                foreach (var bCandidate in NumberDomain(s))
+                {
+                    var result = CalcDec(aCandidate, currentOp, bCandidate, s.AllowDecimals);
+                    if (result == null || !IsAllowedNumber(result.Value, s)) continue;
+                    AddCompletion(aCandidate, currentOp, bCandidate, result.Value);
+                    if (candidates[0].Count > CandidateSearchLimit) return;
+                }
+            }
+        }
+
+        void AddCompletion(decimal av, string ov, decimal bv, decimal cv)
+        {
+            var avs = Format(av);
+            var bvs = Format(bv);
+            var cvs = Format(cv);
+
+            if (knownValues.TryGetValue(validCells[0], out var ka) && ka != avs) return;
+            if (knownValues.TryGetValue(validCells[1], out var ko) && ko != ov) return;
+            if (knownValues.TryGetValue(validCells[2], out var kb) && kb != bvs) return;
+            if (knownValues.TryGetValue(validCells[4], out var kc) && kc != cvs) return;
+
+            if (!IsAllowedNumber(av, s) || !IsAllowedNumber(bv, s) || !IsAllowedNumber(cv, s)) return;
+
+            if (!knownValues.ContainsKey(validCells[0])) candidates[0].Add(avs);
+            if (!knownValues.ContainsKey(validCells[1])) candidates[1].Add(ov);
+            if (!knownValues.ContainsKey(validCells[2])) candidates[2].Add(bvs);
+            if (!knownValues.ContainsKey(validCells[4])) candidates[4].Add(cvs);
+            candidates[3].Add("=");
+        }
+    }
+
     private bool EnsureSolvable(MathCrossGame game, Random rnd)
     {
+        return EnsureSolvableCore(game, rnd, null);
+    }
+
+    private bool EnsureSolvableCore(MathCrossGame game, Random rnd, int? maxStrategicReveals)
+    {
         Settings s = GetSettings(game.Difficulty);
-        int extraGivens = 0;
-        int MaxExtraGivens = Math.Max(2, game.Equations.Count / 3);
+        int maxExtraGivens = Math.Max(2, game.Equations.Count / 3);
+        var editable = GetEditableCoordinates(game).ToList();
+        int revealBudget = Math.Min(maxExtraGivens, maxStrategicReveals ?? maxExtraGivens);
 
-        for (int iter = 0; iter < SolvabilityRetryLimit; iter++)
+        for (int revealsUsed = 0; revealsUsed <= revealBudget; revealsUsed++)
         {
-            var solvable = new bool[game.Rows, game.Cols];
+            var pass = RunDeductionPass(game, s);
+            if (!pass.IsConsistent) return false;
 
-            for (int r = 0; r < game.Rows; r++)
-                for (int c = 0; c < game.Cols; c++)
-                    if (game.Grid[r, c].IsGiven || game.Grid[r, c].Type is CellType.Empty or CellType.Equals)
-                        solvable[r, c] = true;
-
-            bool progress = true;
-            bool anyInconsistent = false;
-
-            while (progress)
-            {
-                progress = false;
-                foreach (var eq in game.Equations)
-                {
-                    var validCells = eq.Cells.Where(p => IsWithinBounds(game, p.row, p.col)).ToList();
-                    if (validCells.Count == 0) continue;
-
-                    int unknowns = validCells.Count(p => !solvable[p.row, p.col]);
-                    if (unknowns > 0)
-                    {
-                        var res = GetValidCandidates(game, eq, solvable, s);
-                        if (!res.IsConsistent || res.Completions == 0)
-                        {
-                            anyInconsistent = true;
-                            break;
-                        }
-
-                        for (int i = 0; i < validCells.Count; i++)
-                        {
-                            var (cr, cc) = validCells[i];
-                            if (!solvable[cr, cc])
-                            {
-                                if (res.Candidates[i].Count == 1)
-                                {
-                                    solvable[cr, cc] = true;
-                                    progress = true;
-                                }
-                            }
-                        }
-                    }
-                }
-                if (anyInconsistent) break;
-            }
-
-            if (anyInconsistent) return false;
-
-            var unsolved = new List<MathCrossCell>();
-            for (int r = 0; r < game.Rows; r++)
-                for (int c = 0; c < game.Cols; c++)
-                    if (game.Grid[r, c].Type is CellType.Number or CellType.Operator && !solvable[r, c])
-                        unsolved.Add(game.Grid[r, c]);
+            var unsolved = editable
+                .Where(p => !pass.KnownValues.ContainsKey(p))
+                .ToList();
 
             if (unsolved.Count == 0) return true;
+            if (revealsUsed == revealBudget) return false;
 
-            if (extraGivens >= MaxExtraGivens) return false;
-            extraGivens++;
-
-            var cellCands = new Dictionary<MathCrossCell, int>();
-            var cellEqCount = new Dictionary<MathCrossCell, int>();
-            
-            foreach (var cell in unsolved) 
-            {
-                cellCands[cell] = 999999; 
-                cellEqCount[cell] = 0; 
-            }
-            
-            foreach (var eq in game.Equations)
-            {
-                var validCells = eq.Cells.Where(p => IsWithinBounds(game, p.row, p.col)).ToList();
-                if (validCells.Count == 0) continue;
-
-                var res = GetValidCandidates(game, eq, solvable, s);
-                if (res.Completions > 0)
-                {
-                    for (int i = 0; i < validCells.Count; i++)
-                    {
-                        var (cr,cc) = validCells[i];
-                        if (!solvable[cr, cc])
-                        {
-                            var cell = game.Grid[cr, cc];
-                            cellEqCount[cell]++;
-                            int cCount = res.Candidates[i].Count;
-                            if (cCount < cellCands[cell]) cellCands[cell] = cCount;
-                        }
-                    }
-                }
-            }
-
+            var baseSolved = pass.KnownValues.Count;
             var pick = unsolved
-                .OrderBy(c => cellCands[c])
-                .ThenByDescending(c => cellEqCount[c])
-                .First();
+                .Select(coord =>
+                {
+                    var simulated = new Dictionary<(int row, int col), string>(pass.KnownValues)
+                    {
+                        [coord] = game.Grid[coord.row, coord.col].Solution
+                    };
+                    var simulatedPass = RunDeductionPass(game, s, simulated);
+                    int gain = simulatedPass.IsConsistent ? simulatedPass.KnownValues.Count - baseSolved : int.MinValue;
+                    int ambiguity = pass.CandidateCounts.TryGetValue(coord, out var cands) ? cands : int.MaxValue;
+                    int eqCoverage = pass.EquationCoverage.TryGetValue(coord, out var eqCount) ? eqCount : 0;
+                    return (coord, gain, ambiguity, eqCoverage);
+                })
+                .OrderByDescending(x => x.gain)
+                .ThenBy(x => x.ambiguity)
+                .ThenByDescending(x => x.eqCoverage)
+                .ThenBy(_ => rnd.Next())
+                .First().coord;
 
-            pick.IsGiven = true;
-            pick.UserInput = pick.Solution;
+            var revealed = game.Grid[pick.row, pick.col];
+            revealed.IsGiven = true;
+            revealed.UserInput = revealed.Solution;
         }
 
         return false;
+    }
+
+
+    private DeductionPassResult RunDeductionPass(
+        MathCrossGame game,
+        Settings s,
+        Dictionary<(int row, int col), string>? seedKnownValues = null)
+    {
+        var knownValues = seedKnownValues != null
+            ? new Dictionary<(int row, int col), string>(seedKnownValues)
+            : new Dictionary<(int row, int col), string>();
+
+        var editable = GetEditableCoordinates(game).ToList();
+        foreach (var (r, c) in editable)
+        {
+            if (game.Grid[r, c].IsGiven)
+                knownValues[(r, c)] = game.Grid[r, c].Solution;
+        }
+
+        var candidateCounts = new Dictionary<(int row, int col), int>();
+        var equationCoverage = new Dictionary<(int row, int col), int>();
+
+        bool progress = true;
+        int guard = 0;
+        while (progress && guard++ < SolvabilityRetryLimit)
+        {
+            progress = false;
+            var mergedCandidates = new Dictionary<(int row, int col), HashSet<string>>();
+            candidateCounts.Clear();
+            equationCoverage.Clear();
+
+            foreach (var eq in game.Equations)
+            {
+                var res = GetValidCandidates(game, eq, knownValues, s);
+                if (!res.IsConsistent || res.Completions == 0)
+                    return new DeductionPassResult(false, knownValues, candidateCounts, equationCoverage);
+
+                var validCells = eq.Cells.Where(p => IsWithinBounds(game, p.row, p.col)).ToList();
+                for (int i = 0; i < validCells.Count; i++)
+                {
+                    var coord = validCells[i];
+                    if (knownValues.ContainsKey(coord) || game.Grid[coord.row, coord.col].Type is CellType.Empty or CellType.Equals)
+                        continue;
+
+                    if (!mergedCandidates.TryGetValue(coord, out var set))
+                    {
+                        set = new HashSet<string>(res.Candidates[i]);
+                        mergedCandidates[coord] = set;
+                    }
+                    else
+                    {
+                        set.IntersectWith(res.Candidates[i]);
+                    }
+
+                    candidateCounts[coord] = set.Count;
+                    equationCoverage[coord] = equationCoverage.TryGetValue(coord, out var ec) ? ec + 1 : 1;
+                }
+            }
+
+            foreach (var kv in mergedCandidates)
+            {
+                if (kv.Value.Count == 0)
+                    return new DeductionPassResult(false, knownValues, candidateCounts, equationCoverage);
+
+                if (kv.Value.Count == 1)
+                {
+                    knownValues[kv.Key] = kv.Value.First();
+                    progress = true;
+                }
+            }
+        }
+
+        return new DeductionPassResult(true, knownValues, candidateCounts, equationCoverage);
+    }
+
+    private IEnumerable<(int row, int col)> GetEditableCoordinates(MathCrossGame game)
+    {
+        for (int r = 0; r < game.Rows; r++)
+            for (int c = 0; c < game.Cols; c++)
+                if (game.Grid[r, c].Type is CellType.Number or CellType.Operator)
+                    yield return (r, c);
+    }
+
+    private IEnumerable<MathCrossCell> ChooseInitialGivens(MathCrossGame game, List<MathCrossCell> editable, int toGive, Random rnd)
+    {
+        var selected = new HashSet<MathCrossCell>();
+
+        foreach (var eq in game.Equations.OrderBy(_ => rnd.Next()))
+        {
+            var options = eq.Cells
+                .Where(p => IsWithinBounds(game, p.row, p.col))
+                .Select(p => game.Grid[p.row, p.col])
+                .Where(c => c.Type is CellType.Number or CellType.Operator)
+                .OrderBy(c => c.Type == CellType.Operator ? 0 : 1)
+                .ThenBy(_ => rnd.Next())
+                .ToList();
+
+            if (options.Count == 0 || selected.Count >= toGive)
+                continue;
+
+            var pick = options.First();
+            selected.Add(pick);
+        }
+
+        foreach (var cell in editable
+            .OrderBy(c => c.Type == CellType.Operator ? 0 : 1)
+            .ThenBy(_ => rnd.Next()))
+        {
+            if (selected.Count >= toGive)
+                break;
+            selected.Add(cell);
+        }
+
+        return selected;
+    }
+
+    private static IEnumerable<decimal> NumberDomain(Settings s)
+    {
+        if (!s.AllowDecimals)
+        {
+            for (int v = s.MinVal; v <= s.MaxVal; v++)
+                yield return v;
+            yield break;
+        }
+
+        for (int v = s.MinVal; v <= s.MaxVal; v++)
+        {
+            yield return v;
+            for (int tenth = 1; tenth <= 9; tenth++)
+                yield return v + tenth / 10m;
+        }
+    }
+
+    private static bool IsAllowedNumber(decimal value, Settings s)
+    {
+        if (value < s.MinVal || value > s.MaxVal) return false;
+        if (!s.AllowDecimals && value != Math.Truncate(value)) return false;
+        if (s.AllowDecimals && !HasAtMostOneDecimal(value)) return false;
+        return true;
+    }
+
+    private static bool AreSameNumber(decimal a, decimal b)
+    {
+        return Math.Abs(a - b) < 0.0001m;
+    }
+
+    private static decimal? SolveRightOperand(decimal left, decimal result, string op, bool allowDecimalDivision)
+    {
+        return op switch
+        {
+            "+" => result - left,
+            "-" => left - result,
+            "×" when left != 0 => result / left,
+            "÷" when result != 0 => DivideWithRule(left, result, allowDecimalDivision),
+            _ => null
+        };
+    }
+
+    private static decimal? SolveLeftOperand(decimal right, decimal result, string op, bool allowDecimalDivision)
+    {
+        return op switch
+        {
+            "+" => result - right,
+            "-" => result + right,
+            "×" when right != 0 => result / right,
+            "÷" => right * result,
+            _ => null
+        };
+    }
+
+    private static bool IsBudgetExceeded(DateTime startedAt)
+    {
+        return (DateTime.UtcNow - startedAt).TotalMilliseconds >= GenerationBudgetMs;
     }
 
     private static bool IsWithinBounds(MathCrossGame game, int row, int col)
