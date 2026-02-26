@@ -16,6 +16,7 @@ public sealed class MathCrossGeneratorService
     public MathCrossGame GenerateGame(string difficultyKey, int seed)
     {
         var s = GetSettings(difficultyKey);
+        var startedAt = DateTime.UtcNow;
 
         for (int attempt = 0; attempt < 24; attempt++)
         {
@@ -532,6 +533,24 @@ public sealed class MathCrossGeneratorService
         int rows = eqLen * 2 + 3;
         int cols = eqLen * 2 + 3;
 
+        // Return an empty-safe board object only as an internal guard; caller will continue with rescue generation attempts.
+        return new MathCrossGame
+        {
+            Rows = 1,
+            Cols = 1,
+            Grid = new[,] { { new MathCrossCell { Row = 0, Col = 0, Type = CellType.Empty, IsGiven = true, Solution = "", UserInput = "" } } },
+            Difficulty = s.DifficultyKey,
+            EquationLength = s.EquationLength,
+            UseExtendedEquations = s.IsExtended,
+            Equations = new List<MathEquation>()
+        };
+    }
+
+    private MathCrossGame? TryBuildEmergencyTemplate(Settings s, int seed)
+    {
+        int len = s.EquationLength;
+        int rows = 25;
+        int cols = 25;
         var game = new MathCrossGame
         {
             Rows = rows,
@@ -680,7 +699,7 @@ public sealed class MathCrossGeneratorService
         int toGive = (int)(editable.Count * s.GivenPercent);
         toGive = Math.Max(4, Math.Min(toGive, Math.Max(0, editable.Count - 2)));
 
-        foreach (var cell in editable.OrderBy(_ => rnd.Next()).Take(toGive))
+        foreach (var cell in ChooseInitialGivens(game, editable, toGive, rnd))
         {
             cell.IsGiven = true;
             cell.UserInput = cell.Solution;
