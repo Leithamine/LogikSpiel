@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using LogikSpiel.Core;
 using LogikSpiel.Services;
 using LogikSpiel.Services.Localization;
@@ -16,7 +15,6 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
 
     private readonly MathCrossPageViewModel _vm;
     private readonly Action _requestLayoutUpdateHandler;
-    private readonly PropertyChangedEventHandler _propertyChangedHandler;
     private bool _disposed;
 
     public MathCrossPage(MathCrossPageViewModel vm)
@@ -26,10 +24,8 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
         BindingContext = _vm;
 
         _requestLayoutUpdateHandler = BuildGrid;
-        _propertyChangedHandler = OnViewModelPropertyChanged;
 
         _vm.RequestLayoutUpdate += _requestLayoutUpdateHandler;
-        _vm.PropertyChanged += _propertyChangedHandler;
     }
 
     ~MathCrossPage()
@@ -42,17 +38,11 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
         if (_disposed) return;
 
         _vm.RequestLayoutUpdate -= _requestLayoutUpdateHandler;
-        _vm.PropertyChanged -= _propertyChangedHandler;
 
         _disposed = true;
         GC.SuppressFinalize(this);
     }
 
-    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(MathCrossPageViewModel.Game))
-            MainThread.BeginInvokeOnMainThread(BuildGrid);
-    }
 
     private void BuildGrid()
     {
@@ -127,10 +117,14 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
         _isLoaded = true;
 
         string diff = query.TryGetValue("difficulty", out var d) ? d?.ToString() ?? "easy" : "easy";
+        diff = (diff ?? "easy").Trim().ToLowerInvariant();
+        if (diff is not ("easy" or "normal" or "hard" or "master"))
+            diff = "easy";
+
         int level = query.TryGetValue("level", out var l) && int.TryParse(l?.ToString(), out var lv) ? lv : 1;
 
         const int maxLevel = 10000;
-        if (level > maxLevel) level = maxLevel;
+        level = Math.Clamp(level, 1, maxLevel);
 
         MainThread.BeginInvokeOnMainThread(async () =>
         {

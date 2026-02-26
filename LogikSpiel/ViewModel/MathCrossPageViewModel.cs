@@ -219,7 +219,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
         try
         {
             GameId = string.IsNullOrWhiteSpace(gameId) ? "math_cross" : gameId;
-            DifficultyKey = string.IsNullOrWhiteSpace(difficulty) ? "easy" : difficulty;
+            DifficultyKey = NormalizeDifficulty(difficulty);
             LevelNumber = Math.Max(1, level);
             _gameDefinition = await _catalog.GetGameAsync(GameId);
 
@@ -453,6 +453,12 @@ public sealed class MathCrossPageViewModel : ObservableObject
         if (cell.IsGiven) return Color.FromArgb("#313B4A");
         if (cell.Type == CellType.Operator) return Color.FromArgb("#2F3442");
         return Color.FromArgb("#242C3A");
+    }
+
+    private static string NormalizeDifficulty(string? difficulty)
+    {
+        var value = (difficulty ?? "easy").Trim().ToLowerInvariant();
+        return value is "easy" or "normal" or "hard" or "master" ? value : "easy";
     }
 
     private static string DiffName(string k) => LocalizationService.GetDifficultyLabel(k);
