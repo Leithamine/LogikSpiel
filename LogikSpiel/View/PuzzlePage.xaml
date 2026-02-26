@@ -185,6 +185,8 @@
                                            BackgroundColor="Transparent"
                                            Loaded="DigitEntry_Loaded"
                                            Unloaded="DigitEntry_Unloaded"
+                                           Focused="DigitEntry_Focused"
+                                           Unfocused="DigitEntry_Unfocused"
                                            TextChanged="DigitEntry_TextChanged"/>
                                 </Border>
                             </DataTemplate>
