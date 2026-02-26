@@ -29,8 +29,8 @@
                         IsEnabled="{Binding IsNotBusy}"/>
 
                 <VerticalStackLayout Grid.Column="1" Spacing="0" HorizontalOptions="Center" VerticalOptions="Center">
-                    <Label Text="{Binding Title}" Style="{StaticResource H3}" HorizontalOptions="Center"/>
-                    <Label Text="{Binding LevelDisplayText}" TextColor="{StaticResource C_TextMuted}" FontSize="14" HorizontalOptions="Center" FontAttributes="Bold"/>
+                    <Label Text="{resx:Translate Key=MathCross_Title}" Style="{StaticResource H3}" HorizontalOptions="Center"/>
+                    <Label Text="{Binding HeaderSubtitle}" TextColor="{StaticResource C_TextMuted}" FontSize="14" HorizontalOptions="Center" FontAttributes="Bold"/>
                 </VerticalStackLayout>
 
                 <Border Grid.Column="2" Style="{StaticResource CoinBadge}" Padding="{OnIdiom Phone=8, Desktop=10}">

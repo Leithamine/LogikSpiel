@@ -42,6 +42,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
             {
                 OnPropertyChanged(nameof(Title));
                 OnPropertyChanged(nameof(LevelDisplayText));
+                OnPropertyChanged(nameof(HeaderSubtitle));
             }
         }
     }
@@ -49,6 +50,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
     public string Title => LocalizationService.Format("MathCross_TitleFormat", DiffName(DifficultyKey), LevelNumber);
     public string LevelDisplayText => LocalizationService.Format("Common_LevelFormat", LevelNumber);
     public string DifficultyText => DiffName(DifficultyKey);
+    public string HeaderSubtitle => $"{DifficultyText} - {LevelDisplayText}";
 
     private MathCrossGame? _game;
     public MathCrossGame? Game
@@ -229,6 +231,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
             OnPropertyChanged(nameof(DifficultyText));
             OnPropertyChanged(nameof(AllowNegativeInput));
             OnPropertyChanged(nameof(AllowDecimalInput));
+            OnPropertyChanged(nameof(HeaderSubtitle));
 
             _userProfile = await _userService.GetUserAsync();
             Coins = _userProfile?.Coins ?? 0;
