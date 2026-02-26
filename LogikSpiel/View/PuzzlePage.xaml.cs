@@ -12,7 +12,6 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
     private readonly Dictionary<int, Entry> _entryByIndex = new();
     private readonly PuzzlePageViewModel _vm;
     private CancellationTokenSource? _celebrationCts;
-    private CancellationTokenSource? _typingCts;
     private CancellationTokenSource? _professorAnimCts;
     private CancellationTokenSource? _speechBubbleAnimCts;
 
@@ -40,7 +39,7 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
             if (vm.ShowProfessor && SpeechBubble.Opacity == 0)
             {
                 await ShowBubbleAsync();
-                await TypeTextAsync(vm.ProfessorMessage);
+                SetProfessorText(vm.ProfessorMessage);
 
                 if (!vm.IsCelebrating)
                     await ShakeLockAsync();
@@ -52,7 +51,7 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         }
 
         if (e.PropertyName == nameof(PuzzlePageViewModel.ProfessorMessage) && vm.ShowProfessor)
-            await TypeTextAsync(vm.ProfessorMessage);
+            SetProfessorText(vm.ProfessorMessage);
 
         if (e.PropertyName != nameof(PuzzlePageViewModel.IsCelebrating))
             return;
@@ -109,30 +108,9 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         );
     }
 
-    private async Task TypeTextAsync(string text)
+    private void SetProfessorText(string text)
     {
-        _typingCts?.Cancel();
-        _typingCts?.Dispose();
-        _typingCts = new CancellationTokenSource();
-        var ct = _typingCts.Token;
-
-        ProfessorLabel.Text = string.Empty;
-
-        try
-        {
-            foreach (char c in text ?? string.Empty)
-            {
-                if (ct.IsCancellationRequested)
-                    break;
-
-                ProfessorLabel.Text += c;
-                await Task.Delay(20, ct);
-            }
-        }
-        catch (OperationCanceledException)
-        {
-            // Expected when typing is interrupted by a new message
-        }
+        ProfessorLabel.Text = text ?? string.Empty;
     }
 
 
