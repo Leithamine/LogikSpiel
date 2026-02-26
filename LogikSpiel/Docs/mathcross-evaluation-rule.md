@@ -11,3 +11,14 @@ Beispiele:
 - `20 - 6 ÷ 2` wird als `(20 - 6) ÷ 2 = 7` ausgewertet.
 
 Diese Regel wird im Generator (`MathCrossGeneratorService.Evaluate`) konsistent umgesetzt.
+
+
+## Division in Master
+
+Fachentscheidung für den `master`-Modus:
+
+- **Nicht-ganzzahlige Divisionsergebnisse sind erlaubt**.
+- Zugelassen sind Ergebnisse mit **maximal einer Nachkommastelle** (z. B. `5 ÷ 2 = 2.5`).
+- Ergebnisse mit mehr als einer Nachkommastelle (z. B. `1 ÷ 3`) werden verworfen, um Anzeige/Validierung konsistent zu halten.
+
+In Modi ohne Dezimalzahlen bleiben nur ganzzahlige Divisionsergebnisse gültig.

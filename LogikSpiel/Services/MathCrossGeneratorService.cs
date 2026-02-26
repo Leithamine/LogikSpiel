@@ -233,7 +233,7 @@ public sealed class MathCrossGeneratorService
                 c = GenValue(s, rnd);
             }
 
-            decimal? d = Evaluate(a, op1, b, op2, c);
+            decimal? d = Evaluate(a, op1, b, op2, c, s.AllowDecimals);
             if (d == null) continue;
             if (d.Value < s.MinVal || d.Value > s.MaxVal) continue;
             if (!s.AllowDecimals && d.Value != Math.Truncate(d.Value)) continue;
@@ -267,7 +267,7 @@ public sealed class MathCrossGeneratorService
                 if (numIdx == 1) b = anchorVal;
                 if (numIdx == 2) c = anchorVal;
 
-                decimal? d = Evaluate(a, op1, b, op2, c);
+                decimal? d = Evaluate(a, op1, b, op2, c, s.AllowDecimals);
                 if (d == null) continue;
 
                 if (numIdx == 3 && d.Value != anchorVal) continue;
@@ -337,25 +337,42 @@ public sealed class MathCrossGeneratorService
         };
     }
 
-    private static decimal? CalcDec(decimal a, string op, decimal b)
+    private static decimal? CalcDec(decimal a, string op, decimal b, bool allowDecimalDivision)
     {
         return op switch
         {
             "+" => a + b,
             "-" => a - b,
             "×" => a * b,
-            "÷" when b != 0 && a % b == 0 => a / b,
+            "÷" when b != 0 => DivideWithRule(a, b, allowDecimalDivision),
             _ => null
         };
     }
 
-    private static decimal? Evaluate(decimal a, string op1, decimal b, string op2, decimal c)
+    private static decimal? DivideWithRule(decimal a, decimal b, bool allowDecimalDivision)
+    {
+        var quotient = a / b;
+
+        if (!allowDecimalDivision)
+            return quotient == Math.Truncate(quotient) ? quotient : null;
+
+        // Master-Regel: nicht-ganzzahlige Ergebnisse sind erlaubt,
+        // aber nur mit maximal einer Nachkommastelle, damit Anzeige/Validierung stabil bleibt.
+        return HasAtMostOneDecimal(quotient) ? quotient : null;
+    }
+
+    private static bool HasAtMostOneDecimal(decimal value)
+    {
+        return value == decimal.Round(value, 1, MidpointRounding.AwayFromZero);
+    }
+
+    private static decimal? Evaluate(decimal a, string op1, decimal b, string op2, decimal c, bool allowDecimalDivision)
     {
         // Spielregel: strikt links-nach-rechts auswerten
-        var t1 = CalcDec(a, op1, b);
+        var t1 = CalcDec(a, op1, b, allowDecimalDivision);
         if (t1 == null) return null;
 
-        return CalcDec(t1.Value, op2, c);
+        return CalcDec(t1.Value, op2, c, allowDecimalDivision);
     }
 
     private (int a, int b)? Reverse(int c, string op, Settings s, Random rnd)
