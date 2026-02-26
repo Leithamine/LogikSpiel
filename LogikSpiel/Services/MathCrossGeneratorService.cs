@@ -12,27 +12,45 @@ namespace LogikSpiel.Services;
 public sealed class MathCrossGeneratorService
 {
     private const int GridSize = 30;
+    private const int FinalizeAttempts = 8;
+    private const int SolvabilityRetryLimit = 60;
 
     public MathCrossGame GenerateGame(string difficultyKey, int seed)
     {
         var s = GetSettings(difficultyKey);
-        var rnd = new Random(seed);
 
-        // Versuche mehrmals ein gutes Rätsel zu generieren
+        // Versuche mehrmals ein gutes und lösbares Rätsel zu generieren
         for (int attempt = 0; attempt < 50; attempt++)
         {
             var game = TryGenerate(s, new Random(seed + attempt * 1000));
-            if (game != null && game.Equations.Count >= s.MinEquations)
+            if (game == null || game.Equations.Count < s.MinEquations) continue;
+
+            for (int finalizeAttempt = 0; finalizeAttempt < FinalizeAttempts; finalizeAttempt++)
             {
-                FinalizeGame(game, rnd, s);
-                return game;
+                var finalizeRnd = new Random(seed + attempt * 1000 + finalizeAttempt * 97 + 17);
+                if (FinalizeGame(game, finalizeRnd, s))
+                {
+                    return game;
+                }
             }
         }
 
-        // Fallback: Einfaches Grid-Layout
-        var fallback = GenerateFallbackGrid(s, rnd);
-        FinalizeGame(fallback, rnd, s);
-        return fallback;
+        // Fallback: Einfaches Grid-Layout; bei unlösbaren Starts neu würfeln
+        for (int attempt = 0; attempt < 30; attempt++)
+        {
+            var fallbackRnd = new Random(seed + 50000 + attempt * 131);
+            var fallback = GenerateFallbackGrid(s, fallbackRnd);
+            if (FinalizeGame(fallback, fallbackRnd, s))
+            {
+                return fallback;
+            }
+        }
+
+        // Letzte Absicherung: Minimal konfiguriertes Fallback ohne Vollaufdeckung.
+        var lastRnd = new Random(seed + 999999);
+        var lastFallback = GenerateFallbackGrid(s, lastRnd);
+        FinalizeGame(lastFallback, lastRnd, s, allowFailure: true);
+        return lastFallback;
     }
 
     private MathCrossGame? TryGenerate(Settings s, Random rnd)
@@ -215,7 +233,7 @@ public sealed class MathCrossGeneratorService
                 c = GenValue(s, rnd);
             }
 
-            decimal? d = Evaluate(a, op1, b, op2, c);
+            decimal? d = Evaluate(a, op1, b, op2, c, s.AllowDecimals);
             if (d == null) continue;
             if (d.Value < s.MinVal || d.Value > s.MaxVal) continue;
             if (!s.AllowDecimals && d.Value != Math.Truncate(d.Value)) continue;
@@ -249,7 +267,7 @@ public sealed class MathCrossGeneratorService
                 if (numIdx == 1) b = anchorVal;
                 if (numIdx == 2) c = anchorVal;
 
-                decimal? d = Evaluate(a, op1, b, op2, c);
+                decimal? d = Evaluate(a, op1, b, op2, c, s.AllowDecimals);
                 if (d == null) continue;
 
                 if (numIdx == 3 && d.Value != anchorVal) continue;
@@ -301,10 +319,10 @@ public sealed class MathCrossGeneratorService
     {
         if (s.AllowDecimals && rnd.Next(10) < 3)
         {
-            int whole = rnd.Next(Math.Max(0, s.MinVal), Math.Min(50, s.MaxVal) + 1);
+            int whole = rnd.Next(Math.Max(-50, s.MinVal), Math.Min(50, s.MaxVal) + 1);
             return whole + rnd.Next(1, 10) / 10m;
         }
-        return rnd.Next(Math.Max(1, s.MinVal), Math.Min(50, s.MaxVal) + 1);
+        return rnd.Next(Math.Max(-50, s.MinVal), Math.Min(50, s.MaxVal) + 1);
     }
 
     private static int? Calc(int a, string op, int b)
@@ -319,36 +337,42 @@ public sealed class MathCrossGeneratorService
         };
     }
 
-    private static decimal? CalcDec(decimal a, string op, decimal b)
+    private static decimal? CalcDec(decimal a, string op, decimal b, bool allowDecimalDivision)
     {
         return op switch
         {
             "+" => a + b,
             "-" => a - b,
             "×" => a * b,
-            "÷" when b != 0 && a % b == 0 => a / b,
+            "÷" when b != 0 => DivideWithRule(a, b, allowDecimalDivision),
             _ => null
         };
     }
 
-    private static decimal? Evaluate(decimal a, string op1, decimal b, string op2, decimal c)
+    private static decimal? DivideWithRule(decimal a, decimal b, bool allowDecimalDivision)
     {
-        // Punkt vor Strich
-        if (op1 is "×" or "÷")
-        {
-            var t = CalcDec(a, op1, b);
-            if (t == null) return null;
-            return CalcDec(t.Value, op2, c);
-        }
-        if (op2 is "×" or "÷")
-        {
-            var t = CalcDec(b, op2, c);
-            if (t == null) return null;
-            return CalcDec(a, op1, t.Value);
-        }
-        var t1 = CalcDec(a, op1, b);
+        var quotient = a / b;
+
+        if (!allowDecimalDivision)
+            return quotient == Math.Truncate(quotient) ? quotient : null;
+
+        // Master-Regel: nicht-ganzzahlige Ergebnisse sind erlaubt,
+        // aber nur mit maximal einer Nachkommastelle, damit Anzeige/Validierung stabil bleibt.
+        return HasAtMostOneDecimal(quotient) ? quotient : null;
+    }
+
+    private static bool HasAtMostOneDecimal(decimal value)
+    {
+        return value == decimal.Round(value, 1, MidpointRounding.AwayFromZero);
+    }
+
+    private static decimal? Evaluate(decimal a, string op1, decimal b, string op2, decimal c, bool allowDecimalDivision)
+    {
+        // Spielregel: strikt links-nach-rechts auswerten
+        var t1 = CalcDec(a, op1, b, allowDecimalDivision);
         if (t1 == null) return null;
-        return CalcDec(t1.Value, op2, c);
+
+        return CalcDec(t1.Value, op2, c, allowDecimalDivision);
     }
 
     private (int a, int b)? Reverse(int c, string op, Settings s, Random rnd)
@@ -359,17 +383,29 @@ public sealed class MathCrossGeneratorService
             switch (op)
             {
                 case "+":
-                    a = rnd.Next(Math.Max(1, s.MinVal), c);
+                    int minAddend = Math.Max(1, s.MinVal);
+                    int maxAddend = Math.Min(s.MaxVal, c - 1);
+                    if (maxAddend < minAddend) break;
+
+                    a = rnd.Next(minAddend, maxAddend + 1);
                     b = c - a;
                     if (b >= s.MinVal && b <= s.MaxVal) return (a, b);
                     break;
                 case "-":
-                    b = rnd.Next(Math.Max(1, s.MinVal), s.MaxVal);
+                    int minB = Math.Max(s.MinVal, s.MinVal - c);
+                    int maxB = Math.Min(s.MaxVal, s.MaxVal - c);
+                    if (maxB < minB) break;
+
+                    b = rnd.Next(minB, maxB + 1);
                     a = c + b;
                     if (a >= s.MinVal && a <= s.MaxVal) return (a, b);
                     break;
                 case "×":
-                    var divs = Enumerable.Range(2, Math.Min(12, Math.Abs(c)) - 1)
+                    int absC = Math.Abs(c);
+                    int maxDivisor = Math.Min(12, absC);
+                    if (maxDivisor < 2) break;
+
+                    var divs = Enumerable.Range(2, maxDivisor - 1)
                         .Where(d => c % d == 0).ToList();
                     if (divs.Count > 0)
                     {
@@ -578,7 +614,7 @@ public sealed class MathCrossGeneratorService
         {
             var eq = GenerateEquation(s, rnd);
             if (eq == null) continue;
-            PlaceInGame(game, hCols[i], hRows[i], false, eq, eqLen);
+            PlaceInGame(game, hRows[i], hCols[i], false, eq, eqLen);
         }
 
         game.Equations = ScanEquations(game, eqLen);
@@ -657,7 +693,7 @@ public sealed class MathCrossGeneratorService
         return true;
     }
 
-    private void FinalizeGame(MathCrossGame game, Random rnd, Settings s)
+    private bool FinalizeGame(MathCrossGame game, Random rnd, Settings s, bool allowFailure = false)
     {
         // Setze Defaults
         for (int r = 0; r < game.Rows; r++)
@@ -700,13 +736,25 @@ public sealed class MathCrossGeneratorService
             cell.UserInput = cell.Solution;
         }
 
-        EnsureSolvable(game, rnd);
+        bool solvable = EnsureSolvable(game, rnd);
+
+        // Startzustand darf nicht vollständig gelöst sein.
+        if (editable.Count > 0 && editable.All(c => c.IsGiven))
+        {
+            var toHide = editable[rnd.Next(editable.Count)];
+            toHide.IsGiven = false;
+            toHide.UserInput = "";
+            solvable = false;
+        }
+
         game.GivenCells = editable.Count(c => c.IsGiven);
+
+        return allowFailure || solvable;
     }
 
-    private void EnsureSolvable(MathCrossGame game, Random rnd)
+    private bool EnsureSolvable(MathCrossGame game, Random rnd)
     {
-        for (int iter = 0; iter < 100; iter++)
+        for (int iter = 0; iter < SolvabilityRetryLimit; iter++)
         {
             var solvable = new bool[game.Rows, game.Cols];
 
@@ -734,30 +782,17 @@ public sealed class MathCrossGeneratorService
             var unsolved = new List<MathCrossCell>();
             for (int r = 0; r < game.Rows; r++)
                 for (int c = 0; c < game.Cols; c++)
-                    if (game.Grid[r, c].Type != CellType.Empty && !solvable[r, c])
+                    if (game.Grid[r, c].Type is CellType.Number or CellType.Operator && !solvable[r, c])
                         unsolved.Add(game.Grid[r, c]);
 
-            if (unsolved.Count == 0) return;
+            if (unsolved.Count == 0) return true;
 
             var pick = unsolved[rnd.Next(unsolved.Count)];
             pick.IsGiven = true;
             pick.UserInput = pick.Solution;
         }
 
-        // Harte Absicherung: falls der iterative Ansatz nicht ausreicht,
-        // alle verbleibenden Zellen freigeben, damit das Rätsel immer lösbar ist.
-        for (int r = 0; r < game.Rows; r++)
-        {
-            for (int c = 0; c < game.Cols; c++)
-            {
-                var cell = game.Grid[r, c];
-                if (cell.Type is CellType.Number or CellType.Operator && !cell.IsGiven)
-                {
-                    cell.IsGiven = true;
-                    cell.UserInput = cell.Solution;
-                }
-            }
-        }
+        return false;
     }
 
     private static string Format(decimal v)

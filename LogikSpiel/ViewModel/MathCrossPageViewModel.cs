@@ -12,6 +12,7 @@ namespace LogikSpiel.ViewModel;
 
 public sealed class MathCrossPageViewModel : ObservableObject
 {
+    private const int HintCost = 50;
     private readonly IGameProgressStore _progressStore;
     private readonly IDialogService _dialog;
     private readonly INavigationService _nav;
@@ -140,17 +141,17 @@ public sealed class MathCrossPageViewModel : ObservableObject
 
         HintCommand = new AsyncCommand(async () =>
         {
-            if (Coins < 50)
+            if (Coins < HintCost)
             {
                 await _dialog.AlertAsync(
                     LocalizationService.GetString("Common_NotEnoughCoinsTitle"),
-                    LocalizationService.Format("Common_NeedCoinsFormat", 10));
+                    LocalizationService.Format("Common_NeedCoinsFormat", HintCost));
                 return;
             }
 
             bool buy = await _dialog.ConfirmAsync(
                 LocalizationService.GetString("MathCross_BuyHintTitle"),
-                LocalizationService.Format("MathCross_BuyHintMessage", 50));
+                LocalizationService.Format("MathCross_BuyHintMessage", HintCost));
             if (!buy) return;
 
             var empty = FlatCells
@@ -172,7 +173,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
 
             if (_userProfile != null)
             {
-                _userProfile.Coins -= 10;
+                _userProfile.Coins -= HintCost;
                 Coins = _userProfile.Coins;
                 await _userService.SaveUserAsync(_userProfile);
             }
@@ -431,29 +432,17 @@ public sealed class MathCrossPageViewModel : ObservableObject
         await StartNewRoundAsync();
     }
 
-    private static bool SameOp(string? u, string? s) => Norm(u) == Norm(s);
+    private static bool SameOp(string? u, string? s) =>
+        MathCrossValueNormalizer.NormalizeOperator(u) == MathCrossValueNormalizer.NormalizeOperator(s);
 
-    private static bool SameNumber(string? u, string? s)
+    private bool SameNumber(string? u, string? s)
     {
-        if (!TryParse(u, out var uv) || !TryParse(s, out var sv)) return false;
-        return Math.Abs(uv - sv) < 0.001;
+        return MathCrossValueNormalizer.AreNumbersEqual(u, s, allowDecimals: DifficultyKey == "master");
     }
 
     private static bool TryParse(string? s, out double r)
     {
-        r = 0;
-        var t = (s ?? "").Trim().Replace('−', '-').Replace(',', '.');
-        return double.TryParse(t, System.Globalization.NumberStyles.Any,
-            System.Globalization.CultureInfo.InvariantCulture, out r);
-    }
-
-    private static string Norm(string? s)
-    {
-        var t = (s ?? "").Trim().Replace('−', '-').Replace('–', '-');
-        if (t is "x" or "X" or "*") return "×";
-        if (t is "/" or ":") return "÷";
-        if (t == "-") return "−";
-        return t;
+        return MathCrossValueNormalizer.TryParseNumber(s, out r);
     }
 
     public Color GetCellColor(MathCrossCell cell, bool sel)

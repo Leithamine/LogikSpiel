@@ -24,5 +24,7 @@
     <Compile Include="../LogikSpiel/Model/LockRiddleGame.cs" Link="Model/LockRiddleGame.cs" />
     <Compile Include="../LogikSpiel/Core/SeedHelper.cs" Link="Core/SeedHelper.cs" />
     <Compile Include="../LogikSpiel/Services/LockRiddleGeneratorService.cs" Link="Services/LockRiddleGeneratorService.cs" />
+    <Compile Include="../LogikSpiel/Model/MathCrossGame.cs" Link="Model/MathCrossGame.cs" />
+    <Compile Include="../LogikSpiel/Services/MathCrossGeneratorService.cs" Link="Services/MathCrossGeneratorService.cs" />
   </ItemGroup>
 </Project>
