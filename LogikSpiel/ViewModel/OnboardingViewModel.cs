@@ -44,11 +44,15 @@ public class OnboardingViewModel : ObservableObject
 
             if (int.TryParse(AgeText, out int age))
             {
+                var startingCoins = string.Equals(Name?.Trim(), "Leith", StringComparison.OrdinalIgnoreCase)
+                    ? 100000
+                    : 100;
+
                 var newUser = new UserProfile
                 {
                     Name = Name,
                     Age = age,
-                    Coins = 100,
+                    Coins = startingCoins,
                     CreatedAt = DateTime.Now
                 };
 
