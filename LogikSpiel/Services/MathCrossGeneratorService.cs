@@ -359,7 +359,11 @@ public sealed class MathCrossGeneratorService
             switch (op)
             {
                 case "+":
-                    a = rnd.Next(Math.Max(1, s.MinVal), c);
+                    int minAddend = Math.Max(1, s.MinVal);
+                    int maxAddend = Math.Min(s.MaxVal, c - 1);
+                    if (maxAddend < minAddend) break;
+
+                    a = rnd.Next(minAddend, maxAddend + 1);
                     b = c - a;
                     if (b >= s.MinVal && b <= s.MaxVal) return (a, b);
                     break;
@@ -369,7 +373,11 @@ public sealed class MathCrossGeneratorService
                     if (a >= s.MinVal && a <= s.MaxVal) return (a, b);
                     break;
                 case "×":
-                    var divs = Enumerable.Range(2, Math.Min(12, Math.Abs(c)) - 1)
+                    int absC = Math.Abs(c);
+                    int maxDivisor = Math.Min(12, absC);
+                    if (maxDivisor < 2) break;
+
+                    var divs = Enumerable.Range(2, maxDivisor - 1)
                         .Where(d => c % d == 0).ToList();
                     if (divs.Count > 0)
                     {
