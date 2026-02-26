@@ -34,6 +34,53 @@ public class MathCrossCellViewModelTests
         Assert.Equal("42", vm.EditableText);
     }
 
+
+
+    [Fact]
+    public async Task Hint_IgnoresEditableCellsThatAlreadyHaveUserInput()
+    {
+        var userService = new StubUserProfileService { User = new UserProfile { Coins = 50 } };
+        var parent = new MathCrossPageViewModel(
+            progressStore: new StubGameProgressStore(),
+            dialog: new StubDialogService(),
+            nav: new StubNavigationService(),
+            userService: userService,
+            generator: new MathCrossGeneratorService(),
+            catalog: new StubGameCatalogService());
+
+        await parent.LoadAsync("math_cross", "easy", 1);
+
+        parent.FlatCells.Clear();
+
+        var prefilledWrong = new MathCrossCell
+        {
+            Type = CellType.Number,
+            Solution = "24",
+            UserInput = "29",
+            IsGiven = false
+        };
+
+        var emptyTarget = new MathCrossCell
+        {
+            Type = CellType.Operator,
+            Solution = "-",
+            UserInput = "",
+            IsGiven = false
+        };
+
+        parent.FlatCells.Add(new MathCrossCellViewModel(prefilledWrong, parent));
+        parent.FlatCells.Add(new MathCrossCellViewModel(emptyTarget, parent));
+
+        parent.HintCommand.Execute(null);
+        await Task.Delay(100);
+
+        Assert.Equal("29", prefilledWrong.UserInput);
+        Assert.False(prefilledWrong.IsGiven);
+        Assert.Equal("-", emptyTarget.UserInput);
+        Assert.True(emptyTarget.IsGiven);
+        Assert.Equal(40, parent.Coins);
+    }
+
     private sealed class StubGameProgressStore : IGameProgressStore
     {
         public Task<GameProgress> LoadAsync(CancellationToken ct = default)
@@ -78,10 +125,13 @@ public class MathCrossCellViewModelTests
     {
         public event Action? UserDataChanged;
 
-        public Task<UserProfile?> GetUserAsync() => Task.FromResult<UserProfile?>(new UserProfile());
+        public UserProfile User { get; set; } = new();
+
+        public Task<UserProfile?> GetUserAsync() => Task.FromResult<UserProfile?>(User);
 
         public Task SaveUserAsync(UserProfile user)
         {
+            User = user;
             UserDataChanged?.Invoke();
             return Task.CompletedTask;
         }

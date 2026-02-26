@@ -332,10 +332,18 @@ public sealed class MathCrossGeneratorService
 
     private static decimal? Evaluate(decimal a, string op1, decimal b, string op2, decimal c, bool allowDecimalDivision)
     {
-        // Consistent rule: left-to-right evaluation.
-        var t1 = CalcDec(a, op1, b, allowDecimalDivision);
-        if (t1 == null) return null;
-        return CalcDec(t1.Value, op2, c, allowDecimalDivision);
+        static int Priority(string op) => op is "×" or "÷" ? 2 : 1;
+
+        if (Priority(op1) >= Priority(op2))
+        {
+            var t1 = CalcDec(a, op1, b, allowDecimalDivision);
+            if (t1 == null) return null;
+            return CalcDec(t1.Value, op2, c, allowDecimalDivision);
+        }
+
+        var t2 = CalcDec(b, op2, c, allowDecimalDivision);
+        if (t2 == null) return null;
+        return CalcDec(a, op1, t2.Value, allowDecimalDivision);
     }
 
     private (int a, int b)? Reverse(int c, string op, Settings s, Random rnd)
