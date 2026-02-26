@@ -432,29 +432,17 @@ public sealed class MathCrossPageViewModel : ObservableObject
         await StartNewRoundAsync();
     }
 
-    private static bool SameOp(string? u, string? s) => Norm(u) == Norm(s);
+    private static bool SameOp(string? u, string? s) =>
+        MathCrossValueNormalizer.NormalizeOperator(u) == MathCrossValueNormalizer.NormalizeOperator(s);
 
-    private static bool SameNumber(string? u, string? s)
+    private bool SameNumber(string? u, string? s)
     {
-        if (!TryParse(u, out var uv) || !TryParse(s, out var sv)) return false;
-        return Math.Abs(uv - sv) < 0.001;
+        return MathCrossValueNormalizer.AreNumbersEqual(u, s, allowDecimals: DifficultyKey == "master");
     }
 
     private static bool TryParse(string? s, out double r)
     {
-        r = 0;
-        var t = (s ?? "").Trim().Replace('−', '-').Replace(',', '.');
-        return double.TryParse(t, System.Globalization.NumberStyles.Any,
-            System.Globalization.CultureInfo.InvariantCulture, out r);
-    }
-
-    private static string Norm(string? s)
-    {
-        var t = (s ?? "").Trim().Replace('−', '-').Replace('–', '-');
-        if (t is "x" or "X" or "*") return "×";
-        if (t is "/" or ":") return "÷";
-        if (t == "-") return "−";
-        return t;
+        return MathCrossValueNormalizer.TryParseNumber(s, out r);
     }
 
     public Color GetCellColor(MathCrossCell cell, bool sel)
