@@ -524,7 +524,7 @@ public sealed class MathCrossCellViewModel : ObservableObject
 
     public string DisplayText => Cell.Type == CellType.Equals ? "=" : Cell.IsGiven ? Cell.Solution : Cell.UserInput;
 
-    public string EditableText => !IsEditable ? "" :
+    public string EditableText => !IsEditable ? DisplayText :
         Cell.Type == CellType.Operator ?
             (string.IsNullOrWhiteSpace(Cell.UserInput) ? "?" : Cell.UserInput) :
             (string.IsNullOrWhiteSpace(Cell.UserInput) ? "·" : Cell.UserInput);
