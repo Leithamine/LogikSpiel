@@ -46,69 +46,72 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
 
     private void BuildGrid()
     {
-        if (BindingContext is not MathCrossPageViewModel vm || vm.Game == null) return;
-
-        var game = vm.Game;
-
-        BoardGrid.Children.Clear();
-        BoardGrid.RowDefinitions.Clear();
-        BoardGrid.ColumnDefinitions.Clear();
-
-        for (int r = 0; r < game.Rows; r++)
-            BoardGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(CellSize) });
-
-        for (int c = 0; c < game.Cols; c++)
-            BoardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(CellSize) });
-
-        foreach (var cellVm in vm.FlatCells)
+        MainThread.BeginInvokeOnMainThread(() =>
         {
-            var cell = cellVm.Cell;
+            if (BindingContext is not MathCrossPageViewModel vm || vm.Game == null) return;
 
-            var border = new Border
+            var game = vm.Game;
+
+            BoardGrid.Children.Clear();
+            BoardGrid.RowDefinitions.Clear();
+            BoardGrid.ColumnDefinitions.Clear();
+
+            for (int r = 0; r < game.Rows; r++)
+                BoardGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(CellSize) });
+
+            for (int c = 0; c < game.Cols; c++)
+                BoardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(CellSize) });
+
+            foreach (var cellVm in vm.FlatCells)
             {
-                StrokeThickness = 1,
-                Stroke = Color.FromArgb("#4DFFFFFF"),
-                StrokeShape = new RoundRectangle { CornerRadius = 6 },
-                Padding = 0
-            };
+                var cell = cellVm.Cell;
 
-            border.SetBinding(Border.BackgroundColorProperty,
-                new Binding(nameof(MathCrossCellViewModel.BackgroundColor), source: cellVm));
-
-            Grid.SetRow(border, cell.Row);
-            Grid.SetColumn(border, cell.Col);
-
-            if (cellVm.IsEditable)
-            {
-                var btn = new Button
+                var border = new Border
                 {
-                    Padding = 0,
-                    FontAttributes = FontAttributes.Bold,
-                    FontSize = 15,
-                    BackgroundColor = Colors.Transparent,
-                    TextColor = Colors.White,
-                    BorderWidth = 0
+                    StrokeThickness = 1,
+                    Stroke = Color.FromArgb("#4DFFFFFF"),
+                    StrokeShape = new RoundRectangle { CornerRadius = 6 },
+                    Padding = 0
                 };
-                btn.SetBinding(Button.TextProperty, new Binding(nameof(MathCrossCellViewModel.EditableText), source: cellVm));
-                btn.SetBinding(Button.CommandProperty, new Binding(nameof(MathCrossCellViewModel.TapCellCommand), source: cellVm));
-                border.Content = btn;
-            }
-            else
-            {
-                var lbl = new Label
-                {
-                    HorizontalTextAlignment = TextAlignment.Center,
-                    VerticalTextAlignment = TextAlignment.Center,
-                    FontAttributes = FontAttributes.Bold,
-                    TextColor = Color.FromArgb("#DADADA"),
-                    FontSize = 15
-                };
-                lbl.SetBinding(Label.TextProperty, new Binding(nameof(MathCrossCellViewModel.DisplayText), source: cellVm));
-                border.Content = lbl;
-            }
 
-            BoardGrid.Children.Add(border);
-        }
+                border.SetBinding(Border.BackgroundColorProperty,
+                    new Binding(nameof(MathCrossCellViewModel.BackgroundColor), source: cellVm));
+
+                Grid.SetRow(border, cell.Row);
+                Grid.SetColumn(border, cell.Col);
+
+                if (cellVm.IsEditable)
+                {
+                    var btn = new Button
+                    {
+                        Padding = 0,
+                        FontAttributes = FontAttributes.Bold,
+                        FontSize = 15,
+                        BackgroundColor = Colors.Transparent,
+                        TextColor = Colors.White,
+                        BorderWidth = 0
+                    };
+                    btn.SetBinding(Button.TextProperty, new Binding(nameof(MathCrossCellViewModel.EditableText), source: cellVm));
+                    btn.SetBinding(Button.CommandProperty, new Binding(nameof(MathCrossCellViewModel.TapCellCommand), source: cellVm));
+                    border.Content = btn;
+                }
+                else
+                {
+                    var lbl = new Label
+                    {
+                        HorizontalTextAlignment = TextAlignment.Center,
+                        VerticalTextAlignment = TextAlignment.Center,
+                        FontAttributes = FontAttributes.Bold,
+                        TextColor = Color.FromArgb("#DADADA"),
+                        FontSize = 15
+                    };
+                    lbl.SetBinding(Label.TextProperty, new Binding(nameof(MathCrossCellViewModel.DisplayText), source: cellVm));
+                    border.Content = lbl;
+                }
+
+                BoardGrid.Children.Add(border);
+            }
+        });
     }
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)

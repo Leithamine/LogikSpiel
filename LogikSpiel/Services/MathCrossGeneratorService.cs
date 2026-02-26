@@ -76,8 +76,8 @@ public sealed class MathCrossGeneratorService
         var first = GenerateEquation(s, rnd);
         if (first == null) return null;
 
-        Place(grid, solutions, midR, midC, true, first, s.EquationLength);
-        placed.Add(new EquationPlacement(midR, midC, true, first));
+        Place(grid, solutions, midR, midC, false, first, s.EquationLength);
+        placed.Add(new EquationPlacement(midR, midC, false, first));
 
         // Abwechselnd vertikal und horizontal hinzufügen
         bool tryVertical = true;
@@ -493,6 +493,9 @@ public sealed class MathCrossGeneratorService
                 // Muss exakt übereinstimmen
                 if (existing != type) return false;
                 if (sols[r, c] != val) return false;
+
+                // Verhindere, dass wir parallel eine bereits in dieser Richtung existierende Gleichung überlappen (Glued Equations)
+                if (HasEquationInDirection(grid, r, c, !vertical)) return false;
             }
         }
 
@@ -500,10 +503,10 @@ public sealed class MathCrossGeneratorService
     }
 
     private void Place(CellType[,] grid, string[,] sols, int startR, int startC,
-        bool horizontal, EquationData eq, int len)
+        bool vertical, EquationData eq, int len)
     {
-        int dr = horizontal ? 0 : 1;
-        int dc = horizontal ? 1 : 0;
+        int dr = vertical ? 1 : 0;
+        int dc = vertical ? 0 : 1;
 
         var cells = BuildCells(eq, len);
 
@@ -799,6 +802,9 @@ public sealed class MathCrossGeneratorService
 
     private bool EnsureSolvable(MathCrossGame game, Random rnd)
     {
+        int extraGivens = 0;
+        const int MaxExtraGivens = 2;
+
         for (int iter = 0; iter < SolvabilityRetryLimit; iter++)
         {
             var solvable = new bool[game.Rows, game.Cols];
@@ -838,6 +844,9 @@ public sealed class MathCrossGeneratorService
                         unsolved.Add(game.Grid[r, c]);
 
             if (unsolved.Count == 0) return true;
+            
+            if (extraGivens >= MaxExtraGivens) return false;
+            extraGivens++;
 
             var pick = unsolved[rnd.Next(unsolved.Count)];
             pick.IsGiven = true;
@@ -859,7 +868,7 @@ public sealed class MathCrossGeneratorService
     }
 
     private record EquationData(decimal[] Numbers, string[] Operators);
-    private record EquationPlacement(int StartR, int StartC, bool Horizontal, EquationData Eq);
+    private record EquationPlacement(int StartR, int StartC, bool Vertical, EquationData Eq);
 
     private record Settings(
         string DifficultyKey, int MinVal, int MaxVal, bool AllowDecimals,
