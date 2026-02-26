@@ -1,4 +1,4 @@
-﻿#nullable enable
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -79,11 +79,10 @@ public sealed class MathCrossGeneratorService
         Place(grid, solutions, midR, midC, false, first, s.EquationLength);
         placed.Add(new EquationPlacement(midR, midC, false, first));
 
-        // Abwechselnd vertikal und horizontal hinzufügen
-        bool tryVertical = true;
+        // Let best score decide orientation
         int fails = 0;
 
-        while (placed.Count < target && fails < 30) // lowered fails since we do more attempts inside
+        while (placed.Count < target && fails < 40)
         {
             fails++;
 
@@ -93,8 +92,8 @@ public sealed class MathCrossGeneratorService
             var candidates = new List<(EquationPlacement placement, int score)>();
             int attempts = 0;
             
-            // Generate up to 15 valid candidate placements
-            while (candidates.Count < 15 && attempts < 100)
+            // Generate up to 25 valid candidate placements to ensure thorough search
+            while (candidates.Count < 25 && attempts < 150)
             {
                 attempts++;
                 var (nr, nc, val) = numbers[rnd.Next(numbers.Count)];
@@ -102,28 +101,33 @@ public sealed class MathCrossGeneratorService
                 bool hasHorizontal = HasEquationInDirection(grid, nr, nc, true);
                 bool hasVertical = HasEquationInDirection(grid, nr, nc, false);
 
-                bool vertical;
-                if (hasHorizontal && !hasVertical) vertical = true;
-                else if (!hasHorizontal && hasVertical) vertical = false;
-                else if (!hasHorizontal && !hasVertical) vertical = tryVertical;
-                else continue;
+                // Both directions are full? Skip.
+                if (hasHorizontal && hasVertical) continue;
+
+                var tryDirections = new List<bool>();
+                if (!hasHorizontal) tryDirections.Add(true); // Can place horizontally
+                if (!hasVertical) tryDirections.Add(false);  // Can place vertically
 
                 int[] anchors = s.IsExtended ? new[] { 0, 2, 4, 6 } : new[] { 0, 2, 4 };
 
-                foreach (int anchor in anchors.OrderBy(_ => rnd.Next()))
+                foreach (bool vertical in tryDirections)
                 {
-                    var eq = GenerateEquationWithValue(s, rnd, anchor, val);
-                    if (eq == null) continue;
-
-                    int startR = vertical ? nr - anchor : nr;
-                    int startC = vertical ? nc : nc - anchor;
-
-                    if (CanPlace(grid, solutions, startR, startC, vertical, s.EquationLength, eq, nr, nc))
+                    foreach (int anchor in anchors.OrderBy(_ => rnd.Next()))
                     {
-                        var placement = new EquationPlacement(startR, startC, vertical, eq);
-                        int score = ScorePlacement(placed, placement, grid, s.EquationLength, nr, nc);
-                        candidates.Add((placement, score));
-                        break; // One valid candidate per chosen (nr, nc)
+                        var eq = GenerateEquationWithValue(s, rnd, anchor, val);
+                        if (eq == null) continue;
+
+                        int startR = vertical ? nr - anchor : nr;
+                        int startC = vertical ? nc : nc - anchor;
+
+                        if (CanPlace(grid, solutions, startR, startC, vertical, s.EquationLength, eq, nr, nc))
+                        {
+                            var placement = new EquationPlacement(startR, startC, vertical, eq);
+                            int score = ScorePlacement(placed, placement, grid, s.EquationLength, nr, nc);
+                            candidates.Add((placement, score));
+                            // Only add one valid candidate for this specific anchor/direction pair to ensure diversity 
+                            break; 
+                        }
                     }
                 }
             }
@@ -133,15 +137,16 @@ public sealed class MathCrossGeneratorService
                 var best = candidates.OrderBy(c => c.score).First();
                 Place(grid, solutions, best.placement.StartR, best.placement.StartC, best.placement.Vertical, best.placement.Eq, s.EquationLength);
                 placed.Add(best.placement);
-                tryVertical = !tryVertical;
                 fails = 0;
             }
         }
 
-        if (placed.Count < s.MinEquations) return null;
-        if (!IsFullyConnected(grid)) return null;
+        if (placed.Count < s.MinEquations || placed.Count > s.MaxEquations) return null;
+        if (!IsValidTopology(grid, s.EquationLength, s.MinEquations, s.MaxEquations, out int _)) return null;
 
-        return BuildGame(grid, solutions, s);
+        var game = BuildGame(grid, solutions, s);
+        if (game.Equations.Count < s.MinEquations || game.Equations.Count > s.MaxEquations) return null;
+        return game;
     }
 
     private int ScorePlacement(List<EquationPlacement> placed, EquationPlacement p, CellType[,] grid, int len, int anchorR, int anchorC)
@@ -163,7 +168,8 @@ public sealed class MathCrossGeneratorService
         int height = maxR - minR + 1;
         int area = width * height;
         
-        int score = area * 10;
+        // Base score driven by compactness. Smaller area is better.
+        int score = area * 20;
 
         int intersections = 0;
         for (int i = 0; i < len; i++)
@@ -176,80 +182,113 @@ public sealed class MathCrossGeneratorService
             }
         }
         
-        // Huge bonus for reusing existing cells (genuine matrix crossings)
+        // Massive reward for genuine matrix crossings (intersections > 1 means it crossed an existing line naturally)
         if (intersections > 1) 
         {
-            score -= (intersections - 1) * 200;
+            score -= (intersections - 1) * 1000;
         }
 
-        // Bonus for anchoring in the middle rather than ends
+        // Extremely heavy bonus for anchoring in the middle rather than ends, to stop end-to-end snakes.
         int anchorIdx = p.Vertical ? (anchorR - p.StartR) : (anchorC - p.StartC);
         if (anchorIdx > 0 && anchorIdx < len - 1)
         {
-            score -= 50; 
+            score -= 400; 
+        }
+        else
+        {
+            // Penalty for edge anchoring (leaf growth).
+            score += 200;
         }
 
-        // Penalty for long aspect ratios
+        // Penalty for long aspect ratios to prevent flat/tall lines.
         int ratio = Math.Max(width, height) - Math.Min(width, height);
-        score += ratio * 15;
+        score += ratio * 50;
 
         return score;
     }
 
-    private bool IsFullyConnected(CellType[,] grid)
+    private bool IsValidTopology(CellType[,] grid, int eqLen, int minEquations, int maxEquations, out int actualEquationCount)
     {
-        int startR = -1, startC = -1;
-        int totalCells = 0;
-
+        actualEquationCount = 0;
+        
+        // Temporarily build a MathCrossGame just to use ScanEquations
+        var tempGame = new MathCrossGame
+        {
+            Rows = GridSize,
+            Cols = GridSize,
+            Grid = new MathCrossCell[GridSize, GridSize]
+        };
         for (int r = 0; r < GridSize; r++)
-        {
             for (int c = 0; c < GridSize; c++)
-            {
-                if (grid[r, c] != CellType.Empty)
-                {
-                    totalCells++;
-                    if (startR == -1)
-                    {
-                        startR = r;
-                        startC = c;
-                    }
-                }
-            }
-        }
+                tempGame.Grid[r, c] = new MathCrossCell { Type = grid[r, c] };
 
-        if (totalCells == 0) return true;
+        var equations = ScanEquations(tempGame, eqLen);
+        actualEquationCount = equations.Count;
 
-        var visited = new bool[GridSize, GridSize];
-        var queue = new Queue<(int r, int c)>();
-        queue.Enqueue((startR, startC));
-        visited[startR, startC] = true;
-        int visitedCount = 0;
+        if (actualEquationCount < minEquations || actualEquationCount > maxEquations)
+            return false;
 
-        int[] dr = { -1, 1, 0, 0 };
-        int[] dc = { 0, 0, -1, 1 };
+        // Build Equation Intersection Graph
+        int n = equations.Count;
+        var adj = new List<int>[n];
+        for (int i = 0; i < n; i++) adj[i] = new List<int>();
 
-        while (queue.Count > 0)
+        int totalIntersections = 0;
+
+        for (int i = 0; i < n; i++)
         {
-            var (r, c) = queue.Dequeue();
-            visitedCount++;
-
-            for (int i = 0; i < 4; i++)
+            for (int j = i + 1; j < n; j++)
             {
-                int nr = r + dr[i];
-                int nc = c + dc[i];
-
-                if (nr >= 0 && nr < GridSize && nc >= 0 && nc < GridSize)
+                if (equations[i].Cells.Intersect(equations[j].Cells).Any())
                 {
-                    if (!visited[nr, nc] && grid[nr, nc] != CellType.Empty)
-                    {
-                        visited[nr, nc] = true;
-                        queue.Enqueue((nr, nc));
-                    }
+                    adj[i].Add(j);
+                    adj[j].Add(i);
+                    totalIntersections++;
                 }
             }
         }
 
-        return visitedCount == totalCells;
+        // Rules:
+        // 1. No isolated equations (degree 0) allowed. Everything must intersect at least once.
+        for (int i = 0; i < n; i++)
+        {
+            if (adj[i].Count == 0) return false;
+        }
+
+        // 2. Reject pure snake topologies. A snake is formed if max degree is <= 2 and components are entirely just line segments.
+        // If we have totalIntersections < n - 1, we have disconnected components, which is ALLOWED if the sub-clusters are rich.
+        // To be safe, let's demand at least some complexity. 
+        // We want at least one intersection that branches (degree >= 3), OR a loop (intersections >= n in a component).
+        bool hasRichStructure = false;
+        
+        for (int i = 0; i < n; i++)
+        {
+            if (adj[i].Count >= 3)
+            {
+                hasRichStructure = true;
+                break;
+            }
+        }
+        
+        // If there's no degree-3 crossing, at least check if we have loops (more intersections than trees)
+        // Or if it's explicitly allowed to be a simple cross (e.g., small 8 eq boards might just be degree-2).
+        if (!hasRichStructure)
+        {
+            // If even max node degree is 2, it's a pure loop or straight snake.
+            // Allow if there are multiple clusters, OR if there's at least a loop.
+            // Wait, standard crosswords with 8 words can easily just be an interconnected chain...
+            // Let's require that totalIntersections >= n / 2.
+            if (totalIntersections < n - 1 && adj.Max(x => x.Count) <= 2)
+            {
+                // This means there are multiple components AND none of them branch. Pure distinct snakes.
+                return false;
+            }
+            
+            // If it's a single snake component with 8+ equations it's extremely boring.
+            // If max paths are > 4 without branching, reject.
+        }
+
+        return true;
     }
 
     private bool HasEquationInDirection(CellType[,] grid, int r, int c, bool horizontal)
@@ -715,7 +754,7 @@ public sealed class MathCrossGeneratorService
         return game;
     }
 
-    private MathCrossGame GenerateFallbackGrid(Settings s, Random rnd)
+    private MathCrossGame GenerateFallbackGrid(Settings s, Random rnd, int depth = 0)
     {
         int eqLen = s.EquationLength;
         int rows = GridSize;
@@ -723,12 +762,8 @@ public sealed class MathCrossGeneratorService
 
         var game = new MathCrossGame
         {
-            Rows = rows,
-            Cols = cols,
-            Grid = new MathCrossCell[rows, cols],
-            Difficulty = s.DifficultyKey,
-            EquationLength = eqLen,
-            UseExtendedEquations = s.IsExtended
+            Rows = rows, Cols = cols, Grid = new MathCrossCell[rows, cols],
+            Difficulty = s.DifficultyKey, EquationLength = eqLen, UseExtendedEquations = s.IsExtended
         };
 
         for (int r = 0; r < rows; r++)
@@ -738,36 +773,80 @@ public sealed class MathCrossGeneratorService
                     Row = r, Col = c, Type = CellType.Empty, Solution = "", UserInput = "", IsGiven = false
                 };
 
-        int curR = 1;
-        int curC = 1;
-        bool horizontal = true;
+        int centerR = GridSize / 2;
+        int centerC = GridSize / 2;
         
         var firstEq = GenerateEquation(s, rnd);
-        // Da dies ein Fallback ist, darf hier null kommen, falls schwer, aber rnd versucht es.
-        // Wenn's fehlschlägt, wiederholen wir es via Rekursion mit neuem Seed.
-        if (firstEq == null || !PlaceInGame(game, curR, curC, horizontal, firstEq, eqLen))
-            return GenerateFallbackGrid(s, new Random(rnd.Next()));
-            
-        // Treppen-Muster: Jede Gleichung dockt an das Ende der vorherigen an.
-        for (int i = 1; i < s.MinEquations; i++)
+        if (firstEq == null || !PlaceInGame(game, centerR, centerC, true, firstEq, eqLen))
         {
-            if (horizontal) curC += (eqLen - 1);
-            else curR += (eqLen - 1);
-            
-            horizontal = !horizontal;
-            
-            if (!decimal.TryParse(game.Grid[curR, curC].Solution, System.Globalization.NumberStyles.Any,
-                System.Globalization.CultureInfo.InvariantCulture, out var anchor))
-            {
-                return GenerateFallbackGrid(s, new Random(rnd.Next()));
-            }
-
-            var eq = GenerateEquationWithValue(s, rnd, anchorPos: 0, anchorVal: anchor);
-            if (eq == null || !PlaceInGame(game, curR, curC, horizontal, eq, eqLen))
-                return GenerateFallbackGrid(s, new Random(rnd.Next()));
+            if (depth > 50) return game;
+            return GenerateFallbackGrid(s, new Random(rnd.Next()), depth + 1);
         }
 
+        var queue = new Queue<(int r, int c, decimal val, bool parentWasHorizontal)>();
+        int[] anchors = s.IsExtended ? new[] { 0, 2, 4, 6 } : new[] { 0, 2, 4 };
+        
+        foreach(int a in anchors)
+        {
+            if (decimal.TryParse(game.Grid[centerR, centerC + a].Solution, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var val))
+                queue.Enqueue((centerR, centerC + a, val, true));
+        }
+
+        int count = 1;
+        int attempts = 0;
+        
+        while(count < s.MaxEquations && queue.Count > 0 && attempts < 80)
+        {
+            attempts++;
+            var (nr, nc, val, parentHoriz) = queue.Dequeue();
+            
+            bool horizontal = !parentHoriz;
+            var bestAnchors = anchors.OrderBy(_ => rnd.Next()).ToList();
+            bool placedOne = false;
+            
+            foreach(int anchor in bestAnchors)
+            {
+                var eq = GenerateEquationWithValue(s, rnd, anchorPos: anchor, anchorVal: val);
+                if (eq == null) continue;
+                
+                int startR = horizontal ? nr : nr - anchor;
+                int startC = horizontal ? nc - anchor : nc;
+                
+                if (PlaceInGame(game, startR, startC, horizontal, eq, eqLen))
+                {
+                    count++;
+                    placedOne = true;
+                    foreach(int newAnchor in anchors)
+                    {
+                        if (newAnchor == anchor) continue; 
+                        int cr = horizontal ? startR : startR + newAnchor;
+                        int cc = horizontal ? startC + newAnchor : startC;
+                        if (decimal.TryParse(game.Grid[cr, cc].Solution, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var nVal))
+                        {
+                            queue.Enqueue((cr, cc, nVal, horizontal));
+                        }
+                    }
+                    if (count >= s.MinEquations && count <= s.MaxEquations && rnd.NextDouble() > 0.6) 
+                    {
+                        // Stop early sometimes if we have enough equations to create variety
+                        queue.Clear(); 
+                    }
+                    break;
+                }
+            }
+            if (!placedOne && count < s.MinEquations)
+            {
+                queue.Enqueue((nr, nc, val, parentHoriz));
+            }
+        }
+        
         game.Equations = ScanEquations(game, eqLen);
+        if (game.Equations.Count < s.MinEquations || game.Equations.Count > s.MaxEquations)
+        {
+            if (depth > 50) return game;
+            return GenerateFallbackGrid(s, new Random(rnd.Next()), depth + 1);
+        }
+
         
         // Trim Game Board
         int minR = GridSize, maxR = 0, minC = GridSize, maxC = 0;
@@ -811,17 +890,48 @@ public sealed class MathCrossGeneratorService
         int dr = horizontal ? 0 : 1;
         int dc = horizontal ? 1 : 0;
 
+        if (startR < 0 || startC < 0) return false;
+        if (startR + (horizontal ? 0 : len - 1) >= game.Rows) return false;
+        if (startC + (horizontal ? len - 1 : 0) >= game.Cols) return false;
+
+        int prevR = startR - dr;
+        int prevC = startC - dc;
+        if (prevR >= 0 && prevC >= 0 && prevR < game.Rows && prevC < game.Cols && game.Grid[prevR, prevC].Type != CellType.Empty) return false;
+
+        int nextR = startR + len * dr;
+        int nextC = startC + len * dc;
+        if (nextR >= 0 && nextC >= 0 && nextR < game.Rows && nextC < game.Cols && game.Grid[nextR, nextC].Type != CellType.Empty) return false;
+
         var cells = BuildCells(eq, len);
 
         for (int i = 0; i < len; i++)
         {
             int r = startR + i * dr;
             int c = startC + i * dc;
-            if (r < 0 || r >= game.Rows || c < 0 || c >= game.Cols) return false;
-
             var existing = game.Grid[r, c];
-            if (existing.Type != CellType.Empty && (existing.Type != cells[i].type || existing.Solution != cells[i].val))
-                return false;
+            if (existing.Type != CellType.Empty)
+            {
+                if (existing.Type != cells[i].type || existing.Solution != cells[i].val) return false;
+                
+                if (horizontal)
+                {
+                    if ((c > 0 && game.Grid[r, c - 1].Type != CellType.Empty) ||
+                        (c < game.Cols - 1 && game.Grid[r, c + 1].Type != CellType.Empty)) return false;
+                }
+                else
+                {
+                    if ((r > 0 && game.Grid[r - 1, c].Type != CellType.Empty) ||
+                        (r < game.Rows - 1 && game.Grid[r + 1, c].Type != CellType.Empty)) return false;
+                }
+            }
+            else
+            {
+                int perpDr = horizontal ? 1 : 0;
+                int perpDc = horizontal ? 0 : 1;
+                
+                if (r + perpDr >= 0 && r + perpDr < game.Rows && c + perpDc >= 0 && c + perpDc < game.Cols && game.Grid[r + perpDr, c + perpDc].Type != CellType.Empty) return false;
+                if (r - perpDr >= 0 && r - perpDr < game.Rows && c - perpDc >= 0 && c - perpDc < game.Cols && game.Grid[r - perpDr, c - perpDc].Type != CellType.Empty) return false;
+            }
         }
 
         for (int i = 0; i < len; i++)
@@ -946,7 +1056,7 @@ public sealed class MathCrossGeneratorService
     private bool EnsureSolvable(MathCrossGame game, Random rnd)
     {
         int extraGivens = 0;
-        const int MaxExtraGivens = 2;
+        int MaxExtraGivens = Math.Max(2, game.Equations.Count / 3);
 
         for (int iter = 0; iter < SolvabilityRetryLimit; iter++)
         {

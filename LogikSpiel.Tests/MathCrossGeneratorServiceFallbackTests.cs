@@ -10,17 +10,17 @@ public class MathCrossGeneratorServiceFallbackTests
     [Theory]
     [InlineData("easy")]
     [InlineData("hard")]
-    public void FallbackGrid_MultipleSeeds_IsFullyConnected(string difficulty)
+    public void FallbackGrid_MultipleSeeds_IsValidTopology(string difficulty)
     {
         for (int seed = 1; seed <= 40; seed++)
         {
             var game = InvokeGenerateFallbackGrid(difficulty, seed);
             
-            Assert.True(game.Equations.Count >= 8,
-                $"Expected at least 8 equations in fallback for seed={seed}, difficulty={difficulty}, got {game.Equations.Count}.");
+            Assert.True(game.Equations.Count >= 8 && game.Equations.Count <= 12,
+                $"Expected 8-12 equations in fallback for seed={seed}, difficulty={difficulty}, got {game.Equations.Count}.");
                 
-            Assert.True(IsGameFullyConnected(game), 
-                $"Fallback Grid is not fully connected for seed={seed}, difficulty={difficulty}.");
+            Assert.True(HasValidIntersectionTopology(game), 
+                $"Fallback Grid topology is invalid (too few intersections) for seed={seed}, difficulty={difficulty}.");
         }
     }
 
@@ -29,71 +29,69 @@ public class MathCrossGeneratorServiceFallbackTests
     [InlineData("normal")]
     [InlineData("hard")]
     [InlineData("master")]
-    public void GenerateGame_MultipleSeeds_IsFullyConnected(string difficulty)
+    public void GenerateGame_MultipleSeeds_IsValidTopology(string difficulty)
     {
         var service = new MathCrossGeneratorService();
         for (int seed = 1; seed <= 40; seed++)
         {
             var game = service.GenerateGame(difficulty, seed);
-            Assert.True(IsGameFullyConnected(game), 
-                $"Generated Grid is not fully connected for seed={seed}, difficulty={difficulty}.");
+            
+            Assert.True(game.Equations.Count >= 8 && game.Equations.Count <= 12,
+                $"Expected 8-12 equations in generated game for seed={seed}, difficulty={difficulty}, got {game.Equations.Count}.");
+            
+            Assert.True(HasValidIntersectionTopology(game), 
+                $"Generated Grid topology is invalid for seed={seed}, difficulty={difficulty}.");
         }
     }
 
-    private static bool IsGameFullyConnected(MathCrossGame game)
+    private static bool HasValidIntersectionTopology(MathCrossGame game)
     {
-        int startR = -1, startC = -1;
-        int totalCells = 0;
+        int n = game.Equations.Count;
+        if (n < 8 || n > 12) return false;
 
-        for (int r = 0; r < game.Rows; r++)
+        var adj = new List<int>[n];
+        for (int i = 0; i < n; i++) adj[i] = new List<int>();
+
+        int totalIntersections = 0;
+
+        for (int i = 0; i < n; i++)
         {
-            for (int c = 0; c < game.Cols; c++)
+            for (int j = i + 1; j < n; j++)
             {
-                if (game.Grid[r, c].Type != CellType.Empty)
+                if (game.Equations[i].Cells.Intersect(game.Equations[j].Cells).Any())
                 {
-                    totalCells++;
-                    if (startR == -1)
-                    {
-                        startR = r;
-                        startC = c;
-                    }
+                    adj[i].Add(j);
+                    adj[j].Add(i);
+                    totalIntersections++;
                 }
             }
         }
 
-        if (totalCells == 0) return true;
-
-        var visited = new bool[game.Rows, game.Cols];
-        var queue = new Queue<(int r, int c)>();
-        queue.Enqueue((startR, startC));
-        visited[startR, startC] = true;
-        int visitedCount = 0;
-
-        int[] dr = { -1, 1, 0, 0 };
-        int[] dc = { 0, 0, -1, 1 };
-
-        while (queue.Count > 0)
+        // Rule 1: No isolated equations
+        for (int i = 0; i < n; i++)
         {
-            var (r, c) = queue.Dequeue();
-            visitedCount++;
+            if (adj[i].Count == 0) return false;
+        }
 
-            for (int i = 0; i < 4; i++)
+        bool hasRichStructure = false;
+        for (int i = 0; i < n; i++)
+        {
+            if (adj[i].Count >= 3)
             {
-                int nr = r + dr[i];
-                int nc = c + dc[i];
-
-                if (nr >= 0 && nr < game.Rows && nc >= 0 && nc < game.Cols)
-                {
-                    if (!visited[nr, nc] && game.Grid[nr, nc].Type != CellType.Empty)
-                    {
-                        visited[nr, nc] = true;
-                        queue.Enqueue((nr, nc));
-                    }
-                }
+                hasRichStructure = true;
+                break;
             }
         }
 
-        return visitedCount == totalCells;
+        if (!hasRichStructure)
+        {
+            if (totalIntersections < n - 1 && adj.Max(x => x.Count) <= 2)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     [Theory]
