@@ -37,7 +37,7 @@ public class MathCrossCellViewModelTests
 
 
     [Fact]
-    public async Task Hint_IgnoresEditableCellsThatAlreadyHaveUserInput()
+    public async Task Hint_IsOnlyEnabledForFocusedEmptyCell_AndIgnoresPrefilledCell()
     {
         var userService = new StubUserProfileService { User = new UserProfile { Coins = 50 } };
         var parent = new MathCrossPageViewModel(
@@ -68,8 +68,17 @@ public class MathCrossCellViewModelTests
             IsGiven = false
         };
 
-        parent.FlatCells.Add(new MathCrossCellViewModel(prefilledWrong, parent));
-        parent.FlatCells.Add(new MathCrossCellViewModel(emptyTarget, parent));
+        var prefilledVm = new MathCrossCellViewModel(prefilledWrong, parent);
+        var emptyVm = new MathCrossCellViewModel(emptyTarget, parent);
+
+        parent.FlatCells.Add(prefilledVm);
+        parent.FlatCells.Add(emptyVm);
+
+        parent.SelectedCell = prefilledVm;
+        Assert.False(parent.HintCommand.CanExecute(null));
+
+        parent.SelectedCell = emptyVm;
+        Assert.True(parent.HintCommand.CanExecute(null));
 
         parent.HintCommand.Execute(null);
         await Task.Delay(100);
