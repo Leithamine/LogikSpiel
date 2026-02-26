@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace LogikSpiel.Model;
 
@@ -22,7 +23,47 @@ public class MathCrossCell
     public bool IsGiven { get; set; }
     public bool IsSelected { get; set; }
 
-    public bool IsCorrect => !string.IsNullOrEmpty(UserInput) && UserInput == Solution;
+}
+
+
+public static class MathCrossValueNormalizer
+{
+    public static string NormalizeOperator(string? value)
+    {
+        var t = (value ?? "").Trim().Replace('−', '-').Replace('–', '-');
+        if (t is "x" or "X" or "*") return "×";
+        if (t is "/" or ":") return "÷";
+        if (t == "-") return "−";
+        if (t == "+") return "+";
+        if (t == "×" || t == "÷" || t == "=") return t;
+        return t;
+    }
+
+    public static string NormalizeNumberText(string? value)
+    {
+        return (value ?? "").Trim().Replace('−', '-').Replace(',', '.');
+    }
+
+    public static bool TryParseNumber(string? value, out double number)
+    {
+        return double.TryParse(
+            NormalizeNumberText(value),
+            System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.InvariantCulture,
+            out number);
+    }
+
+    public static bool AreNumbersEqual(string? userInput, string? solution, bool allowDecimals)
+    {
+        if (!TryParseNumber(userInput, out var u) || !TryParseNumber(solution, out var s))
+            return false;
+
+        if (allowDecimals)
+            return Math.Abs(u - s) < 0.0001;
+
+        return Math.Abs(u - s) < 0.0000001 && Math.Round(u) == Math.Round(s);
+    }
+
 }
 
 public class MathEquation
