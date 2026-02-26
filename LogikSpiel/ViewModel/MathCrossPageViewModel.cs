@@ -39,11 +39,15 @@ public sealed class MathCrossPageViewModel : ObservableObject
         private set
         {
             if (SetProperty(ref _levelNumber, value))
+            {
                 OnPropertyChanged(nameof(Title));
+                OnPropertyChanged(nameof(LevelDisplayText));
+            }
         }
     }
 
     public string Title => LocalizationService.Format("MathCross_TitleFormat", DiffName(DifficultyKey), LevelNumber);
+    public string LevelDisplayText => LocalizationService.Format("Common_LevelFormat", LevelNumber);
     public string DifficultyText => DiffName(DifficultyKey);
 
     private MathCrossGame? _game;
@@ -88,6 +92,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
             OnPropertyChanged();
             OnPropertyChanged(nameof(HasSelection));
             UpdateCandidateTokens();
+            HintCommand.RaiseCanExecuteChanged();
         }
     }
 
@@ -142,6 +147,10 @@ public sealed class MathCrossPageViewModel : ObservableObject
 
         HintCommand = new AsyncCommand(async () =>
         {
+            var candidate = SelectedCell;
+            if (!CanUseHintOnSelectedCell() || candidate == null)
+                return;
+
             if (Coins < HintCost)
             {
                 await _dialog.AlertAsync(
@@ -155,21 +164,6 @@ public sealed class MathCrossPageViewModel : ObservableObject
                 LocalizationService.Format("MathCross_BuyHintMessage", HintCost));
             if (!buy) return;
 
-            var candidate = FlatCells
-                .Where(c => c.IsEditable
-                    && !IsCellSolved(c.Cell)
-                    && !string.IsNullOrWhiteSpace(c.Cell.Solution))
-                .OrderBy(_ => Random.Shared.Next())
-                .FirstOrDefault();
-
-            if (candidate == null)
-            {
-                await _dialog.AlertAsync(
-                    LocalizationService.GetString("MathCross_NoHintTitle"),
-                    LocalizationService.GetString("MathCross_NoHintMessage"));
-                return;
-            }
-
             candidate.Cell.UserInput = candidate.Cell.Solution;
             candidate.Cell.IsGiven = true;
             candidate.UpdateDisplay();
@@ -180,8 +174,11 @@ public sealed class MathCrossPageViewModel : ObservableObject
                 Coins = _userProfile.Coins;
                 await _userService.SaveUserAsync(_userProfile);
             }
+
+            SelectedCell = null;
             UpdateCandidateTokens();
-        });
+            HintCommand.RaiseCanExecuteChanged();
+        }, CanUseHintOnSelectedCell);
 
         TokenCommand = new AsyncCommand<string>(async token =>
         {
@@ -201,6 +198,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
                 next.IsSelected = true;
                 SelectedCell = next;
             }
+            HintCommand.RaiseCanExecuteChanged();
             await Task.CompletedTask;
         });
 
@@ -210,6 +208,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
             SelectedCell.Cell.UserInput = "";
             SelectedCell.UpdateDisplay();
             UpdateCandidateTokens();
+            HintCommand.RaiseCanExecuteChanged();
             await Task.CompletedTask;
         });
     }
@@ -293,6 +292,17 @@ public sealed class MathCrossPageViewModel : ObservableObject
     {
         foreach (var c in FlatCells)
             if (c.IsSelected) c.IsSelected = false;
+    }
+
+
+    private bool CanUseHintOnSelectedCell()
+    {
+        if (SelectedCell == null || !SelectedCell.IsEditable) return false;
+
+        var cell = SelectedCell.Cell;
+        return string.IsNullOrWhiteSpace(cell.UserInput)
+            && !IsCellSolved(cell)
+            && !string.IsNullOrWhiteSpace(cell.Solution);
     }
 
     private void UpdateCandidateTokens()

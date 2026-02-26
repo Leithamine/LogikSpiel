@@ -17,22 +17,25 @@
 
     <Grid RowDefinitions="Auto,*,Auto" Padding="12" RowSpacing="12">
         <!-- HEADER -->
-        <Border Style="{StaticResource GlassCard}" Padding="12">
-            <Grid ColumnDefinitions="Auto,*,Auto">
-                <Button Grid.Column="0" Text="{resx:Translate Key=Common_Back}" Style="{StaticResource BtnIcon}"
-                        Command="{Binding BackCommand}" IsEnabled="{Binding IsNotBusy}"/>
+        <Border Style="{StaticResource GlassCard}" Padding="{OnIdiom Phone=8, Desktop=12}" Margin="0">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                <Button Grid.Column="0"
+                        Text="&#x2190;"
+                        Style="{StaticResource BtnIcon}"
+                        WidthRequest="{OnIdiom Phone=76, Desktop=88}"
+                        HeightRequest="{OnIdiom Phone=40, Desktop=48}"
+                        Padding="10,0"
+                        Command="{Binding BackCommand}"
+                        IsEnabled="{Binding IsNotBusy}"/>
 
-                <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center" VerticalOptions="Center">
+                <VerticalStackLayout Grid.Column="1" Spacing="0" HorizontalOptions="Center" VerticalOptions="Center">
                     <Label Text="{Binding Title}" Style="{StaticResource H3}" HorizontalOptions="Center"/>
-                    <Border StrokeThickness="0" StrokeShape="RoundRectangle 8"
-                            BackgroundColor="{StaticResource C_Primary}" Padding="10,4">
-                        <Label Text="{Binding DifficultyText}" TextColor="{StaticResource C_TextOnColor}" FontSize="11" FontAttributes="Bold"/>
-                    </Border>
+                    <Label Text="{Binding LevelDisplayText}" TextColor="{StaticResource C_TextMuted}" FontSize="14" HorizontalOptions="Center" FontAttributes="Bold"/>
                 </VerticalStackLayout>
 
-                <Border Grid.Column="2" Style="{StaticResource CoinBadge}">
+                <Border Grid.Column="2" Style="{StaticResource CoinBadge}" Padding="{OnIdiom Phone=8, Desktop=10}">
                     <HorizontalStackLayout Spacing="4">
-                        <Label Text="💰" FontSize="14"/>
+                        <Label Text="&#x1F4B0;" FontSize="14"/>
                         <Label Text="{Binding Coins}" TextColor="{StaticResource C_Gold}" FontAttributes="Bold"/>
                     </HorizontalStackLayout>
                 </Border>
