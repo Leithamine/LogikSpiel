@@ -7,11 +7,12 @@ namespace LogikSpiel.Tests;
 public class MathCrossGeneratorServiceEvaluateTests
 {
     [Theory]
-    [InlineData(2, "+", 3, "×", 4, 20)]
-    [InlineData(20, "-", 6, "÷", 2, 7)]
+    [InlineData(2, "+", 3, "×", 4, 14)]
+    [InlineData(20, "-", 6, "÷", 2, 17)]
     [InlineData(8, "÷", 2, "+", 3, 7)]
     [InlineData(3, "×", 4, "-", 5, 7)]
-    public void Evaluate_ThreeTermExpressions_UsesLeftToRightRule(
+    [InlineData(18, "-", 3, "×", 2, 12)]
+    public void Evaluate_ThreeTermExpressions_UsesOperatorPrecedence(
         decimal a, string op1, decimal b, string op2, decimal c, decimal expected)
     {
         var result = InvokeEvaluate(a, op1, b, op2, c, allowDecimalDivision: false);
