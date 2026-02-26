@@ -93,4 +93,25 @@
     <Color x:Key="C_BubbleNeutral">#FF2A3342</Color>
     <Color x:Key="C_BubbleSuccess">#4CAF50</Color>
     <Color x:Key="C_BubbleError">#EB5757</Color>
+
+    <!-- MathCross cells (space/dark theme) -->
+    <Color x:Key="C_MathCell_Fixed_Bg">#313B4A</Color>
+    <Color x:Key="C_MathCell_Fixed_Border">#646B76</Color>
+    <Color x:Key="C_MathCell_Fixed_Text">#E8EDF5</Color>
+
+    <Color x:Key="C_MathCell_Num_Bg">#23445E</Color>
+    <Color x:Key="C_MathCell_Num_Border">#5EA6D8</Color>
+    <Color x:Key="C_MathCell_Num_Text">#F3FAFF</Color>
+
+    <Color x:Key="C_MathCell_Op_Bg">#3A3556</Color>
+    <Color x:Key="C_MathCell_Op_Border">#9A8BE0</Color>
+    <Color x:Key="C_MathCell_Op_Text">#F7F4FF</Color>
+
+    <Color x:Key="C_MathCell_Num_HoverBg">#2B5370</Color>
+    <Color x:Key="C_MathCell_Num_HoverBorder">#79BCEB</Color>
+    <Color x:Key="C_MathCell_Num_Glow">#595EA6D8</Color>
+
+    <Color x:Key="C_MathCell_Op_HoverBg">#474164</Color>
+    <Color x:Key="C_MathCell_Op_HoverBorder">#B2A4F0</Color>
+    <Color x:Key="C_MathCell_Op_Glow">#599A8BE0</Color>
 </ResourceDictionary>
