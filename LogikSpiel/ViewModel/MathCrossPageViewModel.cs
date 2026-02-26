@@ -155,7 +155,9 @@ public sealed class MathCrossPageViewModel : ObservableObject
             if (!buy) return;
 
             var candidate = FlatCells
-                .Where(c => c.IsEditable && !IsCellSolved(c.Cell))
+                .Where(c => c.IsEditable
+                    && !IsCellSolved(c.Cell)
+                    && !string.IsNullOrWhiteSpace(c.Cell.Solution))
                 .OrderBy(_ => Random.Shared.Next())
                 .FirstOrDefault();
 
@@ -524,7 +526,7 @@ public sealed class MathCrossCellViewModel : ObservableObject
 
     public string DisplayText => Cell.Type == CellType.Equals ? "=" : Cell.IsGiven ? Cell.Solution : Cell.UserInput;
 
-    public string EditableText => !IsEditable ? "" :
+    public string EditableText => !IsEditable ? DisplayText :
         Cell.Type == CellType.Operator ?
             (string.IsNullOrWhiteSpace(Cell.UserInput) ? "?" : Cell.UserInput) :
             (string.IsNullOrWhiteSpace(Cell.UserInput) ? "·" : Cell.UserInput);
