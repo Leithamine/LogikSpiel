@@ -70,6 +70,37 @@ public class MathCrossGeneratorServicePerformanceReliabilityTests
         Assert.True(InvokeEnsureSolvableCore(game, maxStrategicReveals: 0));
     }
 
+
+    [Theory]
+    [InlineData("easy")]
+    [InlineData("normal")]
+    [InlineData("hard")]
+    [InlineData("master")]
+    public void GenerateGame_MultipleSeeds_DoesNotThrowAndHasPlayableCells(string difficulty)
+    {
+        var service = new MathCrossGeneratorService();
+
+        for (int seed = 1; seed <= 40; seed++)
+        {
+            MathCrossGame? game = null;
+            var ex = Record.Exception(() => game = service.GenerateGame(difficulty, seed));
+            Assert.Null(ex);
+            Assert.NotNull(game);
+
+            Assert.True(game.Rows > 0 && game.Cols > 0);
+            Assert.Contains(EnumerateEditable(game), c => !string.IsNullOrWhiteSpace(c.Solution));
+            Assert.InRange(game.Equations.Count, 8, 12);
+        }
+    }
+
+    private static IEnumerable<MathCrossCell> EnumerateEditable(MathCrossGame game)
+    {
+        for (int r = 0; r < game.Rows; r++)
+            for (int c = 0; c < game.Cols; c++)
+                if (game.Grid[r, c].Type is CellType.Number or CellType.Operator)
+                    yield return game.Grid[r, c];
+    }
+
     private static bool InvokeEnsureSolvableCore(MathCrossGame game, int maxStrategicReveals)
     {
         var service = new MathCrossGeneratorService();

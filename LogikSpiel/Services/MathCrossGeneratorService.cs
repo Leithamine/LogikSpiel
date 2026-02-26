@@ -49,11 +49,23 @@ public sealed class MathCrossGeneratorService
             }
         }
 
-        var emergency = GenerateEmergencyTemplateGame(s, seed + 777777);
-        if (!FinalizeGame(emergency, new Random(seed + 888888), s))
-            throw new InvalidOperationException("MathCross generation failed to produce a solvable puzzle within budget.");
+        for (int emergencyAttempt = 0; emergencyAttempt < 24; emergencyAttempt++)
+        {
+            var emergency = GenerateEmergencyTemplateGame(s, seed + 777777 + emergencyAttempt * 101);
+            if (FinalizeGame(emergency, new Random(seed + 888888 + emergencyAttempt * 103), s))
+                return emergency;
+        }
 
-        return emergency;
+        // Last-resort reliability path: keep trying regular generation seeds until a valid board is finalized.
+        for (int rescueAttempt = 0; rescueAttempt < 200; rescueAttempt++)
+        {
+            var candidate = TryGenerate(s, new Random(seed + 990000 + rescueAttempt * 211));
+            if (candidate == null) continue;
+            if (FinalizeGame(candidate, new Random(seed + 995000 + rescueAttempt * 223), s))
+                return candidate;
+        }
+
+        throw new InvalidOperationException("MathCross generation failed to produce a valid solvable puzzle.");
     }
 
     private MathCrossGame? TryGenerate(Settings s, Random rnd)
@@ -764,6 +776,28 @@ public sealed class MathCrossGeneratorService
 
     private MathCrossGame GenerateEmergencyTemplateGame(Settings s, int seed)
     {
+        for (int variant = 0; variant < 80; variant++)
+        {
+            var built = TryBuildEmergencyTemplate(s, seed + variant * 37);
+            if (built != null)
+                return built;
+        }
+
+        // Return an empty-safe board object only as an internal guard; caller will continue with rescue generation attempts.
+        return new MathCrossGame
+        {
+            Rows = 1,
+            Cols = 1,
+            Grid = new[,] { { new MathCrossCell { Row = 0, Col = 0, Type = CellType.Empty, IsGiven = true, Solution = "", UserInput = "" } } },
+            Difficulty = s.DifficultyKey,
+            EquationLength = s.EquationLength,
+            UseExtendedEquations = s.IsExtended,
+            Equations = new List<MathEquation>()
+        };
+    }
+
+    private MathCrossGame? TryBuildEmergencyTemplate(Settings s, int seed)
+    {
         int len = s.EquationLength;
         int rows = 25;
         int cols = 25;
@@ -782,13 +816,13 @@ public sealed class MathCrossGeneratorService
                 game.Grid[r, c] = new MathCrossCell { Row = r, Col = c, Type = CellType.Empty, Solution = "", UserInput = "", IsGiven = false };
 
         var rnd = new Random(seed);
-        var placements = GetEmergencyPlacements(len);
+        var placements = GetEmergencyPlacements(len).OrderBy(_ => rnd.Next()).ToList();
         var used = new Dictionary<(int r, int c), string>();
 
         foreach (var (startR, startC, horizontal) in placements)
         {
             EquationData? picked = null;
-            for (int attempt = 0; attempt < 120; attempt++)
+            for (int attempt = 0; attempt < 180; attempt++)
             {
                 var candidate = GenerateEquation(s, rnd);
                 if (candidate == null) continue;
@@ -814,7 +848,7 @@ public sealed class MathCrossGeneratorService
             }
 
             if (picked == null)
-                throw new InvalidOperationException("Emergency template could not be filled consistently.");
+                return null;
 
             var packed = BuildCells(picked, len);
             for (int i = 0; i < len; i++)
@@ -847,7 +881,7 @@ public sealed class MathCrossGeneratorService
         };
     }
 
-    private MathCrossGame TrimAndScanGame(MathCrossGame game, Settings s)
+    private MathCrossGame? TrimAndScanGame(MathCrossGame game, Settings s)
     {
         int minR = game.Rows, maxR = 0, minC = game.Cols, maxC = 0;
         for (int r = 0; r < game.Rows; r++)
@@ -893,7 +927,7 @@ public sealed class MathCrossGeneratorService
 
         trimmed.Equations = ScanEquations(trimmed, s.EquationLength);
         if (trimmed.Equations.Count < s.MinEquations || trimmed.Equations.Count > s.MaxEquations)
-            throw new InvalidOperationException("Emergency template produced invalid equation count.");
+            return null;
 
         return trimmed;
     }
