@@ -769,10 +769,17 @@ public sealed class MathCrossGeneratorService
                 progress = false;
                 foreach (var eq in game.Equations)
                 {
-                    int unknowns = eq.Cells.Count(p => !solvable[p.row, p.col]);
+                    var validCells = eq.Cells
+                        .Where(p => IsWithinBounds(game, p.row, p.col))
+                        .ToList();
+
+                    if (validCells.Count == 0)
+                        continue;
+
+                    int unknowns = validCells.Count(p => !solvable[p.row, p.col]);
                     if (unknowns == 1)
                     {
-                        foreach (var (er, ec) in eq.Cells)
+                        foreach (var (er, ec) in validCells)
                             solvable[er, ec] = true;
                         progress = true;
                     }
@@ -793,6 +800,11 @@ public sealed class MathCrossGeneratorService
         }
 
         return false;
+    }
+
+    private static bool IsWithinBounds(MathCrossGame game, int row, int col)
+    {
+        return row >= 0 && row < game.Rows && col >= 0 && col < game.Cols;
     }
 
     private static string Format(decimal v)
