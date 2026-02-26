@@ -333,21 +333,10 @@ public sealed class MathCrossGeneratorService
 
     private static decimal? Evaluate(decimal a, string op1, decimal b, string op2, decimal c)
     {
-        // Punkt vor Strich
-        if (op1 is "×" or "÷")
-        {
-            var t = CalcDec(a, op1, b);
-            if (t == null) return null;
-            return CalcDec(t.Value, op2, c);
-        }
-        if (op2 is "×" or "÷")
-        {
-            var t = CalcDec(b, op2, c);
-            if (t == null) return null;
-            return CalcDec(a, op1, t.Value);
-        }
+        // Spielregel: strikt links-nach-rechts auswerten
         var t1 = CalcDec(a, op1, b);
         if (t1 == null) return null;
+
         return CalcDec(t1.Value, op2, c);
     }
 
