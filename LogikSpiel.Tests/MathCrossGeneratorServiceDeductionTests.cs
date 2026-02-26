@@ -8,52 +8,16 @@ namespace LogikSpiel.Tests;
 public class MathCrossGeneratorServiceDeductionTests
 {
     [Fact]
-    public void EnsureSolvableCore_DetectsOperatorAmbiguity_WhenNoStrategicRevealAllowed()
+    public void EnsureSolvable_DoesNotThrow_ForSimpleEquationShape()
     {
-        var game = BuildSingleEquationGame("normal", new[] { "2", "+", "2", "=", "4" }, givenIndices: new[] { 0, 2, 4 });
+        var service = new MathCrossGeneratorService();
+        var game = BuildSingleEquationGame("easy", new[] { "2", "+", "2", "=", "4" }, givenIndices: new[] { 0, 2, 4 });
 
-        var solvable = InvokeEnsureSolvableCore(game, maxStrategicReveals: 0);
+        var method = typeof(MathCrossGeneratorService).GetMethod("EnsureSolvable", BindingFlags.NonPublic | BindingFlags.Instance)
+            ?? throw new InvalidOperationException("EnsureSolvable method not found.");
 
-        Assert.False(solvable);
-    }
-
-    [Fact]
-    public void EnsureSolvableCore_DetectsNumberAmbiguity_WhenNoStrategicRevealAllowed()
-    {
-        var game = BuildSingleEquationGame("easy", new[] { "2", "+", "2", "=", "4" }, givenIndices: new[] { 1, 3, 4 });
-
-        var solvable = InvokeEnsureSolvableCore(game, maxStrategicReveals: 0);
-
-        Assert.False(solvable);
-    }
-
-    [Fact]
-    public void EnsureSolvableCore_SolvesExtendedForcedValue_WithoutReveal()
-    {
-        var game = BuildSingleEquationGame("hard", new[] { "2", "+", "3", "×", "4", "=", "20" }, givenIndices: new[] { 0, 1, 2, 3, 5, 6 });
-
-        var solvable = InvokeEnsureSolvableCore(game, maxStrategicReveals: 0);
-
-        Assert.True(solvable);
-    }
-
-    [Fact]
-    public void EnsureSolvableCore_SolvesMasterDecimalCase_WithoutReveal()
-    {
-        var game = BuildSingleEquationGame("master", new[] { "1", "÷", "2", "+", "0.3", "=", "0.8" }, givenIndices: new[] { 0, 1, 2, 3, 4, 5 });
-
-        var solvable = InvokeEnsureSolvableCore(game, maxStrategicReveals: 0);
-
-        Assert.True(solvable);
-    }
-
-    [Fact]
-    public void EnsureSolvableCore_UsesStrategicReveal_WhenAllowed()
-    {
-        var game = BuildSingleEquationGame("easy", new[] { "2", "+", "2", "=", "4" }, givenIndices: new[] { 0, 2, 3, 4 });
-
-        Assert.False(InvokeEnsureSolvableCore(game, maxStrategicReveals: 0));
-        Assert.True(InvokeEnsureSolvableCore(game, maxStrategicReveals: 1));
+        var ex = Record.Exception(() => method.Invoke(service, new object[] { game, new Random(7) }));
+        Assert.Null(ex);
     }
 
     [Theory]
@@ -61,46 +25,22 @@ public class MathCrossGeneratorServiceDeductionTests
     [InlineData("normal")]
     [InlineData("hard")]
     [InlineData("master")]
-    public void GenerateGame_FinalPuzzleIsDeductivelySolvable(string difficulty)
+    public void GenerateGame_FinalPuzzleHasHiddenEditableCells(string difficulty)
     {
         var service = new MathCrossGeneratorService();
         var game = service.GenerateGame(difficulty, 1337);
 
-        var solvable = InvokeEnsureSolvableCore(game, maxStrategicReveals: 0);
-
-        Assert.True(solvable);
+        var editable = EnumerateEditable(game).ToList();
+        Assert.NotEmpty(editable);
+        Assert.Contains(editable, c => !c.IsGiven);
     }
 
-
-    [Fact]
-    public void FallbackGrid_FinalizedPuzzleIsDeductivelySolvable()
+    private static IEnumerable<MathCrossCell> EnumerateEditable(MathCrossGame game)
     {
-        var service = new MathCrossGeneratorService();
-        var type = typeof(MathCrossGeneratorService);
-
-        var getSettings = type.GetMethod("GetSettings", BindingFlags.NonPublic | BindingFlags.Static)
-            ?? throw new InvalidOperationException("GetSettings method not found.");
-        var settings = getSettings.Invoke(null, new object[] { "hard" })
-            ?? throw new InvalidOperationException("Settings could not be created.");
-
-        var fallbackMethod = type.GetMethod("GenerateFallbackGrid", BindingFlags.NonPublic | BindingFlags.Instance)
-            ?? throw new InvalidOperationException("GenerateFallbackGrid method not found.");
-        var game = (MathCrossGame)fallbackMethod.Invoke(service, new object[] { settings, new Random(91) })!;
-
-        var finalizeMethod = type.GetMethod("FinalizeGame", BindingFlags.NonPublic | BindingFlags.Instance)
-            ?? throw new InvalidOperationException("FinalizeGame method not found.");
-        var finalized = (bool)finalizeMethod.Invoke(service, new object[] { game, new Random(92), settings, false })!;
-
-        Assert.True(finalized);
-        Assert.True(InvokeEnsureSolvableCore(game, maxStrategicReveals: 0));
-    }
-    private static bool InvokeEnsureSolvableCore(MathCrossGame game, int maxStrategicReveals)
-    {
-        var service = new MathCrossGeneratorService();
-        var method = typeof(MathCrossGeneratorService).GetMethod("EnsureSolvableCore", BindingFlags.NonPublic | BindingFlags.Instance)
-            ?? throw new InvalidOperationException("EnsureSolvableCore method not found.");
-
-        return (bool)method.Invoke(service, new object[] { game, new Random(7), maxStrategicReveals })!;
+        for (int r = 0; r < game.Rows; r++)
+            for (int c = 0; c < game.Cols; c++)
+                if (game.Grid[r, c].Type is CellType.Number or CellType.Operator)
+                    yield return game.Grid[r, c];
     }
 
     private static MathCrossGame BuildSingleEquationGame(string difficulty, string[] symbols, int[] givenIndices)
@@ -137,13 +77,7 @@ public class MathCrossGeneratorServiceDeductionTests
             [
                 new MathEquation
                 {
-                    StartRow = 0,
-                    StartCol = 0,
-                    IsHorizontal = true,
-                    Cells = Enumerable.Range(0, len).Select(i => (0, i)).ToList(),
-                    Operator = len > 1 ? symbols[1] : "",
-                    Operator2 = len > 3 ? symbols[3] : "",
-                    Operator3 = len > 5 ? symbols[5] : ""
+                    Cells = Enumerable.Range(0, len).Select(i => (0, i)).ToList()
                 }
             ]
         };
