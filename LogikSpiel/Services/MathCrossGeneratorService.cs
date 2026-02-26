@@ -84,8 +84,8 @@ public sealed class MathCrossGeneratorService
             if (hasHorizontal && hasVertical) continue;
 
             var directions = new List<bool>();
-            if (!hasVertical) directions.Add(vertical: true);
-            if (!hasHorizontal) directions.Add(vertical: false);
+            if (!hasVertical) directions.Add(true);
+            if (!hasHorizontal) directions.Add(false);
 
             int[] anchors = s.IsExtended ? new[] { 0, 2, 4, 6 } : new[] { 0, 2, 4 };
             bool placedOne = false;
