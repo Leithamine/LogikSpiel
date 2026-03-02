@@ -15,6 +15,8 @@ public sealed class MathCrossGeneratorService
     private const int GridSize = 16;
     private const int DefaultMaxLayoutSize = 10;
     private const int ExtendedMaxLayoutSize = 12;
+    private const int MaxAspectDelta = 3;
+    private const double MinCompactnessRatio = 0.62;
     private const int EquationVariantsPerAnchor = 1;
     private const double IntersectionBonus = 14.0;
     private const double AreaGrowthPenalty = 1.2;
@@ -87,7 +89,7 @@ public sealed class MathCrossGeneratorService
 
             fails++;
 
-            var best = FindBestPlacement(grid, solutions, s, rnd, bounds, midR, midC, maxWidth, maxHeight, maxDepth);
+            var best = FindBestPlacement(grid, solutions, s, rnd, bounds, midR, midC, maxWidth, maxHeight, maxDepth, placed.Count);
             if (best == null)
             {
                 if (placed.Count > 1)
@@ -134,7 +136,8 @@ public sealed class MathCrossGeneratorService
         int centerC,
         int maxWidth,
         int maxHeight,
-        int maxDepth)
+        int maxDepth,
+        int placedCount)
     {
         var numbers = GetNumberPositions(grid, solutions)
             .OrderBy(_ => rnd.Next())
@@ -170,7 +173,8 @@ public sealed class MathCrossGeneratorService
 
                         var simulation = SimulatePlacement(grid, solutions, startR, startC, vertical, s.EquationLength, eq, currentBounds);
 
-                        if (simulation.Intersections == 0)
+                        int requiredIntersections = placedCount >= 4 ? 2 : 1;
+                        if (simulation.Intersections < requiredIntersections)
                             continue;
 
                         if (simulation.NewBounds.Width > maxWidth || simulation.NewBounds.Height > maxHeight)
@@ -183,14 +187,23 @@ public sealed class MathCrossGeneratorService
 
                         int width = simulation.NewBounds.Width;
                         int height = simulation.NewBounds.Height;
+                        if (Math.Abs(width - height) > MaxAspectDelta)
+                            continue;
+
                         int newArea = simulation.NewBounds.Area;
+                        int nonEmptyCells = CountNonEmptyCells(grid) + simulation.NewCells;
+                        double compactness = (double)nonEmptyCells / Math.Max(1, newArea);
+                        if (compactness < MinCompactnessRatio)
+                            continue;
+
                         double centerDistance = Math.Abs(nr - centerR) + Math.Abs(nc - centerC);
 
                         double score =
                             IntersectionBonus * simulation.Intersections
                             - AreaGrowthPenalty * (newArea - oldArea)
                             - AspectRatioPenalty * Math.Abs(width - height)
-                            - CenterDistancePenalty * centerDistance;
+                            - CenterDistancePenalty * centerDistance
+                            + compactness * 8.5;
 
                         if (best == null || score > best.Score)
                         {
@@ -223,6 +236,7 @@ public sealed class MathCrossGeneratorService
         int minC = current.MinC;
         int maxC = current.MaxC;
         int intersections = 0;
+        int newCells = 0;
 
         for (int i = 0; i < len; i++)
         {
@@ -231,6 +245,7 @@ public sealed class MathCrossGeneratorService
 
             if (grid[r, c] == CellType.Empty)
             {
+                newCells++;
                 minR = Math.Min(minR, r);
                 maxR = Math.Max(maxR, r);
                 minC = Math.Min(minC, c);
@@ -242,7 +257,18 @@ public sealed class MathCrossGeneratorService
             }
         }
 
-        return new PlacementSimulation(new Bounds(minR, maxR, minC, maxC), intersections);
+        return new PlacementSimulation(new Bounds(minR, maxR, minC, maxC), intersections, newCells);
+    }
+
+    private static int CountNonEmptyCells(CellType[,] grid)
+    {
+        int count = 0;
+        for (int r = 0; r < GridSize; r++)
+            for (int c = 0; c < GridSize; c++)
+                if (grid[r, c] != CellType.Empty)
+                    count++;
+
+        return count;
     }
 
     private static Bounds ComputeBounds(CellType[,] grid)
@@ -1062,8 +1088,13 @@ public sealed class MathCrossGeneratorService
         int n = game.Equations.Count;
         if (n < 8 || n > 12) return false;
 
+        if (!HasCompactBounds(game.Rows, game.Cols)) return false;
+        if (CalculateFillRatio(game) < MinCompactnessRatio) return false;
+
         var adj = new List<int>[n];
         for (int i = 0; i < n; i++) adj[i] = new List<int>();
+
+        var hasPerpendicularIntersection = new bool[n];
 
         int intersections = 0;
         for (int i = 0; i < n; i++)
@@ -1073,12 +1104,37 @@ public sealed class MathCrossGeneratorService
                     adj[i].Add(j);
                     adj[j].Add(i);
                     intersections++;
+
+                    if (game.Equations[i].IsHorizontal != game.Equations[j].IsHorizontal)
+                    {
+                        hasPerpendicularIntersection[i] = true;
+                        hasPerpendicularIntersection[j] = true;
+                    }
                 }
 
         if (adj.Any(a => a.Count == 0)) return false;
+        if (hasPerpendicularIntersection.Any(v => !v)) return false;
+
+        var visited = new bool[n];
+        var queue = new Queue<int>();
+        visited[0] = true;
+        queue.Enqueue(0);
+
+        while (queue.Count > 0)
+        {
+            int current = queue.Dequeue();
+            foreach (var next in adj[current])
+            {
+                if (visited[next]) continue;
+                visited[next] = true;
+                queue.Enqueue(next);
+            }
+        }
+
+        if (visited.Any(v => !v)) return false;
 
         bool hasBranch = adj.Any(a => a.Count >= 3);
-        if (!hasBranch && intersections < n - 1 && adj.Max(a => a.Count) <= 2)
+        if (!hasBranch || intersections < n)
             return false;
 
         return true;
@@ -1103,9 +1159,15 @@ public sealed class MathCrossGeneratorService
         actualEquationCount = equations.Count;
         if (actualEquationCount < minEquations || actualEquationCount > maxEquations) return false;
 
+        var bounds = ComputeBounds(grid);
+        if (!HasCompactBounds(bounds.Height, bounds.Width)) return false;
+        if (CalculateFillRatio(grid, bounds) < MinCompactnessRatio) return false;
+
         int n = equations.Count;
         var adj = new List<int>[n];
         for (int i = 0; i < n; i++) adj[i] = new List<int>();
+
+        var hasPerpendicularIntersection = new bool[n];
 
         int intersections = 0;
         for (int i = 0; i < n; i++)
@@ -1115,12 +1177,37 @@ public sealed class MathCrossGeneratorService
                     adj[i].Add(j);
                     adj[j].Add(i);
                     intersections++;
+
+                    if (equations[i].IsHorizontal != equations[j].IsHorizontal)
+                    {
+                        hasPerpendicularIntersection[i] = true;
+                        hasPerpendicularIntersection[j] = true;
+                    }
                 }
 
         if (adj.Any(a => a.Count == 0)) return false;
+        if (hasPerpendicularIntersection.Any(v => !v)) return false;
+
+        var visited = new bool[n];
+        var queue = new Queue<int>();
+        visited[0] = true;
+        queue.Enqueue(0);
+
+        while (queue.Count > 0)
+        {
+            int current = queue.Dequeue();
+            foreach (var next in adj[current])
+            {
+                if (visited[next]) continue;
+                visited[next] = true;
+                queue.Enqueue(next);
+            }
+        }
+
+        if (visited.Any(v => !v)) return false;
 
         bool hasBranch = adj.Any(a => a.Count >= 3);
-        if (!hasBranch && intersections < n - 1 && adj.Max(a => a.Count) <= 2)
+        if (!hasBranch || intersections < n)
             return false;
 
         return true;
@@ -1137,6 +1224,33 @@ public sealed class MathCrossGeneratorService
         return v.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
     }
 
+    private static bool HasCompactBounds(int rows, int cols)
+    {
+        return Math.Abs(rows - cols) <= MaxAspectDelta;
+    }
+
+    private static double CalculateFillRatio(MathCrossGame game)
+    {
+        int occupied = 0;
+        for (int r = 0; r < game.Rows; r++)
+            for (int c = 0; c < game.Cols; c++)
+                if (game.Grid[r, c].Type != CellType.Empty)
+                    occupied++;
+
+        return (double)occupied / Math.Max(1, game.Rows * game.Cols);
+    }
+
+    private static double CalculateFillRatio(CellType[,] grid, Bounds bounds)
+    {
+        int occupied = 0;
+        for (int r = bounds.MinR; r <= bounds.MaxR; r++)
+            for (int c = bounds.MinC; c <= bounds.MaxC; c++)
+                if (grid[r, c] != CellType.Empty)
+                    occupied++;
+
+        return (double)occupied / Math.Max(1, bounds.Area);
+    }
+
     private record EquationData(decimal[] Numbers, string[] Operators);
     private record EquationPlacement(int StartR, int StartC, bool Horizontal, EquationData Eq);
     private record Bounds(int MinR, int MaxR, int MinC, int MaxC)
@@ -1145,7 +1259,7 @@ public sealed class MathCrossGeneratorService
         public int Height => MaxR - MinR + 1;
         public int Area => Width * Height;
     }
-    private record PlacementSimulation(Bounds NewBounds, int Intersections);
+    private record PlacementSimulation(Bounds NewBounds, int Intersections, int NewCells);
     private record PlacementCandidate(int StartR, int StartC, bool Vertical, EquationData Equation, Bounds NewBounds, double Score);
     private record CellChange(int Row, int Col);
 

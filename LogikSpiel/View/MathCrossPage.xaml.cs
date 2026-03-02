@@ -12,7 +12,10 @@ namespace LogikSpiel.View;
 public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposable
 {
     private bool _isLoaded;
-    private const double CellSize = 42;
+    private const double DefaultCellSize = 42;
+    private const double MinCellSize = 30;
+    private const double MaxCellSize = 46;
+    private const double CellSpacing = 4;
 
     private readonly MathCrossPageViewModel _vm;
     private readonly Action _requestLayoutUpdateHandler;
@@ -27,6 +30,8 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
         _requestLayoutUpdateHandler = BuildGrid;
 
         _vm.RequestLayoutUpdate += _requestLayoutUpdateHandler;
+        BoardContainer.SizeChanged += OnBoardContainerSizeChanged;
+        SizeChanged += OnPageSizeChanged;
     }
 
     ~MathCrossPage()
@@ -39,6 +44,8 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
         if (_disposed) return;
 
         _vm.RequestLayoutUpdate -= _requestLayoutUpdateHandler;
+        BoardContainer.SizeChanged -= OnBoardContainerSizeChanged;
+        SizeChanged -= OnPageSizeChanged;
 
         _disposed = true;
         GC.SuppressFinalize(this);
@@ -52,16 +59,17 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
             if (BindingContext is not MathCrossPageViewModel vm || vm.Game == null) return;
 
             var game = vm.Game;
+            double cellSize = GetCellSize(game);
 
             BoardGrid.Children.Clear();
             BoardGrid.RowDefinitions.Clear();
             BoardGrid.ColumnDefinitions.Clear();
 
             for (int r = 0; r < game.Rows; r++)
-                BoardGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(CellSize) });
+                BoardGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(cellSize) });
 
             for (int c = 0; c < game.Cols; c++)
-                BoardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(CellSize) });
+                BoardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(cellSize) });
 
             foreach (var cellVm in vm.FlatCells)
             {
@@ -120,6 +128,30 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
                 BoardGrid.Children.Add(border);
             }
         });
+    }
+
+    private void OnBoardContainerSizeChanged(object? sender, EventArgs e)
+    {
+        BuildGrid();
+    }
+
+    private void OnPageSizeChanged(object? sender, EventArgs e)
+    {
+        BuildGrid();
+    }
+
+    private double GetCellSize(MathCrossGame game)
+    {
+        if (BoardContainer.Width <= 0 || BoardContainer.Height <= 0)
+            return DefaultCellSize;
+
+        double usableWidth = Math.Max(1, BoardContainer.Width - 12);
+        double usableHeight = Math.Max(1, BoardContainer.Height - 12);
+
+        double widthBased = (usableWidth - CellSpacing * Math.Max(0, game.Cols - 1)) / Math.Max(1, game.Cols);
+        double heightBased = (usableHeight - CellSpacing * Math.Max(0, game.Rows - 1)) / Math.Max(1, game.Rows);
+
+        return Math.Clamp(Math.Min(widthBased, heightBased), MinCellSize, MaxCellSize);
     }
 
     private static Color ResolveTextColor(MathCrossCell cell)
