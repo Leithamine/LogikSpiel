@@ -26,6 +26,9 @@ public sealed class MathCrossPageViewModel : ObservableObject
     private UserProfile? _userProfile;
     private GameDefinition? _gameDefinition;
 
+    private MathCrossGeneratorService.LayoutConstraints? _layoutConstraints;
+    private int _layoutRevision;
+
     private int _coins;
     public int Coins { get => _coins; set => SetProperty(ref _coins, value); }
 
@@ -244,14 +247,34 @@ public sealed class MathCrossPageViewModel : ObservableObject
         }
     }
 
+
+    public async Task UpdateLayoutConstraintsAsync(int maxRows, int maxCols)
+    {
+        maxRows = Math.Clamp(maxRows, 5, 16);
+        maxCols = Math.Clamp(maxCols, 5, 16);
+
+        var next = new MathCrossGeneratorService.LayoutConstraints(maxRows, maxCols);
+        if (_layoutConstraints.HasValue && _layoutConstraints.Value.Equals(next))
+            return;
+
+        _layoutConstraints = next;
+
+        if (Game == null || IsBusy)
+            return;
+
+        _layoutRevision++;
+        await StartNewRoundAsync();
+    }
+
     private async Task StartNewRoundAsync()
     {
         FlatCells.Clear();
         SelectedCell = null;
         CandidateTokens.Clear();
 
-        int seed = StableHash($"{GameId}:{DifficultyKey}") + LevelNumber * 77;
-        var game = await Task.Run(() => _generator.GenerateGame(DifficultyKey, seed));
+        int seed = StableHash($"{GameId}:{DifficultyKey}") + LevelNumber * 77 + _layoutRevision * 9973;
+        var constraints = _layoutConstraints;
+        var game = await Task.Run(() => _generator.GenerateGame(DifficultyKey, seed, constraints));
 
         if (game == null || game.Rows == 0)
         {
