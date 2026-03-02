@@ -447,6 +447,15 @@ public class LockRiddleGeneratorService
 
         if (hints.Count == 0)
             return null;
+
+        if (!SatisfiesNothingCorrectCoverageRule(hints))
+            return null;
+
+        var verifySolver = new ConstraintSolver(length, hints);
+        var verifySolutions = verifySolver.FindAllSolutions(maxSolutions: 2);
+        if (!(verifySolutions.Count == 1 && verifySolutions[0] == string.Concat(secret)))
+            return null;
+
         return new LockRiddleGame
         {
             SecretCode = string.Concat(secret),
@@ -885,20 +894,16 @@ public class LockRiddleGeneratorService
             if (zeroDigits.Count == 0)
                 return false;
 
-            // Qualitätsregel für Lesbarkeit:
-            // In JEDEM anderen Hinweis soll mindestens eine Ziffer aus dem (0,0)-Hinweis vorkommen,
-            // damit die "falschen" Ziffern klar über das gesamte Hint-Set hinweg wiedererkennbar sind.
-            foreach (var otherHint in allHints.Where(h => h != zeroHint))
-            {
-                bool hasSharedDigit = otherHint.Slots
-                    .Select(slot => int.TryParse(slot, out var digit) ? digit : (int?)null)
-                    .Where(d => d.HasValue)
-                    .Select(d => d!.Value)
-                    .Any(zeroDigits.Contains);
+            var otherDigits = allHints
+                .Where(h => h != zeroHint)
+                .SelectMany(h => h.Slots)
+                .Select(slot => int.TryParse(slot, out var digit) ? digit : (int?)null)
+                .Where(d => d.HasValue)
+                .Select(d => d!.Value)
+                .ToHashSet();
 
-                if (!hasSharedDigit)
-                    return false;
-            }
+            if (!zeroDigits.All(otherDigits.Contains))
+                return false;
         }
 
         return true;

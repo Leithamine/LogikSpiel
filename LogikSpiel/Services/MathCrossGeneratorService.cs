@@ -537,6 +537,17 @@ public sealed class MathCrossGeneratorService
 
     private MathCrossGame GenerateFallbackGrid(Settings s, Random rnd)
     {
+        int baseSeed = rnd.Next();
+
+        for (int attempt = 0; attempt < 96; attempt++)
+        {
+            var candidate = TryGenerate(s, new Random(baseSeed + attempt * 541));
+            if (candidate == null) continue;
+            if (candidate.Equations.Count < s.MinEquations || candidate.Equations.Count > s.MaxEquations) continue;
+            if (!HasValidTopology(candidate)) continue;
+            return candidate;
+        }
+
         return TryBuildEmergencyTemplate(s, rnd);
     }
 
