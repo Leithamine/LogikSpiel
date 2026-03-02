@@ -94,6 +94,32 @@ public class MathCrossGeneratorServiceFallbackTests
         return true;
     }
 
+
+    [Theory]
+    [InlineData("easy")]
+    [InlineData("normal")]
+    [InlineData("hard")]
+    [InlineData("master")]
+    public void GenerateGame_EachEquation_HasPerpendicularIntersection(string difficulty)
+    {
+        var service = new MathCrossGeneratorService();
+
+        for (int seed = 1; seed <= 60; seed++)
+        {
+            var game = service.GenerateGame(difficulty, seed);
+
+            foreach (var equation in game.Equations)
+            {
+                bool hasPerpendicularIntersection = game.Equations
+                    .Where(other => !ReferenceEquals(other, equation) && other.IsHorizontal != equation.IsHorizontal)
+                    .Any(other => equation.Cells.Intersect(other.Cells).Any());
+
+                Assert.True(hasPerpendicularIntersection,
+                    $"Equation at ({equation.StartRow},{equation.StartCol}) must intersect at least one perpendicular equation (seed={seed}, difficulty={difficulty}).");
+            }
+        }
+    }
+
     [Theory]
     [InlineData("easy")]
     [InlineData("normal")]
