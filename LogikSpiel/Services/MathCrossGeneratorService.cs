@@ -839,6 +839,33 @@ public sealed class MathCrossGeneratorService
         return editable > 0 && hidden > 0;
     }
 
+    private static bool HasValidTopology(MathCrossGame game)
+    {
+        int n = game.Equations.Count;
+        if (n < 8 || n > 12) return false;
+
+        var adj = new List<int>[n];
+        for (int i = 0; i < n; i++) adj[i] = new List<int>();
+
+        int intersections = 0;
+        for (int i = 0; i < n; i++)
+            for (int j = i + 1; j < n; j++)
+                if (game.Equations[i].Cells.Intersect(game.Equations[j].Cells).Any())
+                {
+                    adj[i].Add(j);
+                    adj[j].Add(i);
+                    intersections++;
+                }
+
+        if (adj.Any(a => a.Count == 0)) return false;
+
+        bool hasBranch = adj.Any(a => a.Count >= 3);
+        if (!hasBranch && intersections < n - 1 && adj.Max(a => a.Count) <= 2)
+            return false;
+
+        return true;
+    }
+
     private bool IsValidTopology(CellType[,] grid, int eqLen, int minEquations, int maxEquations, out int actualEquationCount)
     {
         actualEquationCount = 0;
