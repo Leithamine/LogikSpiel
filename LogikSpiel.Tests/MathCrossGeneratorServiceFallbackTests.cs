@@ -94,6 +94,31 @@ public class MathCrossGeneratorServiceFallbackTests
         return true;
     }
 
+
+    [Theory]
+    [InlineData("easy")]
+    [InlineData("normal")]
+    [InlineData("hard")]
+    [InlineData("master")]
+    public void GenerateGame_HiddenCells_ArePerpendicularlyConstrained(string difficulty)
+    {
+        var service = new MathCrossGeneratorService();
+
+        for (int seed = 1; seed <= 60; seed++)
+        {
+            var game = service.GenerateGame(difficulty, seed);
+
+            foreach (var cell in EnumerateEditable(game).Where(c => !c.IsGiven))
+            {
+                bool hasHorizontal = game.Equations.Any(eq => eq.IsHorizontal && eq.Cells.Contains((cell.Row, cell.Col)));
+                bool hasVertical = game.Equations.Any(eq => !eq.IsHorizontal && eq.Cells.Contains((cell.Row, cell.Col)));
+
+                Assert.True(hasHorizontal && hasVertical,
+                    $"Hidden cell at ({cell.Row},{cell.Col}) must be constrained by horizontal and vertical equations (seed={seed}, difficulty={difficulty}).");
+            }
+        }
+    }
+
     [Theory]
     [InlineData("easy")]
     [InlineData("normal")]

@@ -1065,6 +1065,8 @@ public sealed class MathCrossGeneratorService
         var adj = new List<int>[n];
         for (int i = 0; i < n; i++) adj[i] = new List<int>();
 
+        var hasPerpendicularIntersection = new bool[n];
+
         int intersections = 0;
         for (int i = 0; i < n; i++)
             for (int j = i + 1; j < n; j++)
@@ -1073,9 +1075,34 @@ public sealed class MathCrossGeneratorService
                     adj[i].Add(j);
                     adj[j].Add(i);
                     intersections++;
+
+                    if (game.Equations[i].IsHorizontal != game.Equations[j].IsHorizontal)
+                    {
+                        hasPerpendicularIntersection[i] = true;
+                        hasPerpendicularIntersection[j] = true;
+                    }
                 }
 
         if (adj.Any(a => a.Count == 0)) return false;
+        if (hasPerpendicularIntersection.Any(v => !v)) return false;
+
+        var visited = new bool[n];
+        var queue = new Queue<int>();
+        visited[0] = true;
+        queue.Enqueue(0);
+
+        while (queue.Count > 0)
+        {
+            int current = queue.Dequeue();
+            foreach (var next in adj[current])
+            {
+                if (visited[next]) continue;
+                visited[next] = true;
+                queue.Enqueue(next);
+            }
+        }
+
+        if (visited.Any(v => !v)) return false;
 
         bool hasBranch = adj.Any(a => a.Count >= 3);
         if (!hasBranch && intersections < n - 1 && adj.Max(a => a.Count) <= 2)
@@ -1107,6 +1134,8 @@ public sealed class MathCrossGeneratorService
         var adj = new List<int>[n];
         for (int i = 0; i < n; i++) adj[i] = new List<int>();
 
+        var hasPerpendicularIntersection = new bool[n];
+
         int intersections = 0;
         for (int i = 0; i < n; i++)
             for (int j = i + 1; j < n; j++)
@@ -1115,9 +1144,34 @@ public sealed class MathCrossGeneratorService
                     adj[i].Add(j);
                     adj[j].Add(i);
                     intersections++;
+
+                    if (equations[i].IsHorizontal != equations[j].IsHorizontal)
+                    {
+                        hasPerpendicularIntersection[i] = true;
+                        hasPerpendicularIntersection[j] = true;
+                    }
                 }
 
         if (adj.Any(a => a.Count == 0)) return false;
+        if (hasPerpendicularIntersection.Any(v => !v)) return false;
+
+        var visited = new bool[n];
+        var queue = new Queue<int>();
+        visited[0] = true;
+        queue.Enqueue(0);
+
+        while (queue.Count > 0)
+        {
+            int current = queue.Dequeue();
+            foreach (var next in adj[current])
+            {
+                if (visited[next]) continue;
+                visited[next] = true;
+                queue.Enqueue(next);
+            }
+        }
+
+        if (visited.Any(v => !v)) return false;
 
         bool hasBranch = adj.Any(a => a.Count >= 3);
         if (!hasBranch && intersections < n - 1 && adj.Max(a => a.Count) <= 2)
