@@ -13,10 +13,9 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
 {
     private bool _isLoaded;
     private const double DefaultCellSize = 40;
-    private const double MinCellSize = 32;
+    private const double MinCellSize = 22;
     private const double MaxCellSize = 46;
     private const double CellSpacing = 4;
-    private const double ReferenceColumns = 9.0;
 
     private double _uniformCellSize = DefaultCellSize;
 
@@ -63,7 +62,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
 
             var game = vm.Game;
             double cellSize = _uniformCellSize;
-            double textSize = Math.Clamp(cellSize * 0.34, 15, 22);
+            double textSize = Math.Clamp(cellSize * 0.34, 11, 22);
 
             BoardGrid.Children.Clear();
             BoardGrid.RowDefinitions.Clear();
@@ -164,11 +163,20 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
 
     private double GetUniformCellSize()
     {
-        if (BoardContainer.Width <= 0)
+        if (BoardContainer.Width <= 0 || BoardContainer.Height <= 0)
             return DefaultCellSize;
 
-        double widthBased = (BoardContainer.Width - CellSpacing * (ReferenceColumns - 1)) / ReferenceColumns;
-        return Math.Clamp(widthBased, MinCellSize, MaxCellSize);
+        if (BindingContext is not MathCrossPageViewModel vm || vm.Game is not MathCrossGame game)
+            return DefaultCellSize;
+
+        int rows = Math.Max(1, game.Rows);
+        int cols = Math.Max(1, game.Cols);
+
+        double widthBased = (BoardContainer.Width - CellSpacing * Math.Max(0, cols - 1)) / cols;
+        double heightBased = (BoardContainer.Height - CellSpacing * Math.Max(0, rows - 1)) / rows;
+
+        double sizeToFit = Math.Min(widthBased, heightBased);
+        return Math.Clamp(sizeToFit, MinCellSize, MaxCellSize);
     }
 
     private static Color ResolveTextColor(MathCrossCell cell)
