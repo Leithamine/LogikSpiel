@@ -38,6 +38,7 @@
     <Compile Include="../LogikSpiel/Services/IUserProfileService.cs" Link="Services/IUserProfileService.cs" />
     <Compile Include="../LogikSpiel/Services/INavigationService.cs" Link="Services/INavigationService.cs" />
     <Compile Include="../LogikSpiel/Services/IDialogService.cs" Link="Services/IDialogService.cs" />
+    <Compile Include="../LogikSpiel/Services/AppServices.cs" Link="Services/AppServices.cs" />
     <Compile Include="../LogikSpiel/ViewModel/MathCrossPageViewModel.cs" Link="ViewModel/MathCrossPageViewModel.cs" />
   </ItemGroup>
 </Project>
