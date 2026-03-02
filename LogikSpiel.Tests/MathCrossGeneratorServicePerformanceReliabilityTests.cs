@@ -8,6 +8,19 @@ namespace LogikSpiel.Tests;
 
 public class MathCrossGeneratorServicePerformanceReliabilityTests
 {
+    private static (int MinEquations, int MaxEquations) GetEquationRange(string difficulty)
+    {
+        var type = typeof(MathCrossGeneratorService);
+        var getSettings = type.GetMethod("GetSettings", BindingFlags.NonPublic | BindingFlags.Static)
+            ?? throw new InvalidOperationException("GetSettings method not found.");
+        var settings = getSettings.Invoke(null, new object[] { difficulty })
+            ?? throw new InvalidOperationException("Settings creation failed.");
+
+        int min = (int)settings.GetType().GetProperty("MinEquations")!.GetValue(settings)!;
+        int max = (int)settings.GetType().GetProperty("MaxEquations")!.GetValue(settings)!;
+        return (min, max);
+    }
+
     [Theory]
     [InlineData("easy")]
     [InlineData("normal")]
@@ -35,7 +48,8 @@ public class MathCrossGeneratorServicePerformanceReliabilityTests
         for (int seed = 1; seed <= 40; seed++)
         {
             var game = service.GenerateGame(difficulty, seed);
-            Assert.InRange(game.Equations.Count, 8, 12);
+            var (minEq, maxEq) = GetEquationRange(difficulty);
+            Assert.InRange(game.Equations.Count, minEq, maxEq);
             Assert.True(game.Rows > 0 && game.Cols > 0);
         }
     }
@@ -105,7 +119,8 @@ public class MathCrossGeneratorServicePerformanceReliabilityTests
             ?? throw new InvalidOperationException("GenerateFallbackGrid method not found.");
         var game = (MathCrossGame)fallbackMethod.Invoke(service, new object[] { settings, new Random(11) })!;
 
-        Assert.InRange(game.Equations.Count, 8, 12);
+        var (minEq, maxEq) = GetEquationRange(difficulty);
+        Assert.InRange(game.Equations.Count, minEq, maxEq);
 
         var finalizeMethod = type.GetMethod("FinalizeGame", BindingFlags.NonPublic | BindingFlags.Instance)
             ?? throw new InvalidOperationException("FinalizeGame method not found.");
