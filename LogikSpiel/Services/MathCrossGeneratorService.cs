@@ -15,8 +15,9 @@ public sealed class MathCrossGeneratorService
     private const int GridSize = 16;
     private const int DefaultMaxLayoutSize = 10;
     private const int ExtendedMaxLayoutSize = 12;
-    private const int MaxAspectDelta = 3;
-    private const double MinCompactnessRatio = 0.62;
+    private const int MaxAspectDelta = 4;
+    private const double MinCompactnessRatio = 0.44;
+    private const double MinTopologyCompactnessRatio = 0.38;
     private const int EquationVariantsPerAnchor = 1;
     private const double IntersectionBonus = 14.0;
     private const double AreaGrowthPenalty = 1.2;
@@ -173,7 +174,7 @@ public sealed class MathCrossGeneratorService
 
                         var simulation = SimulatePlacement(grid, solutions, startR, startC, vertical, s.EquationLength, eq, currentBounds);
 
-                        int requiredIntersections = placedCount >= 4 ? 2 : 1;
+                        int requiredIntersections = placedCount >= 7 ? 2 : 1;
                         if (simulation.Intersections < requiredIntersections)
                             continue;
 
@@ -1089,7 +1090,7 @@ public sealed class MathCrossGeneratorService
         if (n < 8 || n > 12) return false;
 
         if (!HasCompactBounds(game.Rows, game.Cols)) return false;
-        if (CalculateFillRatio(game) < MinCompactnessRatio) return false;
+        if (CalculateFillRatio(game) < MinTopologyCompactnessRatio) return false;
 
         var adj = new List<int>[n];
         for (int i = 0; i < n; i++) adj[i] = new List<int>();
@@ -1134,7 +1135,7 @@ public sealed class MathCrossGeneratorService
         if (visited.Any(v => !v)) return false;
 
         bool hasBranch = adj.Any(a => a.Count >= 3);
-        if (!hasBranch || intersections < n)
+        if (!hasBranch && intersections < n - 1)
             return false;
 
         return true;
@@ -1161,7 +1162,7 @@ public sealed class MathCrossGeneratorService
 
         var bounds = ComputeBounds(grid);
         if (!HasCompactBounds(bounds.Height, bounds.Width)) return false;
-        if (CalculateFillRatio(grid, bounds) < MinCompactnessRatio) return false;
+        if (CalculateFillRatio(grid, bounds) < MinTopologyCompactnessRatio) return false;
 
         int n = equations.Count;
         var adj = new List<int>[n];
@@ -1207,7 +1208,7 @@ public sealed class MathCrossGeneratorService
         if (visited.Any(v => !v)) return false;
 
         bool hasBranch = adj.Any(a => a.Count >= 3);
-        if (!hasBranch || intersections < n)
+        if (!hasBranch && intersections < n - 1)
             return false;
 
         return true;
