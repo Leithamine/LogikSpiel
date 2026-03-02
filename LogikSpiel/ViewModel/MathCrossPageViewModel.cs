@@ -249,8 +249,8 @@ public sealed class MathCrossPageViewModel : ObservableObject
 
     public async Task UpdateLayoutConstraintsAsync(int maxRows, int maxCols)
     {
-        maxRows = Math.Clamp(maxRows, 5, 16);
-        maxCols = Math.Clamp(maxCols, 5, 16);
+        maxRows = Math.Clamp(maxRows, 5, 24);
+        maxCols = Math.Clamp(maxCols, 5, 24);
 
         var next = new MathCrossGeneratorService.LayoutConstraints(maxRows, maxCols);
         if (_layoutConstraints.HasValue && _layoutConstraints.Value.Equals(next))

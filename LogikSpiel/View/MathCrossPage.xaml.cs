@@ -13,7 +13,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
 {
     private bool _isLoaded;
     private const double DefaultCellSize = 40;
-    private const double MinCellSize = 22;
+    private const double MinCellSize = 14;
     private const double MaxCellSize = 46;
     private const double CellSpacing = 4;
 
@@ -61,6 +61,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
             if (BindingContext is not MathCrossPageViewModel vm || vm.Game == null) return;
 
             var game = vm.Game;
+            _uniformCellSize = GetUniformCellSize();
             double cellSize = _uniformCellSize;
             double textSize = Math.Clamp(cellSize * 0.34, 11, 22);
 
