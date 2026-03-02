@@ -710,17 +710,26 @@ public sealed class MathCrossGeneratorService
     private MathCrossGame GenerateFallbackGrid(Settings s, Random rnd)
     {
         MathCrossGame? first = null;
+        MathCrossGame? best = null;
 
-        for (int attempt = 0; attempt < 10; attempt++)
+        for (int attempt = 0; attempt < 40; attempt++)
         {
             var candidate = TryBuildEmergencyTemplate(s, new Random(rnd.Next() + attempt * 101));
             first ??= candidate;
+            if (best == null || candidate.Equations.Count > best.Equations.Count)
+                best = candidate;
 
             if (candidate.Equations.Count >= s.MinEquations
                 && candidate.Equations.Count <= s.MaxEquations
                 && HasValidTopology(candidate))
                 return candidate;
         }
+
+        if (best != null
+            && best.Equations.Count >= s.MinEquations
+            && best.Equations.Count <= s.MaxEquations
+            && HasValidTopology(best))
+            return best;
 
         return first ?? TryBuildEmergencyTemplate(s, rnd);
     }
@@ -752,7 +761,7 @@ public sealed class MathCrossGeneratorService
         var bounds = ComputeBounds(grid);
         int[] anchors = s.IsExtended ? new[] { 2, 4 } : new[] { 2 };
 
-        while (placed < target && attempts < 120)
+        while (placed < target && attempts < 400)
         {
             attempts++;
             bool placedOne = false;
@@ -802,23 +811,6 @@ public sealed class MathCrossGeneratorService
         }
 
         return BuildGame(grid, solutions, s);
-    }
-
-    private static int[] GetFallbackLineStarts(int len, int size)
-    {
-        int maxStart = Math.Max(0, size - len);
-        var starts = new[] { 0, maxStart / 3, (2 * maxStart) / 3, maxStart }
-            .Distinct()
-            .ToList();
-
-        while (starts.Count < 4)
-        {
-            starts.Add(Math.Max(0, starts[^1] - 1));
-            starts = starts.Distinct().ToList();
-            if (starts.Count == Math.Min(4, maxStart + 1)) break;
-        }
-
-        return starts.OrderBy(v => v).Take(4).ToArray();
     }
 
     private void PlaceInGame(MathCrossGame game, int startR, int startC, bool horizontal, EquationData eq, int len)
