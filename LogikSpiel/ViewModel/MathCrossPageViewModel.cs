@@ -13,7 +13,7 @@ namespace LogikSpiel.ViewModel;
 
 public sealed class MathCrossPageViewModel : ObservableObject
 {
-    private const int HintCost = 50;
+    private const int HintCost = 10;
     private readonly IGameProgressStore _progressStore;
     private readonly IDialogService _dialog;
     private readonly INavigationService _nav;
