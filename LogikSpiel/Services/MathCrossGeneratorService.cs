@@ -804,6 +804,23 @@ public sealed class MathCrossGeneratorService
         return BuildGame(grid, solutions, s);
     }
 
+    private static int[] GetFallbackLineStarts(int len, int size)
+    {
+        int maxStart = Math.Max(0, size - len);
+        var starts = new[] { 0, maxStart / 3, (2 * maxStart) / 3, maxStart }
+            .Distinct()
+            .ToList();
+
+        while (starts.Count < 4)
+        {
+            starts.Add(Math.Max(0, starts[^1] - 1));
+            starts = starts.Distinct().ToList();
+            if (starts.Count == Math.Min(4, maxStart + 1)) break;
+        }
+
+        return starts.OrderBy(v => v).Take(4).ToArray();
+    }
+
     private void PlaceInGame(MathCrossGame game, int startR, int startC, bool horizontal, EquationData eq, int len)
     {
         int dr = horizontal ? 0 : 1;
