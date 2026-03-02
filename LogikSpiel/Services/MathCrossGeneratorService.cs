@@ -12,6 +12,13 @@ namespace LogikSpiel.Services;
 public sealed class MathCrossGeneratorService
 {
     private const int GridSize = 30;
+    private const int DefaultMaxLayoutSize = 10;
+    private const int ExtendedMaxLayoutSize = 12;
+    private const int EquationVariantsPerAnchor = 1;
+    private const double IntersectionBonus = 14.0;
+    private const double AreaGrowthPenalty = 1.2;
+    private const double AspectRatioPenalty = 2.0;
+    private const double CenterDistancePenalty = 0.35;
 
     public MathCrossGame GenerateGame(string difficultyKey, int seed)
     {
@@ -69,62 +76,198 @@ public sealed class MathCrossGeneratorService
         Place(grid, solutions, midR, midC, horizontal: true, first, s.EquationLength);
         placed.Add(new EquationPlacement(midR, midC, true, first));
 
+        var bounds = ComputeBounds(grid);
+        var boundsHistory = new List<Bounds> { bounds };
+        var changeStack = new List<List<CellChange>>();
+
+        int maxWidth = s.IsExtended ? ExtendedMaxLayoutSize : DefaultMaxLayoutSize;
+        int maxHeight = s.IsExtended ? ExtendedMaxLayoutSize : DefaultMaxLayoutSize;
+        int maxDepth = Math.Max(maxWidth, maxHeight) / 2 + 2;
+
         int fails = 0;
-        while (placed.Count < target && fails < 200)
+        while (placed.Count < target && fails < 80)
         {
             fails++;
 
-            var numbers = GetNumberPositions(grid, solutions);
-            if (numbers.Count == 0) continue;
-
-            var (nr, nc, val) = numbers[rnd.Next(numbers.Count)];
-            bool hasHorizontal = HasEquationInDirection(grid, nr, nc, horizontal: true);
-            bool hasVertical = HasEquationInDirection(grid, nr, nc, horizontal: false);
-
-            if (hasHorizontal && hasVertical) continue;
-
-            var directions = new List<bool>();
-            if (!hasVertical) directions.Add(true);
-            if (!hasHorizontal) directions.Add(false);
-
-            int[] anchors = s.IsExtended ? new[] { 0, 2, 4, 6 } : new[] { 0, 2, 4 };
-            bool placedOne = false;
-
-            foreach (var vertical in directions.OrderBy(_ => rnd.Next()))
+            var best = FindBestPlacement(grid, solutions, s, rnd, bounds, midR, midC, maxWidth, maxHeight, maxDepth);
+            if (best == null)
             {
-                foreach (var anchor in anchors.OrderBy(_ => rnd.Next()))
+                if (placed.Count > 1)
                 {
-                    var eq = GenerateEquationWithValue(s, rnd, anchor, val);
-                    if (eq == null) continue;
-
-                    int startR = vertical ? nr - anchor : nr;
-                    int startC = vertical ? nc : nc - anchor;
-
-                    if (!CanPlace(grid, solutions, startR, startC, vertical, s.EquationLength, eq, nr, nc))
-                        continue;
-
-                    Place(grid, solutions, startR, startC, horizontal: !vertical, eq, s.EquationLength);
-                    placed.Add(new EquationPlacement(startR, startC, !vertical, eq));
-                    fails = 0;
-                    placedOne = true;
-                    break;
+                    placed.RemoveAt(placed.Count - 1);
+                    UndoChanges(grid, solutions, changeStack[^1]);
+                    changeStack.RemoveAt(changeStack.Count - 1);
+                    boundsHistory.RemoveAt(boundsHistory.Count - 1);
+                    bounds = boundsHistory[^1];
+                    continue;
                 }
 
-                if (placedOne) break;
+                continue;
             }
+
+            var changes = PlaceWithChanges(grid, solutions, best.StartR, best.StartC, horizontal: !best.Vertical, best.Equation, s.EquationLength);
+            placed.Add(new EquationPlacement(best.StartR, best.StartC, !best.Vertical, best.Equation));
+            changeStack.Add(changes);
+            bounds = best.NewBounds;
+            boundsHistory.Add(bounds);
+            fails = 0;
         }
 
         if (placed.Count < s.MinEquations || placed.Count > s.MaxEquations)
-            return null;
-
-        if (!IsValidTopology(grid, s.EquationLength, s.MinEquations, s.MaxEquations, out _))
             return null;
 
         var game = BuildGame(grid, solutions, s);
         if (game.Equations.Count < s.MinEquations || game.Equations.Count > s.MaxEquations)
             return null;
 
+        if (!HasValidTopology(game))
+            return null;
+
         return game;
+    }
+
+    private PlacementCandidate? FindBestPlacement(
+        CellType[,] grid,
+        string[,] solutions,
+        Settings s,
+        Random rnd,
+        Bounds currentBounds,
+        int centerR,
+        int centerC,
+        int maxWidth,
+        int maxHeight,
+        int maxDepth)
+    {
+        var numbers = GetNumberPositions(grid, solutions)
+            .OrderBy(_ => rnd.Next())
+            .ToList();
+        if (numbers.Count == 0) return null;
+
+        int oldArea = currentBounds.Area;
+        int[] anchors = s.IsExtended ? new[] { 2, 4 } : new[] { 2 };
+        PlacementCandidate? best = null;
+
+        foreach (var (nr, nc, val) in numbers)
+        {
+            bool hasHorizontal = HasEquationInDirection(grid, nr, nc, horizontal: true);
+            bool hasVertical = HasEquationInDirection(grid, nr, nc, horizontal: false);
+            if (hasHorizontal && hasVertical) continue;
+
+            var directions = new List<bool>();
+            if (!hasVertical) directions.Add(true);
+            if (!hasHorizontal) directions.Add(false);
+
+            foreach (var vertical in directions)
+            {
+                foreach (var anchor in anchors)
+                {
+                    int startR = vertical ? nr - anchor : nr;
+                    int startC = vertical ? nc : nc - anchor;
+
+                    for (int variant = 0; variant < EquationVariantsPerAnchor; variant++)
+                    {
+                        var eq = GenerateEquationWithValue(s, rnd, anchor, val);
+                        if (eq == null) continue;
+                        if (!CanPlace(grid, solutions, startR, startC, vertical, s.EquationLength, eq, nr, nc)) continue;
+
+                        var simulation = SimulatePlacement(grid, solutions, startR, startC, vertical, s.EquationLength, eq, currentBounds);
+
+                        if (simulation.Intersections == 0)
+                            continue;
+
+                        if (simulation.NewBounds.Width > maxWidth || simulation.NewBounds.Height > maxHeight)
+                            continue;
+
+                        int verticalDepth = Math.Max(Math.Abs(simulation.NewBounds.MinR - centerR), Math.Abs(simulation.NewBounds.MaxR - centerR));
+                        int horizontalDepth = Math.Max(Math.Abs(simulation.NewBounds.MinC - centerC), Math.Abs(simulation.NewBounds.MaxC - centerC));
+                        if (verticalDepth > maxDepth || horizontalDepth > maxDepth)
+                            continue;
+
+                        int width = simulation.NewBounds.Width;
+                        int height = simulation.NewBounds.Height;
+                        int newArea = simulation.NewBounds.Area;
+                        double centerDistance = Math.Abs(nr - centerR) + Math.Abs(nc - centerC);
+
+                        double score =
+                            IntersectionBonus * simulation.Intersections
+                            - AreaGrowthPenalty * (newArea - oldArea)
+                            - AspectRatioPenalty * Math.Abs(width - height)
+                            - CenterDistancePenalty * centerDistance;
+
+                        if (best == null || score > best.Score)
+                        {
+                            best = new PlacementCandidate(startR, startC, vertical, eq, simulation.NewBounds, score);
+                        }
+                    }
+                }
+            }
+        }
+
+        return best;
+    }
+
+    private PlacementSimulation SimulatePlacement(
+        CellType[,] grid,
+        string[,] solutions,
+        int startR,
+        int startC,
+        bool vertical,
+        int len,
+        EquationData eq,
+        Bounds current)
+    {
+        int dr = vertical ? 1 : 0;
+        int dc = vertical ? 0 : 1;
+        var cells = BuildCells(eq, len);
+
+        int minR = current.MinR;
+        int maxR = current.MaxR;
+        int minC = current.MinC;
+        int maxC = current.MaxC;
+        int intersections = 0;
+
+        for (int i = 0; i < len; i++)
+        {
+            int r = startR + i * dr;
+            int c = startC + i * dc;
+
+            if (grid[r, c] == CellType.Empty)
+            {
+                minR = Math.Min(minR, r);
+                maxR = Math.Max(maxR, r);
+                minC = Math.Min(minC, c);
+                maxC = Math.Max(maxC, c);
+            }
+            else if (grid[r, c] == cells[i].type && solutions[r, c] == cells[i].val)
+            {
+                intersections++;
+            }
+        }
+
+        return new PlacementSimulation(new Bounds(minR, maxR, minC, maxC), intersections);
+    }
+
+    private static Bounds ComputeBounds(CellType[,] grid)
+    {
+        int minR = GridSize;
+        int maxR = -1;
+        int minC = GridSize;
+        int maxC = -1;
+
+        for (int r = 0; r < GridSize; r++)
+            for (int c = 0; c < GridSize; c++)
+                if (grid[r, c] != CellType.Empty)
+                {
+                    minR = Math.Min(minR, r);
+                    maxR = Math.Max(maxR, r);
+                    minC = Math.Min(minC, c);
+                    maxC = Math.Max(maxC, c);
+                }
+
+        if (maxR < 0)
+            return new Bounds(0, 0, 0, 0);
+
+        return new Bounds(minR, maxR, minC, maxC);
     }
 
     private bool HasEquationInDirection(CellType[,] grid, int r, int c, bool horizontal)
@@ -473,6 +616,35 @@ public sealed class MathCrossGeneratorService
         }
     }
 
+    private List<CellChange> PlaceWithChanges(CellType[,] grid, string[,] sols, int startR, int startC, bool horizontal, EquationData eq, int len)
+    {
+        int dr = horizontal ? 0 : 1;
+        int dc = horizontal ? 1 : 0;
+        var cells = BuildCells(eq, len);
+        var changes = new List<CellChange>(len);
+
+        for (int i = 0; i < len; i++)
+        {
+            int r = startR + i * dr;
+            int c = startC + i * dc;
+            changes.Add(new CellChange(r, c, grid[r, c], sols[r, c]));
+            grid[r, c] = cells[i].type;
+            sols[r, c] = cells[i].val;
+        }
+
+        return changes;
+    }
+
+    private static void UndoChanges(CellType[,] grid, string[,] sols, List<CellChange> changes)
+    {
+        for (int i = changes.Count - 1; i >= 0; i--)
+        {
+            var c = changes[i];
+            grid[c.Row, c.Col] = c.OldType;
+            sols[c.Row, c.Col] = c.OldSolution;
+        }
+    }
+
     private List<(CellType type, string val)> BuildCells(EquationData eq, int len)
     {
         var cells = new List<(CellType, string)>();
@@ -539,7 +711,7 @@ public sealed class MathCrossGeneratorService
     {
         int baseSeed = rnd.Next();
 
-        for (int attempt = 0; attempt < 96; attempt++)
+        for (int attempt = 0; attempt < 20; attempt++)
         {
             var candidate = TryGenerate(s, new Random(baseSeed + attempt * 541));
             if (candidate == null) continue;
@@ -921,6 +1093,15 @@ public sealed class MathCrossGeneratorService
 
     private record EquationData(decimal[] Numbers, string[] Operators);
     private record EquationPlacement(int StartR, int StartC, bool Horizontal, EquationData Eq);
+    private record Bounds(int MinR, int MaxR, int MinC, int MaxC)
+    {
+        public int Width => MaxC - MinC + 1;
+        public int Height => MaxR - MinR + 1;
+        public int Area => Width * Height;
+    }
+    private record PlacementSimulation(Bounds NewBounds, int Intersections);
+    private record PlacementCandidate(int StartR, int StartC, bool Vertical, EquationData Equation, Bounds NewBounds, double Score);
+    private record CellChange(int Row, int Col, CellType OldType, string OldSolution);
 
     private record Settings(
         string DifficultyKey,
