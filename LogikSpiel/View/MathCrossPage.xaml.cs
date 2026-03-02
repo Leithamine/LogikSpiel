@@ -12,9 +12,9 @@ namespace LogikSpiel.View;
 public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposable
 {
     private bool _isLoaded;
-    private const double DefaultCellSize = 42;
-    private const double MinCellSize = 30;
-    private const double MaxCellSize = 46;
+    private const double DefaultCellSize = 48;
+    private const double MinCellSize = 36;
+    private const double MaxCellSize = 64;
     private const double CellSpacing = 4;
 
     private readonly MathCrossPageViewModel _vm;
@@ -60,6 +60,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
 
             var game = vm.Game;
             double cellSize = GetCellSize(game);
+            double textSize = Math.Clamp(cellSize * 0.34, 15, 22);
 
             BoardGrid.Children.Clear();
             BoardGrid.RowDefinitions.Clear();
@@ -102,7 +103,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
                     {
                         Padding = 0,
                         FontAttributes = FontAttributes.Bold,
-                        FontSize = 15,
+                        FontSize = textSize,
                         BackgroundColor = Colors.Transparent,
                         TextColor = ResolveTextColor(cell),
                         BorderWidth = 0
@@ -119,7 +120,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
                         VerticalTextAlignment = TextAlignment.Center,
                         FontAttributes = FontAttributes.Bold,
                         TextColor = ResolveTextColor(cell),
-                        FontSize = 15
+                        FontSize = textSize
                     };
                     lbl.SetBinding(Label.TextProperty, new Binding(nameof(MathCrossCellViewModel.DisplayText), source: cellVm));
                     border.Content = lbl;
@@ -145,8 +146,8 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
         if (BoardContainer.Width <= 0 || BoardContainer.Height <= 0)
             return DefaultCellSize;
 
-        double usableWidth = Math.Max(1, BoardContainer.Width - 12);
-        double usableHeight = Math.Max(1, BoardContainer.Height - 12);
+        double usableWidth = Math.Max(1, BoardContainer.Width - 4);
+        double usableHeight = Math.Max(1, BoardContainer.Height - 4);
 
         double widthBased = (usableWidth - CellSpacing * Math.Max(0, game.Cols - 1)) / Math.Max(1, game.Cols);
         double heightBased = (usableHeight - CellSpacing * Math.Max(0, game.Rows - 1)) / Math.Max(1, game.Rows);
