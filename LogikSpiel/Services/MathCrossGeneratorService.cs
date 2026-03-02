@@ -727,40 +727,81 @@ public sealed class MathCrossGeneratorService
 
     private MathCrossGame TryBuildEmergencyTemplate(Settings s, Random rnd)
     {
-        int rows = s.IsExtended ? ExtendedMaxLayoutSize : DefaultMaxLayoutSize;
-        int cols = rows;
-        var game = new MathCrossGame
+        var grid = new CellType[GridSize, GridSize];
+        var solutions = new string[GridSize, GridSize];
+        for (int r = 0; r < GridSize; r++)
+            for (int c = 0; c < GridSize; c++)
+            {
+                grid[r, c] = CellType.Empty;
+                solutions[r, c] = "";
+            }
+
+        int midR = GridSize / 2;
+        int midC = (GridSize - s.EquationLength) / 2;
+        var first = GenerateEquation(s, rnd);
+        if (first == null)
+            return BuildGame(grid, solutions, s);
+
+        Place(grid, solutions, midR, midC, horizontal: true, first, s.EquationLength);
+
+        int target = s.MinEquations;
+        int placed = 1;
+        int attempts = 0;
+        int maxWidth = s.IsExtended ? ExtendedMaxLayoutSize : DefaultMaxLayoutSize;
+        int maxHeight = maxWidth;
+        var bounds = ComputeBounds(grid);
+        int[] anchors = s.IsExtended ? new[] { 2, 4 } : new[] { 2 };
+
+        while (placed < target && attempts < 120)
         {
-            Rows = rows,
-            Cols = cols,
-            Grid = new MathCrossCell[rows, cols],
-            Difficulty = s.DifficultyKey,
-            EquationLength = s.EquationLength,
-            UseExtendedEquations = s.IsExtended
-        };
+            attempts++;
+            bool placedOne = false;
+            var numbers = GetNumberPositions(grid, solutions).OrderBy(_ => rnd.Next()).ToList();
 
-        for (int r = 0; r < rows; r++)
-            for (int c = 0; c < cols; c++)
-                game.Grid[r, c] = new MathCrossCell { Row = r, Col = c, Type = CellType.Empty, Solution = "", UserInput = "", IsGiven = false };
+            foreach (var (nr, nc, val) in numbers)
+            {
+                bool hasHorizontal = HasEquationInDirection(grid, nr, nc, horizontal: true);
+                bool hasVertical = HasEquationInDirection(grid, nr, nc, horizontal: false);
+                if (hasHorizontal && hasVertical) continue;
 
-        int[] lineStarts = GetFallbackLineStarts(game.EquationLength, rows);
+                var directions = new List<bool>();
+                if (!hasVertical) directions.Add(true);
+                if (!hasHorizontal) directions.Add(false);
 
-        // 4 horizontal equations
-        foreach (int hr in lineStarts)
-        {
-            var eq = GenerateEquation(s, rnd);
-            if (eq != null) PlaceInGame(game, hr, 0, horizontal: true, eq, game.EquationLength);
+                foreach (var vertical in directions)
+                {
+                    foreach (var anchor in anchors)
+                    {
+                        var eq = GenerateEquationWithValue(s, rnd, anchor, val);
+                        if (eq == null) continue;
+
+                        int startR = vertical ? nr - anchor : nr;
+                        int startC = vertical ? nc : nc - anchor;
+
+                        if (!CanPlace(grid, solutions, startR, startC, vertical, s.EquationLength, eq, nr, nc))
+                            continue;
+
+                        var simulation = SimulatePlacement(grid, solutions, startR, startC, vertical, s.EquationLength, eq, bounds);
+                        if (simulation.NewBounds.Width > maxWidth || simulation.NewBounds.Height > maxHeight)
+                            continue;
+
+                        Place(grid, solutions, startR, startC, horizontal: !vertical, eq, s.EquationLength);
+                        bounds = simulation.NewBounds;
+                        placed++;
+                        placedOne = true;
+                        break;
+                    }
+
+                    if (placedOne) break;
+                }
+
+                if (placedOne) break;
+            }
+
+            if (!placedOne) break;
         }
 
-        // 4 vertical equations
-        foreach (int vc in lineStarts)
-        {
-            var eq = GenerateEquation(s, rnd);
-            if (eq != null) PlaceInGame(game, 0, vc, horizontal: false, eq, game.EquationLength);
-        }
-
-        game.Equations = ScanEquations(game, game.EquationLength);
-        return game;
+        return BuildGame(grid, solutions, s);
     }
 
     private static int[] GetFallbackLineStarts(int len, int size)
