@@ -55,6 +55,36 @@ public class MathCrossGeneratorServicePerformanceReliabilityTests
             var game = service.GenerateGame(difficulty, seed);
             Assert.InRange(game.Rows, 1, maxSize);
             Assert.InRange(game.Cols, 1, maxSize);
+            Assert.True(Math.Abs(game.Rows - game.Cols) <= 4,
+                $"Layout too elongated for {difficulty}, seed={seed}: rows={game.Rows}, cols={game.Cols}.");
+        }
+    }
+
+    [Theory]
+    [InlineData("easy")]
+    [InlineData("normal")]
+    [InlineData("hard")]
+    [InlineData("master")]
+    public void GenerateGame_MultipleSeeds_HasMinimumFillRatio(string difficulty)
+    {
+        var service = new MathCrossGeneratorService();
+
+        for (int seed = 1; seed <= 40; seed++)
+        {
+            var game = service.GenerateGame(difficulty, seed);
+            int occupied = 0;
+            for (int r = 0; r < game.Rows; r++)
+            {
+                for (int c = 0; c < game.Cols; c++)
+                {
+                    if (game.Grid[r, c].Type != CellType.Empty)
+                        occupied++;
+                }
+            }
+
+            double fillRatio = (double)occupied / Math.Max(1, game.Rows * game.Cols);
+            Assert.True(fillRatio >= 0.38,
+                $"Layout too sparse for {difficulty}, seed={seed}: fillRatio={fillRatio:0.00}, rows={game.Rows}, cols={game.Cols}.");
         }
     }
 
