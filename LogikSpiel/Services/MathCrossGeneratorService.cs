@@ -14,7 +14,7 @@ public sealed class MathCrossGeneratorService
     private const int GridSize = 30;
     private const int DefaultMaxLayoutSize = 10;
     private const int ExtendedMaxLayoutSize = 12;
-    private const int EquationVariantsPerAnchor = 3;
+    private const int EquationVariantsPerAnchor = 1;
     private const double IntersectionBonus = 14.0;
     private const double AreaGrowthPenalty = 1.2;
     private const double AspectRatioPenalty = 2.0;
@@ -77,17 +77,15 @@ public sealed class MathCrossGeneratorService
         placed.Add(new EquationPlacement(midR, midC, true, first));
 
         var bounds = ComputeBounds(grid);
-        var snapshots = new List<GenerationSnapshot>
-        {
-            new(CloneGrid(grid), CloneSolutions(solutions), bounds)
-        };
+        var boundsHistory = new List<Bounds> { bounds };
+        var changeStack = new List<List<CellChange>>();
 
         int maxWidth = s.IsExtended ? ExtendedMaxLayoutSize : DefaultMaxLayoutSize;
         int maxHeight = s.IsExtended ? ExtendedMaxLayoutSize : DefaultMaxLayoutSize;
         int maxDepth = Math.Max(maxWidth, maxHeight) / 2 + 2;
 
         int fails = 0;
-        while (placed.Count < target && fails < 200)
+        while (placed.Count < target && fails < 80)
         {
             fails++;
 
@@ -97,32 +95,32 @@ public sealed class MathCrossGeneratorService
                 if (placed.Count > 1)
                 {
                     placed.RemoveAt(placed.Count - 1);
-                    snapshots.RemoveAt(snapshots.Count - 1);
-                    var restore = snapshots[^1];
-                    CopyGrid(restore.Grid, grid);
-                    CopySolutions(restore.Solutions, solutions);
-                    bounds = restore.Bounds;
+                    UndoChanges(grid, solutions, changeStack[^1]);
+                    changeStack.RemoveAt(changeStack.Count - 1);
+                    boundsHistory.RemoveAt(boundsHistory.Count - 1);
+                    bounds = boundsHistory[^1];
                     continue;
                 }
 
                 continue;
             }
 
-            Place(grid, solutions, best.StartR, best.StartC, horizontal: !best.Vertical, best.Equation, s.EquationLength);
+            var changes = PlaceWithChanges(grid, solutions, best.StartR, best.StartC, horizontal: !best.Vertical, best.Equation, s.EquationLength);
             placed.Add(new EquationPlacement(best.StartR, best.StartC, !best.Vertical, best.Equation));
+            changeStack.Add(changes);
             bounds = best.NewBounds;
-            snapshots.Add(new GenerationSnapshot(CloneGrid(grid), CloneSolutions(solutions), bounds));
+            boundsHistory.Add(bounds);
             fails = 0;
         }
 
         if (placed.Count < s.MinEquations || placed.Count > s.MaxEquations)
             return null;
 
-        if (!IsValidTopology(grid, s.EquationLength, s.MinEquations, s.MaxEquations, out _))
-            return null;
-
         var game = BuildGame(grid, solutions, s);
         if (game.Equations.Count < s.MinEquations || game.Equations.Count > s.MaxEquations)
+            return null;
+
+        if (!HasValidTopology(game))
             return null;
 
         return game;
@@ -146,7 +144,7 @@ public sealed class MathCrossGeneratorService
         if (numbers.Count == 0) return null;
 
         int oldArea = currentBounds.Area;
-        int[] anchors = s.IsExtended ? new[] { 0, 2, 4, 6 } : new[] { 0, 2, 4 };
+        int[] anchors = s.IsExtended ? new[] { 2, 4 } : new[] { 2 };
         PlacementCandidate? best = null;
 
         foreach (var (nr, nc, val) in numbers)
@@ -173,6 +171,9 @@ public sealed class MathCrossGeneratorService
                         if (!CanPlace(grid, solutions, startR, startC, vertical, s.EquationLength, eq, nr, nc)) continue;
 
                         var simulation = SimulatePlacement(grid, solutions, startR, startC, vertical, s.EquationLength, eq, currentBounds);
+
+                        if (simulation.Intersections == 0)
+                            continue;
 
                         if (simulation.NewBounds.Width > maxWidth || simulation.NewBounds.Height > maxHeight)
                             continue;
@@ -267,34 +268,6 @@ public sealed class MathCrossGeneratorService
             return new Bounds(0, 0, 0, 0);
 
         return new Bounds(minR, maxR, minC, maxC);
-    }
-
-    private static CellType[,] CloneGrid(CellType[,] source)
-    {
-        var clone = new CellType[GridSize, GridSize];
-        CopyGrid(source, clone);
-        return clone;
-    }
-
-    private static string[,] CloneSolutions(string[,] source)
-    {
-        var clone = new string[GridSize, GridSize];
-        CopySolutions(source, clone);
-        return clone;
-    }
-
-    private static void CopyGrid(CellType[,] source, CellType[,] destination)
-    {
-        for (int r = 0; r < GridSize; r++)
-            for (int c = 0; c < GridSize; c++)
-                destination[r, c] = source[r, c];
-    }
-
-    private static void CopySolutions(string[,] source, string[,] destination)
-    {
-        for (int r = 0; r < GridSize; r++)
-            for (int c = 0; c < GridSize; c++)
-                destination[r, c] = source[r, c];
     }
 
     private bool HasEquationInDirection(CellType[,] grid, int r, int c, bool horizontal)
@@ -643,6 +616,35 @@ public sealed class MathCrossGeneratorService
         }
     }
 
+    private List<CellChange> PlaceWithChanges(CellType[,] grid, string[,] sols, int startR, int startC, bool horizontal, EquationData eq, int len)
+    {
+        int dr = horizontal ? 0 : 1;
+        int dc = horizontal ? 1 : 0;
+        var cells = BuildCells(eq, len);
+        var changes = new List<CellChange>(len);
+
+        for (int i = 0; i < len; i++)
+        {
+            int r = startR + i * dr;
+            int c = startC + i * dc;
+            changes.Add(new CellChange(r, c, grid[r, c], sols[r, c]));
+            grid[r, c] = cells[i].type;
+            sols[r, c] = cells[i].val;
+        }
+
+        return changes;
+    }
+
+    private static void UndoChanges(CellType[,] grid, string[,] sols, List<CellChange> changes)
+    {
+        for (int i = changes.Count - 1; i >= 0; i--)
+        {
+            var c = changes[i];
+            grid[c.Row, c.Col] = c.OldType;
+            sols[c.Row, c.Col] = c.OldSolution;
+        }
+    }
+
     private List<(CellType type, string val)> BuildCells(EquationData eq, int len)
     {
         var cells = new List<(CellType, string)>();
@@ -709,7 +711,7 @@ public sealed class MathCrossGeneratorService
     {
         int baseSeed = rnd.Next();
 
-        for (int attempt = 0; attempt < 96; attempt++)
+        for (int attempt = 0; attempt < 20; attempt++)
         {
             var candidate = TryGenerate(s, new Random(baseSeed + attempt * 541));
             if (candidate == null) continue;
@@ -1099,7 +1101,7 @@ public sealed class MathCrossGeneratorService
     }
     private record PlacementSimulation(Bounds NewBounds, int Intersections);
     private record PlacementCandidate(int StartR, int StartC, bool Vertical, EquationData Equation, Bounds NewBounds, double Score);
-    private record GenerationSnapshot(CellType[,] Grid, string[,] Solutions, Bounds Bounds);
+    private record CellChange(int Row, int Col, CellType OldType, string OldSolution);
 
     private record Settings(
         string DifficultyKey,
