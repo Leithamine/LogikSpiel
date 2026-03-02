@@ -12,9 +12,9 @@ namespace LogikSpiel.Services;
 /// </summary>
 public sealed class MathCrossGeneratorService
 {
-    private const int GridSize = 16;
-    private const int DefaultMaxLayoutSize = 10;
-    private const int ExtendedMaxLayoutSize = 12;
+    private const int GridSize = 24;
+    private const int DefaultMaxLayoutSize = 12;
+    private const int ExtendedMaxLayoutSize = 14;
     private const int MaxAspectDelta = 4;
     private const double MinCompactnessRatio = 0.44;
     private const double MinTopologyCompactnessRatio = 0.38;
@@ -774,7 +774,15 @@ public sealed class MathCrossGeneratorService
             && HasValidTopology(best))
             return best;
 
-        return first ?? TryBuildEmergencyTemplateWithEffective(s, effective, rnd);
+        // Fallback: If no valid topology found, AT LEAST satisfy the equation count!
+        for (int attempt = 0; attempt < 100; attempt++)
+        {
+            var candidate = TryBuildEmergencyTemplateWithEffective(s, effective, new Random(rnd.Next() + attempt * 103));
+            if (candidate.Equations.Count >= effective.MinEquations && candidate.Equations.Count <= effective.MaxEquations)
+                return candidate;
+        }
+
+        return best ?? first ?? TryBuildEmergencyTemplateWithEffective(s, effective, rnd);
     }
 
     private MathCrossGame TryBuildEmergencyTemplate(Settings s, Random rnd)
@@ -802,15 +810,16 @@ public sealed class MathCrossGeneratorService
 
         Place(grid, solutions, midR, midC, horizontal: true, first, s.EquationLength);
 
-        int target = effective.MinEquations;
+        int target = rnd.Next(effective.MinEquations, effective.MaxEquations + 1);
         int placed = 1;
         int attempts = 0;
+        int maxAttempts = 1000;
         int maxWidth = effective.MaxLayoutWidth;
         int maxHeight = effective.MaxLayoutHeight;
         var bounds = ComputeBounds(grid);
         int[] anchors = s.IsExtended ? new[] { 2, 4 } : new[] { 2 };
 
-        while (placed < target && attempts < 400)
+        while (placed < target && attempts < maxAttempts)
         {
             attempts++;
             bool placedOne = false;
@@ -840,7 +849,7 @@ public sealed class MathCrossGeneratorService
                             continue;
 
                         var simulation = SimulatePlacement(grid, solutions, startR, startC, vertical, s.EquationLength, eq, bounds);
-                        if (simulation.NewBounds.Width > maxWidth || simulation.NewBounds.Height > maxHeight)
+                        if (simulation.NewBounds.Width > maxWidth + 2 || simulation.NewBounds.Height > maxHeight + 2) // Allow slight overflow if necessary to reach equation count
                             continue;
 
                         Place(grid, solutions, startR, startC, horizontal: !vertical, eq, s.EquationLength);
@@ -856,7 +865,12 @@ public sealed class MathCrossGeneratorService
                 if (placedOne) break;
             }
 
-            if (!placedOne) break;
+            if (!placedOne)
+            {
+                if (maxWidth < GridSize) maxWidth++;
+                if (maxHeight < GridSize) maxHeight++;
+                if (maxWidth >= GridSize && maxHeight >= GridSize) break;
+            }
         }
 
         return BuildGame(grid, solutions, s);
