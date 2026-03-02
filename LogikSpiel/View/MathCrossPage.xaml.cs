@@ -12,10 +12,12 @@ namespace LogikSpiel.View;
 public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposable
 {
     private bool _isLoaded;
-    private const double DefaultCellSize = 40;
-    private const double MinCellSize = 14;
-    private const double MaxCellSize = 46;
-    private const double CellSpacing = 4;
+    private const double DefaultCellSize = 44;
+    private const double MinCellSize = 32;
+    private const double PreferredTouchCellSize = 44;
+    private const double MaxCellSize = 56;
+    private const double CellSpacing = 6;
+    private const double BoardInnerPadding = 12;
 
     private double _uniformCellSize = DefaultCellSize;
 
@@ -153,13 +155,21 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
         if (BoardContainer.Width <= 0 || BoardContainer.Height <= 0)
             return;
 
+        UpdateLayoutConstraintsFromViewport();
+
         _uniformCellSize = GetUniformCellSize();
-
-        int rows = Math.Max(1, (int)Math.Floor((BoardContainer.Height + CellSpacing) / (_uniformCellSize + CellSpacing)));
-        int cols = Math.Max(1, (int)Math.Floor((BoardContainer.Width + CellSpacing) / (_uniformCellSize + CellSpacing)));
-
-        _ = _vm.UpdateLayoutConstraintsAsync(rows, cols);
         BuildGrid();
+    }
+
+    private void UpdateLayoutConstraintsFromViewport()
+    {
+        double availableWidth = Math.Max(0, BoardContainer.Width - 2 * BoardInnerPadding);
+        double availableHeight = Math.Max(0, BoardContainer.Height - 2 * BoardInnerPadding);
+
+        int maxRows = Math.Max(1, (int)Math.Floor((availableHeight + CellSpacing) / (PreferredTouchCellSize + CellSpacing)));
+        int maxCols = Math.Max(1, (int)Math.Floor((availableWidth + CellSpacing) / (PreferredTouchCellSize + CellSpacing)));
+
+        _ = _vm.UpdateLayoutConstraintsAsync(maxRows, maxCols);
     }
 
     private double GetUniformCellSize()
@@ -173,8 +183,11 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
         int rows = Math.Max(1, game.Rows);
         int cols = Math.Max(1, game.Cols);
 
-        double widthBased = (BoardContainer.Width - CellSpacing * Math.Max(0, cols - 1)) / cols;
-        double heightBased = (BoardContainer.Height - CellSpacing * Math.Max(0, rows - 1)) / rows;
+        double availableWidth = Math.Max(0, BoardContainer.Width - 2 * BoardInnerPadding);
+        double availableHeight = Math.Max(0, BoardContainer.Height - 2 * BoardInnerPadding);
+
+        double widthBased = (availableWidth - CellSpacing * Math.Max(0, cols - 1)) / cols;
+        double heightBased = (availableHeight - CellSpacing * Math.Max(0, rows - 1)) / rows;
 
         double sizeToFit = Math.Min(widthBased, heightBased);
         return Math.Clamp(sizeToFit, MinCellSize, MaxCellSize);
