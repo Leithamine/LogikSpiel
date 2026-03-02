@@ -27,7 +27,6 @@ public sealed class MathCrossPageViewModel : ObservableObject
     private GameDefinition? _gameDefinition;
 
     private MathCrossGeneratorService.LayoutConstraints? _layoutConstraints;
-    private int _layoutRevision;
 
     private int _coins;
     public int Coins { get => _coins; set => SetProperty(ref _coins, value); }
@@ -259,11 +258,10 @@ public sealed class MathCrossPageViewModel : ObservableObject
 
         _layoutConstraints = next;
 
-        if (Game == null || IsBusy)
-            return;
-
-        _layoutRevision++;
-        await StartNewRoundAsync();
+        // Wichtig: Laufendes Rätsel nicht neu erzeugen, wenn sich das Layout
+        // (z. B. durch Auswahl/Keyboard/Resize) leicht verändert.
+        // Neue Constraints werden erst bei der nächsten Runde berücksichtigt.
+        await Task.CompletedTask;
     }
 
     private async Task StartNewRoundAsync()
@@ -272,7 +270,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
         SelectedCell = null;
         CandidateTokens.Clear();
 
-        int seed = StableHash($"{GameId}:{DifficultyKey}") + LevelNumber * 77 + _layoutRevision * 9973;
+        int seed = StableHash($"{GameId}:{DifficultyKey}") + LevelNumber * 77;
         var constraints = _layoutConstraints;
         var game = await Task.Run(() => _generator.GenerateGame(DifficultyKey, seed, constraints));
 
