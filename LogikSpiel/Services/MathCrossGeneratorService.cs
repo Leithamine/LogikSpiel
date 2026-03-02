@@ -1,6 +1,7 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using LogikSpiel.Model;
 
@@ -11,7 +12,7 @@ namespace LogikSpiel.Services;
 /// </summary>
 public sealed class MathCrossGeneratorService
 {
-    private const int GridSize = 30;
+    private const int GridSize = 16;
     private const int DefaultMaxLayoutSize = 10;
     private const int ExtendedMaxLayoutSize = 12;
     private const int EquationVariantsPerAnchor = 1;
@@ -23,11 +24,14 @@ public sealed class MathCrossGeneratorService
     public MathCrossGame GenerateGame(string difficultyKey, int seed)
     {
         var s = GetSettings(difficultyKey);
-        var startedAt = DateTime.UtcNow;
+        var sw = Stopwatch.StartNew();
+        TimeSpan generationTimeout = TimeSpan.FromMilliseconds(300);
 
-        for (int attempt = 0; attempt < 24; attempt++)
+        for (int attempt = 0; attempt < 6; attempt++)
         {
-            var game = TryGenerate(s, new Random(seed + attempt * 977));
+            if (sw.Elapsed >= generationTimeout) break;
+
+            var game = TryGenerate(s, new Random(seed + attempt * 977), sw, generationTimeout);
             if (game == null) continue;
             if (game.Equations.Count < s.MinEquations || game.Equations.Count > s.MaxEquations) continue;
 
@@ -36,24 +40,15 @@ public sealed class MathCrossGeneratorService
                 return game;
         }
 
-        for (int attempt = 0; attempt < 24; attempt++)
-        {
-            var fallback = GenerateFallbackGrid(s, new Random(seed + 50_000 + attempt * 131));
-            if (fallback.Equations.Count < s.MinEquations || fallback.Equations.Count > s.MaxEquations) continue;
-
-            FinalizeGame(fallback, new Random(seed + 60_000 + attempt * 163), s);
-            if (IsPlayable(fallback))
-                return fallback;
-        }
-
-        // Safety: very unlikely, but still return a finalized fallback attempt.
         var safe = GenerateFallbackGrid(s, new Random(seed + 777_777));
         FinalizeGame(safe, new Random(seed + 888_888), s);
         return safe;
     }
 
-    private MathCrossGame? TryGenerate(Settings s, Random rnd)
+    private MathCrossGame? TryGenerate(Settings s, Random rnd, Stopwatch sw, TimeSpan timeout)
     {
+        if (sw.Elapsed >= timeout) return null;
+
         var grid = new CellType[GridSize, GridSize];
         var solutions = new string[GridSize, GridSize];
 
@@ -85,8 +80,11 @@ public sealed class MathCrossGeneratorService
         int maxDepth = Math.Max(maxWidth, maxHeight) / 2 + 2;
 
         int fails = 0;
-        while (placed.Count < target && fails < 80)
+        while (placed.Count < target && fails < 50)
         {
+            if (sw.Elapsed >= timeout)
+                return null;
+
             fails++;
 
             var best = FindBestPlacement(grid, solutions, s, rnd, bounds, midR, midC, maxWidth, maxHeight, maxDepth);
@@ -621,13 +619,15 @@ public sealed class MathCrossGeneratorService
         int dr = horizontal ? 0 : 1;
         int dc = horizontal ? 1 : 0;
         var cells = BuildCells(eq, len);
-        var changes = new List<CellChange>(len);
+        var changes = new List<CellChange>(len / 2 + 1);
 
         for (int i = 0; i < len; i++)
         {
             int r = startR + i * dr;
             int c = startC + i * dc;
-            changes.Add(new CellChange(r, c, grid[r, c], sols[r, c]));
+            if (grid[r, c] == CellType.Empty)
+                changes.Add(new CellChange(r, c));
+
             grid[r, c] = cells[i].type;
             sols[r, c] = cells[i].val;
         }
@@ -640,8 +640,8 @@ public sealed class MathCrossGeneratorService
         for (int i = changes.Count - 1; i >= 0; i--)
         {
             var c = changes[i];
-            grid[c.Row, c.Col] = c.OldType;
-            sols[c.Row, c.Col] = c.OldSolution;
+            grid[c.Row, c.Col] = CellType.Empty;
+            sols[c.Row, c.Col] = "";
         }
     }
 
@@ -709,24 +709,26 @@ public sealed class MathCrossGeneratorService
 
     private MathCrossGame GenerateFallbackGrid(Settings s, Random rnd)
     {
-        int baseSeed = rnd.Next();
+        MathCrossGame? first = null;
 
-        for (int attempt = 0; attempt < 20; attempt++)
+        for (int attempt = 0; attempt < 10; attempt++)
         {
-            var candidate = TryGenerate(s, new Random(baseSeed + attempt * 541));
-            if (candidate == null) continue;
-            if (candidate.Equations.Count < s.MinEquations || candidate.Equations.Count > s.MaxEquations) continue;
-            if (!HasValidTopology(candidate)) continue;
-            return candidate;
+            var candidate = TryBuildEmergencyTemplate(s, new Random(rnd.Next() + attempt * 101));
+            first ??= candidate;
+
+            if (candidate.Equations.Count >= s.MinEquations
+                && candidate.Equations.Count <= s.MaxEquations
+                && HasValidTopology(candidate))
+                return candidate;
         }
 
-        return TryBuildEmergencyTemplate(s, rnd);
+        return first ?? TryBuildEmergencyTemplate(s, rnd);
     }
 
     private MathCrossGame TryBuildEmergencyTemplate(Settings s, Random rnd)
     {
-        int rows = 25;
-        int cols = 25;
+        int rows = s.IsExtended ? ExtendedMaxLayoutSize : DefaultMaxLayoutSize;
+        int cols = rows;
         var game = new MathCrossGame
         {
             Rows = rows,
@@ -741,30 +743,41 @@ public sealed class MathCrossGeneratorService
             for (int c = 0; c < cols; c++)
                 game.Grid[r, c] = new MathCrossCell { Row = r, Col = c, Type = CellType.Empty, Solution = "", UserInput = "", IsGiven = false };
 
-        int[] lineStarts = { 1, 1 + game.EquationLength };
+        int[] lineStarts = GetFallbackLineStarts(game.EquationLength, rows);
 
         // 4 horizontal equations
         foreach (int hr in lineStarts)
         {
-            foreach (int hc in lineStarts)
-            {
-                var eq = GenerateEquation(s, rnd);
-                if (eq != null) PlaceInGame(game, hr, hc, horizontal: true, eq, game.EquationLength);
-            }
+            var eq = GenerateEquation(s, rnd);
+            if (eq != null) PlaceInGame(game, hr, 0, horizontal: true, eq, game.EquationLength);
         }
 
-        // 4 vertical equations (fixed row/col bug)
+        // 4 vertical equations
         foreach (int vc in lineStarts)
         {
-            foreach (int vr in lineStarts)
-            {
-                var eq = GenerateEquation(s, rnd);
-                if (eq != null) PlaceInGame(game, vr, vc, horizontal: false, eq, game.EquationLength);
-            }
+            var eq = GenerateEquation(s, rnd);
+            if (eq != null) PlaceInGame(game, 0, vc, horizontal: false, eq, game.EquationLength);
         }
 
         game.Equations = ScanEquations(game, game.EquationLength);
         return game;
+    }
+
+    private static int[] GetFallbackLineStarts(int len, int size)
+    {
+        int maxStart = Math.Max(0, size - len);
+        var starts = new[] { 0, maxStart / 3, (2 * maxStart) / 3, maxStart }
+            .Distinct()
+            .ToList();
+
+        while (starts.Count < 4)
+        {
+            starts.Add(Math.Max(0, starts[^1] - 1));
+            starts = starts.Distinct().ToList();
+            if (starts.Count == Math.Min(4, maxStart + 1)) break;
+        }
+
+        return starts.OrderBy(v => v).Take(4).ToArray();
     }
 
     private void PlaceInGame(MathCrossGame game, int startR, int startC, bool horizontal, EquationData eq, int len)
@@ -948,7 +961,7 @@ public sealed class MathCrossGeneratorService
 
     private void EnsureSolvable(MathCrossGame game, Random rnd)
     {
-        for (int iter = 0; iter < 80; iter++)
+        for (int iter = 0; iter < 20; iter++)
         {
             var solved = new bool[game.Rows, game.Cols];
 
@@ -1101,7 +1114,7 @@ public sealed class MathCrossGeneratorService
     }
     private record PlacementSimulation(Bounds NewBounds, int Intersections);
     private record PlacementCandidate(int StartR, int StartC, bool Vertical, EquationData Equation, Bounds NewBounds, double Score);
-    private record CellChange(int Row, int Col, CellType OldType, string OldSolution);
+    private record CellChange(int Row, int Col);
 
     private record Settings(
         string DifficultyKey,
