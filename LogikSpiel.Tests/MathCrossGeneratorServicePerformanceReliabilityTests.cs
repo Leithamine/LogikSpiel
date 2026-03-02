@@ -42,6 +42,24 @@ public class MathCrossGeneratorServicePerformanceReliabilityTests
 
     [Theory]
     [InlineData("easy")]
+    [InlineData("normal")]
+    [InlineData("hard")]
+    [InlineData("master")]
+    public void GenerateGame_MultipleSeeds_StaysWithinCompactBounds(string difficulty)
+    {
+        var service = new MathCrossGeneratorService();
+        int maxSize = difficulty is "hard" or "master" ? 12 : 10;
+
+        for (int seed = 1; seed <= 30; seed++)
+        {
+            var game = service.GenerateGame(difficulty, seed);
+            Assert.InRange(game.Rows, 1, maxSize);
+            Assert.InRange(game.Cols, 1, maxSize);
+        }
+    }
+
+    [Theory]
+    [InlineData("easy")]
     [InlineData("hard")]
     public void FallbackTemplate_IsInBounds_AndFinalizes(string difficulty)
     {
