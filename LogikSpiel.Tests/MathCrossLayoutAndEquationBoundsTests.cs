@@ -46,6 +46,100 @@ public class MathCrossLayoutAndEquationBoundsTests
         }
     }
 
+    [Theory]
+    [InlineData("easy", 9, 9)]
+    [InlineData("normal", 9, 9)]
+    [InlineData("hard", 10, 10)]
+    [InlineData("master", 10, 10)]
+    public void GenerateGame_WithViewportConstraints_FillsBoundsAndAvoidsLargeEmptyRegions(string difficulty, int rows, int cols)
+    {
+        var generator = new MathCrossGeneratorService();
+        var constraints = new MathCrossGeneratorService.LayoutConstraints(rows, cols);
+
+        for (int seed = 1; seed <= 25; seed++)
+        {
+            var game = generator.GenerateGame(difficulty, seed, constraints);
+
+            Assert.True(game.Equations.Any(e => e.IsHorizontal), $"Missing horizontal equations for {difficulty}, seed={seed}.");
+            Assert.True(game.Equations.Any(e => !e.IsHorizontal), $"Missing vertical equations for {difficulty}, seed={seed}.");
+
+            int occupied = CountOccupied(game);
+            double fillRatio = (double)occupied / Math.Max(1, game.Rows * game.Cols);
+            Assert.True(fillRatio >= 0.68,
+                $"Grid too sparse for {difficulty}, seed={seed}: fill={fillRatio:0.00}, size={game.Rows}x{game.Cols}.");
+
+            double largestEmptyRegionRatio = LargestEmptyRegionRatio(game);
+            Assert.True(largestEmptyRegionRatio <= 0.20,
+                $"Large connected empty area for {difficulty}, seed={seed}: emptyRegionRatio={largestEmptyRegionRatio:0.00}.");
+        }
+    }
+
+    private static int CountOccupied(MathCrossGame game)
+    {
+        int occupied = 0;
+        for (int r = 0; r < game.Rows; r++)
+            for (int c = 0; c < game.Cols; c++)
+                if (game.Grid[r, c].Type != CellType.Empty)
+                    occupied++;
+
+        return occupied;
+    }
+
+    private static double LargestEmptyRegionRatio(MathCrossGame game)
+    {
+        if (game.Rows == 0 || game.Cols == 0)
+            return 1.0;
+
+        var visited = new bool[game.Rows, game.Cols];
+        int largest = 0;
+
+        for (int r = 0; r < game.Rows; r++)
+        {
+            for (int c = 0; c < game.Cols; c++)
+            {
+                if (visited[r, c] || game.Grid[r, c].Type != CellType.Empty)
+                    continue;
+
+                int size = Flood(game, visited, r, c);
+                if (size > largest)
+                    largest = size;
+            }
+        }
+
+        return (double)largest / Math.Max(1, game.Rows * game.Cols);
+    }
+
+    private static int Flood(MathCrossGame game, bool[,] visited, int startR, int startC)
+    {
+        var queue = new Queue<(int r, int c)>();
+        queue.Enqueue((startR, startC));
+        visited[startR, startC] = true;
+        int size = 0;
+
+        while (queue.Count > 0)
+        {
+            var (r, c) = queue.Dequeue();
+            size++;
+            TryVisit(r - 1, c);
+            TryVisit(r + 1, c);
+            TryVisit(r, c - 1);
+            TryVisit(r, c + 1);
+        }
+
+        return size;
+
+        void TryVisit(int nr, int nc)
+        {
+            if (nr < 0 || nr >= game.Rows || nc < 0 || nc >= game.Cols)
+                return;
+            if (visited[nr, nc] || game.Grid[nr, nc].Type != CellType.Empty)
+                return;
+
+            visited[nr, nc] = true;
+            queue.Enqueue((nr, nc));
+        }
+    }
+
     private sealed class StubGameProgressStore : IGameProgressStore
     {
         public Task<GameProgress> LoadAsync(CancellationToken ct = default) => Task.FromResult(new GameProgress());

@@ -16,13 +16,15 @@ public sealed class MathCrossGeneratorService
     private const int DefaultMaxLayoutSize = 12;
     private const int ExtendedMaxLayoutSize = 14;
     private const int MaxAspectDelta = 4;
-    private const double MinCompactnessRatio = 0.44;
-    private const double MinTopologyCompactnessRatio = 0.38;
+    private const double MinCompactnessRatio = 0.58;
+    private const double MinTopologyCompactnessRatio = 0.68;
+    private const double TargetBoundsCoverageRatio = 0.88;
+    private const double MaxLargestEmptyRegionRatio = 0.20;
     private const int EquationVariantsPerAnchor = 1;
     private const double IntersectionBonus = 14.0;
-    private const double AreaGrowthPenalty = 1.2;
+    private const double AreaGrowthPenalty = 0.8;
     private const double AspectRatioPenalty = 2.0;
-    private const double CenterDistancePenalty = 0.35;
+    private const double CenterDistancePenalty = 0.25;
     private const int MinEquationsPerLevel = 10;
     private const int MaxEquationsPerLevel = 15;
 
@@ -208,13 +210,19 @@ public sealed class MathCrossGeneratorService
                             continue;
 
                         double centerDistance = Math.Abs(nr - centerR) + Math.Abs(nc - centerC);
+                        double widthCoverage = (double)width / Math.Max(1, maxWidth);
+                        double heightCoverage = (double)height / Math.Max(1, maxHeight);
+                        double areaCoverage = Math.Min(widthCoverage, heightCoverage);
+                        double targetCoverageProgress = Math.Min(1.0, areaCoverage / TargetBoundsCoverageRatio);
 
                         double score =
                             IntersectionBonus * simulation.Intersections
                             - AreaGrowthPenalty * (newArea - oldArea)
                             - AspectRatioPenalty * Math.Abs(width - height)
                             - CenterDistancePenalty * centerDistance
-                            + compactness * 8.5;
+                            + compactness * 10.0
+                            + targetCoverageProgress * 9.0
+                            + areaCoverage * 7.0;
 
                         if (best == null || score > best.Score)
                         {
@@ -1127,6 +1135,7 @@ public sealed class MathCrossGeneratorService
 
         if (!HasCompactBounds(game.Rows, game.Cols)) return false;
         if (CalculateFillRatio(game) < MinTopologyCompactnessRatio) return false;
+        if (CalculateLargestEmptyRegionRatio(game) > MaxLargestEmptyRegionRatio) return false;
 
         var adj = new List<int>[n];
         for (int i = 0; i < n; i++) adj[i] = new List<int>();
@@ -1199,6 +1208,7 @@ public sealed class MathCrossGeneratorService
         var bounds = ComputeBounds(grid);
         if (!HasCompactBounds(bounds.Height, bounds.Width)) return false;
         if (CalculateFillRatio(grid, bounds) < MinTopologyCompactnessRatio) return false;
+        if (CalculateLargestEmptyRegionRatio(grid, bounds) > MaxLargestEmptyRegionRatio) return false;
 
         int n = equations.Count;
         var adj = new List<int>[n];
@@ -1288,6 +1298,91 @@ public sealed class MathCrossGeneratorService
         return (double)occupied / Math.Max(1, bounds.Area);
     }
 
+    private static double CalculateLargestEmptyRegionRatio(MathCrossGame game)
+    {
+        int rows = game.Rows;
+        int cols = game.Cols;
+        if (rows <= 0 || cols <= 0)
+            return 1.0;
+
+        var visited = new bool[rows, cols];
+        int largest = 0;
+
+        for (int r = 0; r < rows; r++)
+        {
+            for (int c = 0; c < cols; c++)
+            {
+                if (visited[r, c] || game.Grid[r, c].Type != CellType.Empty)
+                    continue;
+
+                int size = FloodEmptyRegion(rows, cols, visited, (rr, cc) => game.Grid[rr, cc].Type == CellType.Empty, r, c);
+                if (size > largest)
+                    largest = size;
+            }
+        }
+
+        return (double)largest / Math.Max(1, rows * cols);
+    }
+
+    private static double CalculateLargestEmptyRegionRatio(CellType[,] grid, Bounds bounds)
+    {
+        int rows = bounds.Height;
+        int cols = bounds.Width;
+        if (rows <= 0 || cols <= 0)
+            return 1.0;
+
+        var visited = new bool[rows, cols];
+        int largest = 0;
+
+        for (int r = 0; r < rows; r++)
+        {
+            for (int c = 0; c < cols; c++)
+            {
+                if (visited[r, c] || grid[bounds.MinR + r, bounds.MinC + c] != CellType.Empty)
+                    continue;
+
+                int size = FloodEmptyRegion(rows, cols, visited, (rr, cc) =>
+                    grid[bounds.MinR + rr, bounds.MinC + cc] == CellType.Empty, r, c);
+                if (size > largest)
+                    largest = size;
+            }
+        }
+
+        return (double)largest / Math.Max(1, rows * cols);
+    }
+
+    private static int FloodEmptyRegion(int rows, int cols, bool[,] visited, Func<int, int, bool> isEmpty, int startR, int startC)
+    {
+        var queue = new Queue<(int r, int c)>();
+        queue.Enqueue((startR, startC));
+        visited[startR, startC] = true;
+        int size = 0;
+
+        while (queue.Count > 0)
+        {
+            var (r, c) = queue.Dequeue();
+            size++;
+
+            TryVisit(r - 1, c);
+            TryVisit(r + 1, c);
+            TryVisit(r, c - 1);
+            TryVisit(r, c + 1);
+        }
+
+        return size;
+
+        void TryVisit(int nr, int nc)
+        {
+            if (nr < 0 || nr >= rows || nc < 0 || nc >= cols)
+                return;
+            if (visited[nr, nc] || !isEmpty(nr, nc))
+                return;
+
+            visited[nr, nc] = true;
+            queue.Enqueue((nr, nc));
+        }
+    }
+
     private record EquationData(decimal[] Numbers, string[] Operators);
     private record EquationPlacement(int StartR, int StartC, bool Horizontal, EquationData Eq);
     private record Bounds(int MinR, int MaxR, int MinC, int MaxC)
@@ -1347,14 +1442,14 @@ public sealed class MathCrossGeneratorService
         int maxCols = Math.Clamp(constraints.Value.MaxCols, settings.EquationLength, GridSize);
 
         int area = maxRows * maxCols;
-        int estimated = Math.Max(settings.MinEquations, area / 9);
+        int estimated = Math.Max(settings.MinEquations, area / 7);
 
         int minEquations = Math.Clamp(
             constraints.Value.MinEquations ?? estimated,
             settings.MinEquations,
             settings.MaxEquations);
         int maxEquations = Math.Clamp(
-            constraints.Value.MaxEquations ?? (estimated + 3),
+            constraints.Value.MaxEquations ?? (estimated + 2),
             minEquations,
             settings.MaxEquations);
 
