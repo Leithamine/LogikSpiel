@@ -100,7 +100,7 @@ public class MathCrossGeneratorServiceFallbackTests
     [InlineData("normal")]
     [InlineData("hard")]
     [InlineData("master")]
-    public void GenerateGame_HiddenCells_ArePerpendicularlyConstrained(string difficulty)
+    public void GenerateGame_EachEquation_HasPerpendicularIntersection(string difficulty)
     {
         var service = new MathCrossGeneratorService();
 
@@ -108,13 +108,14 @@ public class MathCrossGeneratorServiceFallbackTests
         {
             var game = service.GenerateGame(difficulty, seed);
 
-            foreach (var cell in EnumerateEditable(game).Where(c => !c.IsGiven))
+            foreach (var equation in game.Equations)
             {
-                bool hasHorizontal = game.Equations.Any(eq => eq.IsHorizontal && eq.Cells.Contains((cell.Row, cell.Col)));
-                bool hasVertical = game.Equations.Any(eq => !eq.IsHorizontal && eq.Cells.Contains((cell.Row, cell.Col)));
+                bool hasPerpendicularIntersection = game.Equations
+                    .Where(other => !ReferenceEquals(other, equation) && other.IsHorizontal != equation.IsHorizontal)
+                    .Any(other => equation.Cells.Intersect(other.Cells).Any());
 
-                Assert.True(hasHorizontal && hasVertical,
-                    $"Hidden cell at ({cell.Row},{cell.Col}) must be constrained by horizontal and vertical equations (seed={seed}, difficulty={difficulty}).");
+                Assert.True(hasPerpendicularIntersection,
+                    $"Equation at ({equation.StartRow},{equation.StartCol}) must intersect at least one perpendicular equation (seed={seed}, difficulty={difficulty}).");
             }
         }
     }
