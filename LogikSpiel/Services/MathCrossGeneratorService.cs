@@ -1089,7 +1089,7 @@ public sealed class MathCrossGeneratorService
 
     private bool IsPlayable(MathCrossGame game)
     {
-        if (game.Equations.Count < 8 || game.Equations.Count > 12) return false;
+        if (game.Equations.Count < 10 || game.Equations.Count > 15) return false;
 
         int editable = 0;
         int hidden = 0;
@@ -1107,7 +1107,7 @@ public sealed class MathCrossGeneratorService
     private static bool HasValidTopology(MathCrossGame game)
     {
         int n = game.Equations.Count;
-        if (n < 8 || n > 12) return false;
+        if (n < 10 || n > 15) return false;
 
         if (!HasCompactBounds(game.Rows, game.Cols)) return false;
         if (CalculateFillRatio(game) < MinTopologyCompactnessRatio) return false;
@@ -1333,11 +1333,14 @@ public sealed class MathCrossGeneratorService
         int area = maxRows * maxCols;
         int estimated = Math.Max(settings.MinEquations, area / 9);
 
-        int minEquations = Math.Clamp(constraints.Value.MinEquations ?? estimated, settings.MinEquations, 40);
-        int maxEquations = Math.Clamp(constraints.Value.MaxEquations ?? (estimated + 3), minEquations, 48);
-
-        minEquations = Math.Min(minEquations, settings.MaxEquations + 16);
-        maxEquations = Math.Max(minEquations, maxEquations);
+        int minEquations = Math.Clamp(
+            constraints.Value.MinEquations ?? estimated,
+            settings.MinEquations,
+            settings.MaxEquations);
+        int maxEquations = Math.Clamp(
+            constraints.Value.MaxEquations ?? (estimated + 3),
+            minEquations,
+            settings.MaxEquations);
 
         return new EffectiveSettings(minEquations, maxEquations, maxCols, maxRows);
     }
