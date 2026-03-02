@@ -1303,16 +1303,16 @@ public sealed class MathCrossGeneratorService
         return key switch
         {
             "easy" => new Settings("easy", 1, 99, false,
-                new[] { "+", "-" }, 8, 12, 0.45, 5, false),
+                new[] { "+", "-" }, 10, 15, 0.45, 5, false),
 
             "normal" => new Settings("normal", 1, 99, false,
-                new[] { "+", "-", "×" }, 8, 12, 0.40, 5, false),
+                new[] { "+", "-", "×" }, 10, 15, 0.40, 5, false),
 
             "hard" => new Settings("hard", -1, 99, false,
-                new[] { "+", "-", "×", "÷" }, 8, 12, 0.35, 7, true),
+                new[] { "+", "-", "×", "÷" }, 10, 15, 0.35, 7, true),
 
             "master" => new Settings("master", -1, 99, true,
-                new[] { "+", "-", "×", "÷" }, 8, 12, 0.30, 7, true),
+                new[] { "+", "-", "×", "÷" }, 10, 15, 0.30, 7, true),
 
             _ => GetSettings("easy")
         };
