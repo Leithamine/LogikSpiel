@@ -51,7 +51,7 @@ public sealed class MathCrossGeneratorService
                 return game;
         }
 
-        var safe = GenerateFallbackGrid(s, new Random(seed + 777_777), effective);
+        var safe = GenerateFallbackGridWithEffective(s, new Random(seed + 777_777), effective);
         FinalizeGame(safe, new Random(seed + 888_888), s);
         return safe;
     }
@@ -745,17 +745,17 @@ public sealed class MathCrossGeneratorService
     private MathCrossGame GenerateFallbackGrid(Settings s, Random rnd)
     {
         var effective = ResolveEffectiveSettings(s, null);
-        return GenerateFallbackGrid(s, rnd, effective);
+        return GenerateFallbackGridWithEffective(s, rnd, effective);
     }
 
-    private MathCrossGame GenerateFallbackGrid(Settings s, Random rnd, EffectiveSettings effective)
+    private MathCrossGame GenerateFallbackGridWithEffective(Settings s, Random rnd, EffectiveSettings effective)
     {
         MathCrossGame? first = null;
         MathCrossGame? best = null;
 
         for (int attempt = 0; attempt < 40; attempt++)
         {
-            var candidate = TryBuildEmergencyTemplate(s, effective, new Random(rnd.Next() + attempt * 101));
+            var candidate = TryBuildEmergencyTemplateWithEffective(s, effective, new Random(rnd.Next() + attempt * 101));
             first ??= candidate;
             if (best == null || candidate.Equations.Count > best.Equations.Count)
                 best = candidate;
@@ -772,16 +772,16 @@ public sealed class MathCrossGeneratorService
             && HasValidTopology(best))
             return best;
 
-        return first ?? TryBuildEmergencyTemplate(s, effective, rnd);
+        return first ?? TryBuildEmergencyTemplateWithEffective(s, effective, rnd);
     }
 
     private MathCrossGame TryBuildEmergencyTemplate(Settings s, Random rnd)
     {
         var effective = ResolveEffectiveSettings(s, null);
-        return TryBuildEmergencyTemplate(s, effective, rnd);
+        return TryBuildEmergencyTemplateWithEffective(s, effective, rnd);
     }
 
-    private MathCrossGame TryBuildEmergencyTemplate(Settings s, EffectiveSettings effective, Random rnd)
+    private MathCrossGame TryBuildEmergencyTemplateWithEffective(Settings s, EffectiveSettings effective, Random rnd)
     {
         var grid = new CellType[GridSize, GridSize];
         var solutions = new string[GridSize, GridSize];
@@ -1321,14 +1321,20 @@ public sealed class MathCrossGeneratorService
     private static EffectiveSettings ResolveEffectiveSettings(Settings settings, LayoutConstraints? constraints)
     {
         int baseLayoutSize = settings.IsExtended ? ExtendedMaxLayoutSize : DefaultMaxLayoutSize;
-        int maxRows = Math.Clamp(constraints?.MaxRows ?? baseLayoutSize, settings.EquationLength, GridSize);
-        int maxCols = Math.Clamp(constraints?.MaxCols ?? baseLayoutSize, settings.EquationLength, GridSize);
+
+        if (constraints is null)
+        {
+            return new EffectiveSettings(settings.MinEquations, settings.MaxEquations, baseLayoutSize, baseLayoutSize);
+        }
+
+        int maxRows = Math.Clamp(constraints.Value.MaxRows, settings.EquationLength, GridSize);
+        int maxCols = Math.Clamp(constraints.Value.MaxCols, settings.EquationLength, GridSize);
 
         int area = maxRows * maxCols;
         int estimated = Math.Max(settings.MinEquations, area / 9);
 
-        int minEquations = Math.Clamp(constraints?.MinEquations ?? estimated, settings.MinEquations, 40);
-        int maxEquations = Math.Clamp(constraints?.MaxEquations ?? (estimated + 3), minEquations, 48);
+        int minEquations = Math.Clamp(constraints.Value.MinEquations ?? estimated, settings.MinEquations, 40);
+        int maxEquations = Math.Clamp(constraints.Value.MaxEquations ?? (estimated + 3), minEquations, 48);
 
         minEquations = Math.Min(minEquations, settings.MaxEquations + 16);
         maxEquations = Math.Max(minEquations, maxEquations);
