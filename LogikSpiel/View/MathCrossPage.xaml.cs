@@ -13,12 +13,12 @@ namespace LogikSpiel.View;
 public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposable
 {
     private bool _isLoaded;
-    private const double DefaultCellSize = 48;
-    private const double MinCellSize = 32;
-    private const double PreferredTouchCellSize = 48;
-    private const double MaxCellSize = 64;
-    private const double CellSpacing = 1;
-    private const double BoardInnerPadding = 6;
+    private const double DefaultCellSize = 56;
+    private const double MinCellSize = 36;
+    private const double PreferredTouchCellSize = 54;
+    private const double MaxCellSize = 72;
+    private const double CellSpacing = 2;
+    private const double BoardInnerPadding = 4;
 
     private double _uniformCellSize = DefaultCellSize;
 
@@ -57,7 +57,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
             var game = vm.Game;
             _uniformCellSize = GetUniformCellSize();
             double cellSize = _uniformCellSize;
-            double textSize = Math.Clamp(cellSize * 0.38, 11, 24);
+            double textSize = Math.Clamp(cellSize * 0.42, 13, 28);
 
             BoardGrid.Children.Clear();
             BoardGrid.RowDefinitions.Clear();
@@ -78,7 +78,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
                         continue;
 
                     var cell = cellVm.Cell;
-                    var border = new Border { StrokeShape = new RoundRectangle { CornerRadius = 2 }, Padding = 0, BindingContext = cellVm };
+                    var border = new Border { StrokeShape = new RoundRectangle { CornerRadius = 4 }, Padding = 0, BindingContext = cellVm };
                     border.SetBinding(Border.StrokeProperty, new Binding(nameof(MathCrossCellViewModel.BorderStroke), source: cellVm));
                     border.SetBinding(Border.StrokeThicknessProperty, new Binding(nameof(MathCrossCellViewModel.BorderThickness), source: cellVm));
                     border.SetBinding(Border.ShadowProperty, new Binding(nameof(MathCrossCellViewModel.FocusGlow), source: cellVm));
