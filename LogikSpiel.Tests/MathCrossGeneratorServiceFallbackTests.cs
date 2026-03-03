@@ -15,11 +15,12 @@ public class MathCrossGeneratorServiceFallbackTests
         for (int seed = 1; seed <= 40; seed++)
         {
             var game = InvokeGenerateFallbackGrid(difficulty, seed);
-            
-            Assert.True(game.Equations.Count >= 8 && game.Equations.Count <= 12,
-                $"Expected 8-12 equations in fallback for seed={seed}, difficulty={difficulty}, got {game.Equations.Count}.");
-                
-            Assert.True(HasValidIntersectionTopology(game), 
+            var (minEq, maxEq) = GetEquationRange(difficulty);
+
+            Assert.True(game.Equations.Count >= minEq && game.Equations.Count <= maxEq,
+                $"Expected {minEq}-{maxEq} equations in fallback for seed={seed}, difficulty={difficulty}, got {game.Equations.Count}.");
+
+            Assert.True(HasValidIntersectionTopology(game, minEq, maxEq),
                 $"Fallback Grid topology is invalid (too few intersections) for seed={seed}, difficulty={difficulty}.");
         }
     }
@@ -35,19 +36,33 @@ public class MathCrossGeneratorServiceFallbackTests
         for (int seed = 1; seed <= 40; seed++)
         {
             var game = service.GenerateGame(difficulty, seed);
-            
-            Assert.True(game.Equations.Count >= 8 && game.Equations.Count <= 12,
-                $"Expected 8-12 equations in generated game for seed={seed}, difficulty={difficulty}, got {game.Equations.Count}.");
-            
-            Assert.True(HasValidIntersectionTopology(game), 
+            var (minEq, maxEq) = GetEquationRange(difficulty);
+
+            Assert.True(game.Equations.Count >= minEq && game.Equations.Count <= maxEq,
+                $"Expected {minEq}-{maxEq} equations in generated game for seed={seed}, difficulty={difficulty}, got {game.Equations.Count}.");
+
+            Assert.True(HasValidIntersectionTopology(game, minEq, maxEq),
                 $"Generated Grid topology is invalid for seed={seed}, difficulty={difficulty}.");
         }
     }
 
-    private static bool HasValidIntersectionTopology(MathCrossGame game)
+    private static (int MinEquations, int MaxEquations) GetEquationRange(string difficulty)
+    {
+        var type = typeof(MathCrossGeneratorService);
+        var getSettings = type.GetMethod("GetSettings", BindingFlags.NonPublic | BindingFlags.Static)
+            ?? throw new InvalidOperationException("GetSettings method not found.");
+        var settings = getSettings.Invoke(null, new object[] { difficulty })
+            ?? throw new InvalidOperationException("Settings could not be created.");
+
+        int min = (int)settings.GetType().GetProperty("MinEquations")!.GetValue(settings)!;
+        int max = (int)settings.GetType().GetProperty("MaxEquations")!.GetValue(settings)!;
+        return (min, max);
+    }
+
+    private static bool HasValidIntersectionTopology(MathCrossGame game, int minEquations = 1, int maxEquations = int.MaxValue)
     {
         int n = game.Equations.Count;
-        if (n < 8 || n > 12) return false;
+        if (n < minEquations || n > maxEquations) return false;
 
         var adj = new List<int>[n];
         for (int i = 0; i < n; i++) adj[i] = new List<int>();
@@ -92,6 +107,32 @@ public class MathCrossGeneratorServiceFallbackTests
         }
 
         return true;
+    }
+
+
+    [Theory]
+    [InlineData("easy")]
+    [InlineData("normal")]
+    [InlineData("hard")]
+    [InlineData("master")]
+    public void GenerateGame_EachEquation_HasPerpendicularIntersection(string difficulty)
+    {
+        var service = new MathCrossGeneratorService();
+
+        for (int seed = 1; seed <= 60; seed++)
+        {
+            var game = service.GenerateGame(difficulty, seed);
+
+            foreach (var equation in game.Equations)
+            {
+                bool hasPerpendicularIntersection = game.Equations
+                    .Where(other => !ReferenceEquals(other, equation) && other.IsHorizontal != equation.IsHorizontal)
+                    .Any(other => equation.Cells.Intersect(other.Cells).Any());
+
+                Assert.True(hasPerpendicularIntersection,
+                    $"Equation at ({equation.StartRow},{equation.StartCol}) must intersect at least one perpendicular equation (seed={seed}, difficulty={difficulty}).");
+            }
+        }
     }
 
     [Theory]

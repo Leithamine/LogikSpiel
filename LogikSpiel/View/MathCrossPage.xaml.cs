@@ -12,7 +12,14 @@ namespace LogikSpiel.View;
 public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposable
 {
     private bool _isLoaded;
-    private const double CellSize = 42;
+    private const double DefaultCellSize = 50;
+    private const double MinCellSize = 32;
+    private const double PreferredTouchCellSize = 50;
+    private const double MaxCellSize = 80;
+    private const double CellSpacing = 3;
+    private const double BoardInnerPadding = 8;
+
+    private double _uniformCellSize = DefaultCellSize;
 
     private readonly MathCrossPageViewModel _vm;
     private readonly Action _requestLayoutUpdateHandler;
@@ -27,6 +34,8 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
         _requestLayoutUpdateHandler = BuildGrid;
 
         _vm.RequestLayoutUpdate += _requestLayoutUpdateHandler;
+        BoardContainer.SizeChanged += OnBoardContainerSizeChanged;
+        SizeChanged += OnPageSizeChanged;
     }
 
     ~MathCrossPage()
@@ -39,6 +48,8 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
         if (_disposed) return;
 
         _vm.RequestLayoutUpdate -= _requestLayoutUpdateHandler;
+        BoardContainer.SizeChanged -= OnBoardContainerSizeChanged;
+        SizeChanged -= OnPageSizeChanged;
 
         _disposed = true;
         GC.SuppressFinalize(this);
@@ -52,16 +63,27 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
             if (BindingContext is not MathCrossPageViewModel vm || vm.Game == null) return;
 
             var game = vm.Game;
+            _uniformCellSize = GetUniformCellSize();
+            double cellSize = _uniformCellSize;
+            double textSize = Math.Clamp(cellSize * 0.38, 12, 26);
 
             BoardGrid.Children.Clear();
             BoardGrid.RowDefinitions.Clear();
             BoardGrid.ColumnDefinitions.Clear();
+            BoardGrid.RowSpacing = CellSpacing;
+            BoardGrid.ColumnSpacing = CellSpacing;
+            BoardGrid.HorizontalOptions = LayoutOptions.Center;
+            BoardGrid.VerticalOptions = LayoutOptions.Center;
 
             for (int r = 0; r < game.Rows; r++)
-                BoardGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(CellSize) });
+                BoardGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(cellSize) });
 
             for (int c = 0; c < game.Cols; c++)
-                BoardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(CellSize) });
+                BoardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(cellSize) });
+
+
+            BoardGrid.WidthRequest = game.Cols * cellSize + CellSpacing * Math.Max(0, game.Cols - 1);
+            BoardGrid.HeightRequest = game.Rows * cellSize + CellSpacing * Math.Max(0, game.Rows - 1);
 
             foreach (var cellVm in vm.FlatCells)
             {
@@ -94,7 +116,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
                     {
                         Padding = 0,
                         FontAttributes = FontAttributes.Bold,
-                        FontSize = 15,
+                        FontSize = textSize,
                         BackgroundColor = Colors.Transparent,
                         TextColor = ResolveTextColor(cell),
                         BorderWidth = 0
@@ -111,7 +133,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
                         VerticalTextAlignment = TextAlignment.Center,
                         FontAttributes = FontAttributes.Bold,
                         TextColor = ResolveTextColor(cell),
-                        FontSize = 15
+                        FontSize = textSize
                     };
                     lbl.SetBinding(Label.TextProperty, new Binding(nameof(MathCrossCellViewModel.DisplayText), source: cellVm));
                     border.Content = lbl;
@@ -120,6 +142,59 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
                 BoardGrid.Children.Add(border);
             }
         });
+    }
+
+    private void OnBoardContainerSizeChanged(object? sender, EventArgs e)
+    {
+        RecalculateLayoutAndRefresh();
+    }
+
+    private void OnPageSizeChanged(object? sender, EventArgs e)
+    {
+        RecalculateLayoutAndRefresh();
+    }
+
+    private void RecalculateLayoutAndRefresh()
+    {
+        if (BoardContainer.Width <= 0 || BoardContainer.Height <= 0)
+            return;
+
+        UpdateLayoutConstraintsFromViewport();
+
+        _uniformCellSize = GetUniformCellSize();
+        BuildGrid();
+    }
+
+    private void UpdateLayoutConstraintsFromViewport()
+    {
+        double availableWidth = Math.Max(0, BoardContainer.Width - 2 * BoardInnerPadding);
+        double availableHeight = Math.Max(0, BoardContainer.Height - 2 * BoardInnerPadding);
+
+        int maxRows = Math.Max(1, (int)Math.Floor((availableHeight + CellSpacing) / (PreferredTouchCellSize + CellSpacing)));
+        int maxCols = Math.Max(1, (int)Math.Floor((availableWidth + CellSpacing) / (PreferredTouchCellSize + CellSpacing)));
+
+        _ = _vm.UpdateLayoutConstraintsAsync(maxRows, maxCols);
+    }
+
+    private double GetUniformCellSize()
+    {
+        if (BoardContainer.Width <= 0 || BoardContainer.Height <= 0)
+            return DefaultCellSize;
+
+        if (BindingContext is not MathCrossPageViewModel vm || vm.Game is not MathCrossGame game)
+            return DefaultCellSize;
+
+        int rows = Math.Max(1, game.Rows);
+        int cols = Math.Max(1, game.Cols);
+
+        double availableWidth = Math.Max(0, BoardContainer.Width - 2 * BoardInnerPadding);
+        double availableHeight = Math.Max(0, BoardContainer.Height - 2 * BoardInnerPadding);
+
+        double widthBased = (availableWidth - CellSpacing * Math.Max(0, cols - 1)) / cols;
+        double heightBased = (availableHeight - CellSpacing * Math.Max(0, rows - 1)) / rows;
+
+        double sizeToFit = Math.Min(widthBased, heightBased);
+        return Math.Clamp(sizeToFit, MinCellSize, MaxCellSize);
     }
 
     private static Color ResolveTextColor(MathCrossCell cell)

@@ -26,6 +26,8 @@ public sealed class MathCrossPageViewModel : ObservableObject
     private UserProfile? _userProfile;
     private GameDefinition? _gameDefinition;
 
+    private MathCrossGeneratorService.LayoutConstraints? _layoutConstraints;
+
     private int _coins;
     public int Coins { get => _coins; set => SetProperty(ref _coins, value); }
 
@@ -244,6 +246,24 @@ public sealed class MathCrossPageViewModel : ObservableObject
         }
     }
 
+
+    public async Task UpdateLayoutConstraintsAsync(int maxRows, int maxCols)
+    {
+        maxRows = Math.Clamp(maxRows, 5, 24);
+        maxCols = Math.Clamp(maxCols, 5, 24);
+
+        var next = new MathCrossGeneratorService.LayoutConstraints(maxRows, maxCols);
+        if (_layoutConstraints.HasValue && _layoutConstraints.Value.Equals(next))
+            return;
+
+        _layoutConstraints = next;
+
+        // Wichtig: Laufendes Rätsel nicht neu erzeugen, wenn sich das Layout
+        // (z. B. durch Auswahl/Keyboard/Resize) leicht verändert.
+        // Neue Constraints werden erst bei der nächsten Runde berücksichtigt.
+        await Task.CompletedTask;
+    }
+
     private async Task StartNewRoundAsync()
     {
         FlatCells.Clear();
@@ -251,7 +271,8 @@ public sealed class MathCrossPageViewModel : ObservableObject
         CandidateTokens.Clear();
 
         int seed = StableHash($"{GameId}:{DifficultyKey}") + LevelNumber * 77;
-        var game = await Task.Run(() => _generator.GenerateGame(DifficultyKey, seed));
+        var constraints = _layoutConstraints;
+        var game = await Task.Run(() => _generator.GenerateGame(DifficultyKey, seed, constraints));
 
         if (game == null || game.Rows == 0)
         {
@@ -333,6 +354,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
         {
             "easy" => new[] { "+", "−" },
             "normal" => new[] { "+", "−", "×" },
+            "master" => new[] { "+", "−", "×", "÷", "^" },
             _ => new[] { "+", "−", "×", "÷" }
         };
     }
@@ -342,8 +364,8 @@ public sealed class MathCrossPageViewModel : ObservableObject
         string sol = (solution ?? "").Trim();
         var set = new HashSet<string> { sol };
 
-        int minVal = DifficultyKey is "hard" or "master" ? -1 : 1;
-        int maxVal = 99;
+        int minVal = DifficultyKey is "hard" or "master" ? -100 : 1;
+        int maxVal = DifficultyKey is "hard" or "master" ? 100 : 99;
 
         if (TryParse(sol, out var sNum))
         {

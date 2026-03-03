@@ -1,6 +1,7 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using LogikSpiel.Model;
 
@@ -11,42 +12,59 @@ namespace LogikSpiel.Services;
 /// </summary>
 public sealed class MathCrossGeneratorService
 {
-    private const int GridSize = 30;
+    private const int GridSize = 24;
+    private const int DefaultMaxLayoutSize = 10;
+    private const int ExtendedMaxLayoutSize = 12;
+    private const int MaxAspectDelta = 3;
+    private const double MinCompactnessRatio = 0.65;
+    private const double MinTopologyCompactnessRatio = 0.76;
+    private const double TargetBoundsCoverageRatio = 0.92;
+    private const double MaxLargestEmptyRegionRatio = 0.10;
+    private const int EquationVariantsPerAnchor = 1;
+    private const double IntersectionBonus = 20.0;
+    private const double AreaGrowthPenalty = 1.2;
+    private const double AspectRatioPenalty = 3.0;
+    private const double CenterDistancePenalty = 0.3;
+    private const int MaxLeafEquations = 3;
+    private const int MinEquationsPerLevel = 10;
+    private const int MaxEquationsPerLevel = 15;
+
+    public readonly record struct LayoutConstraints(int MaxRows, int MaxCols, int? MinEquations = null, int? MaxEquations = null);
+
+    private readonly record struct EffectiveSettings(int MinEquations, int MaxEquations, int MaxLayoutWidth, int MaxLayoutHeight);
 
     public MathCrossGame GenerateGame(string difficultyKey, int seed)
+        => GenerateGame(difficultyKey, seed, null);
+
+    public MathCrossGame GenerateGame(string difficultyKey, int seed, LayoutConstraints? layoutConstraints)
     {
         var s = GetSettings(difficultyKey);
-        var startedAt = DateTime.UtcNow;
+        var effective = ResolveEffectiveSettings(s, layoutConstraints);
+        var sw = Stopwatch.StartNew();
+        TimeSpan generationTimeout = TimeSpan.FromMilliseconds(900);
 
-        for (int attempt = 0; attempt < 24; attempt++)
+        for (int attempt = 0; attempt < 10; attempt++)
         {
-            var game = TryGenerate(s, new Random(seed + attempt * 977));
+            if (sw.Elapsed >= generationTimeout) break;
+
+            var game = TryGenerate(s, effective, new Random(seed + attempt * 977), sw, generationTimeout);
             if (game == null) continue;
-            if (game.Equations.Count < s.MinEquations || game.Equations.Count > s.MaxEquations) continue;
+            if (game.Equations.Count < effective.MinEquations || game.Equations.Count > effective.MaxEquations) continue;
 
             FinalizeGame(game, new Random(seed + attempt * 1231 + 7), s);
             if (IsPlayable(game))
                 return game;
         }
 
-        for (int attempt = 0; attempt < 24; attempt++)
-        {
-            var fallback = GenerateFallbackGrid(s, new Random(seed + 50_000 + attempt * 131));
-            if (fallback.Equations.Count < s.MinEquations || fallback.Equations.Count > s.MaxEquations) continue;
-
-            FinalizeGame(fallback, new Random(seed + 60_000 + attempt * 163), s);
-            if (IsPlayable(fallback))
-                return fallback;
-        }
-
-        // Safety: very unlikely, but still return a finalized fallback attempt.
-        var safe = GenerateFallbackGrid(s, new Random(seed + 777_777));
+        var safe = GenerateFallbackGridWithEffective(s, new Random(seed + 777_777), effective);
         FinalizeGame(safe, new Random(seed + 888_888), s);
         return safe;
     }
 
-    private MathCrossGame? TryGenerate(Settings s, Random rnd)
+    private MathCrossGame? TryGenerate(Settings s, EffectiveSettings effective, Random rnd, Stopwatch sw, TimeSpan timeout)
     {
+        if (sw.Elapsed >= timeout) return null;
+
         var grid = new CellType[GridSize, GridSize];
         var solutions = new string[GridSize, GridSize];
 
@@ -58,7 +76,7 @@ public sealed class MathCrossGeneratorService
             }
 
         var placed = new List<EquationPlacement>();
-        int target = rnd.Next(s.MinEquations, s.MaxEquations + 1);
+        int target = rnd.Next(effective.MinEquations, effective.MaxEquations + 1);
 
         int midR = GridSize / 2;
         int midC = (GridSize - s.EquationLength) / 2;
@@ -69,62 +87,236 @@ public sealed class MathCrossGeneratorService
         Place(grid, solutions, midR, midC, horizontal: true, first, s.EquationLength);
         placed.Add(new EquationPlacement(midR, midC, true, first));
 
+        var bounds = ComputeBounds(grid);
+        var boundsHistory = new List<Bounds> { bounds };
+        var changeStack = new List<List<CellChange>>();
+
+        int maxWidth = effective.MaxLayoutWidth;
+        int maxHeight = effective.MaxLayoutHeight;
+        int maxDepth = Math.Max(maxWidth, maxHeight) / 2 + 2;
+
         int fails = 0;
-        while (placed.Count < target && fails < 200)
+        while (placed.Count < target && fails < 50)
         {
+            if (sw.Elapsed >= timeout)
+                return null;
+
             fails++;
 
-            var numbers = GetNumberPositions(grid, solutions);
-            if (numbers.Count == 0) continue;
+            var best = FindBestPlacement(grid, solutions, s, rnd, bounds, midR, midC, maxWidth, maxHeight, maxDepth, placed.Count);
+            if (best == null)
+            {
+                if (placed.Count > 1)
+                {
+                    placed.RemoveAt(placed.Count - 1);
+                    UndoChanges(grid, solutions, changeStack[^1]);
+                    changeStack.RemoveAt(changeStack.Count - 1);
+                    boundsHistory.RemoveAt(boundsHistory.Count - 1);
+                    bounds = boundsHistory[^1];
+                    continue;
+                }
 
-            var (nr, nc, val) = numbers[rnd.Next(numbers.Count)];
+                continue;
+            }
+
+            var changes = PlaceWithChanges(grid, solutions, best.StartR, best.StartC, horizontal: !best.Vertical, best.Equation, s.EquationLength);
+            placed.Add(new EquationPlacement(best.StartR, best.StartC, !best.Vertical, best.Equation));
+            changeStack.Add(changes);
+            bounds = best.NewBounds;
+            boundsHistory.Add(bounds);
+            fails = 0;
+        }
+
+        if (placed.Count < effective.MinEquations || placed.Count > effective.MaxEquations)
+            return null;
+
+        var game = BuildGame(grid, solutions, s);
+        if (game.Equations.Count < effective.MinEquations || game.Equations.Count > effective.MaxEquations)
+            return null;
+
+        if (!HasValidTopology(game))
+            return null;
+
+        return game;
+    }
+
+    private PlacementCandidate? FindBestPlacement(
+        CellType[,] grid,
+        string[,] solutions,
+        Settings s,
+        Random rnd,
+        Bounds currentBounds,
+        int centerR,
+        int centerC,
+        int maxWidth,
+        int maxHeight,
+        int maxDepth,
+        int placedCount)
+    {
+        var numbers = GetNumberPositions(grid, solutions)
+            .OrderBy(_ => rnd.Next())
+            .ToList();
+        if (numbers.Count == 0) return null;
+
+        int oldArea = currentBounds.Area;
+        int[] anchors = s.IsExtended ? new[] { 0, 2, 4 } : new[] { 0, 2, 4 };
+        PlacementCandidate? best = null;
+
+        foreach (var (nr, nc, val) in numbers)
+        {
             bool hasHorizontal = HasEquationInDirection(grid, nr, nc, horizontal: true);
             bool hasVertical = HasEquationInDirection(grid, nr, nc, horizontal: false);
-
             if (hasHorizontal && hasVertical) continue;
 
             var directions = new List<bool>();
             if (!hasVertical) directions.Add(true);
             if (!hasHorizontal) directions.Add(false);
 
-            int[] anchors = s.IsExtended ? new[] { 0, 2, 4, 6 } : new[] { 0, 2, 4 };
-            bool placedOne = false;
-
-            foreach (var vertical in directions.OrderBy(_ => rnd.Next()))
+            foreach (var vertical in directions)
             {
-                foreach (var anchor in anchors.OrderBy(_ => rnd.Next()))
+                foreach (var anchor in anchors)
                 {
-                    var eq = GenerateEquationWithValue(s, rnd, anchor, val);
-                    if (eq == null) continue;
-
                     int startR = vertical ? nr - anchor : nr;
                     int startC = vertical ? nc : nc - anchor;
 
-                    if (!CanPlace(grid, solutions, startR, startC, vertical, s.EquationLength, eq, nr, nc))
-                        continue;
+                    for (int variant = 0; variant < EquationVariantsPerAnchor; variant++)
+                    {
+                        var eq = GenerateEquationWithValue(s, rnd, anchor, val);
+                        if (eq == null) continue;
+                        if (!CanPlace(grid, solutions, startR, startC, vertical, s.EquationLength, eq, nr, nc)) continue;
 
-                    Place(grid, solutions, startR, startC, horizontal: !vertical, eq, s.EquationLength);
-                    placed.Add(new EquationPlacement(startR, startC, !vertical, eq));
-                    fails = 0;
-                    placedOne = true;
-                    break;
+                        var simulation = SimulatePlacement(grid, solutions, startR, startC, vertical, s.EquationLength, eq, currentBounds);
+
+                        int requiredIntersections = placedCount switch
+                        {
+                            >= 8 => 3,
+                            >= 4 => 2,
+                            _ => 1
+                        };
+                        if (simulation.Intersections < requiredIntersections)
+                            continue;
+
+                        if (simulation.NewBounds.Width > maxWidth || simulation.NewBounds.Height > maxHeight)
+                            continue;
+
+                        int verticalDepth = Math.Max(Math.Abs(simulation.NewBounds.MinR - centerR), Math.Abs(simulation.NewBounds.MaxR - centerR));
+                        int horizontalDepth = Math.Max(Math.Abs(simulation.NewBounds.MinC - centerC), Math.Abs(simulation.NewBounds.MaxC - centerC));
+                        if (verticalDepth > maxDepth || horizontalDepth > maxDepth)
+                            continue;
+
+                        int width = simulation.NewBounds.Width;
+                        int height = simulation.NewBounds.Height;
+                        if (Math.Abs(width - height) > MaxAspectDelta)
+                            continue;
+
+                        int newArea = simulation.NewBounds.Area;
+                        int nonEmptyCells = CountNonEmptyCells(grid) + simulation.NewCells;
+                        double compactness = (double)nonEmptyCells / Math.Max(1, newArea);
+                        if (compactness < MinCompactnessRatio)
+                            continue;
+
+                        double centerDistance = Math.Abs(nr - centerR) + Math.Abs(nc - centerC);
+                        double widthCoverage = (double)width / Math.Max(1, maxWidth);
+                        double heightCoverage = (double)height / Math.Max(1, maxHeight);
+                        double areaCoverage = Math.Min(widthCoverage, heightCoverage);
+                        double targetCoverageProgress = Math.Min(1.0, areaCoverage / TargetBoundsCoverageRatio);
+
+                        double score =
+                            IntersectionBonus * simulation.Intersections
+                            - AreaGrowthPenalty * (newArea - oldArea)
+                            - AspectRatioPenalty * Math.Abs(width - height)
+                            - CenterDistancePenalty * centerDistance
+                            + compactness * 18.0
+                            + targetCoverageProgress * 9.0
+                            + areaCoverage * 7.0;
+
+                        if (best == null || score > best.Score)
+                        {
+                            best = new PlacementCandidate(startR, startC, vertical, eq, simulation.NewBounds, score);
+                        }
+                    }
                 }
-
-                if (placedOne) break;
             }
         }
 
-        if (placed.Count < s.MinEquations || placed.Count > s.MaxEquations)
-            return null;
+        return best;
+    }
 
-        if (!IsValidTopology(grid, s.EquationLength, s.MinEquations, s.MaxEquations, out _))
-            return null;
+    private PlacementSimulation SimulatePlacement(
+        CellType[,] grid,
+        string[,] solutions,
+        int startR,
+        int startC,
+        bool vertical,
+        int len,
+        EquationData eq,
+        Bounds current)
+    {
+        int dr = vertical ? 1 : 0;
+        int dc = vertical ? 0 : 1;
+        var cells = BuildCells(eq, len);
 
-        var game = BuildGame(grid, solutions, s);
-        if (game.Equations.Count < s.MinEquations || game.Equations.Count > s.MaxEquations)
-            return null;
+        int minR = current.MinR;
+        int maxR = current.MaxR;
+        int minC = current.MinC;
+        int maxC = current.MaxC;
+        int intersections = 0;
+        int newCells = 0;
 
-        return game;
+        for (int i = 0; i < len; i++)
+        {
+            int r = startR + i * dr;
+            int c = startC + i * dc;
+
+            if (grid[r, c] == CellType.Empty)
+            {
+                newCells++;
+                minR = Math.Min(minR, r);
+                maxR = Math.Max(maxR, r);
+                minC = Math.Min(minC, c);
+                maxC = Math.Max(maxC, c);
+            }
+            else if (grid[r, c] == cells[i].type && solutions[r, c] == cells[i].val)
+            {
+                intersections++;
+            }
+        }
+
+        return new PlacementSimulation(new Bounds(minR, maxR, minC, maxC), intersections, newCells);
+    }
+
+    private static int CountNonEmptyCells(CellType[,] grid)
+    {
+        int count = 0;
+        for (int r = 0; r < GridSize; r++)
+            for (int c = 0; c < GridSize; c++)
+                if (grid[r, c] != CellType.Empty)
+                    count++;
+
+        return count;
+    }
+
+    private static Bounds ComputeBounds(CellType[,] grid)
+    {
+        int minR = GridSize;
+        int maxR = -1;
+        int minC = GridSize;
+        int maxC = -1;
+
+        for (int r = 0; r < GridSize; r++)
+            for (int c = 0; c < GridSize; c++)
+                if (grid[r, c] != CellType.Empty)
+                {
+                    minR = Math.Min(minR, r);
+                    maxR = Math.Max(maxR, r);
+                    minC = Math.Min(minC, c);
+                    maxC = Math.Max(maxC, c);
+                }
+
+        if (maxR < 0)
+            return new Bounds(0, 0, 0, 0);
+
+        return new Bounds(minR, maxR, minC, maxC);
     }
 
     private bool HasEquationInDirection(CellType[,] grid, int r, int c, bool horizontal)
@@ -164,21 +356,36 @@ public sealed class MathCrossGeneratorService
 
         for (int i = 0; i < 30; i++)
         {
-            int a, b;
+            decimal a, b;
             if (op == "×")
             {
                 a = rnd.Next(2, 12);
                 b = rnd.Next(2, 12);
             }
+            else if (op == "÷")
+            {
+                int divisor = rnd.Next(2, 12);
+                int quotient = rnd.Next(2, 12);
+                int dividend = divisor * quotient;
+                if (dividend < s.MinVal || dividend > s.MaxVal) continue;
+                a = dividend;
+                b = divisor;
+            }
+            else if (op == "^")
+            {
+                a = rnd.Next(2, 11);
+                b = rnd.Next(2, 4);
+            }
             else
             {
-                a = rnd.Next(Math.Max(s.MinVal, -50), Math.Min(50, s.MaxVal) + 1);
-                b = rnd.Next(Math.Max(s.MinVal, -50), Math.Min(50, s.MaxVal) + 1);
+                a = s.AllowDecimals ? GenValue(s, rnd) : rnd.Next(Math.Max(s.MinVal, -50), Math.Min(50, s.MaxVal) + 1);
+                b = s.AllowDecimals ? GenValue(s, rnd) : rnd.Next(Math.Max(s.MinVal, -50), Math.Min(50, s.MaxVal) + 1);
             }
 
-            int? c = Calc(a, op, b);
+            decimal? c = CalcDec(a, op, b, s.AllowDecimals);
             if (c == null || c.Value < s.MinVal || c.Value > s.MaxVal) continue;
-            return new EquationData(new decimal[] { a, b, c.Value }, new[] { op });
+            if (!s.AllowDecimals && c.Value != Math.Truncate(c.Value)) continue;
+            return new EquationData(new[] { a, b, c.Value }, new[] { op });
         }
 
         return null;
@@ -248,26 +455,40 @@ public sealed class MathCrossGeneratorService
                 if (numIdx == 0)
                 {
                     a = anchorVal;
-                    b = op == "×" ? rnd.Next(2, 12) : GenValue(s, rnd);
-                    var res = Calc((int)a, op, (int)b);
+                    b = GenOperandForOp(op, s, rnd);
+                    var res = CalcDec(a, op, b, s.AllowDecimals);
                     if (res == null || res.Value < s.MinVal || res.Value > s.MaxVal) continue;
+                    if (!s.AllowDecimals && res.Value != Math.Truncate(res.Value)) continue;
                     c = res.Value;
                 }
                 else if (numIdx == 1)
                 {
                     b = anchorVal;
-                    a = op == "×" ? rnd.Next(2, 12) : GenValue(s, rnd);
-                    var res = Calc((int)a, op, (int)b);
+                    if (op == "÷" && b == 0) continue;
+                    if (op == "^" && (b != Math.Truncate(b) || b < 2 || b > 3)) continue;
+                    a = GenOperandForOp(op, s, rnd);
+                    var res = CalcDec(a, op, b, s.AllowDecimals);
                     if (res == null || res.Value < s.MinVal || res.Value > s.MaxVal) continue;
+                    if (!s.AllowDecimals && res.Value != Math.Truncate(res.Value)) continue;
                     c = res.Value;
                 }
                 else
                 {
                     c = anchorVal;
-                    var rev = Reverse((int)c, op, s, rnd);
-                    if (rev == null) continue;
-                    a = rev.Value.a;
-                    b = rev.Value.b;
+                    if (c != Math.Truncate(c))
+                    {
+                        a = GenOperandForOp(op, s, rnd);
+                        b = GenOperandForOp(op, s, rnd);
+                        var fwd = CalcDec(a, op, b, s.AllowDecimals);
+                        if (fwd == null || fwd.Value != c) continue;
+                    }
+                    else
+                    {
+                        var rev = Reverse((int)c, op, s, rnd);
+                        if (rev == null) continue;
+                        a = rev.Value.a;
+                        b = rev.Value.b;
+                    }
                 }
 
                 return new EquationData(new[] { a, b, c }, new[] { op });
@@ -292,8 +513,19 @@ public sealed class MathCrossGeneratorService
         return rnd.Next(min, max + 1);
     }
 
+    private decimal GenOperandForOp(string op, Settings s, Random rnd)
+    {
+        return op switch
+        {
+            "×" or "÷" => rnd.Next(2, 12),
+            "^" => rnd.Next(2, 4),
+            _ => GenValue(s, rnd)
+        };
+    }
+
     private static int? Calc(int a, string op, int b)
     {
+        if (op == "^") return CalcPow(a, b);
         return op switch
         {
             "+" => a + b,
@@ -304,8 +536,20 @@ public sealed class MathCrossGeneratorService
         };
     }
 
+    private static int? CalcPow(int a, int b)
+    {
+        if (b < 0) return null;
+        double p = Math.Pow(a, b);
+        if (double.IsNaN(p) || double.IsInfinity(p)) return null;
+        if (p < -1_000_000 || p > 1_000_000) return null;
+        int result = (int)Math.Round(p);
+        if (Math.Abs(p - result) > 0.001) return null;
+        return result;
+    }
+
     private static decimal? CalcDec(decimal a, string op, decimal b, bool allowDecimalDivision)
     {
+        if (op == "^") return CalcPowDec(a, b);
         return op switch
         {
             "+" => a + b,
@@ -314,6 +558,15 @@ public sealed class MathCrossGeneratorService
             "÷" when b != 0 => DivideWithRule(a, b, allowDecimalDivision),
             _ => null
         };
+    }
+
+    private static decimal? CalcPowDec(decimal a, decimal b)
+    {
+        if (b != Math.Truncate(b) || b < 0) return null;
+        double p = Math.Pow((double)a, (double)b);
+        if (double.IsNaN(p) || double.IsInfinity(p)) return null;
+        if (p < -1_000_000 || p > 1_000_000) return null;
+        return (decimal)Math.Round(p, 1);
     }
 
     private static decimal? DivideWithRule(decimal a, decimal b, bool allowDecimalDivision)
@@ -412,6 +665,22 @@ public sealed class MathCrossGeneratorService
                     if (a >= s.MinVal && a <= s.MaxVal) return (a, b);
                     break;
                 }
+                case "^":
+                {
+                    for (int exp = 2; exp <= 3; exp++)
+                    {
+                        if (c <= 0) break;
+                        double root = Math.Pow(c, 1.0 / exp);
+                        int iroot = (int)Math.Round(root);
+                        if (iroot >= 2 && iroot <= 10 && CalcPow(iroot, exp) == c)
+                        {
+                            a = iroot;
+                            b = exp;
+                            if (a >= s.MinVal && a <= s.MaxVal) return (a, b);
+                        }
+                    }
+                    break;
+                }
             }
         }
 
@@ -470,6 +739,37 @@ public sealed class MathCrossGeneratorService
             int c = startC + i * dc;
             grid[r, c] = cells[i].type;
             sols[r, c] = cells[i].val;
+        }
+    }
+
+    private List<CellChange> PlaceWithChanges(CellType[,] grid, string[,] sols, int startR, int startC, bool horizontal, EquationData eq, int len)
+    {
+        int dr = horizontal ? 0 : 1;
+        int dc = horizontal ? 1 : 0;
+        var cells = BuildCells(eq, len);
+        var changes = new List<CellChange>(len / 2 + 1);
+
+        for (int i = 0; i < len; i++)
+        {
+            int r = startR + i * dr;
+            int c = startC + i * dc;
+            if (grid[r, c] == CellType.Empty)
+                changes.Add(new CellChange(r, c));
+
+            grid[r, c] = cells[i].type;
+            sols[r, c] = cells[i].val;
+        }
+
+        return changes;
+    }
+
+    private static void UndoChanges(CellType[,] grid, string[,] sols, List<CellChange> changes)
+    {
+        for (int i = changes.Count - 1; i >= 0; i--)
+        {
+            var c = changes[i];
+            grid[c.Row, c.Col] = CellType.Empty;
+            sols[c.Row, c.Col] = "";
         }
     }
 
@@ -532,67 +832,260 @@ public sealed class MathCrossGeneratorService
                 };
 
         game.Equations = ScanEquations(game, s.EquationLength);
+        return CompactGameByRemovingEmptyStrips(game, s.EquationLength);
+    }
+
+    private MathCrossGame CompactGameByRemovingEmptyStrips(MathCrossGame game, int equationLength)
+    {
+        var source = game.Grid;
+        int rows = game.Rows;
+        int cols = game.Cols;
+
+        if (rows <= 0 || cols <= 0)
+            return game;
+
+        var rowMap = Enumerable.Range(0, rows)
+            .Where(r => Enumerable.Range(0, cols).Any(c => source[r, c].Type != CellType.Empty))
+            .ToList();
+
+        var colMap = Enumerable.Range(0, cols)
+            .Where(c => Enumerable.Range(0, rows).Any(r => source[r, c].Type != CellType.Empty))
+            .ToList();
+
+        if (rowMap.Count == rows && colMap.Count == cols)
+            return game;
+
+        if (rowMap.Count == 0 || colMap.Count == 0)
+            return game;
+
+        var compact = new MathCrossCell[rowMap.Count, colMap.Count];
+        for (int r = 0; r < rowMap.Count; r++)
+        {
+            for (int c = 0; c < colMap.Count; c++)
+            {
+                var src = source[rowMap[r], colMap[c]];
+                compact[r, c] = new MathCrossCell
+                {
+                    Row = r,
+                    Col = c,
+                    Type = src.Type,
+                    Solution = src.Solution,
+                    UserInput = src.UserInput,
+                    IsGiven = src.IsGiven,
+                    IsSelected = src.IsSelected
+                };
+            }
+        }
+
+        game.Rows = rowMap.Count;
+        game.Cols = colMap.Count;
+        game.Grid = compact;
+        game.Equations = ScanEquations(game, equationLength);
         return game;
+    }
+
+    private static int CountCompletelyEmptyRows(MathCrossGame game)
+    {
+        int count = 0;
+        for (int r = 0; r < game.Rows; r++)
+        {
+            bool empty = true;
+            for (int c = 0; c < game.Cols; c++)
+            {
+                if (game.Grid[r, c].Type != CellType.Empty)
+                {
+                    empty = false;
+                    break;
+                }
+            }
+
+            if (empty)
+                count++;
+        }
+
+        return count;
+    }
+
+    private static int CountCompletelyEmptyCols(MathCrossGame game)
+    {
+        int count = 0;
+        for (int c = 0; c < game.Cols; c++)
+        {
+            bool empty = true;
+            for (int r = 0; r < game.Rows; r++)
+            {
+                if (game.Grid[r, c].Type != CellType.Empty)
+                {
+                    empty = false;
+                    break;
+                }
+            }
+
+            if (empty)
+                count++;
+        }
+
+        return count;
     }
 
     private MathCrossGame GenerateFallbackGrid(Settings s, Random rnd)
     {
-        int baseSeed = rnd.Next();
+        var effective = ResolveEffectiveSettings(s, null);
+        return GenerateFallbackGridWithEffective(s, rnd, effective);
+    }
 
-        for (int attempt = 0; attempt < 96; attempt++)
+    private MathCrossGame GenerateFallbackGridWithEffective(Settings s, Random rnd, EffectiveSettings effective)
+    {
+        MathCrossGame? best = null;
+        double bestScore = double.NegativeInfinity;
+
+        for (int attempt = 0; attempt < 220; attempt++)
         {
-            var candidate = TryGenerate(s, new Random(baseSeed + attempt * 541));
-            if (candidate == null) continue;
-            if (candidate.Equations.Count < s.MinEquations || candidate.Equations.Count > s.MaxEquations) continue;
-            if (!HasValidTopology(candidate)) continue;
-            return candidate;
+            var candidate = TryBuildEmergencyTemplateWithEffective(s, effective, new Random(rnd.Next() + attempt * 101));
+            double score = ScoreFallbackCandidate(candidate, effective);
+
+            if (score > bestScore)
+            {
+                best = candidate;
+                bestScore = score;
+            }
+
+            if (HasValidTopology(candidate)
+                && candidate.Equations.Count >= effective.MinEquations
+                && candidate.Equations.Count <= effective.MaxEquations)
+            {
+                return candidate;
+            }
         }
 
-        return TryBuildEmergencyTemplate(s, rnd);
+        for (int attempt = 0; attempt < 320; attempt++)
+        {
+            var candidate = TryBuildEmergencyTemplateWithEffective(s, effective, new Random(rnd.Next() + attempt * 103));
+            double score = ScoreFallbackCandidate(candidate, effective);
+            if (score > bestScore)
+            {
+                best = candidate;
+                bestScore = score;
+            }
+        }
+
+        return best ?? TryBuildEmergencyTemplateWithEffective(s, effective, rnd);
     }
 
     private MathCrossGame TryBuildEmergencyTemplate(Settings s, Random rnd)
     {
-        int rows = 25;
-        int cols = 25;
-        var game = new MathCrossGame
-        {
-            Rows = rows,
-            Cols = cols,
-            Grid = new MathCrossCell[rows, cols],
-            Difficulty = s.DifficultyKey,
-            EquationLength = s.EquationLength,
-            UseExtendedEquations = s.IsExtended
-        };
+        var effective = ResolveEffectiveSettings(s, null);
+        return TryBuildEmergencyTemplateWithEffective(s, effective, rnd);
+    }
 
-        for (int r = 0; r < rows; r++)
-            for (int c = 0; c < cols; c++)
-                game.Grid[r, c] = new MathCrossCell { Row = r, Col = c, Type = CellType.Empty, Solution = "", UserInput = "", IsGiven = false };
+    private static double ScoreFallbackCandidate(MathCrossGame game, EffectiveSettings effective)
+    {
+        double fill = CalculateFillRatio(game);
+        double emptyPenalty = CalculateLargestEmptyRegionRatio(game);
+        int eq = game.Equations.Count;
 
-        int[] lineStarts = { 1, 1 + game.EquationLength };
+        int under = Math.Max(0, effective.MinEquations - eq);
+        int over = Math.Max(0, eq - effective.MaxEquations);
+        int outOfRange = under + over;
 
-        // 4 horizontal equations
-        foreach (int hr in lineStarts)
-        {
-            foreach (int hc in lineStarts)
+        int fullEmptyRows = CountCompletelyEmptyRows(game);
+        int fullEmptyCols = CountCompletelyEmptyCols(game);
+
+        double score = 0;
+        score += fill * 120.0;
+        score -= emptyPenalty * 160.0;
+        score -= outOfRange * 14.0;
+        score -= (fullEmptyRows + fullEmptyCols) * 10.0;
+
+        if (HasValidTopology(game))
+            score += 90.0;
+
+        return score;
+    }
+
+    private MathCrossGame TryBuildEmergencyTemplateWithEffective(Settings s, EffectiveSettings effective, Random rnd)
+    {
+        var grid = new CellType[GridSize, GridSize];
+        var solutions = new string[GridSize, GridSize];
+        for (int r = 0; r < GridSize; r++)
+            for (int c = 0; c < GridSize; c++)
             {
-                var eq = GenerateEquation(s, rnd);
-                if (eq != null) PlaceInGame(game, hr, hc, horizontal: true, eq, game.EquationLength);
+                grid[r, c] = CellType.Empty;
+                solutions[r, c] = "";
+            }
+
+        int midR = GridSize / 2;
+        int midC = (GridSize - s.EquationLength) / 2;
+        var first = GenerateEquation(s, rnd);
+        if (first == null)
+            return BuildGame(grid, solutions, s);
+
+        Place(grid, solutions, midR, midC, horizontal: true, first, s.EquationLength);
+
+        int target = rnd.Next(effective.MinEquations, effective.MaxEquations + 1);
+        int placed = 1;
+        int attempts = 0;
+        int maxAttempts = 1000;
+        int maxWidth = effective.MaxLayoutWidth;
+        int maxHeight = effective.MaxLayoutHeight;
+        var bounds = ComputeBounds(grid);
+        int[] anchors = s.IsExtended ? new[] { 0, 2, 4 } : new[] { 0, 2, 4 };
+
+        while (placed < target && attempts < maxAttempts)
+        {
+            attempts++;
+            bool placedOne = false;
+            var numbers = GetNumberPositions(grid, solutions).OrderBy(_ => rnd.Next()).ToList();
+
+            foreach (var (nr, nc, val) in numbers)
+            {
+                bool hasHorizontal = HasEquationInDirection(grid, nr, nc, horizontal: true);
+                bool hasVertical = HasEquationInDirection(grid, nr, nc, horizontal: false);
+                if (hasHorizontal && hasVertical) continue;
+
+                var directions = new List<bool>();
+                if (!hasVertical) directions.Add(true);
+                if (!hasHorizontal) directions.Add(false);
+
+                foreach (var vertical in directions)
+                {
+                    foreach (var anchor in anchors)
+                    {
+                        var eq = GenerateEquationWithValue(s, rnd, anchor, val);
+                        if (eq == null) continue;
+
+                        int startR = vertical ? nr - anchor : nr;
+                        int startC = vertical ? nc : nc - anchor;
+
+                        if (!CanPlace(grid, solutions, startR, startC, vertical, s.EquationLength, eq, nr, nc))
+                            continue;
+
+                        var simulation = SimulatePlacement(grid, solutions, startR, startC, vertical, s.EquationLength, eq, bounds);
+                        if (simulation.NewBounds.Width > maxWidth + 2 || simulation.NewBounds.Height > maxHeight + 2) // Allow slight overflow if necessary to reach equation count
+                            continue;
+
+                        Place(grid, solutions, startR, startC, horizontal: !vertical, eq, s.EquationLength);
+                        bounds = simulation.NewBounds;
+                        placed++;
+                        placedOne = true;
+                        break;
+                    }
+
+                    if (placedOne) break;
+                }
+
+                if (placedOne) break;
+            }
+
+            if (!placedOne)
+            {
+                if (maxWidth < GridSize) maxWidth++;
+                if (maxHeight < GridSize) maxHeight++;
+                if (maxWidth >= GridSize && maxHeight >= GridSize) break;
             }
         }
 
-        // 4 vertical equations (fixed row/col bug)
-        foreach (int vc in lineStarts)
-        {
-            foreach (int vr in lineStarts)
-            {
-                var eq = GenerateEquation(s, rnd);
-                if (eq != null) PlaceInGame(game, vr, vc, horizontal: false, eq, game.EquationLength);
-            }
-        }
-
-        game.Equations = ScanEquations(game, game.EquationLength);
-        return game;
+        return BuildGame(grid, solutions, s);
     }
 
     private void PlaceInGame(MathCrossGame game, int startR, int startC, bool horizontal, EquationData eq, int len)
@@ -687,6 +1180,11 @@ public sealed class MathCrossGeneratorService
                     cell.IsGiven = true;
                     cell.UserInput = "";
                 }
+                else if (cell.Type == CellType.Operator && s.OperatorsAlwaysGiven)
+                {
+                    cell.IsGiven = true;
+                    cell.UserInput = cell.Solution;
+                }
                 else
                 {
                     cell.IsGiven = false;
@@ -710,11 +1208,14 @@ public sealed class MathCrossGeneratorService
         }
 
         EnsureSolvable(game, rnd);
-        HideCellsInFullyGivenEquations(game, rnd);
+        HideCellsInFullyGivenEquations(game, rnd, s);
 
-        if (editable.Count > 0 && editable.All(c => c.IsGiven))
+        var hideableFinal = s.OperatorsAlwaysGiven
+            ? editable.Where(c => c.Type == CellType.Number).ToList()
+            : editable;
+        if (hideableFinal.Count > 0 && hideableFinal.All(c => c.IsGiven))
         {
-            var hide = editable[rnd.Next(editable.Count)];
+            var hide = hideableFinal[rnd.Next(hideableFinal.Count)];
             hide.IsGiven = false;
             hide.UserInput = "";
         }
@@ -755,7 +1256,7 @@ public sealed class MathCrossGeneratorService
         return picked;
     }
 
-    private void HideCellsInFullyGivenEquations(MathCrossGame game, Random rnd)
+    private void HideCellsInFullyGivenEquations(MathCrossGame game, Random rnd, Settings s)
     {
         foreach (var eq in game.Equations.OrderBy(_ => rnd.Next()))
         {
@@ -768,7 +1269,13 @@ public sealed class MathCrossGeneratorService
             if (cells.Count == 0 || cells.Any(c => !c.IsGiven))
                 continue;
 
-            var hide = cells[rnd.Next(cells.Count)];
+            var hideable = s.OperatorsAlwaysGiven
+                ? cells.Where(c => c.Type == CellType.Number).ToList()
+                : cells;
+
+            if (hideable.Count == 0) continue;
+
+            var hide = hideable[rnd.Next(hideable.Count)];
             hide.IsGiven = false;
             hide.UserInput = "";
         }
@@ -776,7 +1283,7 @@ public sealed class MathCrossGeneratorService
 
     private void EnsureSolvable(MathCrossGame game, Random rnd)
     {
-        for (int iter = 0; iter < 80; iter++)
+        for (int iter = 0; iter < 20; iter++)
         {
             var solved = new bool[game.Rows, game.Cols];
 
@@ -824,7 +1331,7 @@ public sealed class MathCrossGeneratorService
 
     private bool IsPlayable(MathCrossGame game)
     {
-        if (game.Equations.Count < 8 || game.Equations.Count > 12) return false;
+        if (game.Equations.Count < 10 || game.Equations.Count > 15) return false;
 
         int editable = 0;
         int hidden = 0;
@@ -842,10 +1349,16 @@ public sealed class MathCrossGeneratorService
     private static bool HasValidTopology(MathCrossGame game)
     {
         int n = game.Equations.Count;
-        if (n < 8 || n > 12) return false;
+        if (n < 10 || n > 15) return false;
+
+        if (!HasCompactBounds(game.Rows, game.Cols)) return false;
+        if (CalculateFillRatio(game) < MinTopologyCompactnessRatio) return false;
+        if (CalculateLargestEmptyRegionRatio(game) > MaxLargestEmptyRegionRatio) return false;
 
         var adj = new List<int>[n];
         for (int i = 0; i < n; i++) adj[i] = new List<int>();
+
+        var hasPerpendicularIntersection = new bool[n];
 
         int intersections = 0;
         for (int i = 0; i < n; i++)
@@ -855,12 +1368,41 @@ public sealed class MathCrossGeneratorService
                     adj[i].Add(j);
                     adj[j].Add(i);
                     intersections++;
+
+                    if (game.Equations[i].IsHorizontal != game.Equations[j].IsHorizontal)
+                    {
+                        hasPerpendicularIntersection[i] = true;
+                        hasPerpendicularIntersection[j] = true;
+                    }
                 }
 
         if (adj.Any(a => a.Count == 0)) return false;
+        if (hasPerpendicularIntersection.Any(v => !v)) return false;
+
+        var visited = new bool[n];
+        var queue = new Queue<int>();
+        visited[0] = true;
+        queue.Enqueue(0);
+
+        while (queue.Count > 0)
+        {
+            int current = queue.Dequeue();
+            foreach (var next in adj[current])
+            {
+                if (visited[next]) continue;
+                visited[next] = true;
+                queue.Enqueue(next);
+            }
+        }
+
+        if (visited.Any(v => !v)) return false;
 
         bool hasBranch = adj.Any(a => a.Count >= 3);
-        if (!hasBranch && intersections < n - 1 && adj.Max(a => a.Count) <= 2)
+        if (!hasBranch && intersections < n)
+            return false;
+
+        int leafCount = adj.Count(a => a.Count == 1);
+        if (leafCount > MaxLeafEquations)
             return false;
 
         return true;
@@ -885,9 +1427,16 @@ public sealed class MathCrossGeneratorService
         actualEquationCount = equations.Count;
         if (actualEquationCount < minEquations || actualEquationCount > maxEquations) return false;
 
+        var bounds = ComputeBounds(grid);
+        if (!HasCompactBounds(bounds.Height, bounds.Width)) return false;
+        if (CalculateFillRatio(grid, bounds) < MinTopologyCompactnessRatio) return false;
+        if (CalculateLargestEmptyRegionRatio(grid, bounds) > MaxLargestEmptyRegionRatio) return false;
+
         int n = equations.Count;
         var adj = new List<int>[n];
         for (int i = 0; i < n; i++) adj[i] = new List<int>();
+
+        var hasPerpendicularIntersection = new bool[n];
 
         int intersections = 0;
         for (int i = 0; i < n; i++)
@@ -897,12 +1446,41 @@ public sealed class MathCrossGeneratorService
                     adj[i].Add(j);
                     adj[j].Add(i);
                     intersections++;
+
+                    if (equations[i].IsHorizontal != equations[j].IsHorizontal)
+                    {
+                        hasPerpendicularIntersection[i] = true;
+                        hasPerpendicularIntersection[j] = true;
+                    }
                 }
 
         if (adj.Any(a => a.Count == 0)) return false;
+        if (hasPerpendicularIntersection.Any(v => !v)) return false;
+
+        var visited = new bool[n];
+        var queue = new Queue<int>();
+        visited[0] = true;
+        queue.Enqueue(0);
+
+        while (queue.Count > 0)
+        {
+            int current = queue.Dequeue();
+            foreach (var next in adj[current])
+            {
+                if (visited[next]) continue;
+                visited[next] = true;
+                queue.Enqueue(next);
+            }
+        }
+
+        if (visited.Any(v => !v)) return false;
 
         bool hasBranch = adj.Any(a => a.Count >= 3);
-        if (!hasBranch && intersections < n - 1 && adj.Max(a => a.Count) <= 2)
+        if (!hasBranch && intersections < n)
+            return false;
+
+        int leafCount = adj.Count(a => a.Count == 1);
+        if (leafCount > MaxLeafEquations)
             return false;
 
         return true;
@@ -919,8 +1497,129 @@ public sealed class MathCrossGeneratorService
         return v.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
     }
 
+    private static bool HasCompactBounds(int rows, int cols)
+    {
+        return Math.Abs(rows - cols) <= MaxAspectDelta;
+    }
+
+    private static double CalculateFillRatio(MathCrossGame game)
+    {
+        int occupied = 0;
+        for (int r = 0; r < game.Rows; r++)
+            for (int c = 0; c < game.Cols; c++)
+                if (game.Grid[r, c].Type != CellType.Empty)
+                    occupied++;
+
+        return (double)occupied / Math.Max(1, game.Rows * game.Cols);
+    }
+
+    private static double CalculateFillRatio(CellType[,] grid, Bounds bounds)
+    {
+        int occupied = 0;
+        for (int r = bounds.MinR; r <= bounds.MaxR; r++)
+            for (int c = bounds.MinC; c <= bounds.MaxC; c++)
+                if (grid[r, c] != CellType.Empty)
+                    occupied++;
+
+        return (double)occupied / Math.Max(1, bounds.Area);
+    }
+
+    private static double CalculateLargestEmptyRegionRatio(MathCrossGame game)
+    {
+        int rows = game.Rows;
+        int cols = game.Cols;
+        if (rows <= 0 || cols <= 0)
+            return 1.0;
+
+        var visited = new bool[rows, cols];
+        int largest = 0;
+
+        for (int r = 0; r < rows; r++)
+        {
+            for (int c = 0; c < cols; c++)
+            {
+                if (visited[r, c] || game.Grid[r, c].Type != CellType.Empty)
+                    continue;
+
+                int size = FloodEmptyRegion(rows, cols, visited, (rr, cc) => game.Grid[rr, cc].Type == CellType.Empty, r, c);
+                if (size > largest)
+                    largest = size;
+            }
+        }
+
+        return (double)largest / Math.Max(1, rows * cols);
+    }
+
+    private static double CalculateLargestEmptyRegionRatio(CellType[,] grid, Bounds bounds)
+    {
+        int rows = bounds.Height;
+        int cols = bounds.Width;
+        if (rows <= 0 || cols <= 0)
+            return 1.0;
+
+        var visited = new bool[rows, cols];
+        int largest = 0;
+
+        for (int r = 0; r < rows; r++)
+        {
+            for (int c = 0; c < cols; c++)
+            {
+                if (visited[r, c] || grid[bounds.MinR + r, bounds.MinC + c] != CellType.Empty)
+                    continue;
+
+                int size = FloodEmptyRegion(rows, cols, visited, (rr, cc) =>
+                    grid[bounds.MinR + rr, bounds.MinC + cc] == CellType.Empty, r, c);
+                if (size > largest)
+                    largest = size;
+            }
+        }
+
+        return (double)largest / Math.Max(1, rows * cols);
+    }
+
+    private static int FloodEmptyRegion(int rows, int cols, bool[,] visited, Func<int, int, bool> isEmpty, int startR, int startC)
+    {
+        var queue = new Queue<(int r, int c)>();
+        queue.Enqueue((startR, startC));
+        visited[startR, startC] = true;
+        int size = 0;
+
+        while (queue.Count > 0)
+        {
+            var (r, c) = queue.Dequeue();
+            size++;
+
+            TryVisit(r - 1, c);
+            TryVisit(r + 1, c);
+            TryVisit(r, c - 1);
+            TryVisit(r, c + 1);
+        }
+
+        return size;
+
+        void TryVisit(int nr, int nc)
+        {
+            if (nr < 0 || nr >= rows || nc < 0 || nc >= cols)
+                return;
+            if (visited[nr, nc] || !isEmpty(nr, nc))
+                return;
+
+            visited[nr, nc] = true;
+            queue.Enqueue((nr, nc));
+        }
+    }
+
     private record EquationData(decimal[] Numbers, string[] Operators);
     private record EquationPlacement(int StartR, int StartC, bool Horizontal, EquationData Eq);
+    private record Bounds(int MinR, int MaxR, int MinC, int MaxC)
+    {
+        public int Width => MaxC - MinC + 1;
+        public int Height => MaxR - MinR + 1;
+        public int Area => Width * Height;
+    }
+    private record PlacementSimulation(Bounds NewBounds, int Intersections, int NewCells);
+    private record PlacementCandidate(int StartR, int StartC, bool Vertical, EquationData Equation, Bounds NewBounds, double Score);
+    private record CellChange(int Row, int Col);
 
     private record Settings(
         string DifficultyKey,
@@ -932,7 +1631,8 @@ public sealed class MathCrossGeneratorService
         int MaxEquations,
         double GivenPercent,
         int EquationLength,
-        bool IsExtended);
+        bool IsExtended,
+        bool OperatorsAlwaysGiven = false);
 
     private static Settings GetSettings(string key)
     {
@@ -941,18 +1641,45 @@ public sealed class MathCrossGeneratorService
         return key switch
         {
             "easy" => new Settings("easy", 1, 99, false,
-                new[] { "+", "-" }, 8, 12, 0.45, 5, false),
+                new[] { "+", "-" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.45, 5, false),
 
             "normal" => new Settings("normal", 1, 99, false,
-                new[] { "+", "-", "×" }, 8, 12, 0.40, 5, false),
+                new[] { "+", "-", "×" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.40, 5, false),
 
-            "hard" => new Settings("hard", -1, 99, false,
-                new[] { "+", "-", "×", "÷" }, 8, 12, 0.35, 7, true),
+            "hard" => new Settings("hard", -100, 100, false,
+                new[] { "+", "-", "×", "÷" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.35, 5, false, true),
 
-            "master" => new Settings("master", -1, 99, true,
-                new[] { "+", "-", "×", "÷" }, 8, 12, 0.30, 7, true),
+            "master" => new Settings("master", -100, 100, true,
+                new[] { "+", "-", "×", "÷", "^" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.30, 5, false, true),
 
             _ => GetSettings("easy")
         };
+    }
+
+    private static EffectiveSettings ResolveEffectiveSettings(Settings settings, LayoutConstraints? constraints)
+    {
+        int baseLayoutSize = settings.IsExtended ? ExtendedMaxLayoutSize : DefaultMaxLayoutSize;
+
+        if (constraints is null)
+        {
+            return new EffectiveSettings(settings.MinEquations, settings.MaxEquations, baseLayoutSize, baseLayoutSize);
+        }
+
+        int maxRows = Math.Clamp(constraints.Value.MaxRows, settings.EquationLength, baseLayoutSize);
+        int maxCols = Math.Clamp(constraints.Value.MaxCols, settings.EquationLength, baseLayoutSize);
+
+        int area = maxRows * maxCols;
+        int estimated = Math.Max(settings.MinEquations, area / 7);
+
+        int minEquations = Math.Clamp(
+            constraints.Value.MinEquations ?? estimated,
+            settings.MinEquations,
+            settings.MaxEquations);
+        int maxEquations = Math.Clamp(
+            constraints.Value.MaxEquations ?? (estimated + 2),
+            minEquations,
+            settings.MaxEquations);
+
+        return new EffectiveSettings(minEquations, maxEquations, maxCols, maxRows);
     }
 }

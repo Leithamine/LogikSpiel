@@ -43,16 +43,12 @@
         </Border>
 
         <!-- BOARD -->
-        <Border Grid.Row="1" Style="{StaticResource GlassCard}" x:Name="BoardContainer">
-            <ScrollView Orientation="Both" 
-                        HorizontalScrollBarVisibility="Never" 
-                        VerticalScrollBarVisibility="Never">
-                <Grid x:Name="BoardGrid" 
-                      HorizontalOptions="Center" 
-                      VerticalOptions="Center" 
-                      RowSpacing="4" 
-                      ColumnSpacing="4"/>
-            </ScrollView>
+        <Border Grid.Row="1" Style="{StaticResource GlassCard}" x:Name="BoardContainer" Padding="12">
+            <Grid x:Name="BoardGrid"
+                  HorizontalOptions="Center"
+                  VerticalOptions="Center"
+                  RowSpacing="4"
+                  ColumnSpacing="4"/>
         </Border>
 
         <!-- CONTROLS -->
