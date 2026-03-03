@@ -356,11 +356,21 @@ public sealed class MathCrossGeneratorService
 
         for (int i = 0; i < 30; i++)
         {
-            int a, b;
-            if (op == "×")
+            decimal a, b;
+            if (op == "^")
+            {
+                a = rnd.Next(2, 11);
+                b = rnd.Next(2, 4);
+            }
+            else if (op == "×")
             {
                 a = rnd.Next(2, 12);
                 b = rnd.Next(2, 12);
+            }
+            else if (s.AllowDecimals && rnd.Next(10) < 3)
+            {
+                a = GenValue(s, rnd);
+                b = GenValue(s, rnd);
             }
             else
             {
@@ -368,9 +378,10 @@ public sealed class MathCrossGeneratorService
                 b = rnd.Next(Math.Max(s.MinVal, -50), Math.Min(50, s.MaxVal) + 1);
             }
 
-            int? c = Calc(a, op, b);
+            decimal? c = CalcDec(a, op, b, s.AllowDecimals);
             if (c == null || c.Value < s.MinVal || c.Value > s.MaxVal) continue;
-            return new EquationData(new decimal[] { a, b, c.Value }, new[] { op });
+            if (!s.AllowDecimals && c.Value != Math.Truncate(c.Value)) continue;
+            return new EquationData(new[] { a, b, c.Value }, new[] { op });
         }
 
         return null;
@@ -440,22 +451,38 @@ public sealed class MathCrossGeneratorService
                 if (numIdx == 0)
                 {
                     a = anchorVal;
-                    b = op == "×" ? rnd.Next(2, 12) : GenValue(s, rnd);
-                    var res = Calc((int)a, op, (int)b);
+                    if (op == "^")
+                        b = rnd.Next(2, 4);
+                    else if (op == "×")
+                        b = rnd.Next(2, 12);
+                    else
+                        b = GenValue(s, rnd);
+                    var res = CalcDec(a, op, b, s.AllowDecimals);
                     if (res == null || res.Value < s.MinVal || res.Value > s.MaxVal) continue;
+                    if (!s.AllowDecimals && res.Value != Math.Truncate(res.Value)) continue;
                     c = res.Value;
                 }
                 else if (numIdx == 1)
                 {
                     b = anchorVal;
-                    a = op == "×" ? rnd.Next(2, 12) : GenValue(s, rnd);
-                    var res = Calc((int)a, op, (int)b);
+                    if (op == "^")
+                    {
+                        if (anchorVal != 2 && anchorVal != 3) continue;
+                        a = rnd.Next(2, 11);
+                    }
+                    else if (op == "×")
+                        a = rnd.Next(2, 12);
+                    else
+                        a = GenValue(s, rnd);
+                    var res = CalcDec(a, op, b, s.AllowDecimals);
                     if (res == null || res.Value < s.MinVal || res.Value > s.MaxVal) continue;
+                    if (!s.AllowDecimals && res.Value != Math.Truncate(res.Value)) continue;
                     c = res.Value;
                 }
                 else
                 {
                     c = anchorVal;
+                    if (c != Math.Truncate(c)) continue;
                     var rev = Reverse((int)c, op, s, rnd);
                     if (rev == null) continue;
                     a = rev.Value.a;
@@ -492,6 +519,7 @@ public sealed class MathCrossGeneratorService
             "-" => a - b,
             "×" => a * b,
             "÷" when b != 0 && a % b == 0 => a / b,
+            "^" when b >= 0 => (int)Math.Pow(a, b),
             _ => null
         };
     }
@@ -504,6 +532,7 @@ public sealed class MathCrossGeneratorService
             "-" => a - b,
             "×" => a * b,
             "÷" when b != 0 => DivideWithRule(a, b, allowDecimalDivision),
+            "^" when b >= 0 && b == Math.Truncate(b) => (decimal)Math.Pow((double)a, (double)b),
             _ => null
         };
     }
@@ -603,6 +632,24 @@ public sealed class MathCrossGeneratorService
                     a = c * b;
                     if (a >= s.MinVal && a <= s.MaxVal) return (a, b);
                     break;
+                }
+                case "^":
+                {
+                    var candidates = new List<(int a, int b)>();
+                    for (int exp = 2; exp <= 3; exp++)
+                    {
+                        double root = Math.Round(Math.Pow(Math.Abs(c), 1.0 / exp));
+                        for (int tryBase = (int)root - 1; tryBase <= (int)root + 1; tryBase++)
+                        {
+                            if (tryBase < 2 || tryBase > 10) continue;
+                            if ((int)Math.Pow(tryBase, exp) == c)
+                                candidates.Add((tryBase, exp));
+                            if (exp % 2 == 1 && (int)Math.Pow(-tryBase, exp) == c)
+                                candidates.Add((-tryBase, exp));
+                        }
+                    }
+                    if (candidates.Count == 0) break;
+                    return candidates[rnd.Next(candidates.Count)];
                 }
             }
         }
@@ -1103,6 +1150,11 @@ public sealed class MathCrossGeneratorService
                     cell.IsGiven = true;
                     cell.UserInput = "";
                 }
+                else if (cell.Type == CellType.Operator)
+                {
+                    cell.IsGiven = true;
+                    cell.UserInput = cell.Solution;
+                }
                 else
                 {
                     cell.IsGiven = false;
@@ -1113,7 +1165,7 @@ public sealed class MathCrossGeneratorService
         var editable = new List<MathCrossCell>();
         for (int r = 0; r < game.Rows; r++)
             for (int c = 0; c < game.Cols; c++)
-                if (game.Grid[r, c].Type is CellType.Number or CellType.Operator)
+                if (game.Grid[r, c].Type == CellType.Number)
                     editable.Add(game.Grid[r, c]);
 
         int toGive = (int)(editable.Count * s.GivenPercent);
@@ -1151,7 +1203,7 @@ public sealed class MathCrossGeneratorService
             var candidates = eq.Cells
                 .Where(p => IsWithinBounds(game, p.row, p.col))
                 .Select(p => game.Grid[p.row, p.col])
-                .Where(c => c.Type is CellType.Number or CellType.Operator)
+                .Where(c => c.Type == CellType.Number)
                 .ToList();
 
             if (candidates.Count == 0) continue;
@@ -1178,7 +1230,7 @@ public sealed class MathCrossGeneratorService
             var cells = eq.Cells
                 .Where(p => IsWithinBounds(game, p.row, p.col))
                 .Select(p => game.Grid[p.row, p.col])
-                .Where(c => c.Type is CellType.Number or CellType.Operator)
+                .Where(c => c.Type == CellType.Number)
                 .ToList();
 
             if (cells.Count == 0 || cells.Any(c => !c.IsGiven))
@@ -1198,7 +1250,7 @@ public sealed class MathCrossGeneratorService
 
             for (int r = 0; r < game.Rows; r++)
                 for (int c = 0; c < game.Cols; c++)
-                    if (game.Grid[r, c].IsGiven || game.Grid[r, c].Type is CellType.Empty or CellType.Equals)
+                    if (game.Grid[r, c].IsGiven || game.Grid[r, c].Type is CellType.Empty or CellType.Equals or CellType.Operator)
                         solved[r, c] = true;
 
             bool progress = true;
@@ -1227,7 +1279,7 @@ public sealed class MathCrossGeneratorService
             var unsolved = new List<MathCrossCell>();
             for (int r = 0; r < game.Rows; r++)
                 for (int c = 0; c < game.Cols; c++)
-                    if (game.Grid[r, c].Type is CellType.Number or CellType.Operator && !solved[r, c])
+                    if (game.Grid[r, c].Type == CellType.Number && !solved[r, c])
                         unsolved.Add(game.Grid[r, c]);
 
             if (unsolved.Count == 0) return;
@@ -1246,7 +1298,7 @@ public sealed class MathCrossGeneratorService
         int hidden = 0;
         for (int r = 0; r < game.Rows; r++)
             for (int c = 0; c < game.Cols; c++)
-                if (game.Grid[r, c].Type is CellType.Number or CellType.Operator)
+                if (game.Grid[r, c].Type == CellType.Number)
                 {
                     editable++;
                     if (!game.Grid[r, c].IsGiven) hidden++;
@@ -1554,11 +1606,11 @@ public sealed class MathCrossGeneratorService
             "normal" => new Settings("normal", 1, 99, false,
                 new[] { "+", "-", "×" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.40, 5, false),
 
-            "hard" => new Settings("hard", -1, 99, false,
-                new[] { "+", "-", "×", "÷" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.35, 7, true),
+            "hard" => new Settings("hard", -100, 100, false,
+                new[] { "+", "-", "×", "÷" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.35, 5, false),
 
-            "master" => new Settings("master", -1, 99, true,
-                new[] { "+", "-", "×", "÷" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.30, 7, true),
+            "master" => new Settings("master", -100, 100, true,
+                new[] { "+", "-", "×", "÷", "^" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.30, 5, false),
 
             _ => GetSettings("easy")
         };
