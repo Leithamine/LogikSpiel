@@ -13,12 +13,12 @@ namespace LogikSpiel.View;
 public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposable
 {
     private bool _isLoaded;
-    private const double DefaultCellSize = 44;
-    private const double MinCellSize = 28;
-    private const double PreferredTouchCellSize = 44;
-    private const double MaxCellSize = 56;
-    private const double CellSpacing = 2;
-    private const double BoardInnerPadding = 8;
+    private const double DefaultCellSize = 48;
+    private const double MinCellSize = 32;
+    private const double PreferredTouchCellSize = 48;
+    private const double MaxCellSize = 64;
+    private const double CellSpacing = 1;
+    private const double BoardInnerPadding = 6;
 
     private double _uniformCellSize = DefaultCellSize;
 
@@ -75,20 +75,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
                 for (int c = 0; c < game.Cols; c++)
                 {
                     if (!cellMap.TryGetValue((r, c), out var cellVm))
-                    {
-                        var placeholder = new Border
-                        {
-                            StrokeShape = new RoundRectangle { CornerRadius = 2 },
-                            Stroke = new SolidColorBrush(Color.FromArgb("#36FFFFFF")),
-                            StrokeThickness = 0.8,
-                            BackgroundColor = Color.FromArgb("#12000000"),
-                            Padding = 0
-                        };
-                        Grid.SetRow(placeholder, r);
-                        Grid.SetColumn(placeholder, c);
-                        BoardGrid.Children.Add(placeholder);
                         continue;
-                    }
 
                     var cell = cellVm.Cell;
                     var border = new Border { StrokeShape = new RoundRectangle { CornerRadius = 2 }, Padding = 0, BindingContext = cellVm };
