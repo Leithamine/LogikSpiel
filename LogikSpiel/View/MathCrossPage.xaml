@@ -37,7 +37,10 @@
             <Grid x:Name="BoardGrid" HorizontalOptions="Center" VerticalOptions="Center" RowSpacing="4" ColumnSpacing="4"/>
         </Border>
 
-        <Border Grid.Row="2" Style="{StaticResource SolidCard}" Padding="12">
+        <Border Grid.Row="2" x:Name="NumberBankContainer" Style="{StaticResource SolidCard}" Padding="12">
+            <Border.GestureRecognizers>
+                <DropGestureRecognizer AllowDrop="True" Drop="OnBankDrop"/>
+            </Border.GestureRecognizers>
             <VerticalStackLayout Spacing="8">
                 <Label Text="Zahlenbank" Style="{StaticResource Caption}"/>
                 <CollectionView ItemsSource="{Binding NumberBank}" SelectionMode="None" HeightRequest="66">

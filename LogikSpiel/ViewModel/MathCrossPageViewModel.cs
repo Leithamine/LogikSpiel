@@ -25,6 +25,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
     private readonly IGameCatalogService _catalog;
     private readonly Stack<PlacementMove> _undoStack = new();
     private readonly HashSet<string> _satisfiedEquationCellKeys = new();
+    private readonly HashSet<string> _wrongEquationCellKeys = new();
 
     public event Action? RequestLayoutUpdate;
     private UserProfile? _userProfile;
@@ -232,6 +233,60 @@ public sealed class MathCrossPageViewModel : ObservableObject
 
     public void SetDragging(bool isDragging) => IsDragging = isDragging;
 
+    public bool TryMoveCellToCell(MathCrossCellViewModel? sourceVm, MathCrossCellViewModel? targetVm)
+    {
+        if (sourceVm == null || targetVm == null) return false;
+        var source = sourceVm.Cell;
+        var target = targetVm.Cell;
+
+        if (source == target) return false;
+        if (source.Type != CellType.Number || target.Type != CellType.Number) return false;
+        if (source.IsGiven || target.IsGiven) return false;
+        if (string.IsNullOrWhiteSpace(source.UserInput)) return false;
+
+        var srcValue = source.UserInput;
+        var srcTileId = source.PlacedTileId;
+        if (string.IsNullOrWhiteSpace(srcTileId))
+            srcTileId = Guid.NewGuid().ToString("N");
+
+        var tgtValue = target.UserInput;
+        var tgtTileId = target.PlacedTileId;
+
+        target.UserInput = srcValue;
+        target.PlacedTileId = srcTileId;
+
+        source.UserInput = tgtValue;
+        source.PlacedTileId = tgtTileId;
+
+        RefreshEquationHighlights();
+        return true;
+    }
+
+    public bool TryReturnCellNumberToBank(MathCrossCellViewModel? sourceVm)
+    {
+        if (sourceVm == null) return false;
+        var source = sourceVm.Cell;
+
+        if (source.Type != CellType.Number || source.IsGiven) return false;
+        if (string.IsNullOrWhiteSpace(source.UserInput)) return false;
+
+        string tileId = string.IsNullOrWhiteSpace(source.PlacedTileId)
+            ? Guid.NewGuid().ToString("N")
+            : source.PlacedTileId!;
+
+        NumberBank.Insert(0, new NumberBankTileViewModel(new NumberBankTile
+        {
+            Id = tileId,
+            Value = source.UserInput
+        }));
+
+        source.UserInput = "";
+        source.PlacedTileId = null;
+
+        RefreshEquationHighlights();
+        return true;
+    }
+
     private bool TryPlaceTileOnCell(NumberBankTileViewModel tileVm, MathCrossCell cell, bool isHint)
     {
         if (cell.Type != CellType.Number || cell.IsGiven)
@@ -340,15 +395,26 @@ public sealed class MathCrossPageViewModel : ObservableObject
     private void RefreshEquationHighlights()
     {
         _satisfiedEquationCellKeys.Clear();
+        _wrongEquationCellKeys.Clear();
         if (Game == null) return;
 
         foreach (var eq in Game.Equations)
         {
-            if (!IsEquationSatisfied(eq, DifficultyKey == "master"))
-                continue;
+            bool allNumbersFilled = AreAllEquationNumbersFilled(eq);
+            bool satisfied = IsEquationSatisfied(eq, DifficultyKey == "master");
 
-            foreach (var (r, c) in eq.Cells)
-                _satisfiedEquationCellKeys.Add(BuildCellKey(r, c));
+            if (satisfied)
+            {
+                foreach (var (r, c) in eq.Cells)
+                    _satisfiedEquationCellKeys.Add(BuildCellKey(r, c));
+                continue;
+            }
+
+            if (allNumbersFilled)
+            {
+                foreach (var (r, c) in eq.Cells)
+                    _wrongEquationCellKeys.Add(BuildCellKey(r, c));
+            }
         }
 
         foreach (var vm in FlatCells)
@@ -357,6 +423,26 @@ public sealed class MathCrossPageViewModel : ObservableObject
 
     public bool IsCellInSatisfiedEquation(MathCrossCell cell)
         => _satisfiedEquationCellKeys.Contains(BuildCellKey(cell.Row, cell.Col));
+
+    public bool IsCellInWrongEquation(MathCrossCell cell)
+        => _wrongEquationCellKeys.Contains(BuildCellKey(cell.Row, cell.Col));
+
+    private bool AreAllEquationNumbersFilled(MathEquation eq)
+    {
+        if (Game == null) return false;
+
+        foreach (var (r, c) in eq.Cells)
+        {
+            var cell = Game.Grid[r, c];
+            if (cell.Type != CellType.Number) continue;
+
+            var raw = cell.IsGiven ? cell.Solution : cell.UserInput;
+            if (string.IsNullOrWhiteSpace(raw))
+                return false;
+        }
+
+        return true;
+    }
 
     private bool IsEquationSatisfied(MathEquation eq, bool allowDecimals)
     {
@@ -559,6 +645,7 @@ public sealed class MathCrossCellViewModel : ObservableObject
     public bool IsEditable => !Cell.IsGiven && Cell.Type == CellType.Number;
     public bool IsDropTarget => _parent.IsDragging && IsEditable;
     public bool IsEquationSatisfied => _parent.IsCellInSatisfiedEquation(Cell);
+    public bool IsEquationWrong => _parent.IsCellInWrongEquation(Cell);
 
     public string DisplayText => Cell.Type == CellType.Equals || Cell.Type == CellType.Operator
         ? Cell.Solution
@@ -571,14 +658,17 @@ public sealed class MathCrossCellViewModel : ObservableObject
     public Brush BorderStroke => new SolidColorBrush(ResolveBorderColor());
     public double BorderThickness => IsSelected || IsDropTarget ? 2.5 : 1;
 
-    public Shadow? FocusGlow => (IsSelected || IsEquationSatisfied)
-        ? new Shadow { Brush = new SolidColorBrush(ResolveGlowColor()), Offset = new Point(0, 0), Radius = IsEquationSatisfied ? 16 : 14, Opacity = 1 }
+    public Shadow? FocusGlow => (IsSelected || IsEquationSatisfied || IsEquationWrong)
+        ? new Shadow { Brush = new SolidColorBrush(ResolveGlowColor()), Offset = new Point(0, 0), Radius = IsEquationWrong ? 16 : (IsEquationSatisfied ? 16 : 14), Opacity = 1 }
         : null;
 
     public AsyncCommand TapCellCommand { get; }
 
     private Color ResolveBorderColor()
     {
+        if (IsEquationWrong)
+            return GetColor("C_Error", "#D84B4B");
+
         if (IsEquationSatisfied)
             return GetColor("C_Success", "#42C67A");
 
@@ -589,8 +679,14 @@ public sealed class MathCrossCellViewModel : ObservableObject
         return GetColor("C_MathCell_Num_Border", "#5EA6D8");
     }
 
-    private Color ResolveGlowColor()
+    private Color ResolveBackgroundColor()
     {
+        if (IsEquationWrong)
+            return GetColor("C_Error", "#D84B4B");
+
+        if (IsEquationWrong)
+            return GetColor("C_Error", "#D84B4B");
+
         if (IsEquationSatisfied)
             return GetColor("C_Success", "#42C67A");
 
@@ -599,6 +695,9 @@ public sealed class MathCrossCellViewModel : ObservableObject
 
     private Color ResolveBackgroundColor()
     {
+        if (IsEquationWrong)
+            return GetColor("C_Error", "#D84B4B").WithAlpha(0.24f);
+
         if (IsEquationSatisfied)
             return GetColor("C_Success", "#42C67A").WithAlpha(0.28f);
 
@@ -634,6 +733,7 @@ public sealed class MathCrossCellViewModel : ObservableObject
         OnPropertyChanged(nameof(IsEditable));
         OnPropertyChanged(nameof(IsDropTarget));
         OnPropertyChanged(nameof(IsEquationSatisfied));
+        OnPropertyChanged(nameof(IsEquationWrong));
         OnPropertyChanged(nameof(CellBackground));
         OnPropertyChanged(nameof(BorderStroke));
         OnPropertyChanged(nameof(BorderThickness));

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
 using LogikSpiel.Services.Localization;
@@ -82,6 +84,9 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
                 if (cellVm.IsEditable)
                 {
                     border.GestureRecognizers.Add(new TapGestureRecognizer { Command = cellVm.TapCellCommand });
+                    border.GestureRecognizers.Add(new DragGestureRecognizer { });
+                    ((DragGestureRecognizer)border.GestureRecognizers[^1]).DragStarting += OnCellDragStarting;
+
                     border.GestureRecognizers.Add(new DropGestureRecognizer
                     {
                         AllowDrop = true
@@ -113,6 +118,38 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
         _vm.SetDragging(true);
     }
 
+
+    private void OnCellDragStarting(object? sender, DragStartingEventArgs e)
+    {
+        if (sender is not BindableObject bo || bo.BindingContext is not MathCrossCellViewModel cellVm) return;
+        var cell = cellVm.Cell;
+        if (!cellVm.IsEditable || string.IsNullOrWhiteSpace(cell.UserInput)) return;
+
+        e.Data.Properties["sourceCell"] = $"{cell.Row}:{cell.Col}";
+        _vm.SetDragging(true);
+    }
+
+    private MathCrossCellViewModel? ResolveCellVmFromProperties(IDictionary<string, object> properties)
+    {
+        if (!properties.TryGetValue("sourceCell", out var srcObj)) return null;
+        var src = srcObj?.ToString();
+        if (string.IsNullOrWhiteSpace(src)) return null;
+
+        var parts = src.Split(':');
+        if (parts.Length != 2) return null;
+        if (!int.TryParse(parts[0], out int r) || !int.TryParse(parts[1], out int c)) return null;
+
+        return _vm.FlatCells.FirstOrDefault(x => x.Cell.Row == r && x.Cell.Col == c);
+    }
+
+    private void OnBankDrop(object? sender, DropEventArgs e)
+    {
+        _vm.SetDragging(false);
+        var sourceVm = ResolveCellVmFromProperties(e.Data.Properties);
+        if (sourceVm == null) return;
+        _vm.TryReturnCellNumberToBank(sourceVm);
+    }
+
     private void OnCellDragOver(object? sender, DragEventArgs e)
     {
         e.AcceptedOperation = DataPackageOperation.Copy;
@@ -122,8 +159,16 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
     {
         _vm.SetDragging(false);
         if (sender is not BindableObject bo || bo.BindingContext is not MathCrossCellViewModel target) return;
-        if (!e.Data.Properties.TryGetValue("tileId", out var tileIdObj)) return;
-        _vm.TryPlaceTileById(tileIdObj?.ToString(), target);
+
+        if (e.Data.Properties.TryGetValue("tileId", out var tileIdObj) && !string.IsNullOrWhiteSpace(tileIdObj?.ToString()))
+        {
+            _vm.TryPlaceTileById(tileIdObj?.ToString(), target);
+            return;
+        }
+
+        var sourceVm = ResolveCellVmFromProperties(e.Data.Properties);
+        if (sourceVm == null) return;
+        _vm.TryMoveCellToCell(sourceVm, target);
     }
 
     private void OnBoardContainerSizeChanged(object? sender, EventArgs e) => RecalculateLayoutAndRefresh();
