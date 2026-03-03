@@ -1212,19 +1212,55 @@ public sealed class MathCrossGeneratorService
 
         int anchors = s.DifficultyKey switch
         {
-            "easy" => rnd.Next(13, 16),
-            "normal" => rnd.Next(11, 14),
-            "hard" => rnd.Next(9, 12),
-            "master" => rnd.Next(7, 10),
-            _ => 4
+            "easy" => rnd.Next(7, 10),
+            "normal" => rnd.Next(7, 10),
+            "hard" => rnd.Next(5, 8),
+            "master" => rnd.Next(5, 8),
+            _ => 6
         };
 
         anchors = Math.Min(Math.Max(1, anchors), Math.Max(1, allNumbers.Count - 1));
 
-        foreach (var cell in allNumbers.OrderBy(_ => rnd.Next()).Take(anchors))
+        var orderedCandidates = allNumbers.OrderBy(_ => rnd.Next()).ToList();
+        int givenCount = 0;
+        foreach (var cell in orderedCandidates)
         {
+            if (givenCount >= anchors) break;
+            if (WouldCompleteEquationWithGivenCell(game, cell)) continue;
+
             cell.IsGiven = true;
             cell.UserInput = cell.Solution;
+            givenCount++;
+        }
+
+        foreach (var eq in game.Equations)
+        {
+            var numberCells = eq.Cells
+                .Where(p => IsWithinBounds(game, p.row, p.col))
+                .Select(p => game.Grid[p.row, p.col])
+                .Where(c => c.Type == CellType.Number)
+                .ToList();
+
+            if (numberCells.Count > 0 && numberCells.All(c => c.IsGiven))
+            {
+                var hide = numberCells[rnd.Next(numberCells.Count)];
+                hide.IsGiven = false;
+                hide.UserInput = "";
+                givenCount--;
+            }
+        }
+
+        if (givenCount < anchors)
+        {
+            foreach (var cell in orderedCandidates.Where(c => !c.IsGiven))
+            {
+                if (givenCount >= anchors) break;
+                if (WouldCompleteEquationWithGivenCell(game, cell)) continue;
+
+                cell.IsGiven = true;
+                cell.UserInput = cell.Solution;
+                givenCount++;
+            }
         }
 
         game.NumberBank = allNumbers
@@ -1236,6 +1272,27 @@ public sealed class MathCrossGeneratorService
         game.GivenCells = allNumbers.Count(c => c.IsGiven);
     }
 
+
+    private bool WouldCompleteEquationWithGivenCell(MathCrossGame game, MathCrossCell candidate)
+    {
+        foreach (var eq in game.Equations)
+        {
+            var cells = eq.Cells
+                .Where(p => IsWithinBounds(game, p.row, p.col))
+                .Select(p => game.Grid[p.row, p.col])
+                .Where(c => c.Type == CellType.Number)
+                .ToList();
+
+            if (cells.Count == 0 || !cells.Contains(candidate))
+                continue;
+
+            int givenAfter = cells.Count(c => c.IsGiven) + (candidate.IsGiven ? 0 : 1);
+            if (givenAfter == cells.Count)
+                return true;
+        }
+
+        return false;
+    }
     private IEnumerable<MathCrossCell> ChooseInitialGivens(
         MathCrossGame game,
         List<MathCrossCell> editable,

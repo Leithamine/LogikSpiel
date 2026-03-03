@@ -19,10 +19,7 @@
             <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
                 <Button Grid.Column="0" Text="&#x2190;" Style="{StaticResource BtnIcon}" WidthRequest="76" HeightRequest="40" Padding="10,0" Command="{Binding BackCommand}" IsEnabled="{Binding IsNotBusy}"/>
 
-                <VerticalStackLayout Grid.Column="1" Spacing="0" HorizontalOptions="Center" VerticalOptions="Center">
-                    <Label Text="{resx:Translate Key=MathCross_Title}" Style="{StaticResource H3}" HorizontalOptions="Center"/>
-                    <Label Text="{Binding HeaderSubtitle}" TextColor="{StaticResource C_TextMuted}" FontSize="14" HorizontalOptions="Center" FontAttributes="Bold"/>
-                </VerticalStackLayout>
+                <Grid Grid.Column="1"/>
 
                 <Border Grid.Column="2" Style="{StaticResource CoinBadge}" Padding="8">
                     <HorizontalStackLayout Spacing="4">
@@ -43,14 +40,14 @@
         <Border Grid.Row="2" Style="{StaticResource SolidCard}" Padding="12">
             <VerticalStackLayout Spacing="8">
                 <Label Text="Zahlenbank" Style="{StaticResource Caption}"/>
-                <CollectionView ItemsSource="{Binding NumberBank}" SelectionMode="None" HeightRequest="74">
+                <CollectionView ItemsSource="{Binding NumberBank}" SelectionMode="None" HeightRequest="66">
                     <CollectionView.ItemsLayout>
                         <LinearItemsLayout Orientation="Horizontal" ItemSpacing="8"/>
                     </CollectionView.ItemsLayout>
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="vm:NumberBankTileViewModel">
                             <Border Padding="10,0"
-                                    HeightRequest="56"
+                                    HeightRequest="50"
                                     WidthRequest="{Binding TileWidth}"
                                     VerticalOptions="Center"
                                     BackgroundColor="{StaticResource C_BgLight}"

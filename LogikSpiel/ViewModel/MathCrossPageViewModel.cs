@@ -527,7 +527,7 @@ public sealed class NumberBankTileViewModel : ObservableObject
     public NumberBankTile Tile { get; }
     public NumberBankTileViewModel(NumberBankTile tile) => Tile = tile;
     public string DisplayValue => Tile.Value;
-    public double TileWidth => Math.Max(56, 20 + DisplayValue.Length * 14);
+    public double TileWidth => Math.Max(64, 28 + DisplayValue.Length * 16);
 }
 
 public sealed class MathCrossCellViewModel : ObservableObject
