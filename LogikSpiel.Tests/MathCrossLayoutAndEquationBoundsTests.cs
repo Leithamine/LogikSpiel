@@ -74,6 +74,80 @@ public class MathCrossLayoutAndEquationBoundsTests
         }
     }
 
+
+    [Theory]
+    [InlineData("easy")]
+    [InlineData("normal")]
+    [InlineData("hard")]
+    [InlineData("master")]
+    public void GenerateGame_CreatesLogicalCrossingsWithLimitedDeadEnds(string difficulty)
+    {
+        var generator = new MathCrossGeneratorService();
+        var constraints = new MathCrossGeneratorService.LayoutConstraints(12, 12);
+
+        for (int seed = 100; seed <= 130; seed++)
+        {
+            var game = generator.GenerateGame(difficulty, seed, constraints);
+            var adjacency = BuildEquationAdjacency(game);
+
+            Assert.All(adjacency, neighbors => Assert.NotEmpty(neighbors));
+
+            int leafCount = adjacency.Count(neighbors => neighbors.Count == 1);
+            Assert.True(leafCount <= 4,
+                $"Too many dead-end equations for {difficulty}, seed={seed}: leafCount={leafCount}.");
+
+            int intersectionCount = CountIntersections(adjacency);
+            Assert.True(intersectionCount >= game.Equations.Count,
+                $"Not enough crossings for {difficulty}, seed={seed}: intersections={intersectionCount}, equations={game.Equations.Count}.");
+        }
+    }
+
+    [Theory]
+    [InlineData("easy")]
+    [InlineData("normal")]
+    [InlineData("hard")]
+    [InlineData("master")]
+    public void GenerateGame_HasNoCompletelyEmptyRowsOrColsInsideBounds(string difficulty)
+    {
+        var generator = new MathCrossGeneratorService();
+        var constraints = new MathCrossGeneratorService.LayoutConstraints(12, 12);
+
+        for (int seed = 131; seed <= 165; seed++)
+        {
+            var game = generator.GenerateGame(difficulty, seed, constraints);
+
+            for (int r = 0; r < game.Rows; r++)
+            {
+                bool allEmpty = true;
+                for (int c = 0; c < game.Cols; c++)
+                {
+                    if (game.Grid[r, c].Type != CellType.Empty)
+                    {
+                        allEmpty = false;
+                        break;
+                    }
+                }
+
+                Assert.False(allEmpty, $"Found fully empty row for {difficulty}, seed={seed}, row={r}.");
+            }
+
+            for (int c = 0; c < game.Cols; c++)
+            {
+                bool allEmpty = true;
+                for (int r = 0; r < game.Rows; r++)
+                {
+                    if (game.Grid[r, c].Type != CellType.Empty)
+                    {
+                        allEmpty = false;
+                        break;
+                    }
+                }
+
+                Assert.False(allEmpty, $"Found fully empty column for {difficulty}, seed={seed}, col={c}.");
+            }
+        }
+    }
+
     private static int CountOccupied(MathCrossGame game)
     {
         int occupied = 0;
@@ -138,6 +212,37 @@ public class MathCrossLayoutAndEquationBoundsTests
             visited[nr, nc] = true;
             queue.Enqueue((nr, nc));
         }
+    }
+
+
+    private static List<HashSet<int>> BuildEquationAdjacency(MathCrossGame game)
+    {
+        var adjacency = Enumerable.Range(0, game.Equations.Count)
+            .Select(_ => new HashSet<int>())
+            .ToList();
+
+        for (int i = 0; i < game.Equations.Count; i++)
+        {
+            for (int j = i + 1; j < game.Equations.Count; j++)
+            {
+                if (!game.Equations[i].Cells.Intersect(game.Equations[j].Cells).Any())
+                    continue;
+
+                adjacency[i].Add(j);
+                adjacency[j].Add(i);
+            }
+        }
+
+        return adjacency;
+    }
+
+    private static int CountIntersections(IReadOnlyList<HashSet<int>> adjacency)
+    {
+        int count = 0;
+        for (int i = 0; i < adjacency.Count; i++)
+            count += adjacency[i].Count(neighbor => neighbor > i);
+
+        return count;
     }
 
     private sealed class StubGameProgressStore : IGameProgressStore

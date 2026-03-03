@@ -12,11 +12,11 @@ namespace LogikSpiel.View;
 public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposable
 {
     private bool _isLoaded;
-    private const double DefaultCellSize = 44;
-    private const double MinCellSize = 32;
-    private const double PreferredTouchCellSize = 44;
-    private const double MaxCellSize = 56;
-    private const double CellSpacing = 6;
+    private const double DefaultCellSize = 50;
+    private const double MinCellSize = 36;
+    private const double PreferredTouchCellSize = 50;
+    private const double MaxCellSize = 64;
+    private const double CellSpacing = 5;
     private const double BoardInnerPadding = 12;
 
     private double _uniformCellSize = DefaultCellSize;
@@ -70,6 +70,8 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
             BoardGrid.Children.Clear();
             BoardGrid.RowDefinitions.Clear();
             BoardGrid.ColumnDefinitions.Clear();
+            BoardGrid.RowSpacing = CellSpacing;
+            BoardGrid.ColumnSpacing = CellSpacing;
 
             for (int r = 0; r < game.Rows; r++)
                 BoardGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(cellSize) });
