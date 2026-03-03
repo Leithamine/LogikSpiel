@@ -63,6 +63,9 @@ public sealed class MathCrossPageViewModel : ObservableObject
     public bool IsBusy { get => _isBusy; set { if (SetProperty(ref _isBusy, value)) OnPropertyChanged(nameof(IsNotBusy)); } }
     public bool IsNotBusy => !IsBusy;
 
+    public bool AllowNegativeInput => DifficultyKey is "normal" or "hard" or "master";
+    public bool AllowDecimalInput => DifficultyKey == "master";
+
     public ObservableCollection<MathCrossCellViewModel> FlatCells { get; } = new();
     public ObservableCollection<NumberBankTileViewModel> NumberBank { get; } = new();
 
@@ -148,6 +151,8 @@ public sealed class MathCrossPageViewModel : ObservableObject
             OnPropertyChanged(nameof(Title));
             OnPropertyChanged(nameof(DifficultyText));
             OnPropertyChanged(nameof(HeaderSubtitle));
+            OnPropertyChanged(nameof(AllowNegativeInput));
+            OnPropertyChanged(nameof(AllowDecimalInput));
 
             _userProfile = await _userService.GetUserAsync();
             Coins = _userProfile?.Coins ?? 0;
