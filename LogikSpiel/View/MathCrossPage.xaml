@@ -43,35 +43,37 @@
             </Border.GestureRecognizers>
             <VerticalStackLayout Spacing="8">
                 <Label Text="Zahlenbank" Style="{StaticResource Caption}"/>
-                <CollectionView ItemsSource="{Binding NumberBank}" SelectionMode="None" HeightRequest="66">
-                    <CollectionView.ItemsLayout>
-                        <LinearItemsLayout Orientation="Horizontal" ItemSpacing="8"/>
-                    </CollectionView.ItemsLayout>
-                    <CollectionView.ItemTemplate>
-                        <DataTemplate x:DataType="vm:NumberBankTileViewModel">
-                            <Border Padding="10,0"
-                                    HeightRequest="50"
-                                    WidthRequest="{Binding TileWidth}"
-                                    VerticalOptions="Center"
-                                    BackgroundColor="{StaticResource C_BgLight}"
-                                    Stroke="{StaticResource C_Primary}"
-                                    StrokeThickness="1.5"
-                                    StrokeShape="RoundRectangle 12">
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.NumberTileTappedCommand}" CommandParameter="{Binding .}"/>
-                                    <DragGestureRecognizer DragStarting="OnTileDragStarting"/>
-                                </Border.GestureRecognizers>
-                                <Label Text="{Binding DisplayValue}"
-                                       FontAttributes="Bold"
-                                       FontSize="18"
-                                       HorizontalTextAlignment="Center"
-                                       VerticalTextAlignment="Center"
-                                       LineBreakMode="NoWrap"/>
-                            </Border>
-                        </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
-            </VerticalStackLayout>
+                <ScrollView Orientation="Vertical" HeightRequest="132">
+                    <FlexLayout Direction="Row"
+                                Wrap="Wrap"
+                                BindableLayout.ItemsSource="{Binding NumberBank}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:NumberBankTileViewModel">
+                                <Border Margin="0,0,8,8"
+                                        Padding="8,0"
+                                        HeightRequest="44"
+                                        WidthRequest="{Binding TileWidth}"
+                                        VerticalOptions="Center"
+                                        BackgroundColor="{StaticResource C_BgLight}"
+                                        Stroke="{StaticResource C_Primary}"
+                                        StrokeThickness="1.3"
+                                        StrokeShape="RoundRectangle 8">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.NumberTileTappedCommand}" CommandParameter="{Binding .}"/>
+                                        <DragGestureRecognizer DragStarting="OnTileDragStarting"/>
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{Binding DisplayValue}"
+                                           FontAttributes="Bold"
+                                           FontSize="16"
+                                           HorizontalTextAlignment="Center"
+                                           VerticalTextAlignment="Center"
+                                           LineBreakMode="NoWrap"/>
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </FlexLayout>
+                </ScrollView>
+</VerticalStackLayout>
         </Border>
 
         <Grid Grid.RowSpan="3" IsVisible="{Binding IsBusy}" BackgroundColor="#DD000000" InputTransparent="False">

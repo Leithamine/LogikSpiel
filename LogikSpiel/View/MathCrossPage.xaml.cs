@@ -13,11 +13,11 @@ namespace LogikSpiel.View;
 public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposable
 {
     private bool _isLoaded;
-    private const double DefaultCellSize = 50;
-    private const double MinCellSize = 32;
-    private const double PreferredTouchCellSize = 50;
-    private const double MaxCellSize = 80;
-    private const double CellSpacing = 3;
+    private const double DefaultCellSize = 44;
+    private const double MinCellSize = 28;
+    private const double PreferredTouchCellSize = 44;
+    private const double MaxCellSize = 56;
+    private const double CellSpacing = 2;
     private const double BoardInnerPadding = 8;
 
     private double _uniformCellSize = DefaultCellSize;
@@ -68,45 +68,66 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
             for (int r = 0; r < game.Rows; r++) BoardGrid.RowDefinitions.Add(new RowDefinition { Height = cellSize });
             for (int c = 0; c < game.Cols; c++) BoardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = cellSize });
 
-            foreach (var cellVm in vm.FlatCells)
+            var cellMap = vm.FlatCells.ToDictionary(c => (c.Cell.Row, c.Cell.Col));
+
+            for (int r = 0; r < game.Rows; r++)
             {
-                var cell = cellVm.Cell;
-                var border = new Border { StrokeShape = new RoundRectangle { CornerRadius = 6 }, Padding = 0, BindingContext = cellVm };
-                border.SetBinding(Border.StrokeProperty, new Binding(nameof(MathCrossCellViewModel.BorderStroke), source: cellVm));
-                border.SetBinding(Border.StrokeThicknessProperty, new Binding(nameof(MathCrossCellViewModel.BorderThickness), source: cellVm));
-                border.SetBinding(Border.ShadowProperty, new Binding(nameof(MathCrossCellViewModel.FocusGlow), source: cellVm));
-                border.SetBinding(Border.BackgroundColorProperty,
-                    new Binding(nameof(MathCrossCellViewModel.CellBackground), source: cellVm));
-
-                Grid.SetRow(border, cell.Row);
-                Grid.SetColumn(border, cell.Col);
-
-                if (cellVm.IsEditable)
+                for (int c = 0; c < game.Cols; c++)
                 {
-                    border.GestureRecognizers.Add(new TapGestureRecognizer { Command = cellVm.TapCellCommand });
-                    border.GestureRecognizers.Add(new DragGestureRecognizer { });
-                    ((DragGestureRecognizer)border.GestureRecognizers[^1]).DragStarting += OnCellDragStarting;
-
-                    border.GestureRecognizers.Add(new DropGestureRecognizer
+                    if (!cellMap.TryGetValue((r, c), out var cellVm))
                     {
-                        AllowDrop = true
-                    });
-                    ((DropGestureRecognizer)border.GestureRecognizers[^1]).DragOver += OnCellDragOver;
-                    ((DropGestureRecognizer)border.GestureRecognizers[^1]).Drop += OnCellDrop;
-                }
+                        var placeholder = new Border
+                        {
+                            StrokeShape = new RoundRectangle { CornerRadius = 2 },
+                            Stroke = new SolidColorBrush(Color.FromArgb("#36FFFFFF")),
+                            StrokeThickness = 0.8,
+                            BackgroundColor = Color.FromArgb("#12000000"),
+                            Padding = 0
+                        };
+                        Grid.SetRow(placeholder, r);
+                        Grid.SetColumn(placeholder, c);
+                        BoardGrid.Children.Add(placeholder);
+                        continue;
+                    }
 
-                var lbl = new Label
-                {
-                    HorizontalTextAlignment = TextAlignment.Center,
-                    VerticalTextAlignment = TextAlignment.Center,
-                    FontAttributes = FontAttributes.Bold,
-                    TextColor = ResolveTextColor(cell),
-                    FontSize = textSize,
-                    LineBreakMode = LineBreakMode.NoWrap
-                };
-                lbl.SetBinding(Label.TextProperty, new Binding(nameof(MathCrossCellViewModel.EditableText), source: cellVm));
-                border.Content = lbl;
-                BoardGrid.Children.Add(border);
+                    var cell = cellVm.Cell;
+                    var border = new Border { StrokeShape = new RoundRectangle { CornerRadius = 2 }, Padding = 0, BindingContext = cellVm };
+                    border.SetBinding(Border.StrokeProperty, new Binding(nameof(MathCrossCellViewModel.BorderStroke), source: cellVm));
+                    border.SetBinding(Border.StrokeThicknessProperty, new Binding(nameof(MathCrossCellViewModel.BorderThickness), source: cellVm));
+                    border.SetBinding(Border.ShadowProperty, new Binding(nameof(MathCrossCellViewModel.FocusGlow), source: cellVm));
+                    border.SetBinding(Border.BackgroundColorProperty,
+                        new Binding(nameof(MathCrossCellViewModel.CellBackground), source: cellVm));
+
+                    Grid.SetRow(border, cell.Row);
+                    Grid.SetColumn(border, cell.Col);
+
+                    if (cellVm.IsEditable)
+                    {
+                        border.GestureRecognizers.Add(new TapGestureRecognizer { Command = cellVm.TapCellCommand });
+                        border.GestureRecognizers.Add(new DragGestureRecognizer { });
+                        ((DragGestureRecognizer)border.GestureRecognizers[^1]).DragStarting += OnCellDragStarting;
+
+                        border.GestureRecognizers.Add(new DropGestureRecognizer
+                        {
+                            AllowDrop = true
+                        });
+                        ((DropGestureRecognizer)border.GestureRecognizers[^1]).DragOver += OnCellDragOver;
+                        ((DropGestureRecognizer)border.GestureRecognizers[^1]).Drop += OnCellDrop;
+                    }
+
+                    var lbl = new Label
+                    {
+                        HorizontalTextAlignment = TextAlignment.Center,
+                        VerticalTextAlignment = TextAlignment.Center,
+                        FontAttributes = FontAttributes.Bold,
+                        TextColor = ResolveTextColor(cell),
+                        FontSize = textSize,
+                        LineBreakMode = LineBreakMode.NoWrap
+                    };
+                    lbl.SetBinding(Label.TextProperty, new Binding(nameof(MathCrossCellViewModel.EditableText), source: cellVm));
+                    border.Content = lbl;
+                    BoardGrid.Children.Add(border);
+                }
             }
         });
     }
