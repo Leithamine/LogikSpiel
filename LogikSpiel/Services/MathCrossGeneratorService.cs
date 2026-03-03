@@ -380,6 +380,12 @@ public sealed class MathCrossGeneratorService
             {
                 a = s.AllowDecimals ? GenValue(s, rnd) : rnd.Next(Math.Max(s.MinVal, -50), Math.Min(50, s.MaxVal) + 1);
                 b = s.AllowDecimals ? GenValue(s, rnd) : rnd.Next(Math.Max(s.MinVal, -50), Math.Min(50, s.MaxVal) + 1);
+                if (op is "%" or "//")
+                {
+                    a = Math.Truncate(a);
+                    b = Math.Truncate(b);
+                    if (b == 0) continue;
+                }
             }
 
             decimal? c = CalcDec(a, op, b, s.AllowDecimals);
@@ -402,6 +408,8 @@ public sealed class MathCrossGeneratorService
             decimal b = GenValue(s, rnd);
             decimal c = GenValue(s, rnd);
 
+            if (op1 is "%" or "//") { a = Math.Truncate(a); b = Math.Truncate(b); if (b == 0) continue; }
+            if (op2 is "%" or "//") { b = Math.Truncate(b); c = Math.Truncate(c); if (c == 0) continue; }
             if (op1 is "×" or "÷") { a = rnd.Next(2, 12); b = rnd.Next(2, 12); }
             if (op2 is "×" or "÷") { c = rnd.Next(2, 12); }
 
@@ -556,6 +564,8 @@ public sealed class MathCrossGeneratorService
             "-" => a - b,
             "×" => a * b,
             "÷" when b != 0 => DivideWithRule(a, b, allowDecimalDivision),
+            "%" when b != 0 && IsInteger(a) && IsInteger(b) => a % b,
+            "//" when b != 0 && IsInteger(a) && IsInteger(b) => decimal.Truncate(a / b),
             _ => null
         };
     }
@@ -583,9 +593,16 @@ public sealed class MathCrossGeneratorService
         return value == decimal.Round(value, 1, MidpointRounding.AwayFromZero);
     }
 
+    private static bool IsInteger(decimal value) => value == decimal.Truncate(value);
+
     private static decimal? Evaluate(decimal a, string op1, decimal b, string op2, decimal c, bool allowDecimalDivision)
     {
-        static int Priority(string op) => op is "×" or "÷" ? 2 : 1;
+        static int Priority(string op) => op switch
+        {
+            "^" => 3,
+            "×" or "÷" or "%" or "//" => 2,
+            _ => 1
+        };
 
         if (Priority(op1) >= Priority(op2))
         {
@@ -1166,63 +1183,116 @@ public sealed class MathCrossGeneratorService
 
     private void FinalizeGame(MathCrossGame game, Random rnd, Settings s)
     {
+        var allNumbers = new List<MathCrossCell>();
+
         for (int r = 0; r < game.Rows; r++)
             for (int c = 0; c < game.Cols; c++)
             {
                 var cell = game.Grid[r, c];
-                if (cell.Type == CellType.Equals)
+                cell.IsHintGiven = false;
+                cell.PlacedTileId = null;
+
+                if (cell.Type == CellType.Equals || cell.Type == CellType.Operator)
                 {
                     cell.IsGiven = true;
-                    cell.UserInput = "=";
+                    cell.UserInput = cell.Solution;
                 }
                 else if (cell.Type == CellType.Empty)
                 {
                     cell.IsGiven = true;
                     cell.UserInput = "";
                 }
-                else if (cell.Type == CellType.Operator && s.OperatorsAlwaysGiven)
-                {
-                    cell.IsGiven = true;
-                    cell.UserInput = cell.Solution;
-                }
                 else
                 {
                     cell.IsGiven = false;
                     cell.UserInput = "";
+                    allNumbers.Add(cell);
                 }
             }
 
-        var editable = new List<MathCrossCell>();
-        for (int r = 0; r < game.Rows; r++)
-            for (int c = 0; c < game.Cols; c++)
-                if (game.Grid[r, c].Type is CellType.Number or CellType.Operator)
-                    editable.Add(game.Grid[r, c]);
-
-        int toGive = (int)(editable.Count * s.GivenPercent);
-        toGive = Math.Max(4, Math.Min(toGive, Math.Max(0, editable.Count - 2)));
-
-        foreach (var cell in ChooseInitialGivens(game, editable, toGive, rnd))
+        int anchors = s.DifficultyKey switch
         {
+            "easy" => rnd.Next(7, 10),
+            "normal" => rnd.Next(7, 10),
+            "hard" => rnd.Next(5, 8),
+            "master" => rnd.Next(5, 8),
+            _ => 6
+        };
+
+        anchors = Math.Min(Math.Max(1, anchors), Math.Max(1, allNumbers.Count - 1));
+
+        var orderedCandidates = allNumbers.OrderBy(_ => rnd.Next()).ToList();
+        int givenCount = 0;
+        foreach (var cell in orderedCandidates)
+        {
+            if (givenCount >= anchors) break;
+            if (WouldCompleteEquationWithGivenCell(game, cell)) continue;
+
             cell.IsGiven = true;
             cell.UserInput = cell.Solution;
+            givenCount++;
         }
 
-        EnsureSolvable(game, rnd);
-        HideCellsInFullyGivenEquations(game, rnd, s);
-
-        var hideableFinal = s.OperatorsAlwaysGiven
-            ? editable.Where(c => c.Type == CellType.Number).ToList()
-            : editable;
-        if (hideableFinal.Count > 0 && hideableFinal.All(c => c.IsGiven))
+        foreach (var eq in game.Equations)
         {
-            var hide = hideableFinal[rnd.Next(hideableFinal.Count)];
-            hide.IsGiven = false;
-            hide.UserInput = "";
+            var numberCells = eq.Cells
+                .Where(p => IsWithinBounds(game, p.row, p.col))
+                .Select(p => game.Grid[p.row, p.col])
+                .Where(c => c.Type == CellType.Number)
+                .ToList();
+
+            if (numberCells.Count > 0 && numberCells.All(c => c.IsGiven))
+            {
+                var hide = numberCells[rnd.Next(numberCells.Count)];
+                hide.IsGiven = false;
+                hide.UserInput = "";
+                givenCount--;
+            }
         }
 
-        game.GivenCells = editable.Count(c => c.IsGiven);
+        if (givenCount < anchors)
+        {
+            foreach (var cell in orderedCandidates.Where(c => !c.IsGiven))
+            {
+                if (givenCount >= anchors) break;
+                if (WouldCompleteEquationWithGivenCell(game, cell)) continue;
+
+                cell.IsGiven = true;
+                cell.UserInput = cell.Solution;
+                givenCount++;
+            }
+        }
+
+        game.NumberBank = allNumbers
+            .Where(c => !c.IsGiven)
+            .Select(c => new NumberBankTile { Id = Guid.NewGuid().ToString("N"), Value = c.Solution })
+            .OrderBy(_ => rnd.Next())
+            .ToList();
+
+        game.GivenCells = allNumbers.Count(c => c.IsGiven);
     }
 
+
+    private bool WouldCompleteEquationWithGivenCell(MathCrossGame game, MathCrossCell candidate)
+    {
+        foreach (var eq in game.Equations)
+        {
+            var cells = eq.Cells
+                .Where(p => IsWithinBounds(game, p.row, p.col))
+                .Select(p => game.Grid[p.row, p.col])
+                .Where(c => c.Type == CellType.Number)
+                .ToList();
+
+            if (cells.Count == 0 || !cells.Contains(candidate))
+                continue;
+
+            int givenAfter = cells.Count(c => c.IsGiven) + (candidate.IsGiven ? 0 : 1);
+            if (givenAfter == cells.Count)
+                return true;
+        }
+
+        return false;
+    }
     private IEnumerable<MathCrossCell> ChooseInitialGivens(
         MathCrossGame game,
         List<MathCrossCell> editable,
@@ -1632,7 +1702,7 @@ public sealed class MathCrossGeneratorService
         double GivenPercent,
         int EquationLength,
         bool IsExtended,
-        bool OperatorsAlwaysGiven = false);
+        bool OperatorsAlwaysGiven = true);
 
     private static Settings GetSettings(string key)
     {
@@ -1640,17 +1710,17 @@ public sealed class MathCrossGeneratorService
 
         return key switch
         {
-            "easy" => new Settings("easy", 1, 99, false,
-                new[] { "+", "-" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.45, 5, false),
+            "easy" => new Settings("easy", 0, 100, false,
+                new[] { "+", "-", "×" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.45, 5, false),
 
-            "normal" => new Settings("normal", 1, 99, false,
-                new[] { "+", "-", "×" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.40, 5, false),
+            "normal" => new Settings("normal", -100, 100, false,
+                new[] { "+", "-", "×", "÷" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.40, 5, false),
 
             "hard" => new Settings("hard", -100, 100, false,
-                new[] { "+", "-", "×", "÷" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.35, 5, false, true),
+                new[] { "+", "-", "×", "÷", "^", "%", "//" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.35, 5, false, true),
 
             "master" => new Settings("master", -100, 100, true,
-                new[] { "+", "-", "×", "÷", "^" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.30, 5, false, true),
+                new[] { "+", "-", "×", "÷", "^", "%", "//" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.30, 5, false, true),
 
             _ => GetSettings("easy")
         };
