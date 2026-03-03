@@ -41,9 +41,9 @@ public sealed class MathCrossGeneratorService
         var s = GetSettings(difficultyKey);
         var effective = ResolveEffectiveSettings(s, layoutConstraints);
         var sw = Stopwatch.StartNew();
-        TimeSpan generationTimeout = TimeSpan.FromMilliseconds(300);
+        TimeSpan generationTimeout = TimeSpan.FromMilliseconds(900);
 
-        for (int attempt = 0; attempt < 6; attempt++)
+        for (int attempt = 0; attempt < 10; attempt++)
         {
             if (sw.Elapsed >= generationTimeout) break;
 
@@ -755,7 +755,100 @@ public sealed class MathCrossGeneratorService
                 };
 
         game.Equations = ScanEquations(game, s.EquationLength);
+        return CompactGameByRemovingEmptyStrips(game, s.EquationLength);
+    }
+
+    private static MathCrossGame CompactGameByRemovingEmptyStrips(MathCrossGame game, int equationLength)
+    {
+        var source = game.Grid;
+        int rows = game.Rows;
+        int cols = game.Cols;
+
+        if (rows <= 0 || cols <= 0)
+            return game;
+
+        var rowMap = Enumerable.Range(0, rows)
+            .Where(r => Enumerable.Range(0, cols).Any(c => source[r, c].Type != CellType.Empty))
+            .ToList();
+
+        var colMap = Enumerable.Range(0, cols)
+            .Where(c => Enumerable.Range(0, rows).Any(r => source[r, c].Type != CellType.Empty))
+            .ToList();
+
+        if (rowMap.Count == rows && colMap.Count == cols)
+            return game;
+
+        if (rowMap.Count == 0 || colMap.Count == 0)
+            return game;
+
+        var compact = new MathCrossCell[rowMap.Count, colMap.Count];
+        for (int r = 0; r < rowMap.Count; r++)
+        {
+            for (int c = 0; c < colMap.Count; c++)
+            {
+                var src = source[rowMap[r], colMap[c]];
+                compact[r, c] = new MathCrossCell
+                {
+                    Row = r,
+                    Col = c,
+                    Type = src.Type,
+                    Solution = src.Solution,
+                    UserInput = src.UserInput,
+                    IsGiven = src.IsGiven,
+                    IsSelected = src.IsSelected
+                };
+            }
+        }
+
+        game.Rows = rowMap.Count;
+        game.Cols = colMap.Count;
+        game.Grid = compact;
+        game.Equations = ScanEquations(game, equationLength);
         return game;
+    }
+
+    private static int CountCompletelyEmptyRows(MathCrossGame game)
+    {
+        int count = 0;
+        for (int r = 0; r < game.Rows; r++)
+        {
+            bool empty = true;
+            for (int c = 0; c < game.Cols; c++)
+            {
+                if (game.Grid[r, c].Type != CellType.Empty)
+                {
+                    empty = false;
+                    break;
+                }
+            }
+
+            if (empty)
+                count++;
+        }
+
+        return count;
+    }
+
+    private static int CountCompletelyEmptyCols(MathCrossGame game)
+    {
+        int count = 0;
+        for (int c = 0; c < game.Cols; c++)
+        {
+            bool empty = true;
+            for (int r = 0; r < game.Rows; r++)
+            {
+                if (game.Grid[r, c].Type != CellType.Empty)
+                {
+                    empty = false;
+                    break;
+                }
+            }
+
+            if (empty)
+                count++;
+        }
+
+        return count;
     }
 
     private MathCrossGame GenerateFallbackGrid(Settings s, Random rnd)
@@ -766,43 +859,71 @@ public sealed class MathCrossGeneratorService
 
     private MathCrossGame GenerateFallbackGridWithEffective(Settings s, Random rnd, EffectiveSettings effective)
     {
-        MathCrossGame? first = null;
         MathCrossGame? best = null;
+        double bestScore = double.NegativeInfinity;
 
-        for (int attempt = 0; attempt < 40; attempt++)
+        for (int attempt = 0; attempt < 220; attempt++)
         {
             var candidate = TryBuildEmergencyTemplateWithEffective(s, effective, new Random(rnd.Next() + attempt * 101));
-            first ??= candidate;
-            if (best == null || candidate.Equations.Count > best.Equations.Count)
-                best = candidate;
+            double score = ScoreFallbackCandidate(candidate, effective);
 
-            if (candidate.Equations.Count >= effective.MinEquations
-                && candidate.Equations.Count <= effective.MaxEquations
-                && HasValidTopology(candidate))
+            if (score > bestScore)
+            {
+                best = candidate;
+                bestScore = score;
+            }
+
+            if (HasValidTopology(candidate)
+                && candidate.Equations.Count >= effective.MinEquations
+                && candidate.Equations.Count <= effective.MaxEquations)
+            {
                 return candidate;
+            }
         }
 
-        if (best != null
-            && best.Equations.Count >= effective.MinEquations
-            && best.Equations.Count <= effective.MaxEquations
-            && HasValidTopology(best))
-            return best;
-
-        // Fallback: If no valid topology found, AT LEAST satisfy the equation count!
-        for (int attempt = 0; attempt < 100; attempt++)
+        for (int attempt = 0; attempt < 320; attempt++)
         {
             var candidate = TryBuildEmergencyTemplateWithEffective(s, effective, new Random(rnd.Next() + attempt * 103));
-            if (candidate.Equations.Count >= effective.MinEquations && candidate.Equations.Count <= effective.MaxEquations)
-                return candidate;
+            double score = ScoreFallbackCandidate(candidate, effective);
+            if (score > bestScore)
+            {
+                best = candidate;
+                bestScore = score;
+            }
         }
 
-        return best ?? first ?? TryBuildEmergencyTemplateWithEffective(s, effective, rnd);
+        return best ?? TryBuildEmergencyTemplateWithEffective(s, effective, rnd);
     }
 
     private MathCrossGame TryBuildEmergencyTemplate(Settings s, Random rnd)
     {
         var effective = ResolveEffectiveSettings(s, null);
         return TryBuildEmergencyTemplateWithEffective(s, effective, rnd);
+    }
+
+    private static double ScoreFallbackCandidate(MathCrossGame game, EffectiveSettings effective)
+    {
+        double fill = CalculateFillRatio(game);
+        double emptyPenalty = CalculateLargestEmptyRegionRatio(game);
+        int eq = game.Equations.Count;
+
+        int under = Math.Max(0, effective.MinEquations - eq);
+        int over = Math.Max(0, eq - effective.MaxEquations);
+        int outOfRange = under + over;
+
+        int fullEmptyRows = CountCompletelyEmptyRows(game);
+        int fullEmptyCols = CountCompletelyEmptyCols(game);
+
+        double score = 0;
+        score += fill * 100.0;
+        score -= emptyPenalty * 130.0;
+        score -= outOfRange * 14.0;
+        score -= (fullEmptyRows + fullEmptyCols) * 5.0;
+
+        if (HasValidTopology(game))
+            score += 90.0;
+
+        return score;
     }
 
     private MathCrossGame TryBuildEmergencyTemplateWithEffective(Settings s, EffectiveSettings effective, Random rnd)

@@ -101,6 +101,53 @@ public class MathCrossLayoutAndEquationBoundsTests
                 $"Not enough crossings for {difficulty}, seed={seed}: intersections={intersectionCount}, equations={game.Equations.Count}.");
         }
     }
+
+    [Theory]
+    [InlineData("easy")]
+    [InlineData("normal")]
+    [InlineData("hard")]
+    [InlineData("master")]
+    public void GenerateGame_HasNoCompletelyEmptyRowsOrColsInsideBounds(string difficulty)
+    {
+        var generator = new MathCrossGeneratorService();
+        var constraints = new MathCrossGeneratorService.LayoutConstraints(12, 12);
+
+        for (int seed = 131; seed <= 165; seed++)
+        {
+            var game = generator.GenerateGame(difficulty, seed, constraints);
+
+            for (int r = 0; r < game.Rows; r++)
+            {
+                bool allEmpty = true;
+                for (int c = 0; c < game.Cols; c++)
+                {
+                    if (game.Grid[r, c].Type != CellType.Empty)
+                    {
+                        allEmpty = false;
+                        break;
+                    }
+                }
+
+                Assert.False(allEmpty, $"Found fully empty row for {difficulty}, seed={seed}, row={r}.");
+            }
+
+            for (int c = 0; c < game.Cols; c++)
+            {
+                bool allEmpty = true;
+                for (int r = 0; r < game.Rows; r++)
+                {
+                    if (game.Grid[r, c].Type != CellType.Empty)
+                    {
+                        allEmpty = false;
+                        break;
+                    }
+                }
+
+                Assert.False(allEmpty, $"Found fully empty column for {difficulty}, seed={seed}, col={c}.");
+            }
+        }
+    }
+
     private static int CountOccupied(MathCrossGame game)
     {
         int occupied = 0;
