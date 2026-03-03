@@ -684,9 +684,6 @@ public sealed class MathCrossCellViewModel : ObservableObject
         if (IsEquationWrong)
             return GetColor("C_Error", "#D84B4B");
 
-        if (IsEquationWrong)
-            return GetColor("C_Error", "#D84B4B");
-
         if (IsEquationSatisfied)
             return GetColor("C_Success", "#42C67A");
 

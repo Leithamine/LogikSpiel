@@ -150,7 +150,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
         _vm.SetDragging(true);
     }
 
-    private MathCrossCellViewModel? ResolveCellVmFromProperties(IDictionary<string, object> properties)
+    private MathCrossCellViewModel? ResolveCellVmFromProperties(DataPackagePropertySetView properties)
     {
         if (!properties.TryGetValue("sourceCell", out var srcObj)) return null;
         var src = srcObj?.ToString();
