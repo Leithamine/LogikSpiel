@@ -21,8 +21,16 @@ public class MathCrossCell
     public string UserInput { get; set; } = "";
 
     public bool IsGiven { get; set; }
+    public bool IsHintGiven { get; set; }
     public bool IsSelected { get; set; }
+    public string? PlacedTileId { get; set; }
 
+}
+
+public class NumberBankTile
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string Value { get; set; } = "";
 }
 
 
@@ -35,7 +43,7 @@ public static class MathCrossValueNormalizer
         if (t is "/" or ":") return "÷";
         if (t == "-") return "−";
         if (t == "+") return "+";
-        if (t == "×" || t == "÷" || t == "=" || t == "^") return t;
+        if (t == "×" || t == "÷" || t == "=" || t == "^" || t == "%" || t == "//") return t;
         return t;
     }
 
@@ -105,4 +113,6 @@ public class MathCrossGame
     public int EquationLength { get; set; } = 5;
 
     public int GridSize => System.Math.Max(Rows, Cols);
+
+    public List<NumberBankTile> NumberBank { get; set; } = new();
 }

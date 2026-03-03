@@ -1,4 +1,5 @@
-using LogikSpiel.Core;
+using System.Collections.Generic;
+using System.Linq;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
 using LogikSpiel.Services.Localization;
@@ -12,11 +13,11 @@ namespace LogikSpiel.View;
 public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposable
 {
     private bool _isLoaded;
-    private const double DefaultCellSize = 50;
-    private const double MinCellSize = 32;
-    private const double PreferredTouchCellSize = 50;
-    private const double MaxCellSize = 80;
-    private const double CellSpacing = 3;
+    private const double DefaultCellSize = 44;
+    private const double MinCellSize = 28;
+    private const double PreferredTouchCellSize = 44;
+    private const double MaxCellSize = 56;
+    private const double CellSpacing = 2;
     private const double BoardInnerPadding = 8;
 
     private double _uniformCellSize = DefaultCellSize;
@@ -32,29 +33,20 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
         BindingContext = _vm;
 
         _requestLayoutUpdateHandler = BuildGrid;
-
         _vm.RequestLayoutUpdate += _requestLayoutUpdateHandler;
         BoardContainer.SizeChanged += OnBoardContainerSizeChanged;
         SizeChanged += OnPageSizeChanged;
     }
 
-    ~MathCrossPage()
-    {
-        Dispose();
-    }
-
     public void Dispose()
     {
         if (_disposed) return;
-
         _vm.RequestLayoutUpdate -= _requestLayoutUpdateHandler;
         BoardContainer.SizeChanged -= OnBoardContainerSizeChanged;
         SizeChanged -= OnPageSizeChanged;
-
         _disposed = true;
         GC.SuppressFinalize(this);
     }
-
 
     private void BuildGrid()
     {
@@ -65,102 +57,148 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
             var game = vm.Game;
             _uniformCellSize = GetUniformCellSize();
             double cellSize = _uniformCellSize;
-            double textSize = Math.Clamp(cellSize * 0.38, 12, 26);
+            double textSize = Math.Clamp(cellSize * 0.38, 11, 24);
 
             BoardGrid.Children.Clear();
             BoardGrid.RowDefinitions.Clear();
             BoardGrid.ColumnDefinitions.Clear();
             BoardGrid.RowSpacing = CellSpacing;
             BoardGrid.ColumnSpacing = CellSpacing;
-            BoardGrid.HorizontalOptions = LayoutOptions.Center;
-            BoardGrid.VerticalOptions = LayoutOptions.Center;
+
+            for (int r = 0; r < game.Rows; r++) BoardGrid.RowDefinitions.Add(new RowDefinition { Height = cellSize });
+            for (int c = 0; c < game.Cols; c++) BoardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = cellSize });
+
+            var cellMap = vm.FlatCells.ToDictionary(c => (c.Cell.Row, c.Cell.Col));
 
             for (int r = 0; r < game.Rows; r++)
-                BoardGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(cellSize) });
-
-            for (int c = 0; c < game.Cols; c++)
-                BoardGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(cellSize) });
-
-
-            BoardGrid.WidthRequest = game.Cols * cellSize + CellSpacing * Math.Max(0, game.Cols - 1);
-            BoardGrid.HeightRequest = game.Rows * cellSize + CellSpacing * Math.Max(0, game.Rows - 1);
-
-            foreach (var cellVm in vm.FlatCells)
             {
-                var cell = cellVm.Cell;
-
-                var border = new Border
+                for (int c = 0; c < game.Cols; c++)
                 {
-                    StrokeShape = new RoundRectangle { CornerRadius = 6 },
-                    Padding = 0
-                };
-
-                border.SetBinding(Border.StrokeProperty,
-                    new Binding(nameof(MathCrossCellViewModel.BorderStroke), source: cellVm));
-                border.SetBinding(Border.StrokeThicknessProperty,
-                    new Binding(nameof(MathCrossCellViewModel.BorderThickness), source: cellVm));
-                border.SetBinding(Border.ShadowProperty,
-                    new Binding(nameof(MathCrossCellViewModel.FocusGlow), source: cellVm));
-
-                border.SetBinding(Border.BackgroundColorProperty,
-                    new Binding(nameof(MathCrossCellViewModel.Cell),
-                        source: cellVm,
-                        converter: (IValueConverter)Resources["MathCellToColorConverter"]));
-
-                Grid.SetRow(border, cell.Row);
-                Grid.SetColumn(border, cell.Col);
-
-                if (cellVm.IsEditable)
-                {
-                    var btn = new Button
+                    if (!cellMap.TryGetValue((r, c), out var cellVm))
                     {
-                        Padding = 0,
-                        FontAttributes = FontAttributes.Bold,
-                        FontSize = textSize,
-                        BackgroundColor = Colors.Transparent,
-                        TextColor = ResolveTextColor(cell),
-                        BorderWidth = 0
-                    };
-                    btn.SetBinding(Button.TextProperty, new Binding(nameof(MathCrossCellViewModel.EditableText), source: cellVm));
-                    btn.SetBinding(Button.CommandProperty, new Binding(nameof(MathCrossCellViewModel.TapCellCommand), source: cellVm));
-                    border.Content = btn;
-                }
-                else
-                {
+                        var placeholder = new Border
+                        {
+                            StrokeShape = new RoundRectangle { CornerRadius = 2 },
+                            Stroke = new SolidColorBrush(Color.FromArgb("#36FFFFFF")),
+                            StrokeThickness = 0.8,
+                            BackgroundColor = Color.FromArgb("#12000000"),
+                            Padding = 0
+                        };
+                        Grid.SetRow(placeholder, r);
+                        Grid.SetColumn(placeholder, c);
+                        BoardGrid.Children.Add(placeholder);
+                        continue;
+                    }
+
+                    var cell = cellVm.Cell;
+                    var border = new Border { StrokeShape = new RoundRectangle { CornerRadius = 2 }, Padding = 0, BindingContext = cellVm };
+                    border.SetBinding(Border.StrokeProperty, new Binding(nameof(MathCrossCellViewModel.BorderStroke), source: cellVm));
+                    border.SetBinding(Border.StrokeThicknessProperty, new Binding(nameof(MathCrossCellViewModel.BorderThickness), source: cellVm));
+                    border.SetBinding(Border.ShadowProperty, new Binding(nameof(MathCrossCellViewModel.FocusGlow), source: cellVm));
+                    border.SetBinding(Border.BackgroundColorProperty,
+                        new Binding(nameof(MathCrossCellViewModel.CellBackground), source: cellVm));
+
+                    Grid.SetRow(border, cell.Row);
+                    Grid.SetColumn(border, cell.Col);
+
+                    if (cellVm.IsEditable)
+                    {
+                        border.GestureRecognizers.Add(new TapGestureRecognizer { Command = cellVm.TapCellCommand });
+                        border.GestureRecognizers.Add(new DragGestureRecognizer { });
+                        ((DragGestureRecognizer)border.GestureRecognizers[^1]).DragStarting += OnCellDragStarting;
+
+                        border.GestureRecognizers.Add(new DropGestureRecognizer
+                        {
+                            AllowDrop = true
+                        });
+                        ((DropGestureRecognizer)border.GestureRecognizers[^1]).DragOver += OnCellDragOver;
+                        ((DropGestureRecognizer)border.GestureRecognizers[^1]).Drop += OnCellDrop;
+                    }
+
                     var lbl = new Label
                     {
                         HorizontalTextAlignment = TextAlignment.Center,
                         VerticalTextAlignment = TextAlignment.Center,
                         FontAttributes = FontAttributes.Bold,
                         TextColor = ResolveTextColor(cell),
-                        FontSize = textSize
+                        FontSize = textSize,
+                        LineBreakMode = LineBreakMode.NoWrap
                     };
-                    lbl.SetBinding(Label.TextProperty, new Binding(nameof(MathCrossCellViewModel.DisplayText), source: cellVm));
+                    lbl.SetBinding(Label.TextProperty, new Binding(nameof(MathCrossCellViewModel.EditableText), source: cellVm));
                     border.Content = lbl;
+                    BoardGrid.Children.Add(border);
                 }
-
-                BoardGrid.Children.Add(border);
             }
         });
     }
 
-    private void OnBoardContainerSizeChanged(object? sender, EventArgs e)
+    private void OnTileDragStarting(object? sender, DragStartingEventArgs e)
     {
-        RecalculateLayoutAndRefresh();
+        if (sender is not BindableObject bo || bo.BindingContext is not NumberBankTileViewModel tileVm) return;
+        e.Data.Properties.Add("tileId", tileVm.Tile.Id);
+        _vm.SetDragging(true);
     }
 
-    private void OnPageSizeChanged(object? sender, EventArgs e)
+
+    private void OnCellDragStarting(object? sender, DragStartingEventArgs e)
     {
-        RecalculateLayoutAndRefresh();
+        if (sender is not BindableObject bo || bo.BindingContext is not MathCrossCellViewModel cellVm) return;
+        var cell = cellVm.Cell;
+        if (!cellVm.IsEditable || string.IsNullOrWhiteSpace(cell.UserInput)) return;
+
+        e.Data.Properties["sourceCell"] = $"{cell.Row}:{cell.Col}";
+        _vm.SetDragging(true);
     }
+
+    private MathCrossCellViewModel? ResolveCellVmFromProperties(DataPackagePropertySetView properties)
+    {
+        if (!properties.TryGetValue("sourceCell", out var srcObj)) return null;
+        var src = srcObj?.ToString();
+        if (string.IsNullOrWhiteSpace(src)) return null;
+
+        var parts = src.Split(':');
+        if (parts.Length != 2) return null;
+        if (!int.TryParse(parts[0], out int r) || !int.TryParse(parts[1], out int c)) return null;
+
+        return _vm.FlatCells.FirstOrDefault(x => x.Cell.Row == r && x.Cell.Col == c);
+    }
+
+    private void OnBankDrop(object? sender, DropEventArgs e)
+    {
+        _vm.SetDragging(false);
+        var sourceVm = ResolveCellVmFromProperties(e.Data.Properties);
+        if (sourceVm == null) return;
+        _vm.TryReturnCellNumberToBank(sourceVm);
+    }
+
+    private void OnCellDragOver(object? sender, DragEventArgs e)
+    {
+        e.AcceptedOperation = DataPackageOperation.Copy;
+    }
+
+    private void OnCellDrop(object? sender, DropEventArgs e)
+    {
+        _vm.SetDragging(false);
+        if (sender is not BindableObject bo || bo.BindingContext is not MathCrossCellViewModel target) return;
+
+        if (e.Data.Properties.TryGetValue("tileId", out var tileIdObj) && !string.IsNullOrWhiteSpace(tileIdObj?.ToString()))
+        {
+            _vm.TryPlaceTileById(tileIdObj?.ToString(), target);
+            return;
+        }
+
+        var sourceVm = ResolveCellVmFromProperties(e.Data.Properties);
+        if (sourceVm == null) return;
+        _vm.TryMoveCellToCell(sourceVm, target);
+    }
+
+    private void OnBoardContainerSizeChanged(object? sender, EventArgs e) => RecalculateLayoutAndRefresh();
+    private void OnPageSizeChanged(object? sender, EventArgs e) => RecalculateLayoutAndRefresh();
 
     private void RecalculateLayoutAndRefresh()
     {
-        if (BoardContainer.Width <= 0 || BoardContainer.Height <= 0)
-            return;
-
+        if (BoardContainer.Width <= 0 || BoardContainer.Height <= 0) return;
         UpdateLayoutConstraintsFromViewport();
-
         _uniformCellSize = GetUniformCellSize();
         BuildGrid();
     }
@@ -169,45 +207,29 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
     {
         double availableWidth = Math.Max(0, BoardContainer.Width - 2 * BoardInnerPadding);
         double availableHeight = Math.Max(0, BoardContainer.Height - 2 * BoardInnerPadding);
-
         int maxRows = Math.Max(1, (int)Math.Floor((availableHeight + CellSpacing) / (PreferredTouchCellSize + CellSpacing)));
         int maxCols = Math.Max(1, (int)Math.Floor((availableWidth + CellSpacing) / (PreferredTouchCellSize + CellSpacing)));
-
         _ = _vm.UpdateLayoutConstraintsAsync(maxRows, maxCols);
     }
 
     private double GetUniformCellSize()
     {
-        if (BoardContainer.Width <= 0 || BoardContainer.Height <= 0)
-            return DefaultCellSize;
-
-        if (BindingContext is not MathCrossPageViewModel vm || vm.Game is not MathCrossGame game)
-            return DefaultCellSize;
-
+        if (BoardContainer.Width <= 0 || BoardContainer.Height <= 0) return DefaultCellSize;
+        if (BindingContext is not MathCrossPageViewModel vm || vm.Game is not MathCrossGame game) return DefaultCellSize;
         int rows = Math.Max(1, game.Rows);
         int cols = Math.Max(1, game.Cols);
-
         double availableWidth = Math.Max(0, BoardContainer.Width - 2 * BoardInnerPadding);
         double availableHeight = Math.Max(0, BoardContainer.Height - 2 * BoardInnerPadding);
-
         double widthBased = (availableWidth - CellSpacing * Math.Max(0, cols - 1)) / cols;
         double heightBased = (availableHeight - CellSpacing * Math.Max(0, rows - 1)) / rows;
-
-        double sizeToFit = Math.Min(widthBased, heightBased);
-        return Math.Clamp(sizeToFit, MinCellSize, MaxCellSize);
+        return Math.Clamp(Math.Min(widthBased, heightBased), MinCellSize, MaxCellSize);
     }
 
     private static Color ResolveTextColor(MathCrossCell cell)
     {
-        if (cell.IsGiven || cell.Type == CellType.Equals)
+        if (cell.IsGiven || cell.Type == CellType.Equals || cell.Type == CellType.Operator)
             return GetColor("C_MathCell_Fixed_Text", "#E8EDF5");
-
-        return cell.Type switch
-        {
-            CellType.Number => GetColor("C_MathCell_Num_Text", "#F3FAFF"),
-            CellType.Operator => GetColor("C_MathCell_Op_Text", "#F7F4FF"),
-            _ => Colors.White
-        };
+        return GetColor("C_MathCell_Num_Text", "#F3FAFF");
     }
 
     private static Color GetColor(string key, string fallbackHex)
@@ -215,9 +237,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
         if (Application.Current?.Resources != null
             && Application.Current.Resources.TryGetValue(key, out var resource)
             && resource is Color color)
-        {
             return color;
-        }
 
         return Color.FromArgb(fallbackHex);
     }
@@ -229,13 +249,10 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
 
         string diff = query.TryGetValue("difficulty", out var d) ? d?.ToString() ?? "easy" : "easy";
         diff = (diff ?? "easy").Trim().ToLowerInvariant();
-        if (diff is not ("easy" or "normal" or "hard" or "master"))
-            diff = "easy";
+        if (diff is not ("easy" or "normal" or "hard" or "master")) diff = "easy";
 
         int level = query.TryGetValue("level", out var l) && int.TryParse(l?.ToString(), out var lv) ? lv : 1;
-
-        const int maxLevel = 10000;
-        level = Math.Clamp(level, 1, maxLevel);
+        level = Math.Clamp(level, 1, 10000);
 
         MainThread.BeginInvokeOnMainThread(async () =>
         {
@@ -243,17 +260,11 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
             try { await vm.LoadAsync("math_cross", diff, level); }
             catch (Exception ex)
             {
-                var errorTitle = LocalizationService.GetString("MathCross_ErrorTitle");
-                var okLabel = LocalizationService.GetString("Common_Ok");
                 var dialogService = Application.Current?.Handler?.MauiContext?.Services?.GetService<IDialogService>();
                 if (dialogService is not null)
-                {
-                    await dialogService.AlertAsync(errorTitle, ex.Message, okLabel);
-                }
+                    await dialogService.AlertAsync(LocalizationService.GetString("MathCross_ErrorTitle"), ex.Message, LocalizationService.GetString("Common_Ok"));
                 else
-                {
-                    await DisplayAlertAsync(errorTitle, ex.Message, okLabel);
-                }
+                    await DisplayAlertAsync(LocalizationService.GetString("MathCross_ErrorTitle"), ex.Message, LocalizationService.GetString("Common_Ok"));
             }
         });
     }
