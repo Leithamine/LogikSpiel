@@ -13,19 +13,19 @@ namespace LogikSpiel.Services;
 public sealed class MathCrossGeneratorService
 {
     private const int GridSize = 24;
-    private const int DefaultMaxLayoutSize = 12;
-    private const int ExtendedMaxLayoutSize = 14;
-    private const int MaxAspectDelta = 4;
-    private const double MinCompactnessRatio = 0.58;
-    private const double MinTopologyCompactnessRatio = 0.68;
-    private const double TargetBoundsCoverageRatio = 0.88;
-    private const double MaxLargestEmptyRegionRatio = 0.20;
+    private const int DefaultMaxLayoutSize = 10;
+    private const int ExtendedMaxLayoutSize = 12;
+    private const int MaxAspectDelta = 3;
+    private const double MinCompactnessRatio = 0.65;
+    private const double MinTopologyCompactnessRatio = 0.76;
+    private const double TargetBoundsCoverageRatio = 0.92;
+    private const double MaxLargestEmptyRegionRatio = 0.10;
     private const int EquationVariantsPerAnchor = 1;
-    private const double IntersectionBonus = 16.0;
-    private const double AreaGrowthPenalty = 0.8;
-    private const double AspectRatioPenalty = 2.0;
-    private const double CenterDistancePenalty = 0.2;
-    private const int MaxLeafEquations = 4;
+    private const double IntersectionBonus = 20.0;
+    private const double AreaGrowthPenalty = 1.2;
+    private const double AspectRatioPenalty = 3.0;
+    private const double CenterDistancePenalty = 0.3;
+    private const int MaxLeafEquations = 3;
     private const int MinEquationsPerLevel = 10;
     private const int MaxEquationsPerLevel = 15;
 
@@ -159,7 +159,7 @@ public sealed class MathCrossGeneratorService
         if (numbers.Count == 0) return null;
 
         int oldArea = currentBounds.Area;
-        int[] anchors = s.IsExtended ? new[] { 2, 4 } : new[] { 2 };
+        int[] anchors = s.IsExtended ? new[] { 0, 2, 4 } : new[] { 0, 2, 4 };
         PlacementCandidate? best = null;
 
         foreach (var (nr, nc, val) in numbers)
@@ -189,8 +189,8 @@ public sealed class MathCrossGeneratorService
 
                         int requiredIntersections = placedCount switch
                         {
-                            >= 10 => 3,
-                            >= 5 => 2,
+                            >= 8 => 3,
+                            >= 4 => 2,
                             _ => 1
                         };
                         if (simulation.Intersections < requiredIntersections)
@@ -226,7 +226,7 @@ public sealed class MathCrossGeneratorService
                             - AreaGrowthPenalty * (newArea - oldArea)
                             - AspectRatioPenalty * Math.Abs(width - height)
                             - CenterDistancePenalty * centerDistance
-                            + compactness * 10.0
+                            + compactness * 18.0
                             + targetCoverageProgress * 9.0
                             + areaCoverage * 7.0;
 
@@ -915,10 +915,10 @@ public sealed class MathCrossGeneratorService
         int fullEmptyCols = CountCompletelyEmptyCols(game);
 
         double score = 0;
-        score += fill * 100.0;
-        score -= emptyPenalty * 130.0;
+        score += fill * 120.0;
+        score -= emptyPenalty * 160.0;
         score -= outOfRange * 14.0;
-        score -= (fullEmptyRows + fullEmptyCols) * 5.0;
+        score -= (fullEmptyRows + fullEmptyCols) * 10.0;
 
         if (HasValidTopology(game))
             score += 90.0;
@@ -952,7 +952,7 @@ public sealed class MathCrossGeneratorService
         int maxWidth = effective.MaxLayoutWidth;
         int maxHeight = effective.MaxLayoutHeight;
         var bounds = ComputeBounds(grid);
-        int[] anchors = s.IsExtended ? new[] { 2, 4 } : new[] { 2 };
+        int[] anchors = s.IsExtended ? new[] { 0, 2, 4 } : new[] { 0, 2, 4 };
 
         while (placed < target && attempts < maxAttempts)
         {
@@ -1573,8 +1573,8 @@ public sealed class MathCrossGeneratorService
             return new EffectiveSettings(settings.MinEquations, settings.MaxEquations, baseLayoutSize, baseLayoutSize);
         }
 
-        int maxRows = Math.Clamp(constraints.Value.MaxRows, settings.EquationLength, GridSize);
-        int maxCols = Math.Clamp(constraints.Value.MaxCols, settings.EquationLength, GridSize);
+        int maxRows = Math.Clamp(constraints.Value.MaxRows, settings.EquationLength, baseLayoutSize);
+        int maxCols = Math.Clamp(constraints.Value.MaxCols, settings.EquationLength, baseLayoutSize);
 
         int area = maxRows * maxCols;
         int estimated = Math.Max(settings.MinEquations, area / 7);

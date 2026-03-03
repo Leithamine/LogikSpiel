@@ -13,11 +13,11 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
 {
     private bool _isLoaded;
     private const double DefaultCellSize = 50;
-    private const double MinCellSize = 36;
+    private const double MinCellSize = 32;
     private const double PreferredTouchCellSize = 50;
-    private const double MaxCellSize = 64;
-    private const double CellSpacing = 5;
-    private const double BoardInnerPadding = 12;
+    private const double MaxCellSize = 80;
+    private const double CellSpacing = 3;
+    private const double BoardInnerPadding = 8;
 
     private double _uniformCellSize = DefaultCellSize;
 
@@ -65,13 +65,15 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
             var game = vm.Game;
             _uniformCellSize = GetUniformCellSize();
             double cellSize = _uniformCellSize;
-            double textSize = Math.Clamp(cellSize * 0.34, 11, 22);
+            double textSize = Math.Clamp(cellSize * 0.38, 12, 26);
 
             BoardGrid.Children.Clear();
             BoardGrid.RowDefinitions.Clear();
             BoardGrid.ColumnDefinitions.Clear();
             BoardGrid.RowSpacing = CellSpacing;
             BoardGrid.ColumnSpacing = CellSpacing;
+            BoardGrid.HorizontalOptions = LayoutOptions.Center;
+            BoardGrid.VerticalOptions = LayoutOptions.Center;
 
             for (int r = 0; r < game.Rows; r++)
                 BoardGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(cellSize) });
