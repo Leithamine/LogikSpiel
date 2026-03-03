@@ -758,7 +758,7 @@ public sealed class MathCrossGeneratorService
         return CompactGameByRemovingEmptyStrips(game, s.EquationLength);
     }
 
-    private static MathCrossGame CompactGameByRemovingEmptyStrips(MathCrossGame game, int equationLength)
+    private MathCrossGame CompactGameByRemovingEmptyStrips(MathCrossGame game, int equationLength)
     {
         var source = game.Grid;
         int rows = game.Rows;
