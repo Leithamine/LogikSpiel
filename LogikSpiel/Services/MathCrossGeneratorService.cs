@@ -21,10 +21,11 @@ public sealed class MathCrossGeneratorService
     private const double TargetBoundsCoverageRatio = 0.88;
     private const double MaxLargestEmptyRegionRatio = 0.20;
     private const int EquationVariantsPerAnchor = 1;
-    private const double IntersectionBonus = 14.0;
+    private const double IntersectionBonus = 16.0;
     private const double AreaGrowthPenalty = 0.8;
     private const double AspectRatioPenalty = 2.0;
-    private const double CenterDistancePenalty = 0.25;
+    private const double CenterDistancePenalty = 0.2;
+    private const int MaxLeafEquations = 4;
     private const int MinEquationsPerLevel = 10;
     private const int MaxEquationsPerLevel = 15;
 
@@ -186,7 +187,12 @@ public sealed class MathCrossGeneratorService
 
                         var simulation = SimulatePlacement(grid, solutions, startR, startC, vertical, s.EquationLength, eq, currentBounds);
 
-                        int requiredIntersections = placedCount >= 7 ? 2 : 1;
+                        int requiredIntersections = placedCount switch
+                        {
+                            >= 10 => 3,
+                            >= 5 => 2,
+                            _ => 1
+                        };
                         if (simulation.Intersections < requiredIntersections)
                             continue;
 
@@ -1180,7 +1186,11 @@ public sealed class MathCrossGeneratorService
         if (visited.Any(v => !v)) return false;
 
         bool hasBranch = adj.Any(a => a.Count >= 3);
-        if (!hasBranch && intersections < n - 1)
+        if (!hasBranch && intersections < n)
+            return false;
+
+        int leafCount = adj.Count(a => a.Count == 1);
+        if (leafCount > MaxLeafEquations)
             return false;
 
         return true;
@@ -1254,7 +1264,11 @@ public sealed class MathCrossGeneratorService
         if (visited.Any(v => !v)) return false;
 
         bool hasBranch = adj.Any(a => a.Count >= 3);
-        if (!hasBranch && intersections < n - 1)
+        if (!hasBranch && intersections < n)
+            return false;
+
+        int leafCount = adj.Count(a => a.Count == 1);
+        if (leafCount > MaxLeafEquations)
             return false;
 
         return true;
