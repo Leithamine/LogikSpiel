@@ -11,120 +11,72 @@
              Shell.NavBarIsVisible="False"
              BackgroundImageSource="gamebg.png">
     <ContentPage.Resources>
-        <conv:InvertBoolConverter x:Key="InvertBoolConverter"/>
         <conv:MathCellToColorConverter x:Key="MathCellToColorConverter"/>
     </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*,Auto" Padding="12" RowSpacing="12">
-        <!-- HEADER -->
         <Border Style="{StaticResource GlassCard}" Padding="{OnIdiom Phone=8, Desktop=12}" Margin="0">
-            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
-                <Button Grid.Column="0"
-                        Text="&#x2190;"
-                        Style="{StaticResource BtnIcon}"
-                        WidthRequest="{OnIdiom Phone=76, Desktop=88}"
-                        HeightRequest="{OnIdiom Phone=40, Desktop=48}"
-                        Padding="10,0"
-                        Command="{Binding BackCommand}"
-                        IsEnabled="{Binding IsNotBusy}"/>
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
+                <Button Grid.Column="0" Text="&#x2190;" Style="{StaticResource BtnIcon}" WidthRequest="76" HeightRequest="40" Padding="10,0" Command="{Binding BackCommand}" IsEnabled="{Binding IsNotBusy}"/>
 
                 <VerticalStackLayout Grid.Column="1" Spacing="0" HorizontalOptions="Center" VerticalOptions="Center">
                     <Label Text="{resx:Translate Key=MathCross_Title}" Style="{StaticResource H3}" HorizontalOptions="Center"/>
                     <Label Text="{Binding HeaderSubtitle}" TextColor="{StaticResource C_TextMuted}" FontSize="14" HorizontalOptions="Center" FontAttributes="Bold"/>
                 </VerticalStackLayout>
 
-                <Border Grid.Column="2" Style="{StaticResource CoinBadge}" Padding="{OnIdiom Phone=8, Desktop=10}">
+                <Border Grid.Column="2" Style="{StaticResource CoinBadge}" Padding="8">
                     <HorizontalStackLayout Spacing="4">
                         <Label Text="&#x1F4B0;" FontSize="14"/>
                         <Label Text="{Binding Coins}" TextColor="{StaticResource C_Gold}" FontAttributes="Bold"/>
                     </HorizontalStackLayout>
                 </Border>
+
+                <Button Grid.Column="3" Text="💡" Style="{StaticResource BtnGhost}" HeightRequest="40" WidthRequest="44" Command="{Binding HintCommand}" IsEnabled="{Binding CanUseLamp}"/>
+                <Button Grid.Column="4" Text="↶" Style="{StaticResource BtnGhost}" HeightRequest="40" WidthRequest="44" Command="{Binding UndoCommand}"/>
             </Grid>
         </Border>
 
-        <!-- BOARD -->
         <Border Grid.Row="1" Style="{StaticResource GlassCard}" x:Name="BoardContainer" Padding="12">
-            <Grid x:Name="BoardGrid"
-                  HorizontalOptions="Center"
-                  VerticalOptions="Center"
-                  RowSpacing="4"
-                  ColumnSpacing="4"/>
+            <Grid x:Name="BoardGrid" HorizontalOptions="Center" VerticalOptions="Center" RowSpacing="4" ColumnSpacing="4"/>
         </Border>
 
-        <!-- CONTROLS -->
-        <Border Grid.Row="2" Style="{StaticResource SolidCard}" Padding="16">
-            <VerticalStackLayout Spacing="14">
-
-                <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="10">
-                    <Button Grid.Column="0" Text="↩️" 
-                            Style="{StaticResource BtnGhost}"
-                            HeightRequest="50"
-                            Command="{Binding ResetCommand}" 
-                            IsEnabled="{Binding IsNotBusy}"/>
-
-                    <Button Grid.Column="1" Text="💡" 
-                            BackgroundColor="{StaticResource C_Warning}"
-                            TextColor="{StaticResource C_TextDark}"
-                            FontAttributes="Bold"
-                            CornerRadius="14"
-                            HeightRequest="50"
-                            Command="{Binding HintCommand}" 
-                            IsEnabled="{Binding IsNotBusy}"/>
-
-                    <Button Grid.Column="2" Text="⌫" 
-                            BackgroundColor="{StaticResource C_Accent}"
-                            TextColor="{StaticResource C_TextPrimary}"
-                            FontAttributes="Bold"
-                            CornerRadius="14"
-                            HeightRequest="50"
-                            Command="{Binding ClearCellCommand}" 
-                            IsEnabled="{Binding HasSelection}"/>
-
-                    <Button Grid.Column="3" Text="✓" 
-                            Style="{StaticResource BtnSuccess}"
-                            HeightRequest="50"
-                            Command="{Binding CheckCommand}" 
-                            IsEnabled="{Binding IsNotBusy}"/>
-                </Grid>
-
-                <!-- Token Keyboard -->
-                <ScrollView Orientation="Horizontal" 
-                            HorizontalScrollBarVisibility="Never" 
-                            IsVisible="{Binding HasSelection}">
-                    <HorizontalStackLayout Spacing="8" HorizontalOptions="Center" 
-                                           BindableLayout.ItemsSource="{Binding CandidateTokens}">
-                        <BindableLayout.ItemTemplate>
-                            <DataTemplate x:DataType="x:String">
-                                <Button Text="{Binding .}"
-                                        x:DataType="{x:Null}"
-                                        Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.TokenCommand}"
-                                        CommandParameter="{Binding .}"
-                                        WidthRequest="56" HeightRequest="52"
-                                        BackgroundColor="{StaticResource C_BgLight}"
-                                        TextColor="{StaticResource C_TextPrimary}"
-                                        FontAttributes="Bold"
-                                        FontSize="17"
-                                        CornerRadius="12"
-                                        BorderColor="{StaticResource C_Primary}"
-                                        BorderWidth="2"/>
-                            </DataTemplate>
-                        </BindableLayout.ItemTemplate>
-                    </HorizontalStackLayout>
-                </ScrollView>
-
-                <Label Text="{resx:Translate Key=MathCross_Tip}" 
-                       IsVisible="{Binding HasSelection, Converter={StaticResource InvertBoolConverter}}"
-                       HorizontalOptions="Center"
-                       Style="{StaticResource Caption}"/>
+        <Border Grid.Row="2" Style="{StaticResource SolidCard}" Padding="12">
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Zahlenbank" Style="{StaticResource Caption}"/>
+                <CollectionView ItemsSource="{Binding NumberBank}" SelectionMode="None" HeightRequest="74">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Horizontal" ItemSpacing="8"/>
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="vm:NumberBankTileViewModel">
+                            <Border Padding="10,0"
+                                    HeightRequest="56"
+                                    WidthRequest="{Binding TileWidth}"
+                                    VerticalOptions="Center"
+                                    BackgroundColor="{StaticResource C_BgLight}"
+                                    Stroke="{StaticResource C_Primary}"
+                                    StrokeThickness="1.5"
+                                    StrokeShape="RoundRectangle 12">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.NumberTileTappedCommand}" CommandParameter="{Binding .}"/>
+                                    <DragGestureRecognizer DragStarting="OnTileDragStarting"/>
+                                </Border.GestureRecognizers>
+                                <Label Text="{Binding DisplayValue}"
+                                       FontAttributes="Bold"
+                                       FontSize="18"
+                                       HorizontalTextAlignment="Center"
+                                       VerticalTextAlignment="Center"
+                                       LineBreakMode="NoWrap"/>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
             </VerticalStackLayout>
         </Border>
 
-        <!-- LOADING -->
-        <Grid Grid.RowSpan="3" IsVisible="{Binding IsBusy}" 
-              BackgroundColor="#DD000000" InputTransparent="False">
+        <Grid Grid.RowSpan="3" IsVisible="{Binding IsBusy}" BackgroundColor="#DD000000" InputTransparent="False">
             <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="16">
-                <ActivityIndicator IsRunning="True" Color="{StaticResource C_Primary}" 
-                                   HeightRequest="60" WidthRequest="60"/>
+                <ActivityIndicator IsRunning="True" Color="{StaticResource C_Primary}" HeightRequest="60" WidthRequest="60"/>
                 <Label Text="{resx:Translate Key=MathCross_Generating}" Style="{StaticResource H3}"/>
             </VerticalStackLayout>
         </Grid>
