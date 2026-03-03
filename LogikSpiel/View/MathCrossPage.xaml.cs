@@ -113,11 +113,6 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
         _vm.SetDragging(true);
     }
 
-    private void OnTileDragEnded(object? sender, DragEventArgs e)
-    {
-        _vm.SetDragging(false);
-    }
-
     private void OnCellDragOver(object? sender, DragEventArgs e)
     {
         e.AcceptedOperation = DataPackageOperation.Copy;

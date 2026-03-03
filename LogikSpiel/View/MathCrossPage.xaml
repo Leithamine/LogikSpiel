@@ -52,7 +52,7 @@
                             <Border Padding="12,8" BackgroundColor="{StaticResource C_BgLight}" Stroke="{StaticResource C_Primary}" StrokeThickness="1.5" StrokeShape="RoundRectangle 12">
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.NumberTileTappedCommand}" CommandParameter="{Binding .}"/>
-                                    <DragGestureRecognizer DragStarting="OnTileDragStarting" DragEnded="OnTileDragEnded"/>
+                                    <DragGestureRecognizer DragStarting="OnTileDragStarting"/>
                                 </Border.GestureRecognizers>
                                 <Label Text="{Binding DisplayValue}" FontAttributes="Bold" FontSize="18" LineBreakMode="NoWrap"/>
                             </Border>
