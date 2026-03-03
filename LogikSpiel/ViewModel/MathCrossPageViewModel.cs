@@ -24,6 +24,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
     private readonly MathCrossGeneratorService _generator;
     private readonly IGameCatalogService _catalog;
     private readonly Stack<PlacementMove> _undoStack = new();
+    private readonly HashSet<string> _satisfiedEquationCellKeys = new();
 
     public event Action? RequestLayoutUpdate;
     private UserProfile? _userProfile;
@@ -201,6 +202,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
         foreach (var tile in game.NumberBank)
             NumberBank.Add(new NumberBankTileViewModel(tile));
 
+        RefreshEquationHighlights();
         RequestLayoutUpdate?.Invoke();
     }
 
@@ -223,6 +225,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
         var tile = NumberBank.FirstOrDefault(t => t.Tile.Id == tileId);
         if (tile == null) return false;
         if (!TryPlaceTileOnCell(tile, targetVm.Cell, isHint: false)) return false;
+        RefreshEquationHighlights();
         _ = CheckForAutoCompleteAsync();
         return true;
     }
@@ -259,6 +262,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
             UndoCommand.RaiseCanExecuteChanged();
         }
 
+        RefreshEquationHighlights();
         FlatCells.FirstOrDefault(f => f.Cell == cell)?.UpdateDisplay();
         return true;
     }
@@ -328,9 +332,134 @@ public sealed class MathCrossPageViewModel : ObservableObject
 
         cell.UserInput = move.OldInput;
         cell.PlacedTileId = move.OldTileId;
+        RefreshEquationHighlights();
         FlatCells.First(f => f.Cell == cell).UpdateDisplay();
         await Task.CompletedTask;
     }
+
+    private void RefreshEquationHighlights()
+    {
+        _satisfiedEquationCellKeys.Clear();
+        if (Game == null) return;
+
+        foreach (var eq in Game.Equations)
+        {
+            if (!IsEquationSatisfied(eq, DifficultyKey == "master"))
+                continue;
+
+            foreach (var (r, c) in eq.Cells)
+                _satisfiedEquationCellKeys.Add(BuildCellKey(r, c));
+        }
+
+        foreach (var vm in FlatCells)
+            vm.UpdateDisplay();
+    }
+
+    public bool IsCellInSatisfiedEquation(MathCrossCell cell)
+        => _satisfiedEquationCellKeys.Contains(BuildCellKey(cell.Row, cell.Col));
+
+    private bool IsEquationSatisfied(MathEquation eq, bool allowDecimals)
+    {
+        if (Game == null || eq.Cells.Count < 5)
+            return false;
+
+        int equalsIndex = eq.Cells.Count - 2;
+        var numbers = new List<decimal>();
+        var ops = new List<string>();
+
+        for (int i = 0; i < eq.Cells.Count; i++)
+        {
+            var (r, c) = eq.Cells[i];
+            var cell = Game.Grid[r, c];
+
+            if (i == equalsIndex)
+                continue;
+
+            if (i % 2 == 0)
+            {
+                string raw = cell.IsGiven ? cell.Solution : cell.UserInput;
+                if (!decimal.TryParse(MathCrossValueNormalizer.NormalizeNumberText(raw),
+                        System.Globalization.NumberStyles.Any,
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        out var v))
+                    return false;
+
+                numbers.Add(v);
+            }
+            else
+            {
+                ops.Add(MathCrossValueNormalizer.NormalizeOperator(cell.Solution));
+            }
+        }
+
+        if (numbers.Count < 2 || ops.Count == 0)
+            return false;
+
+        decimal result = numbers[^1];
+        var lhsNums = numbers.Take(numbers.Count - 1).ToList();
+        var lhsOps = ops.ToList();
+
+        var evaluated = EvaluateExpression(lhsNums, lhsOps, allowDecimals);
+        if (evaluated == null)
+            return false;
+
+        if (allowDecimals)
+            return Math.Abs((double)(evaluated.Value - result)) <= 0.0001;
+
+        return evaluated.Value == result;
+    }
+
+    private static decimal? EvaluateExpression(List<decimal> nums, List<string> ops, bool allowDecimals)
+    {
+        if (nums.Count == 0) return null;
+
+        foreach (var priority in new[] { 3, 2, 1 })
+        {
+            int i = 0;
+            while (i < ops.Count)
+            {
+                if (GetPriority(ops[i]) != priority)
+                {
+                    i++;
+                    continue;
+                }
+
+                var calc = Calc(nums[i], ops[i], nums[i + 1], allowDecimals);
+                if (calc == null) return null;
+
+                nums[i] = calc.Value;
+                nums.RemoveAt(i + 1);
+                ops.RemoveAt(i);
+            }
+        }
+
+        return nums.Count == 1 ? nums[0] : null;
+    }
+
+    private static int GetPriority(string op)
+        => op switch
+        {
+            "^" => 3,
+            "×" or "÷" or "%" or "//" => 2,
+            _ => 1
+        };
+
+    private static decimal? Calc(decimal a, string op, decimal b, bool allowDecimals)
+    {
+        return op switch
+        {
+            "+" => a + b,
+            "-" or "−" => a - b,
+            "×" => a * b,
+            "÷" when b != 0 => allowDecimals ? a / b : (a % b == 0 ? a / b : null),
+            "%" when b != 0 && a == decimal.Truncate(a) && b == decimal.Truncate(b) => a % b,
+            "//" when b != 0 && a == decimal.Truncate(a) && b == decimal.Truncate(b) => decimal.Truncate(a / b),
+            "^" when b == decimal.Truncate(b) && b >= 0 => (decimal)Math.Pow((double)a, (double)b),
+            _ => null
+        };
+    }
+
+    private static string BuildCellKey(int row, int col) => $"{row}:{col}";
 
     private async Task CheckForAutoCompleteAsync()
     {
@@ -398,6 +527,7 @@ public sealed class NumberBankTileViewModel : ObservableObject
     public NumberBankTile Tile { get; }
     public NumberBankTileViewModel(NumberBankTile tile) => Tile = tile;
     public string DisplayValue => Tile.Value;
+    public double TileWidth => Math.Max(56, 20 + DisplayValue.Length * 14);
 }
 
 public sealed class MathCrossCellViewModel : ObservableObject
@@ -428,24 +558,30 @@ public sealed class MathCrossCellViewModel : ObservableObject
     public bool IsGiven => Cell.IsGiven;
     public bool IsEditable => !Cell.IsGiven && Cell.Type == CellType.Number;
     public bool IsDropTarget => _parent.IsDragging && IsEditable;
+    public bool IsEquationSatisfied => _parent.IsCellInSatisfiedEquation(Cell);
 
     public string DisplayText => Cell.Type == CellType.Equals || Cell.Type == CellType.Operator
         ? Cell.Solution
         : Cell.IsGiven ? Cell.Solution : (string.IsNullOrWhiteSpace(Cell.UserInput) ? "" : Cell.UserInput);
 
-    public string EditableText => !IsEditable ? DisplayText : (string.IsNullOrWhiteSpace(Cell.UserInput) ? "□" : Cell.UserInput);
+    public string EditableText => !IsEditable ? DisplayText : (string.IsNullOrWhiteSpace(Cell.UserInput) ? "" : Cell.UserInput);
+
+    public Color CellBackground => ResolveBackgroundColor();
 
     public Brush BorderStroke => new SolidColorBrush(ResolveBorderColor());
     public double BorderThickness => IsSelected || IsDropTarget ? 2.5 : 1;
 
-    public Shadow? FocusGlow => IsSelected
-        ? new Shadow { Brush = new SolidColorBrush(ResolveGlowColor()), Offset = new Point(0, 0), Radius = 14, Opacity = 1 }
+    public Shadow? FocusGlow => (IsSelected || IsEquationSatisfied)
+        ? new Shadow { Brush = new SolidColorBrush(ResolveGlowColor()), Offset = new Point(0, 0), Radius = IsEquationSatisfied ? 16 : 14, Opacity = 1 }
         : null;
 
     public AsyncCommand TapCellCommand { get; }
 
     private Color ResolveBorderColor()
     {
+        if (IsEquationSatisfied)
+            return GetColor("C_Success", "#42C67A");
+
         if (IsDropTarget) return GetColor("C_MathCell_Num_HoverBorder", "#79BCEB");
         if (Cell.IsGiven || Cell.Type == CellType.Equals || Cell.Type == CellType.Operator)
             return GetColor("C_MathCell_Fixed_Border", "#646B76");
@@ -453,7 +589,32 @@ public sealed class MathCrossCellViewModel : ObservableObject
         return GetColor("C_MathCell_Num_Border", "#5EA6D8");
     }
 
-    private static Color ResolveGlowColor() => GetColor("C_MathCell_Num_Glow", "#595EA6D8");
+    private Color ResolveGlowColor()
+    {
+        if (IsEquationSatisfied)
+            return GetColor("C_Success", "#42C67A");
+
+        return GetColor("C_MathCell_Num_Glow", "#595EA6D8");
+    }
+
+    private Color ResolveBackgroundColor()
+    {
+        if (IsEquationSatisfied)
+            return GetColor("C_Success", "#42C67A").WithAlpha(0.28f);
+
+        if (Cell.Type == CellType.Empty)
+            return Colors.Transparent;
+
+        if (Cell.IsGiven || Cell.Type == CellType.Equals)
+            return GetColor("C_MathCell_Fixed_Bg", "#313B4A");
+
+        return Cell.Type switch
+        {
+            CellType.Number => GetColor("C_MathCell_Num_Bg", "#23445E"),
+            CellType.Operator => GetColor("C_MathCell_Op_Bg", "#3A3556"),
+            _ => Colors.Transparent
+        };
+    }
 
     private static Color GetColor(string key, string fallbackHex)
     {
@@ -472,6 +633,8 @@ public sealed class MathCrossCellViewModel : ObservableObject
         OnPropertyChanged(nameof(IsGiven));
         OnPropertyChanged(nameof(IsEditable));
         OnPropertyChanged(nameof(IsDropTarget));
+        OnPropertyChanged(nameof(IsEquationSatisfied));
+        OnPropertyChanged(nameof(CellBackground));
         OnPropertyChanged(nameof(BorderStroke));
         OnPropertyChanged(nameof(BorderThickness));
         OnPropertyChanged(nameof(FocusGlow));

@@ -43,18 +43,30 @@
         <Border Grid.Row="2" Style="{StaticResource SolidCard}" Padding="12">
             <VerticalStackLayout Spacing="8">
                 <Label Text="Zahlenbank" Style="{StaticResource Caption}"/>
-                <CollectionView ItemsSource="{Binding NumberBank}" SelectionMode="None" HeightRequest="90">
+                <CollectionView ItemsSource="{Binding NumberBank}" SelectionMode="None" HeightRequest="74">
                     <CollectionView.ItemsLayout>
                         <LinearItemsLayout Orientation="Horizontal" ItemSpacing="8"/>
                     </CollectionView.ItemsLayout>
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="vm:NumberBankTileViewModel">
-                            <Border Padding="12,8" BackgroundColor="{StaticResource C_BgLight}" Stroke="{StaticResource C_Primary}" StrokeThickness="1.5" StrokeShape="RoundRectangle 12">
+                            <Border Padding="10,0"
+                                    HeightRequest="56"
+                                    WidthRequest="{Binding TileWidth}"
+                                    VerticalOptions="Center"
+                                    BackgroundColor="{StaticResource C_BgLight}"
+                                    Stroke="{StaticResource C_Primary}"
+                                    StrokeThickness="1.5"
+                                    StrokeShape="RoundRectangle 12">
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.NumberTileTappedCommand}" CommandParameter="{Binding .}"/>
                                     <DragGestureRecognizer DragStarting="OnTileDragStarting"/>
                                 </Border.GestureRecognizers>
-                                <Label Text="{Binding DisplayValue}" FontAttributes="Bold" FontSize="18" LineBreakMode="NoWrap"/>
+                                <Label Text="{Binding DisplayValue}"
+                                       FontAttributes="Bold"
+                                       FontSize="18"
+                                       HorizontalTextAlignment="Center"
+                                       VerticalTextAlignment="Center"
+                                       LineBreakMode="NoWrap"/>
                             </Border>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>

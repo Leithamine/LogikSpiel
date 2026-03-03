@@ -74,7 +74,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
                 border.SetBinding(Border.StrokeThicknessProperty, new Binding(nameof(MathCrossCellViewModel.BorderThickness), source: cellVm));
                 border.SetBinding(Border.ShadowProperty, new Binding(nameof(MathCrossCellViewModel.FocusGlow), source: cellVm));
                 border.SetBinding(Border.BackgroundColorProperty,
-                    new Binding(nameof(MathCrossCellViewModel.Cell), source: cellVm, converter: (IValueConverter)Resources["MathCellToColorConverter"]));
+                    new Binding(nameof(MathCrossCellViewModel.CellBackground), source: cellVm));
 
                 Grid.SetRow(border, cell.Row);
                 Grid.SetColumn(border, cell.Col);
