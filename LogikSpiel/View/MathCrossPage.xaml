@@ -42,7 +42,6 @@
                 <DropGestureRecognizer AllowDrop="True" Drop="OnBankDrop"/>
             </Border.GestureRecognizers>
             <VerticalStackLayout Spacing="8">
-                <Label Text="Zahlenbank" Style="{StaticResource Caption}"/>
                 <ScrollView Orientation="Vertical" HeightRequest="132">
                     <FlexLayout Direction="Row"
                                 Wrap="Wrap"
