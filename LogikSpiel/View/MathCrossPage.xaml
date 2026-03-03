@@ -14,7 +14,7 @@
         <conv:MathCellToColorConverter x:Key="MathCellToColorConverter"/>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto,*,Auto" Padding="12" RowSpacing="12">
+    <Grid RowDefinitions="Auto,Auto,*" Padding="12" RowSpacing="12">
         <Border Style="{StaticResource GlassCard}" Padding="{OnIdiom Phone=8, Desktop=12}" Margin="0">
             <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
                 <Button Grid.Column="0" Text="&#x2190;" Style="{StaticResource BtnIcon}" WidthRequest="76" HeightRequest="40" Padding="10,0" Command="{Binding BackCommand}" IsEnabled="{Binding IsNotBusy}"/>
@@ -33,7 +33,7 @@
             </Grid>
         </Border>
 
-        <Border Grid.Row="1" Style="{StaticResource GlassCard}" x:Name="BoardContainer" Padding="12">
+        <Border Grid.Row="1" Style="{StaticResource GlassCard}" x:Name="BoardContainer" Padding="8" VerticalOptions="Start">
             <Grid x:Name="BoardGrid" HorizontalOptions="Center" VerticalOptions="Center" RowSpacing="4" ColumnSpacing="4"/>
         </Border>
 
