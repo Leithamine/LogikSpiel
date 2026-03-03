@@ -1212,10 +1212,10 @@ public sealed class MathCrossGeneratorService
 
         int anchors = s.DifficultyKey switch
         {
-            "easy" => rnd.Next(4, 7),
-            "normal" => rnd.Next(3, 6),
-            "hard" => rnd.Next(2, 5),
-            "master" => rnd.Next(2, 4),
+            "easy" => rnd.Next(13, 16),
+            "normal" => rnd.Next(11, 14),
+            "hard" => rnd.Next(9, 12),
+            "master" => rnd.Next(7, 10),
             _ => 4
         };
 
