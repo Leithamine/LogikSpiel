@@ -356,21 +356,36 @@ public sealed class MathCrossGeneratorService
 
         for (int i = 0; i < 30; i++)
         {
-            int a, b;
+            decimal a, b;
             if (op == "×")
             {
                 a = rnd.Next(2, 12);
                 b = rnd.Next(2, 12);
             }
+            else if (op == "÷")
+            {
+                int divisor = rnd.Next(2, 12);
+                int quotient = rnd.Next(2, 12);
+                int dividend = divisor * quotient;
+                if (dividend < s.MinVal || dividend > s.MaxVal) continue;
+                a = dividend;
+                b = divisor;
+            }
+            else if (op == "^")
+            {
+                a = rnd.Next(2, 11);
+                b = rnd.Next(2, 4);
+            }
             else
             {
-                a = rnd.Next(Math.Max(s.MinVal, -50), Math.Min(50, s.MaxVal) + 1);
-                b = rnd.Next(Math.Max(s.MinVal, -50), Math.Min(50, s.MaxVal) + 1);
+                a = s.AllowDecimals ? GenValue(s, rnd) : rnd.Next(Math.Max(s.MinVal, -50), Math.Min(50, s.MaxVal) + 1);
+                b = s.AllowDecimals ? GenValue(s, rnd) : rnd.Next(Math.Max(s.MinVal, -50), Math.Min(50, s.MaxVal) + 1);
             }
 
-            int? c = Calc(a, op, b);
+            decimal? c = CalcDec(a, op, b, s.AllowDecimals);
             if (c == null || c.Value < s.MinVal || c.Value > s.MaxVal) continue;
-            return new EquationData(new decimal[] { a, b, c.Value }, new[] { op });
+            if (!s.AllowDecimals && c.Value != Math.Truncate(c.Value)) continue;
+            return new EquationData(new[] { a, b, c.Value }, new[] { op });
         }
 
         return null;
@@ -440,26 +455,40 @@ public sealed class MathCrossGeneratorService
                 if (numIdx == 0)
                 {
                     a = anchorVal;
-                    b = op == "×" ? rnd.Next(2, 12) : GenValue(s, rnd);
-                    var res = Calc((int)a, op, (int)b);
+                    b = GenOperandForOp(op, s, rnd);
+                    var res = CalcDec(a, op, b, s.AllowDecimals);
                     if (res == null || res.Value < s.MinVal || res.Value > s.MaxVal) continue;
+                    if (!s.AllowDecimals && res.Value != Math.Truncate(res.Value)) continue;
                     c = res.Value;
                 }
                 else if (numIdx == 1)
                 {
                     b = anchorVal;
-                    a = op == "×" ? rnd.Next(2, 12) : GenValue(s, rnd);
-                    var res = Calc((int)a, op, (int)b);
+                    if (op == "÷" && b == 0) continue;
+                    if (op == "^" && (b != Math.Truncate(b) || b < 2 || b > 3)) continue;
+                    a = GenOperandForOp(op, s, rnd);
+                    var res = CalcDec(a, op, b, s.AllowDecimals);
                     if (res == null || res.Value < s.MinVal || res.Value > s.MaxVal) continue;
+                    if (!s.AllowDecimals && res.Value != Math.Truncate(res.Value)) continue;
                     c = res.Value;
                 }
                 else
                 {
                     c = anchorVal;
-                    var rev = Reverse((int)c, op, s, rnd);
-                    if (rev == null) continue;
-                    a = rev.Value.a;
-                    b = rev.Value.b;
+                    if (c != Math.Truncate(c))
+                    {
+                        a = GenOperandForOp(op, s, rnd);
+                        b = GenOperandForOp(op, s, rnd);
+                        var fwd = CalcDec(a, op, b, s.AllowDecimals);
+                        if (fwd == null || fwd.Value != c) continue;
+                    }
+                    else
+                    {
+                        var rev = Reverse((int)c, op, s, rnd);
+                        if (rev == null) continue;
+                        a = rev.Value.a;
+                        b = rev.Value.b;
+                    }
                 }
 
                 return new EquationData(new[] { a, b, c }, new[] { op });
@@ -484,8 +513,19 @@ public sealed class MathCrossGeneratorService
         return rnd.Next(min, max + 1);
     }
 
+    private decimal GenOperandForOp(string op, Settings s, Random rnd)
+    {
+        return op switch
+        {
+            "×" or "÷" => rnd.Next(2, 12),
+            "^" => rnd.Next(2, 4),
+            _ => GenValue(s, rnd)
+        };
+    }
+
     private static int? Calc(int a, string op, int b)
     {
+        if (op == "^") return CalcPow(a, b);
         return op switch
         {
             "+" => a + b,
@@ -496,8 +536,20 @@ public sealed class MathCrossGeneratorService
         };
     }
 
+    private static int? CalcPow(int a, int b)
+    {
+        if (b < 0) return null;
+        double p = Math.Pow(a, b);
+        if (double.IsNaN(p) || double.IsInfinity(p)) return null;
+        if (p < -1_000_000 || p > 1_000_000) return null;
+        int result = (int)Math.Round(p);
+        if (Math.Abs(p - result) > 0.001) return null;
+        return result;
+    }
+
     private static decimal? CalcDec(decimal a, string op, decimal b, bool allowDecimalDivision)
     {
+        if (op == "^") return CalcPowDec(a, b);
         return op switch
         {
             "+" => a + b,
@@ -506,6 +558,15 @@ public sealed class MathCrossGeneratorService
             "÷" when b != 0 => DivideWithRule(a, b, allowDecimalDivision),
             _ => null
         };
+    }
+
+    private static decimal? CalcPowDec(decimal a, decimal b)
+    {
+        if (b != Math.Truncate(b) || b < 0) return null;
+        double p = Math.Pow((double)a, (double)b);
+        if (double.IsNaN(p) || double.IsInfinity(p)) return null;
+        if (p < -1_000_000 || p > 1_000_000) return null;
+        return (decimal)Math.Round(p, 1);
     }
 
     private static decimal? DivideWithRule(decimal a, decimal b, bool allowDecimalDivision)
@@ -602,6 +663,22 @@ public sealed class MathCrossGeneratorService
                     b = divisors[rnd.Next(divisors.Count)];
                     a = c * b;
                     if (a >= s.MinVal && a <= s.MaxVal) return (a, b);
+                    break;
+                }
+                case "^":
+                {
+                    for (int exp = 2; exp <= 3; exp++)
+                    {
+                        if (c <= 0) break;
+                        double root = Math.Pow(c, 1.0 / exp);
+                        int iroot = (int)Math.Round(root);
+                        if (iroot >= 2 && iroot <= 10 && CalcPow(iroot, exp) == c)
+                        {
+                            a = iroot;
+                            b = exp;
+                            if (a >= s.MinVal && a <= s.MaxVal) return (a, b);
+                        }
+                    }
                     break;
                 }
             }
@@ -1103,6 +1180,11 @@ public sealed class MathCrossGeneratorService
                     cell.IsGiven = true;
                     cell.UserInput = "";
                 }
+                else if (cell.Type == CellType.Operator && s.OperatorsAlwaysGiven)
+                {
+                    cell.IsGiven = true;
+                    cell.UserInput = cell.Solution;
+                }
                 else
                 {
                     cell.IsGiven = false;
@@ -1126,11 +1208,14 @@ public sealed class MathCrossGeneratorService
         }
 
         EnsureSolvable(game, rnd);
-        HideCellsInFullyGivenEquations(game, rnd);
+        HideCellsInFullyGivenEquations(game, rnd, s);
 
-        if (editable.Count > 0 && editable.All(c => c.IsGiven))
+        var hideableFinal = s.OperatorsAlwaysGiven
+            ? editable.Where(c => c.Type == CellType.Number).ToList()
+            : editable;
+        if (hideableFinal.Count > 0 && hideableFinal.All(c => c.IsGiven))
         {
-            var hide = editable[rnd.Next(editable.Count)];
+            var hide = hideableFinal[rnd.Next(hideableFinal.Count)];
             hide.IsGiven = false;
             hide.UserInput = "";
         }
@@ -1171,7 +1256,7 @@ public sealed class MathCrossGeneratorService
         return picked;
     }
 
-    private void HideCellsInFullyGivenEquations(MathCrossGame game, Random rnd)
+    private void HideCellsInFullyGivenEquations(MathCrossGame game, Random rnd, Settings s)
     {
         foreach (var eq in game.Equations.OrderBy(_ => rnd.Next()))
         {
@@ -1184,7 +1269,13 @@ public sealed class MathCrossGeneratorService
             if (cells.Count == 0 || cells.Any(c => !c.IsGiven))
                 continue;
 
-            var hide = cells[rnd.Next(cells.Count)];
+            var hideable = s.OperatorsAlwaysGiven
+                ? cells.Where(c => c.Type == CellType.Number).ToList()
+                : cells;
+
+            if (hideable.Count == 0) continue;
+
+            var hide = hideable[rnd.Next(hideable.Count)];
             hide.IsGiven = false;
             hide.UserInput = "";
         }
@@ -1540,7 +1631,8 @@ public sealed class MathCrossGeneratorService
         int MaxEquations,
         double GivenPercent,
         int EquationLength,
-        bool IsExtended);
+        bool IsExtended,
+        bool OperatorsAlwaysGiven = false);
 
     private static Settings GetSettings(string key)
     {
@@ -1554,11 +1646,11 @@ public sealed class MathCrossGeneratorService
             "normal" => new Settings("normal", 1, 99, false,
                 new[] { "+", "-", "×" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.40, 5, false),
 
-            "hard" => new Settings("hard", -1, 99, false,
-                new[] { "+", "-", "×", "÷" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.35, 7, true),
+            "hard" => new Settings("hard", -100, 100, false,
+                new[] { "+", "-", "×", "÷" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.35, 5, false, true),
 
-            "master" => new Settings("master", -1, 99, true,
-                new[] { "+", "-", "×", "÷" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.30, 7, true),
+            "master" => new Settings("master", -100, 100, true,
+                new[] { "+", "-", "×", "÷", "^" }, MinEquationsPerLevel, MaxEquationsPerLevel, 0.30, 5, false, true),
 
             _ => GetSettings("easy")
         };

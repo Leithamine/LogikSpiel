@@ -49,8 +49,8 @@ public class MathCrossLayoutAndEquationBoundsTests
     [Theory]
     [InlineData("easy", 9, 9)]
     [InlineData("normal", 9, 9)]
-    [InlineData("hard", 10, 10)]
-    [InlineData("master", 10, 10)]
+    [InlineData("hard", 9, 9)]
+    [InlineData("master", 9, 9)]
     public void GenerateGame_WithViewportConstraints_FillsBoundsAndAvoidsLargeEmptyRegions(string difficulty, int rows, int cols)
     {
         var generator = new MathCrossGeneratorService();
