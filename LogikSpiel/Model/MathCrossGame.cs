@@ -35,7 +35,7 @@ public static class MathCrossValueNormalizer
         if (t is "/" or ":") return "÷";
         if (t == "-") return "−";
         if (t == "+") return "+";
-        if (t == "×" || t == "÷" || t == "=") return t;
+        if (t == "×" || t == "÷" || t == "=" || t == "^") return t;
         return t;
     }
 

@@ -24,6 +24,10 @@ public class MathCrossGeneratorServiceSafetyTests
             ?? throw new InvalidOperationException("Reverse method not found.");
 
         var rnd = new Random(321);
+
+        int minVal = (int)settings.GetType().GetProperty("MinVal")!.GetValue(settings)!;
+        int maxVal = (int)settings.GetType().GetProperty("MaxVal")!.GetValue(settings)!;
+
         foreach (var c in new[] { -1, 0, 1, 2, 12 })
         {
             foreach (var op in new[] { "+", "-", "×", "÷" })
@@ -34,8 +38,8 @@ public class MathCrossGeneratorServiceSafetyTests
                 dynamic pair = result;
                 int a = pair.Item1;
                 int b = pair.Item2;
-                Assert.InRange(a, -1, 99);
-                Assert.InRange(b, -1, 99);
+                Assert.InRange(a, minVal, maxVal);
+                Assert.InRange(b, minVal, maxVal);
             }
         }
     }

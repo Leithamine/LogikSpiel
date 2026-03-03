@@ -354,6 +354,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
         {
             "easy" => new[] { "+", "−" },
             "normal" => new[] { "+", "−", "×" },
+            "master" => new[] { "+", "−", "×", "÷", "^" },
             _ => new[] { "+", "−", "×", "÷" }
         };
     }
@@ -363,8 +364,8 @@ public sealed class MathCrossPageViewModel : ObservableObject
         string sol = (solution ?? "").Trim();
         var set = new HashSet<string> { sol };
 
-        int minVal = DifficultyKey is "hard" or "master" ? -1 : 1;
-        int maxVal = 99;
+        int minVal = DifficultyKey is "hard" or "master" ? -100 : 1;
+        int maxVal = DifficultyKey is "hard" or "master" ? 100 : 99;
 
         if (TryParse(sol, out var sNum))
         {
