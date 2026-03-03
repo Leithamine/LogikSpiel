@@ -679,7 +679,7 @@ public sealed class MathCrossCellViewModel : ObservableObject
         return GetColor("C_MathCell_Num_Border", "#5EA6D8");
     }
 
-    private Color ResolveGlowColor()
+    private Color ResolveBackgroundColor()
     {
         if (IsEquationWrong)
             return GetColor("C_Error", "#D84B4B");
