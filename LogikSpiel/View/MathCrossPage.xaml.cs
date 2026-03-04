@@ -143,18 +143,18 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
             AbsoluteLayout.SetLayoutBounds(coin, new Rect(startX, startY, 30, 30));
         });
 
-        await Task.Delay(RewardRandom.Next(0, 140), ct);
+        await Task.Delay(RewardRandom.Next(120, 320), ct);
 
         await Task.WhenAll(
-            coin.TranslateToAsync(center.X - startX, center.Y - startY, 260, Easing.CubicOut),
-            coin.ScaleToAsync(1.2, 180, Easing.CubicOut));
+            coin.TranslateToAsync(center.X - startX, center.Y - startY, 520, Easing.CubicOut),
+            coin.ScaleToAsync(1.2, 360, Easing.CubicOut));
 
         ct.ThrowIfCancellationRequested();
 
         await Task.WhenAll(
-            coin.TranslateToAsync(target.X - startX, target.Y - startY, 460, Easing.CubicIn),
-            coin.ScaleToAsync(0.3, 460, Easing.CubicIn),
-            coin.FadeToAsync(0, 380, Easing.CubicIn));
+            coin.TranslateToAsync(target.X - startX, target.Y - startY, 900, Easing.CubicIn),
+            coin.ScaleToAsync(0.3, 900, Easing.CubicIn),
+            coin.FadeToAsync(0, 760, Easing.CubicIn));
     }
 
     private async Task BounceCounterAsync(CancellationToken ct)
@@ -163,8 +163,8 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
 
         await MainThread.InvokeOnMainThreadAsync(async () =>
         {
-            await CoinCounterIcon.ScaleToAsync(1.2, 100, Easing.CubicOut);
-            await CoinCounterIcon.ScaleToAsync(1.0, 100, Easing.CubicIn);
+            await CoinCounterIcon.ScaleToAsync(1.2, 220, Easing.CubicOut);
+            await CoinCounterIcon.ScaleToAsync(1.0, 220, Easing.CubicIn);
         });
     }
 

@@ -142,18 +142,18 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
             AbsoluteLayout.SetLayoutBounds(coin, new Rect(startX, startY, 32, 32));
         });
 
-        await Task.Delay(RewardRandom.Next(0, 151), ct);
+        await Task.Delay(RewardRandom.Next(150, 360), ct);
 
         await Task.WhenAll(
-            coin.TranslateToAsync(center.X - startX, center.Y - startY, 300, Easing.CubicOut),
-            coin.ScaleToAsync(1.2, 200, Easing.CubicOut));
+            coin.TranslateToAsync(center.X - startX, center.Y - startY, 560, Easing.CubicOut),
+            coin.ScaleToAsync(1.2, 360, Easing.CubicOut));
 
         ct.ThrowIfCancellationRequested();
 
         await Task.WhenAll(
-            coin.TranslateToAsync(target.X - startX, target.Y - startY, 500, Easing.CubicIn),
-            coin.ScaleToAsync(0.3, 500, Easing.CubicIn),
-            coin.FadeToAsync(0, 400, Easing.CubicIn));
+            coin.TranslateToAsync(target.X - startX, target.Y - startY, 940, Easing.CubicIn),
+            coin.ScaleToAsync(0.3, 940, Easing.CubicIn),
+            coin.FadeToAsync(0, 780, Easing.CubicIn));
     }
 
     private async Task AnimateCoinCounterAsync(PuzzlePageViewModel vm, int start, int end, CancellationToken ct)
@@ -162,7 +162,7 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
             return;
 
         int steps = end - start;
-        int delayMs = steps > 20 ? 20 : 40;
+        int delayMs = steps > 20 ? 35 : 60;
 
         for (int i = 1; i <= steps; i++)
         {
@@ -181,8 +181,8 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
 
         await MainThread.InvokeOnMainThreadAsync(async () =>
         {
-            await CoinCounterIcon.ScaleToAsync(1.2, 120, Easing.CubicOut);
-            await CoinCounterIcon.ScaleToAsync(1.0, 120, Easing.CubicIn);
+            await CoinCounterIcon.ScaleToAsync(1.2, 240, Easing.CubicOut);
+            await CoinCounterIcon.ScaleToAsync(1.0, 240, Easing.CubicIn);
         });
     }
 
