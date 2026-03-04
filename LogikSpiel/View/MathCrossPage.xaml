@@ -14,12 +14,15 @@
         <conv:MathCellToColorConverter x:Key="MathCellToColorConverter"/>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto,Auto,*" Padding="12" RowSpacing="12">
+    <Grid RowDefinitions="Auto,*,Auto" Padding="12" RowSpacing="12">
         <Border Style="{StaticResource GlassCard}" Padding="{OnIdiom Phone=8, Desktop=12}" Margin="0">
             <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
-                <Button Grid.Column="0" Text="&#x2190;" Style="{StaticResource BtnIcon}" WidthRequest="76" HeightRequest="40" Padding="10,0" Command="{Binding BackCommand}" IsEnabled="{Binding IsNotBusy}"/>
+                <Button Grid.Column="0" Text="&#x2302;" Style="{StaticResource BtnIcon}" WidthRequest="76" HeightRequest="40" Padding="10,0" Command="{Binding BackCommand}" IsEnabled="{Binding IsNotBusy}"/>
 
-                <Grid Grid.Column="1"/>
+                <VerticalStackLayout Grid.Column="1" Spacing="0" VerticalOptions="Center">
+                    <Label Text="{Binding GameTitle}" FontSize="14" FontAttributes="Bold" TextColor="{StaticResource C_TextPrimary}" LineBreakMode="TailTruncation"/>
+                    <Label Text="{Binding HeaderSubtitle}" FontSize="12" TextColor="{StaticResource C_TextMuted}" LineBreakMode="TailTruncation"/>
+                </VerticalStackLayout>
 
                 <Border Grid.Column="2" Style="{StaticResource CoinBadge}" Padding="8">
                     <HorizontalStackLayout Spacing="4">
@@ -37,12 +40,12 @@
             <Grid x:Name="BoardGrid" HorizontalOptions="Center" VerticalOptions="Center" RowSpacing="4" ColumnSpacing="4"/>
         </Border>
 
-        <Border Grid.Row="2" x:Name="NumberBankContainer" Style="{StaticResource SolidCard}" Padding="12">
+        <Border Grid.Row="2" x:Name="NumberBankContainer" Style="{StaticResource SolidCard}" Padding="12" VerticalOptions="End">
             <Border.GestureRecognizers>
                 <DropGestureRecognizer AllowDrop="True" Drop="OnBankDrop"/>
             </Border.GestureRecognizers>
             <VerticalStackLayout Spacing="8">
-                <ScrollView Orientation="Vertical" HeightRequest="168">
+                <ScrollView Orientation="Vertical" MaximumHeightRequest="168">
                     <FlexLayout Direction="Row"
                                 Wrap="Wrap"
                                 BindableLayout.ItemsSource="{Binding NumberBank}">
