@@ -27,6 +27,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
     private readonly HashSet<string> _satisfiedEquationCellKeys = new();
     private readonly HashSet<string> _wrongEquationCellKeys = new();
 
+    public event Action<int>? CoinRewardGranted;
     public event Action? RequestLayoutUpdate;
     private UserProfile? _userProfile;
     private GameDefinition? _gameDefinition;
@@ -593,6 +594,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
             await _userService.SaveUserAsync(_userProfile);
         }
 
+        CoinRewardGranted?.Invoke(reward);
         await _dialog.AlertAsync(LocalizationService.GetString("MathCross_SuccessTitle"), LocalizationService.Format("Common_CoinsRewardFormat", reward));
         await _progressStore.MarkLevelCompleteAsync(GameId, DifficultyKey, LevelNumber);
 

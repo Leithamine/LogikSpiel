@@ -15,7 +15,6 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
     private CancellationTokenSource? _professorAnimCts;
     private CancellationTokenSource? _speechBubbleAnimCts;
     private static readonly Random RewardRandom = new();
-    private const int MaxAnimatedCoins = 15;
 
     public PuzzlePage(PuzzlePageViewModel vm)
     {
@@ -96,7 +95,7 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
 
         try
         {
-            int animatedCoins = Math.Min(MaxAnimatedCoins, coinAmount);
+            int animatedCoins = coinAmount;
             var center = GetElementCenter(RootGrid);
             var target = GetElementCenter(CoinCounterBadge);
             var puzzleBounds = GetElementBounds(PuzzleArea);

@@ -26,10 +26,8 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
     private readonly MathCrossPageViewModel _vm;
     private readonly Action _requestLayoutUpdateHandler;
     private CancellationTokenSource? _coinRewardAnimationCts;
-    private int _lastKnownCoins;
     private bool _disposed;
     private static readonly Random RewardRandom = new();
-    private const int MaxAnimatedCoins = 15;
 
     public MathCrossPage(MathCrossPageViewModel vm)
     {
@@ -39,7 +37,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
 
         _requestLayoutUpdateHandler = BuildGrid;
         _vm.RequestLayoutUpdate += _requestLayoutUpdateHandler;
-        _vm.PropertyChanged += OnViewModelPropertyChanged;
+        _vm.CoinRewardGranted += OnCoinRewardGranted;
         BoardContainer.SizeChanged += OnBoardContainerSizeChanged;
         SizeChanged += OnPageSizeChanged;
         _lastKnownCoins = _vm.Coins;
@@ -49,7 +47,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
     {
         if (_disposed) return;
         _vm.RequestLayoutUpdate -= _requestLayoutUpdateHandler;
-        _vm.PropertyChanged -= OnViewModelPropertyChanged;
+        _vm.CoinRewardGranted -= OnCoinRewardGranted;
         CancelCoinRewardAnimation();
         BoardContainer.SizeChanged -= OnBoardContainerSizeChanged;
         SizeChanged -= OnPageSizeChanged;
@@ -57,15 +55,8 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
         GC.SuppressFinalize(this);
     }
 
-    private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private async void OnCoinRewardGranted(int reward)
     {
-        if (e.PropertyName != nameof(MathCrossPageViewModel.Coins))
-            return;
-
-        int newCoins = _vm.Coins;
-        int reward = newCoins - _lastKnownCoins;
-        _lastKnownCoins = newCoins;
-
         if (reward <= 0 || !_isLoaded)
             return;
 
@@ -107,7 +98,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
 
         try
         {
-            int animatedCoins = Math.Min(MaxAnimatedCoins, coinAmount);
+            int animatedCoins = coinAmount;
             var boardBounds = GetElementBounds(BoardContainer);
             var center = GetElementCenter(BoardContainer);
             var target = GetElementCenter(CoinCounterBadge);
