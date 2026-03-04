@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using LogikSpiel.Model;
 using LogikSpiel.Services;
@@ -39,6 +40,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
         _vm.CoinRewardGranted += OnCoinRewardGranted;
         BoardContainer.SizeChanged += OnBoardContainerSizeChanged;
         SizeChanged += OnPageSizeChanged;
+        _lastKnownCoins = _vm.Coins;
     }
 
     public void Dispose()
