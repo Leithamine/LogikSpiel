@@ -14,7 +14,7 @@
         <conv:MathCellToColorConverter x:Key="MathCellToColorConverter"/>
     </ContentPage.Resources>
 
-    <Grid RowDefinitions="Auto,*,Auto" Padding="12" RowSpacing="12">
+    <Grid x:Name="RootGrid" RowDefinitions="Auto,*,Auto" Padding="12" RowSpacing="12">
         <Border Style="{StaticResource GlassCard}" Padding="{OnIdiom Phone=8, Desktop=12}" Margin="0">
             <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
                 <Button Grid.Column="0" Text="&#x2302;" Style="{StaticResource BtnIcon}" WidthRequest="76" HeightRequest="40" Padding="10,0" Command="{Binding BackCommand}" IsEnabled="{Binding IsNotBusy}"/>
@@ -24,9 +24,9 @@
                     <Label Text="{Binding HeaderSubtitle}" FontSize="12" TextColor="{StaticResource C_TextMuted}" LineBreakMode="TailTruncation"/>
                 </VerticalStackLayout>
 
-                <Border Grid.Column="2" Style="{StaticResource CoinBadge}" Padding="8">
+                <Border Grid.Column="2" x:Name="CoinCounterBadge" Style="{StaticResource CoinBadge}" Padding="8">
                     <HorizontalStackLayout Spacing="4">
-                        <Label Text="&#x1F4B0;" FontSize="14"/>
+                        <Label x:Name="CoinCounterIcon" Text="&#x1F4B0;" FontSize="14"/>
                         <Label Text="{Binding Coins}" TextColor="{StaticResource C_Gold}" FontAttributes="Bold"/>
                     </HorizontalStackLayout>
                 </Border>
@@ -87,5 +87,11 @@
                 <Label Text="{resx:Translate Key=MathCross_Generating}" Style="{StaticResource H3}"/>
             </VerticalStackLayout>
         </Grid>
+
+        <AbsoluteLayout Grid.RowSpan="3"
+                        x:Name="RewardOverlay"
+                        IsVisible="False"
+                        InputTransparent="True"
+                        ZIndex="20"/>
     </Grid>
 </ContentPage>
