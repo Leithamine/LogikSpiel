@@ -24,7 +24,9 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
 
     private readonly MathCrossPageViewModel _vm;
     private readonly Action _requestLayoutUpdateHandler;
+    private CancellationTokenSource? _coinRewardAnimationCts;
     private bool _disposed;
+    private static readonly Random RewardRandom = new();
 
     public MathCrossPage(MathCrossPageViewModel vm)
     {
@@ -34,6 +36,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
 
         _requestLayoutUpdateHandler = BuildGrid;
         _vm.RequestLayoutUpdate += _requestLayoutUpdateHandler;
+        _vm.CoinRewardGranted += OnCoinRewardGranted;
         BoardContainer.SizeChanged += OnBoardContainerSizeChanged;
         SizeChanged += OnPageSizeChanged;
     }
@@ -42,10 +45,153 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
     {
         if (_disposed) return;
         _vm.RequestLayoutUpdate -= _requestLayoutUpdateHandler;
+        _vm.CoinRewardGranted -= OnCoinRewardGranted;
+        CancelCoinRewardAnimation();
         BoardContainer.SizeChanged -= OnBoardContainerSizeChanged;
         SizeChanged -= OnPageSizeChanged;
         _disposed = true;
         GC.SuppressFinalize(this);
+    }
+
+    private async void OnCoinRewardGranted(int reward)
+    {
+        if (reward <= 0 || !_isLoaded)
+            return;
+
+        CancelCoinRewardAnimation();
+        _coinRewardAnimationCts = new CancellationTokenSource();
+
+        try
+        {
+            await PlayCoinRewardAnimationAsync(reward, _coinRewardAnimationCts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // ignored on page close or fast level transitions
+        }
+    }
+
+    private void CancelCoinRewardAnimation()
+    {
+        if (_coinRewardAnimationCts is null)
+            return;
+
+        if (!_coinRewardAnimationCts.IsCancellationRequested)
+            _coinRewardAnimationCts.Cancel();
+
+        _coinRewardAnimationCts.Dispose();
+        _coinRewardAnimationCts = null;
+    }
+
+    private async Task PlayCoinRewardAnimationAsync(int coinAmount, CancellationToken ct)
+    {
+        if (coinAmount <= 0)
+            return;
+
+        await MainThread.InvokeOnMainThreadAsync(() =>
+        {
+            RewardOverlay.Children.Clear();
+            RewardOverlay.IsVisible = true;
+        });
+
+        try
+        {
+            int animatedCoins = coinAmount;
+            var boardBounds = GetElementBounds(BoardContainer);
+            var center = GetElementCenter(BoardContainer);
+            var target = GetElementCenter(CoinCounterBadge);
+
+            var tasks = new List<Task>(animatedCoins);
+            for (int i = 0; i < animatedCoins; i++)
+            {
+                ct.ThrowIfCancellationRequested();
+                tasks.Add(AnimateSingleCoinAsync(boardBounds, center, target, ct));
+            }
+
+            await Task.WhenAll(tasks);
+            await BounceCounterAsync(ct);
+        }
+        finally
+        {
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                RewardOverlay.Children.Clear();
+                RewardOverlay.IsVisible = false;
+            });
+        }
+    }
+
+    private async Task AnimateSingleCoinAsync(Rect spawnBounds, Point center, Point target, CancellationToken ct)
+    {
+        var coin = new Image
+        {
+            Source = "coin.png",
+            WidthRequest = 30,
+            HeightRequest = 30,
+            Opacity = 1,
+            Scale = 1
+        };
+
+        double startX = RewardRandom.NextDouble() * Math.Max(1, spawnBounds.Width - 30) + spawnBounds.X;
+        double startY = RewardRandom.NextDouble() * Math.Max(1, spawnBounds.Height - 30) + spawnBounds.Y;
+
+        await MainThread.InvokeOnMainThreadAsync(() =>
+        {
+            RewardOverlay.Children.Add(coin);
+            AbsoluteLayout.SetLayoutBounds(coin, new Rect(startX, startY, 30, 30));
+        });
+
+        await Task.Delay(RewardRandom.Next(0, 140), ct);
+
+        await Task.WhenAll(
+            coin.TranslateToAsync(center.X - startX, center.Y - startY, 260, Easing.CubicOut),
+            coin.ScaleToAsync(1.2, 180, Easing.CubicOut));
+
+        ct.ThrowIfCancellationRequested();
+
+        await Task.WhenAll(
+            coin.TranslateToAsync(target.X - startX, target.Y - startY, 460, Easing.CubicIn),
+            coin.ScaleToAsync(0.3, 460, Easing.CubicIn),
+            coin.FadeToAsync(0, 380, Easing.CubicIn));
+    }
+
+    private async Task BounceCounterAsync(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            await CoinCounterIcon.ScaleToAsync(1.2, 100, Easing.CubicOut);
+            await CoinCounterIcon.ScaleToAsync(1.0, 100, Easing.CubicIn);
+        });
+    }
+
+    private static Rect GetElementBounds(VisualElement element)
+    {
+        var topLeft = GetAbsolutePosition(element);
+        return new Rect(topLeft.X, topLeft.Y, element.Width, element.Height);
+    }
+
+    private static Point GetElementCenter(VisualElement element)
+    {
+        var topLeft = GetAbsolutePosition(element);
+        return new Point(topLeft.X + (element.Width / 2), topLeft.Y + (element.Height / 2));
+    }
+
+    private static Point GetAbsolutePosition(VisualElement element)
+    {
+        double x = element.X;
+        double y = element.Y;
+
+        var parent = element.Parent as VisualElement;
+        while (parent != null)
+        {
+            x += parent.X;
+            y += parent.Y;
+            parent = parent.Parent as VisualElement;
+        }
+
+        return new Point(x, y);
     }
 
     private void BuildGrid()
