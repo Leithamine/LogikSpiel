@@ -246,7 +246,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
         tile?.SetDragVisualState(isDragging: true);
     }
 
-    public void EndTileDrag(string? tileId, bool wasSuccessfulDrop)
+    public void EndTileDrag(string? tileId)
     {
         var effectiveTileId = string.IsNullOrWhiteSpace(tileId) ? _activeDraggedTileId : tileId;
         if (string.IsNullOrWhiteSpace(effectiveTileId)) return;
