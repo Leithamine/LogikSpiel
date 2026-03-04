@@ -36,20 +36,25 @@
             </Grid>
         </Border>
 
-        <Border Grid.Row="1" Style="{StaticResource GlassCard}" x:Name="BoardContainer" Padding="8" VerticalOptions="FillAndExpand">
+        <Border Grid.Row="1" Style="{StaticResource GlassCard}" x:Name="BoardContainer" Padding="8" VerticalOptions="Fill">
             <Grid x:Name="BoardGrid" HorizontalOptions="Center" VerticalOptions="Center" RowSpacing="4" ColumnSpacing="4"/>
         </Border>
 
-        <Border Grid.Row="2" x:Name="NumberBankContainer" Style="{StaticResource SolidCard}" Padding="12" VerticalOptions="End">
+        <Border Grid.Row="2" x:Name="NumberBankContainer" Style="{StaticResource SolidCard}" Padding="16,12" VerticalOptions="End">
             <Border.GestureRecognizers>
                 <DropGestureRecognizer AllowDrop="True" Drop="OnBankDrop"/>
             </Border.GestureRecognizers>
             <FlexLayout Direction="Row"
                         Wrap="Wrap"
+                        VerticalOptions="Center"
+                        HorizontalOptions="Center"
                         BindableLayout.ItemsSource="{Binding NumberBank}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="vm:NumberBankTileViewModel">
                         <Border Margin="0,0,8,8"
+                                Opacity="{Binding TileOpacity}"
+                                Scale="{Binding TileScale}"
+                                ZIndex="{Binding TileZIndex}"
                                 Padding="8,0"
                                 HeightRequest="52"
                                 WidthRequest="{Binding TileWidth}"
@@ -60,7 +65,7 @@
                                 StrokeShape="RoundRectangle 8">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding Source={x:Reference ThisPage}, Path=BindingContext.NumberTileTappedCommand}" CommandParameter="{Binding .}"/>
-                                <DragGestureRecognizer DragStarting="OnTileDragStarting"/>
+                                <DragGestureRecognizer DragStarting="OnTileDragStarting" DropCompleted="OnTileDropCompleted"/>
                             </Border.GestureRecognizers>
                             <Label Text="{Binding DisplayValue}"
                                    FontAttributes="Bold"
