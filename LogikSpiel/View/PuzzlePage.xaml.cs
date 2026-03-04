@@ -189,7 +189,8 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
 
     private static Rect GetElementBounds(VisualElement element)
     {
-        return new Rect(GetAbsolutePosition(element), element.Width, element.Height);
+        var topLeft = GetAbsolutePosition(element);
+        return new Rect(topLeft.X, topLeft.Y, element.Width, element.Height);
     }
 
     private static Point GetElementCenter(VisualElement element)
