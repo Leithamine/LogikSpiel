@@ -14,6 +14,8 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
     private CancellationTokenSource? _celebrationCts;
     private CancellationTokenSource? _professorAnimCts;
     private CancellationTokenSource? _speechBubbleAnimCts;
+    private static readonly Random RewardRandom = new();
+    private const int MaxAnimatedCoins = 15;
 
     public PuzzlePage(PuzzlePageViewModel vm)
     {
@@ -63,17 +65,154 @@ public partial class PuzzlePage : ContentPage, IQueryAttributable
         _celebrationCts = new CancellationTokenSource();
         var ct = _celebrationCts.Token;
 
-        await Task.Delay(100);
+        await Task.Delay(100, ct);
 
         try
         {
             ct.ThrowIfCancellationRequested();
-            await CelebrateLockAsync();
+            await Task.WhenAll(
+                CelebrateLockAsync(),
+                PlayCoinRewardAnimationAsync(vm.PendingCoinReward, ct));
+
+            vm.FinalizePendingCoinReward();
         }
         catch (OperationCanceledException)
         {
             // Seite wurde verlassen
         }
+    }
+
+
+    private async Task PlayCoinRewardAnimationAsync(int coinAmount, CancellationToken ct)
+    {
+        if (coinAmount <= 0)
+            return;
+
+        await MainThread.InvokeOnMainThreadAsync(() =>
+        {
+            RewardOverlay.Children.Clear();
+            RewardOverlay.IsVisible = true;
+        });
+
+        try
+        {
+            int animatedCoins = Math.Min(MaxAnimatedCoins, coinAmount);
+            var center = GetElementCenter(RootGrid);
+            var target = GetElementCenter(CoinCounterBadge);
+            var puzzleBounds = GetElementBounds(PuzzleArea);
+
+            var tasks = new List<Task>(animatedCoins);
+
+            for (int i = 0; i < animatedCoins; i++)
+            {
+                ct.ThrowIfCancellationRequested();
+                tasks.Add(AnimateSingleCoinAsync(puzzleBounds, center, target, ct));
+            }
+
+            await Task.WhenAll(tasks);
+            await AnimateCoinCounterAsync(_vm, _vm.Coins, _vm.PendingCoinTarget, ct);
+            await BounceCounterAsync(ct);
+        }
+        finally
+        {
+            await MainThread.InvokeOnMainThreadAsync(() =>
+            {
+                RewardOverlay.Children.Clear();
+                RewardOverlay.IsVisible = false;
+            });
+        }
+    }
+
+    private async Task AnimateSingleCoinAsync(Rect puzzleBounds, Point center, Point target, CancellationToken ct)
+    {
+        var coin = new Image
+        {
+            Source = "coin.png",
+            WidthRequest = 32,
+            HeightRequest = 32,
+            Opacity = 1,
+            Scale = 1
+        };
+
+        double startX = RewardRandom.NextDouble() * Math.Max(1, puzzleBounds.Width - 32) + puzzleBounds.X;
+        double startY = RewardRandom.NextDouble() * Math.Max(1, puzzleBounds.Height - 32) + puzzleBounds.Y;
+
+        await MainThread.InvokeOnMainThreadAsync(() =>
+        {
+            RewardOverlay.Children.Add(coin);
+            AbsoluteLayout.SetLayoutBounds(coin, new Rect(startX, startY, 32, 32));
+        });
+
+        await Task.Delay(RewardRandom.Next(0, 151), ct);
+
+        await Task.WhenAll(
+            coin.TranslateToAsync(center.X - startX, center.Y - startY, 300, Easing.CubicOut),
+            coin.ScaleToAsync(1.2, 200, Easing.CubicOut));
+
+        ct.ThrowIfCancellationRequested();
+
+        await Task.WhenAll(
+            coin.TranslateToAsync(target.X - startX, target.Y - startY, 500, Easing.CubicIn),
+            coin.ScaleToAsync(0.3, 500, Easing.CubicIn),
+            coin.FadeToAsync(0, 400, Easing.CubicIn));
+    }
+
+    private async Task AnimateCoinCounterAsync(PuzzlePageViewModel vm, int start, int end, CancellationToken ct)
+    {
+        if (end <= start)
+            return;
+
+        int steps = end - start;
+        int delayMs = steps > 20 ? 20 : 40;
+
+        for (int i = 1; i <= steps; i++)
+        {
+            ct.ThrowIfCancellationRequested();
+            int value = start + i;
+            await MainThread.InvokeOnMainThreadAsync(() => vm.Coins = value);
+            await Task.Delay(delayMs, ct);
+        }
+
+        await MainThread.InvokeOnMainThreadAsync(() => vm.Coins = vm.PendingCoinTarget);
+    }
+
+    private async Task BounceCounterAsync(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        await MainThread.InvokeOnMainThreadAsync(async () =>
+        {
+            await CoinCounterIcon.ScaleToAsync(1.2, 120, Easing.CubicOut);
+            await CoinCounterIcon.ScaleToAsync(1.0, 120, Easing.CubicIn);
+        });
+    }
+
+    private static Rect GetElementBounds(VisualElement element)
+    {
+        var topLeft = GetAbsolutePosition(element);
+        return new Rect(topLeft.X, topLeft.Y, element.Width, element.Height);
+    }
+
+    private static Point GetElementCenter(VisualElement element)
+    {
+        var topLeft = GetAbsolutePosition(element);
+        return new Point(topLeft.X + (element.Width / 2), topLeft.Y + (element.Height / 2));
+    }
+
+    private static Point GetAbsolutePosition(VisualElement element)
+    {
+        double x = element.X;
+        double y = element.Y;
+
+        var parent = element.Parent as VisualElement;
+        while (parent != null)
+        {
+            x += parent.X;
+            y += parent.Y;
+            parent = parent.Parent as VisualElement;
+        }
+
+        return new Point(x, y);
     }
 
     private async Task ShowBubbleAsync()
