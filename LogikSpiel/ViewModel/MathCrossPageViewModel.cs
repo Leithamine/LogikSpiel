@@ -54,6 +54,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
     }
 
     public string Title => LocalizationService.Format("MathCross_TitleFormat", DiffName(DifficultyKey), LevelNumber);
+    public string GameTitle => _gameDefinition?.Title ?? LocalizationService.GetString("Game_MathCross_Title");
     public string LevelDisplayText => LocalizationService.Format("Common_LevelFormat", LevelNumber);
     public string DifficultyText => DiffName(DifficultyKey);
     public string HeaderSubtitle => $"{DifficultyText} - {LevelDisplayText}";
@@ -150,6 +151,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
             LevelNumber = Math.Max(1, level);
             _gameDefinition = await _catalog.GetGameAsync(GameId);
 
+            OnPropertyChanged(nameof(GameTitle));
             OnPropertyChanged(nameof(Title));
             OnPropertyChanged(nameof(DifficultyText));
             OnPropertyChanged(nameof(HeaderSubtitle));
@@ -181,6 +183,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
     {
         FlatCells.Clear();
         NumberBank.Clear();
+        _activeDraggedTileId = null;
         _undoStack.Clear();
         UndoCommand.RaiseCanExecuteChanged();
         SelectedCell = null;
@@ -232,6 +235,30 @@ public sealed class MathCrossPageViewModel : ObservableObject
     }
 
     public void SetDragging(bool isDragging) => IsDragging = isDragging;
+
+    private string? _activeDraggedTileId;
+
+    public void BeginTileDrag(string? tileId)
+    {
+        if (string.IsNullOrWhiteSpace(tileId)) return;
+        _activeDraggedTileId = tileId;
+        var tile = NumberBank.FirstOrDefault(t => t.Tile.Id == tileId);
+        tile?.SetDragVisualState(isDragging: true);
+    }
+
+    public void EndTileDrag(string? tileId, bool wasSuccessfulDrop)
+    {
+        var effectiveTileId = string.IsNullOrWhiteSpace(tileId) ? _activeDraggedTileId : tileId;
+        if (string.IsNullOrWhiteSpace(effectiveTileId)) return;
+
+        var tile = NumberBank.FirstOrDefault(t => t.Tile.Id == effectiveTileId);
+        if (tile != null)
+            tile.SetDragVisualState(isDragging: false);
+
+        if (_activeDraggedTileId == effectiveTileId)
+            _activeDraggedTileId = null;
+    }
+
 
     public bool TryMoveCellToCell(MathCrossCellViewModel? sourceVm, MathCrossCellViewModel? targetVm)
     {
@@ -293,6 +320,8 @@ public sealed class MathCrossPageViewModel : ObservableObject
             return false;
 
         NumberBank.Remove(tileVm);
+        if (_activeDraggedTileId == tileVm.Tile.Id)
+            _activeDraggedTileId = null;
 
         var oldInput = cell.UserInput;
         var oldTileId = cell.PlacedTileId;
@@ -614,6 +643,25 @@ public sealed class NumberBankTileViewModel : ObservableObject
     public NumberBankTileViewModel(NumberBankTile tile) => Tile = tile;
     public string DisplayValue => Tile.Value;
     public double TileWidth => Math.Max(64, 24 + DisplayValue.Length * 13);
+
+    private bool _isDragging;
+    public bool IsDragging
+    {
+        get => _isDragging;
+        private set
+        {
+            if (!SetProperty(ref _isDragging, value)) return;
+            OnPropertyChanged(nameof(TileOpacity));
+            OnPropertyChanged(nameof(TileScale));
+            OnPropertyChanged(nameof(TileZIndex));
+        }
+    }
+
+    public double TileOpacity => IsDragging ? 0.35 : 1;
+    public double TileScale => IsDragging ? 1.1 : 1;
+    public int TileZIndex => IsDragging ? 10 : 0;
+
+    public void SetDragVisualState(bool isDragging) => IsDragging = isDragging;
 }
 
 public sealed class MathCrossCellViewModel : ObservableObject

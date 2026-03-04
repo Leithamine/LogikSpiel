@@ -122,10 +122,17 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
     private void OnTileDragStarting(object? sender, DragStartingEventArgs e)
     {
         if (sender is not BindableObject bo || bo.BindingContext is not NumberBankTileViewModel tileVm) return;
-        e.Data.Properties.Add("tileId", tileVm.Tile.Id);
+        e.Data.Properties["tileId"] = tileVm.Tile.Id;
+        _vm.BeginTileDrag(tileVm.Tile.Id);
         _vm.SetDragging(true);
     }
 
+    private void OnTileDropCompleted(object? sender, DropCompletedEventArgs e)
+    {
+        if (sender is not BindableObject bo || bo.BindingContext is not NumberBankTileViewModel tileVm) return;
+        _vm.EndTileDrag(tileVm.Tile.Id, wasSuccessfulDrop: e.DropResult != DataPackageOperation.None);
+        _vm.SetDragging(false);
+    }
 
     private void OnCellDragStarting(object? sender, DragStartingEventArgs e)
     {
@@ -153,6 +160,10 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
     private void OnBankDrop(object? sender, DropEventArgs e)
     {
         _vm.SetDragging(false);
+
+        if (e.Data.Properties.TryGetValue("tileId", out var tileIdObj) && !string.IsNullOrWhiteSpace(tileIdObj?.ToString()))
+            _vm.EndTileDrag(tileIdObj?.ToString(), wasSuccessfulDrop: false);
+
         var sourceVm = ResolveCellVmFromProperties(e.Data.Properties);
         if (sourceVm == null) return;
         _vm.TryReturnCellNumberToBank(sourceVm);
@@ -170,7 +181,9 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
 
         if (e.Data.Properties.TryGetValue("tileId", out var tileIdObj) && !string.IsNullOrWhiteSpace(tileIdObj?.ToString()))
         {
-            _vm.TryPlaceTileById(tileIdObj?.ToString(), target);
+            var tileId = tileIdObj?.ToString();
+            var placed = _vm.TryPlaceTileById(tileId, target);
+            _vm.EndTileDrag(tileId, wasSuccessfulDrop: placed);
             return;
         }
 
