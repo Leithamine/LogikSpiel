@@ -40,14 +40,16 @@
             <Grid x:Name="BoardGrid" HorizontalOptions="Center" VerticalOptions="Center" RowSpacing="4" ColumnSpacing="4"/>
         </Border>
 
-        <Border Grid.Row="2" x:Name="NumberBankContainer" Style="{StaticResource SolidCard}" Padding="16,12" VerticalOptions="End">
+        <Border Grid.Row="2" x:Name="NumberBankContainer" Style="{StaticResource SolidCard}" Padding="16,24,16,20" VerticalOptions="Center" MinimumHeightRequest="220">
             <Border.GestureRecognizers>
                 <DropGestureRecognizer AllowDrop="True" Drop="OnBankDrop"/>
             </Border.GestureRecognizers>
             <FlexLayout Direction="Row"
                         Wrap="Wrap"
-                        VerticalOptions="Center"
+                        VerticalOptions="Fill"
                         HorizontalOptions="Center"
+                        JustifyContent="Center"
+                        AlignContent="Center"
                         BindableLayout.ItemsSource="{Binding NumberBank}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="vm:NumberBankTileViewModel">
