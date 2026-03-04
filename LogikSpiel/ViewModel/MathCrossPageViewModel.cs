@@ -54,6 +54,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
     }
 
     public string Title => LocalizationService.Format("MathCross_TitleFormat", DiffName(DifficultyKey), LevelNumber);
+    public string GameTitle => _gameDefinition?.Title ?? LocalizationService.GetString("Game_MathCross_Title");
     public string LevelDisplayText => LocalizationService.Format("Common_LevelFormat", LevelNumber);
     public string DifficultyText => DiffName(DifficultyKey);
     public string HeaderSubtitle => $"{DifficultyText} - {LevelDisplayText}";
@@ -150,6 +151,7 @@ public sealed class MathCrossPageViewModel : ObservableObject
             LevelNumber = Math.Max(1, level);
             _gameDefinition = await _catalog.GetGameAsync(GameId);
 
+            OnPropertyChanged(nameof(GameTitle));
             OnPropertyChanged(nameof(Title));
             OnPropertyChanged(nameof(DifficultyText));
             OnPropertyChanged(nameof(HeaderSubtitle));
