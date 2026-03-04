@@ -26,6 +26,20 @@ public sealed class PuzzlePageViewModel : ObservableObject
     private int _coins;
     public int Coins { get => _coins; set => SetProperty(ref _coins, value); }
 
+    private int _pendingCoinReward;
+    public int PendingCoinReward
+    {
+        get => _pendingCoinReward;
+        private set => SetProperty(ref _pendingCoinReward, value);
+    }
+
+    private int _pendingCoinTarget;
+    public int PendingCoinTarget
+    {
+        get => _pendingCoinTarget;
+        private set => SetProperty(ref _pendingCoinTarget, value);
+    }
+
     public string GameId { get; private set; } = "codebreaker";
     public string DifficultyKey { get; private set; } = "normal";
 
@@ -263,6 +277,8 @@ public sealed class PuzzlePageViewModel : ObservableObject
         {
             _userProfile = await _userService.GetUserAsync();
             Coins = _userProfile?.Coins ?? 0;
+            PendingCoinReward = 0;
+            PendingCoinTarget = Coins;
         }
         catch (Exception ex)
         {
@@ -480,13 +496,17 @@ public sealed class PuzzlePageViewModel : ObservableObject
         System.Diagnostics.Debug.WriteLine($"[CheckSolutionAsync] Richtige Lösung für Level {LevelNumber}");
 
         int reward = RewardForDifficulty(DifficultyKey);
+        int currentCoins = Coins;
+        int targetCoins = currentCoins + reward;
 
         if (_userProfile != null)
         {
             _userProfile.Coins += reward;
-            Coins = _userProfile.Coins;
             await _userService.SaveUserAsync(_userProfile);
         }
+
+        PendingCoinReward = reward;
+        PendingCoinTarget = targetCoins;
 
         int completedLevel = LevelNumber;
 
@@ -517,6 +537,7 @@ public sealed class PuzzlePageViewModel : ObservableObject
             ProfessorMessage = "";
             RewardText = "";
             LockImageSource = "closedlock.png";
+            PendingCoinReward = 0;
         });
 
         if (_pendingNextLevel > GameConfig.MaxLevel)
@@ -564,6 +585,16 @@ public sealed class PuzzlePageViewModel : ObservableObject
         });
 
         return Task.CompletedTask;
+    }
+
+
+    public void FinalizePendingCoinReward()
+    {
+        if (PendingCoinReward <= 0)
+            return;
+
+        Coins = PendingCoinTarget;
+        PendingCoinReward = 0;
     }
 
     private async Task RevealOneDigitAsync()

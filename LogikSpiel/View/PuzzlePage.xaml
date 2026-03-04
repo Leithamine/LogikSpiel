@@ -11,9 +11,12 @@
              NavigationPage.HasNavigationBar="False"
              Shell.NavBarIsVisible="False">
 
-    <Grid RowDefinitions="Auto, Auto, *"
-          Padding="{OnIdiom Phone=8, Desktop=12}"
-          RowSpacing="{OnIdiom Phone=8, Desktop=12}">
+    <Grid x:Name="RootGrid">
+
+        <Grid x:Name="GameContent"
+              RowDefinitions="Auto, Auto, *"
+              Padding="{OnIdiom Phone=8, Desktop=12}"
+              RowSpacing="{OnIdiom Phone=8, Desktop=12}">
 
         <!-- HEADER BAR -->
         <Border Grid.Row="0" Style="{StaticResource GlassCard}" Padding="{OnIdiom Phone=8, Desktop=12}" Margin="0">
@@ -31,17 +34,17 @@
                     <Label Text="{Binding LevelDisplayText}" TextColor="{StaticResource C_TextMuted}" FontSize="14" HorizontalOptions="Center" FontAttributes="Bold"/>
                 </VerticalStackLayout>
 
-                <Border Grid.Column="2" Style="{StaticResource CoinBadge}" Padding="{OnIdiom Phone=8, Desktop=10}">
+                <Border x:Name="CoinCounterBadge" Grid.Column="2" Style="{StaticResource CoinBadge}" Padding="{OnIdiom Phone=8, Desktop=10}">
                     <HorizontalStackLayout Spacing="4">
-                        <Label Text="&#x1F4B0;" FontSize="14"/>
-                        <Label Text="{Binding Coins}" TextColor="{StaticResource C_Gold}" FontAttributes="Bold"/>
+                        <Label x:Name="CoinCounterIcon" Text="&#x1F4B0;" FontSize="14"/>
+                        <Label x:Name="CoinCounterLabel" Text="{Binding Coins}" TextColor="{StaticResource C_Gold}" FontAttributes="Bold"/>
                     </HorizontalStackLayout>
                 </Border>
             </Grid>
         </Border>
 
         <!-- SCHLOSS + EINGABE BORDER -->
-        <Border Grid.Row="1" Style="{StaticResource GlassCard}" Padding="{OnIdiom Phone=12, Desktop=16}" Margin="0">
+        <Border x:Name="PuzzleArea" Grid.Row="1" Style="{StaticResource GlassCard}" Padding="{OnIdiom Phone=12, Desktop=16}" Margin="0">
 
             <VerticalStackLayout Spacing="14">
 
@@ -313,6 +316,13 @@
         <Grid Grid.RowSpan="3" IsVisible="{Binding IsBusy}" BackgroundColor="#DD000000" InputTransparent="False">
             <ActivityIndicator IsRunning="{Binding IsBusy}" Color="{StaticResource C_Primary}" HeightRequest="60" WidthRequest="60" HorizontalOptions="Center" VerticalOptions="Center"/>
         </Grid>
+
+        </Grid>
+
+        <AbsoluteLayout x:Name="RewardOverlay"
+                        InputTransparent="True"
+                        IsVisible="False"
+                        ZIndex="1000"/>
 
     </Grid>
 </ContentPage>
