@@ -26,6 +26,7 @@ public partial class MathCrossPage : ContentPage, IQueryAttributable, IDisposabl
     private readonly MathCrossPageViewModel _vm;
     private readonly Action _requestLayoutUpdateHandler;
     private CancellationTokenSource? _coinRewardAnimationCts;
+    private int _lastKnownCoins;
     private bool _disposed;
     private static readonly Random RewardRandom = new();
 
